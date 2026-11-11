@@ -35,7 +35,41 @@ function resetRecord(kind){$(kind+'Form').reset();$(kind+'Id').value='';}
 for(const kind of ['teacher','student']){$(kind+'Clear').onclick=()=>resetRecord(kind);$(kind+'Form').onsubmit=async e=>{e.preventDefault();if(!active)return;const plural=kind+'s',id=$(kind+'Id').value||crypto.randomUUID(),data={};for(const field of schemas[plural])data[field.toLowerCase()]=$(kind+field).value.trim();$(kind+'Status').textContent='Saving…';try{await setDoc(doc(db,plural,id),data);resetRecord(kind);$(kind+'Status').textContent='✓ Saved';await renderRecords(plural)}catch(err){$(kind+'Status').textContent='Save failed: '+err.message}}}
 async function renderRecords(kind){const singular=kind.slice(0,-1),list=$(singular+'List');list.textContent='Loading…';try{const snap=await getDocs(query(collection(db,kind),limit(150)));list.replaceChildren();if(snap.empty){list.innerHTML='<p class="empty">No records yet. Add the first one above.</p>';return}snap.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+schemas[kind].filter(f=>f!=='Name').map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>';const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{if(!confirm('Delete this '+singular+' record?'))return;try{await deleteDoc(doc(db,kind,d.id));await renderRecords(kind)}catch(e){alert('Delete failed: '+e.message)}};list.append(el)})}catch(err){list.textContent='Unable to load records: '+err.message}}
 $('refreshApplications').onclick=renderApplications;
-async function renderApplications(){const list=$('applicationList');list.textContent='Loading applications…';try{const snap=await getDocs(query(collection(db,'applications'),limit(200)));$('applicationCount').textContent='Applications: '+snap.size;list.replaceChildren();if(snap.empty){list.innerHTML='<p class="empty">No applications saved yet.</p>';return}const rows=snap.docs.sort((a,b)=>(b.data().submittedAt||'').localeCompare(a.data().submittedAt||''));for(const d of rows){const a=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(a.studentName)+'</strong> <small>'+safe(a.reference)+'</small>'+['course','guardianName','age','phone','email','address','message','submittedAt'].map(k=>a[k]?'<p><small>'+safe(k)+':</small> '+safe(a[k])+'</p>':'').join('')+'<button type="button">Add to Students</button>';el.querySelector('button').onclick=async()=>{if(!confirm('Add '+a.studentName+' to enrolled students?'))return;try{await setDoc(doc(db,'students',d.id),{name:a.studentName||'',course:a.course||'',guardian:a.guardianName||'',phone:a.phone||'',state:'Pending',reference:a.reference||''});$('applicationStatus').textContent='✓ Added to Student Details. Review the enrollment status.'}catch(e){$('applicationStatus').textContent='Could not add student: '+e.message}};list.append(el)}}catch(e){list.textContent='Unable to load applications: '+e.message+' (Check Firestore security rules.)'}}
+async function renderApplications(){
+ const list=$('applicationList');list.textContent='Loading applications…';
+ try{
+  const snap=await getDocs(query(collection(db,'applications'),limit(200)));
+  const rows=snap.docs.sort((a,b)=>(b.data().submittedAt||'').localeCompare(a.data().submittedAt||''));
+  const pending=rows.filter(d=>!['Approved','Rejected'].includes(d.data().status));
+  $('applicationCount').textContent='Total: '+rows.length+' · New: '+pending.length+' · Approved: '+rows.filter(d=>d.data().status==='Approved').length+' · Rejected: '+rows.filter(d=>d.data().status==='Rejected').length;
+  list.replaceChildren();
+  if(!rows.length){list.innerHTML='<p class="empty">No applications saved in Firestore yet. Email-only submissions do not appear automatically.</p>';return}
+  for(const d of rows){
+   const a=d.data(),el=document.createElement('div');el.className='record';
+   el.innerHTML='<strong>'+safe(a.studentName||'Unnamed applicant')+'</strong> <small>'+safe(a.reference||d.id)+'</small><p><strong>Status: '+safe(a.status||'New')+'</strong></p>'+
+    ['course','guardianName','age','phone','email','address','message','submittedAt'].map(k=>a[k]?'<p><small>'+safe(k)+':</small> '+safe(a[k])+'</p>':'').join('')+
+    '<div class="actions"><button type="button" data-action="approve">✓ Approve & Enrol</button> <button type="button" class="secondary" data-action="reject">✕ Reject</button></div><p class="status" aria-live="polite"></p>';
+   const note=el.querySelector('.status');
+   for(const action of ['approve','reject']){
+    const button=el.querySelector('[data-action="'+action+'"]');
+    button.disabled=a.status===(action==='approve'?'Approved':'Rejected');
+    button.onclick=async()=>{
+     if(!confirm((action==='approve'?'Approve and enrol ':'Reject application for ')+(a.studentName||'this student')+'?'))return;
+     el.querySelectorAll('button').forEach(b=>b.disabled=true);note.textContent='Saving…';
+     try{
+      if(action==='approve'){
+       await setDoc(doc(db,'students',d.id),{name:a.studentName||'',course:a.course||'',guardian:a.guardianName||'',phone:a.phone||'',email:a.email||'',age:a.age||'',address:a.address||'',state:'Enrolled',reference:a.reference||d.id,approvedAt:new Date().toISOString()});
+      }
+      await setDoc(doc(db,'applications',d.id),{status:action==='approve'?'Approved':'Rejected',reviewedAt:new Date().toISOString()},{merge:true});
+      $('applicationStatus').textContent=action==='approve'?'✓ Application approved and student enrolled.':'✓ Application rejected.';
+      await renderApplications();
+     }catch(e){note.textContent='Action failed: '+e.message;el.querySelectorAll('button').forEach(b=>b.disabled=false)}
+    };
+   }
+   list.append(el);
+  }
+ }catch(e){list.textContent='Unable to load applications: '+e.message+' (Check Firestore security rules.)'}
+}
 $('course').onchange=load;
 $('save').onclick=async()=>{if(!active)return;const id=$('course').value,data={};for(const k of ['name','duration','description','eligibility','syllabus','fees','timings'])data[k]=$(k).value.trim();data.kitabs=$('kitabs').value.split('\n').map(s=>s.trim()).filter(Boolean);data.published=$('published').checked;$('save').disabled=true;$('status').textContent='Saving…';try{await setDoc(doc(db,'courses',id),data);$('status').textContent='✓ Saved successfully. Published courses are visible on the public Course Details page.'}catch(e){$('status').textContent='Save failed: '+e.message}finally{$('save').disabled=false}};
 }catch(e){$('setup').classList.remove('hidden');$('setup').textContent='Firebase setup error: '+e.message}}
