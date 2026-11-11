@@ -1,6 +1,9 @@
 {
-  "apiKey": "",
-  "authDomain": "",
-  "projectId": "",
-  "appId": ""
+  "apiKey": "AIzaSyCfafl6n3ASFsOLIp635vk4GVAy2CLoCLE",
+  "authDomain": "al-islah-arabic-academy.firebaseapp.com",
+  "projectId": "al-islah-arabic-academy",
+  "storageBucket": "al-islah-arabic-academy.firebasestorage.app",
+  "messagingSenderId": "768903195557",
+  "appId": "1:768903195557:web:e525130d9c82a0f75b164c",
+  "measurementId": "G-XQEL7QXFLD"
 }
