@@ -1,0 +1,22 @@
+rules_version = '2';
+service firebase.storage {
+ match /b/{bucket}/o {
+  function isAdmin() {
+   return request.auth != null
+    && request.auth.token.email == 'alislaharabicacademy@gmail.com'
+    && request.auth.token.email_verified == true;
+  }
+  match /teacher-registration/{token}/{fileName} {
+   allow read: if isAdmin();
+   allow create: if token.matches('^[a-f0-9]{64}$')
+    && fileName.matches('^(photo|academic|sanadFile)\\.(jpg|png|pdf)$')
+    && request.resource.size <= 3 * 1024 * 1024
+    && request.resource.contentType.matches('^(image/jpeg|image/png|application/pdf)$')
+    && !(fileName.matches('^photo\\.pdf$'))
+    && firestore.exists(/databases/(default)/documents/teacherInvites/$(token))
+    && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.used == false
+    && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.revoked == false;
+   allow update, delete: if isAdmin();
+  }
+ }
+}
