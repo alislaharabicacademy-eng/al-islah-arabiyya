@@ -35,7 +35,18 @@ try{
   const published=await getDocs(query(collection(getFirestore(app),'courses'),where('published','==',true)));
   published.forEach(d=>{const v=d.data();if(v.name&&d.id!=='muallama'&&d.id!=='muballigha'&&d.id!=='alima'&&d.id!=='boys-hifz')liveCourses.push(String(v.name).trim())});
  }catch(e){console.warn('Published course catalogue unavailable:',e.code||e.message)}
- if(!data&&liveCourses.length===0){console.warn('No publicly readable admission settings found');return}
+ if(!data&&liveCourses.length===0)console.warn('No publicly readable admission settings found; keeping built-in courses');
+ // Direct document reads also work when a collection query is unavailable.
+ // Merge both sources so a new course never replaces the original options.
+ for(const id of ['childrens-quran-maktab','tajweed-for-girls']){
+  try{
+   const snap=await getDoc(doc(getFirestore(app),'courses',id));
+   if(snap.exists()&&snap.data().published===true){
+    const title=String(snap.data().name||'').trim();
+    if(title&&!liveCourses.includes(title))liveCourses.push(title);
+   }
+  }catch(e){console.warn('Could not read published course',id,e.code||e.message)}
+ }
  const fields=data?.admissionFormFields;
  if(Array.isArray(fields)){
  const holder=document.getElementById('customAdmissionFields');
