@@ -61,9 +61,11 @@ try{
  wrap.append(label,el);holder.append(wrap);
  }
  }
- const courses=[...(Array.isArray(data?.admissionFormCourses)?data.admissionFormCourses:[]),...liveCourses];
+ const select=document.getElementById('course');
+ const builtInCourses=[...select.options].map(o=>o.value).filter(Boolean);
+ const courses=[...builtInCourses,...(Array.isArray(data?.admissionFormCourses)?data.admissionFormCourses:[]),...liveCourses];
  if(Array.isArray(courses)&&courses.length){
- const select=document.getElementById('course');select.replaceChildren(new Option('Choose a course',''));
+ select.replaceChildren(new Option('Choose a course',''));
  for(const name of [...new Set(courses.map(x=>String(x).trim()).filter(Boolean))])select.add(new Option(name.slice(0,120)));
  const requested=new URLSearchParams(location.search).get('course');
  if(requested){const match=[...select.options].find(o=>o.text.startsWith(requested));if(match)select.value=match.value}
