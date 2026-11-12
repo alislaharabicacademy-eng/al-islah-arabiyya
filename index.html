@@ -37,15 +37,17 @@ header .academy-wordmark small{font-family:'DM Sans',Arial,sans-serif!important;
  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
  const part=t=>parts.find(p=>p.type===t).value;
  const date=part('year')+part('month')+part('day');
- const sessionKey='madrasaDailyVisit-'+date;
- const already=sessionStorage.getItem(sessionKey)==='1';
+ const visitKey='madrasaDailyVisit-'+date;
+ // Persist across tabs, refreshes and browser restarts on this device.
+ let already=false;
+ try{already=localStorage.getItem(visitKey)==='1';if(!already)localStorage.setItem(visitKey,'1')}catch(e){already=true}
  const key='madrasa_al_islahul_arabiya_daily_visits_'+date;
  const base='https://countapi.mileshilliard.com/api/v1/';
  const controller=new AbortController();
  const timer=setTimeout(()=>controller.abort(),9000);
  fetch(base+(already?'get/':'hit/')+key,{cache:'no-store',signal:controller.signal})
   .then(async r=>{if(r.status===404&&already)return {value:0};if(!r.ok)throw Error('Counter service error');return r.json()})
-  .then(data=>{const value=Number(data.value);if(!Number.isFinite(value))throw Error('Invalid response');el.textContent=value.toLocaleString('en-IN');if(!already)sessionStorage.setItem(sessionKey,'1')})
+  .then(data=>{const value=Number(data.value);if(!Number.isFinite(value))throw Error('Invalid response');el.textContent=value.toLocaleString('en-IN')})
   .catch(()=>{el.textContent='—';el.parentElement.title='Daily visit count is temporarily unavailable'})
   .finally(()=>clearTimeout(timer));
 })();
