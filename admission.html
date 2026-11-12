@@ -76,7 +76,10 @@ try{
  const builtInCourses=[...select.options].map(o=>o.value).filter(Boolean);
  const allCourseNames=[...builtInCourses,...(Array.isArray(data?.admissionFormCourses)?data.admissionFormCourses:[]),...liveCourses];
  const courses=[...new Set(allCourseNames.map(x=>String(x).trim()).filter(Boolean))]
-  .filter(name=>!/^children['’]s\\s+qur['’]an\\s*\\/\\s*tajweed\\s*\\(enquiry\\)$/i.test(name)&&!/^other\\s+enquir(?:y|ies)$/i.test(name));
+  .filter(name=>{
+   const normalized=name.toLowerCase().replaceAll('’',"'").replaceAll(' ','');
+   return normalized!=="children'squr'an/tajweed(enquiry)" && normalized!=='otherenquiry' && normalized!=='otherenquiries';
+  });
  courses.push('Other enquiry');
  if(Array.isArray(courses)&&courses.length){
  select.replaceChildren(new Option('Choose a course',''));
