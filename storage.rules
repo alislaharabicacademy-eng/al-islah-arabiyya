@@ -8,7 +8,20 @@ service firebase.storage {
   }
   match /teacher-registration/{token}/{fileName} {
    allow read: if isAdmin();
-   allow create: if token.matches('^[a-f0-9]{64}$')
+   allow create: if request.auth != null && request.auth.token.email_verified == true
+    && token.matches('^[a-f0-9]{64}
+    && fileName.matches('^(photo|academic|sanadFile)\\.(jpg|png|pdf)$')
+    && request.resource.size <= 3 * 1024 * 1024
+    && request.resource.contentType.matches('^(image/jpeg|image/png|application/pdf)$')
+    && !(fileName.matches('^photo\\.pdf$'))
+    && firestore.exists(/databases/(default)/documents/teacherInvites/$(token))
+    && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.email == request.auth.token.email
+    && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.used == false
+    && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.revoked == false;
+   allow update, delete: if isAdmin();
+  }
+ }
+})
     && fileName.matches('^(photo|academic|sanadFile)\\.(jpg|png|pdf)$')
     && request.resource.size <= 3 * 1024 * 1024
     && request.resource.contentType.matches('^(image/jpeg|image/png|application/pdf)$')
