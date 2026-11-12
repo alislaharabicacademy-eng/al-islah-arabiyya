@@ -39,7 +39,188 @@ service cloud.firestore {
    allow create: if false;
   }
   match /teacherInvites/{token} {
-   allow get: if isAdmin() || (token.matches('^[a-f0-9]{64}$'));
+   allow get: if isAdmin() || (token.matches('^[a-f0-9]{64}
+   allow list, create, delete: if isAdmin();
+   allow update: if isAdmin() || (
+    token.matches('^[a-f0-9]{64} == false && resource.data.revoked == false
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used','usedAt'])
+    && request.resource.data.used == true
+    && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+   );
+  }
+  match /teacherSubmissions/{token} {
+   allow read, update, delete: if isAdmin();
+   allow create: if token.matches('^[a-f0-9]{64}(/databases/$(database)/documents/teacherInvites/$(token))
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.email == request.auth.token.email
+    && request.resource.data.email == request.auth.token.email
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+    && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+    && request.resource.data.keys().hasOnly(['fullName','dob','phone','email','address','academicEducation','academicInstitution','academicYear','madrasaName','madrasaLocation','sanad','sanadInstitution','sanadYear','experience','previousInstitution','subjects','languages','notes','photoPath','academicPath','sanadPath','submittedAt'])
+    && request.resource.data.fullName is string && request.resource.data.fullName.size() > 0 && request.resource.data.fullName.size() <= 120
+    && request.resource.data.phone is string && request.resource.data.phone.size() > 0 && request.resource.data.phone.size() <= 25
+    && request.resource.data.address is string && request.resource.data.address.size() > 0 && request.resource.data.address.size() <= 700
+    && request.resource.data.madrasaName is string && request.resource.data.madrasaName.size() > 0 && request.resource.data.madrasaName.size() <= 200
+    && request.resource.data.sanad is string && request.resource.data.sanad.size() > 0 && request.resource.data.sanad.size() <= 200
+    && (!('photoPath' in request.resource.data) || request.resource.data.photoPath.matches('^teacher-registration/'+token+'/photo\\.(jpg|png)$'))
+    && (!('academicPath' in request.resource.data) || request.resource.data.academicPath.matches('^teacher-registration/'+token+'/academic\\.(jpg|png|pdf)$'))
+    && (!('sanadPath' in request.resource.data) || request.resource.data.sanadPath.matches('^teacher-registration/'+token+'/sanadFile\\.(jpg|png|pdf)$'));
+  }
+ }
+}) && request.auth != null && request.auth.token.email_verified == true && resource.data.email == request.auth.token.email);
+   allow list, create, delete: if isAdmin();
+   allow update: if isAdmin() || (
+    token.matches('^[a-f0-9]{64}$')
+    && resource.data.used == false && resource.data.revoked == false
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used','usedAt'])
+    && request.resource.data.used == true
+    && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+   );
+  }
+  match /teacherSubmissions/{token} {
+   allow read, update, delete: if isAdmin();
+   allow create: if token.matches('^[a-f0-9]{64}$')
+    && exists(/databases/$(database)/documents/teacherInvites/$(token))
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+    && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+    && request.resource.data.keys().hasOnly(['fullName','dob','phone','email','address','academicEducation','academicInstitution','academicYear','madrasaName','madrasaLocation','sanad','sanadInstitution','sanadYear','experience','previousInstitution','subjects','languages','notes','photoPath','academicPath','sanadPath','submittedAt'])
+    && request.resource.data.fullName is string && request.resource.data.fullName.size() > 0 && request.resource.data.fullName.size() <= 120
+    && request.resource.data.phone is string && request.resource.data.phone.size() > 0 && request.resource.data.phone.size() <= 25
+    && request.resource.data.address is string && request.resource.data.address.size() > 0 && request.resource.data.address.size() <= 700
+    && request.resource.data.madrasaName is string && request.resource.data.madrasaName.size() > 0 && request.resource.data.madrasaName.size() <= 200
+    && request.resource.data.sanad is string && request.resource.data.sanad.size() > 0 && request.resource.data.sanad.size() <= 200
+    && (!('photoPath' in request.resource.data) || request.resource.data.photoPath.matches('^teacher-registration/'+token+'/photo\\.(jpg|png)$'))
+    && (!('academicPath' in request.resource.data) || request.resource.data.academicPath.matches('^teacher-registration/'+token+'/academic\\.(jpg|png|pdf)$'))
+    && (!('sanadPath' in request.resource.data) || request.resource.data.sanadPath.matches('^teacher-registration/'+token+'/sanadFile\\.(jpg|png|pdf)$'));
+  }
+ }
+})
+    && request.auth != null && request.auth.token.email_verified == true && resource.data.email == request.auth.token.email
+    && resource.data.used == false && resource.data.revoked == false
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used','usedAt'])
+    && request.resource.data.used == true
+    && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+   );
+  }
+  match /teacherSubmissions/{token} {
+   allow read, update, delete: if isAdmin();
+   allow create: if token.matches('^[a-f0-9]{64}$')
+    && exists(/databases/$(database)/documents/teacherInvites/$(token))
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+    && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+    && request.resource.data.keys().hasOnly(['fullName','dob','phone','email','address','academicEducation','academicInstitution','academicYear','madrasaName','madrasaLocation','sanad','sanadInstitution','sanadYear','experience','previousInstitution','subjects','languages','notes','photoPath','academicPath','sanadPath','submittedAt'])
+    && request.resource.data.fullName is string && request.resource.data.fullName.size() > 0 && request.resource.data.fullName.size() <= 120
+    && request.resource.data.phone is string && request.resource.data.phone.size() > 0 && request.resource.data.phone.size() <= 25
+    && request.resource.data.address is string && request.resource.data.address.size() > 0 && request.resource.data.address.size() <= 700
+    && request.resource.data.madrasaName is string && request.resource.data.madrasaName.size() > 0 && request.resource.data.madrasaName.size() <= 200
+    && request.resource.data.sanad is string && request.resource.data.sanad.size() > 0 && request.resource.data.sanad.size() <= 200
+    && (!('photoPath' in request.resource.data) || request.resource.data.photoPath.matches('^teacher-registration/'+token+'/photo\\.(jpg|png)$'))
+    && (!('academicPath' in request.resource.data) || request.resource.data.academicPath.matches('^teacher-registration/'+token+'/academic\\.(jpg|png|pdf)$'))
+    && (!('sanadPath' in request.resource.data) || request.resource.data.sanadPath.matches('^teacher-registration/'+token+'/sanadFile\\.(jpg|png|pdf)$'));
+  }
+ }
+}) && request.auth != null && request.auth.token.email_verified == true && resource.data.email == request.auth.token.email);
+   allow list, create, delete: if isAdmin();
+   allow update: if isAdmin() || (
+    token.matches('^[a-f0-9]{64}$')
+    && resource.data.used == false && resource.data.revoked == false
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used','usedAt'])
+    && request.resource.data.used == true
+    && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+   );
+  }
+  match /teacherSubmissions/{token} {
+   allow read, update, delete: if isAdmin();
+   allow create: if token.matches('^[a-f0-9]{64}$')
+    && exists(/databases/$(database)/documents/teacherInvites/$(token))
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+    && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+    && request.resource.data.keys().hasOnly(['fullName','dob','phone','email','address','academicEducation','academicInstitution','academicYear','madrasaName','madrasaLocation','sanad','sanadInstitution','sanadYear','experience','previousInstitution','subjects','languages','notes','photoPath','academicPath','sanadPath','submittedAt'])
+    && request.resource.data.fullName is string && request.resource.data.fullName.size() > 0 && request.resource.data.fullName.size() <= 120
+    && request.resource.data.phone is string && request.resource.data.phone.size() > 0 && request.resource.data.phone.size() <= 25
+    && request.resource.data.address is string && request.resource.data.address.size() > 0 && request.resource.data.address.size() <= 700
+    && request.resource.data.madrasaName is string && request.resource.data.madrasaName.size() > 0 && request.resource.data.madrasaName.size() <= 200
+    && request.resource.data.sanad is string && request.resource.data.sanad.size() > 0 && request.resource.data.sanad.size() <= 200
+    && (!('photoPath' in request.resource.data) || request.resource.data.photoPath.matches('^teacher-registration/'+token+'/photo\\.(jpg|png)$'))
+    && (!('academicPath' in request.resource.data) || request.resource.data.academicPath.matches('^teacher-registration/'+token+'/academic\\.(jpg|png|pdf)$'))
+    && (!('sanadPath' in request.resource.data) || request.resource.data.sanadPath.matches('^teacher-registration/'+token+'/sanadFile\\.(jpg|png|pdf)$'));
+  }
+ }
+})
+    && request.auth != null && request.auth.token.email_verified == true
+    && exists(/databases/$(database)/documents/teacherInvites/$(token))
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+    && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+    && request.resource.data.keys().hasOnly(['fullName','dob','phone','email','address','academicEducation','academicInstitution','academicYear','madrasaName','madrasaLocation','sanad','sanadInstitution','sanadYear','experience','previousInstitution','subjects','languages','notes','photoPath','academicPath','sanadPath','submittedAt'])
+    && request.resource.data.fullName is string && request.resource.data.fullName.size() > 0 && request.resource.data.fullName.size() <= 120
+    && request.resource.data.phone is string && request.resource.data.phone.size() > 0 && request.resource.data.phone.size() <= 25
+    && request.resource.data.address is string && request.resource.data.address.size() > 0 && request.resource.data.address.size() <= 700
+    && request.resource.data.madrasaName is string && request.resource.data.madrasaName.size() > 0 && request.resource.data.madrasaName.size() <= 200
+    && request.resource.data.sanad is string && request.resource.data.sanad.size() > 0 && request.resource.data.sanad.size() <= 200
+    && (!('photoPath' in request.resource.data) || request.resource.data.photoPath.matches('^teacher-registration/'+token+'/photo\\.(jpg|png)$'))
+    && (!('academicPath' in request.resource.data) || request.resource.data.academicPath.matches('^teacher-registration/'+token+'/academic\\.(jpg|png|pdf)$'))
+    && (!('sanadPath' in request.resource.data) || request.resource.data.sanadPath.matches('^teacher-registration/'+token+'/sanadFile\\.(jpg|png|pdf)$'));
+  }
+ }
+}) && request.auth != null && request.auth.token.email_verified == true && resource.data.email == request.auth.token.email);
+   allow list, create, delete: if isAdmin();
+   allow update: if isAdmin() || (
+    token.matches('^[a-f0-9]{64}$')
+    && resource.data.used == false && resource.data.revoked == false
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used','usedAt'])
+    && request.resource.data.used == true
+    && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+   );
+  }
+  match /teacherSubmissions/{token} {
+   allow read, update, delete: if isAdmin();
+   allow create: if token.matches('^[a-f0-9]{64}$')
+    && exists(/databases/$(database)/documents/teacherInvites/$(token))
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+    && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+    && request.resource.data.keys().hasOnly(['fullName','dob','phone','email','address','academicEducation','academicInstitution','academicYear','madrasaName','madrasaLocation','sanad','sanadInstitution','sanadYear','experience','previousInstitution','subjects','languages','notes','photoPath','academicPath','sanadPath','submittedAt'])
+    && request.resource.data.fullName is string && request.resource.data.fullName.size() > 0 && request.resource.data.fullName.size() <= 120
+    && request.resource.data.phone is string && request.resource.data.phone.size() > 0 && request.resource.data.phone.size() <= 25
+    && request.resource.data.address is string && request.resource.data.address.size() > 0 && request.resource.data.address.size() <= 700
+    && request.resource.data.madrasaName is string && request.resource.data.madrasaName.size() > 0 && request.resource.data.madrasaName.size() <= 200
+    && request.resource.data.sanad is string && request.resource.data.sanad.size() > 0 && request.resource.data.sanad.size() <= 200
+    && (!('photoPath' in request.resource.data) || request.resource.data.photoPath.matches('^teacher-registration/'+token+'/photo\\.(jpg|png)$'))
+    && (!('academicPath' in request.resource.data) || request.resource.data.academicPath.matches('^teacher-registration/'+token+'/academic\\.(jpg|png|pdf)$'))
+    && (!('sanadPath' in request.resource.data) || request.resource.data.sanadPath.matches('^teacher-registration/'+token+'/sanadFile\\.(jpg|png|pdf)$'));
+  }
+ }
+})
+    && request.auth != null && request.auth.token.email_verified == true && resource.data.email == request.auth.token.email
+    && resource.data.used == false && resource.data.revoked == false
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used','usedAt'])
+    && request.resource.data.used == true
+    && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+   );
+  }
+  match /teacherSubmissions/{token} {
+   allow read, update, delete: if isAdmin();
+   allow create: if token.matches('^[a-f0-9]{64}$')
+    && exists(/databases/$(database)/documents/teacherInvites/$(token))
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+    && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+    && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+    && request.resource.data.keys().hasOnly(['fullName','dob','phone','email','address','academicEducation','academicInstitution','academicYear','madrasaName','madrasaLocation','sanad','sanadInstitution','sanadYear','experience','previousInstitution','subjects','languages','notes','photoPath','academicPath','sanadPath','submittedAt'])
+    && request.resource.data.fullName is string && request.resource.data.fullName.size() > 0 && request.resource.data.fullName.size() <= 120
+    && request.resource.data.phone is string && request.resource.data.phone.size() > 0 && request.resource.data.phone.size() <= 25
+    && request.resource.data.address is string && request.resource.data.address.size() > 0 && request.resource.data.address.size() <= 700
+    && request.resource.data.madrasaName is string && request.resource.data.madrasaName.size() > 0 && request.resource.data.madrasaName.size() <= 200
+    && request.resource.data.sanad is string && request.resource.data.sanad.size() > 0 && request.resource.data.sanad.size() <= 200
+    && (!('photoPath' in request.resource.data) || request.resource.data.photoPath.matches('^teacher-registration/'+token+'/photo\\.(jpg|png)$'))
+    && (!('academicPath' in request.resource.data) || request.resource.data.academicPath.matches('^teacher-registration/'+token+'/academic\\.(jpg|png|pdf)$'))
+    && (!('sanadPath' in request.resource.data) || request.resource.data.sanadPath.matches('^teacher-registration/'+token+'/sanadFile\\.(jpg|png|pdf)$'));
+  }
+ }
+}) && request.auth != null && request.auth.token.email_verified == true && resource.data.email == request.auth.token.email);
    allow list, create, delete: if isAdmin();
    allow update: if isAdmin() || (
     token.matches('^[a-f0-9]{64}$')
