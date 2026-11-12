@@ -10,7 +10,31 @@ service cloud.firestore {
    allow read, write: if isAdmin();
   }
   match /teachers/{teacherId} {
-   allow read, write: if isAdmin();
+   function isAssignedTeacher() {
+    return request.auth != null
+      && request.auth.token.email_verified == true
+      && resource.data.email is string
+      && resource.data.email.lower() == request.auth.token.email.lower();
+   }
+   allow get: if isAdmin() || isAssignedTeacher();
+   allow list, create, update, delete: if isAdmin();
+   match /attendance/{day} {
+    function ownsTeacher() {
+     return request.auth != null
+       && request.auth.token.email_verified == true
+       && get(/databases/$(database)/documents/teachers/$(teacherId)).data.email is string
+       && get(/databases/$(database)/documents/teachers/$(teacherId)).data.email.lower() == request.auth.token.email.lower();
+    }
+    allow get: if isAdmin() || ownsTeacher();
+    allow list: if isAdmin();
+    allow create: if ownsTeacher()
+      && request.resource.data.keys().hasOnly(['date','teacherId','email','markedAt'])
+      && request.resource.data.date == day
+      && request.resource.data.teacherId == teacherId
+      && request.resource.data.email == request.auth.token.email
+      && request.resource.data.markedAt == request.time;
+    allow update, delete: if isAdmin();
+   }
   }
   match /applications/{applicationId} {
    allow read, update, delete: if isAdmin();
