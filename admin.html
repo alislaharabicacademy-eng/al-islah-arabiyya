@@ -54,11 +54,17 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
 async function openFees(student){if(!active)return;feeStudent=student;const s=student.data();$('feeStudentName').value=s.name||student.id;feeCourse=courseKey(s.course);$('feeStatus').textContent='Loading fees…';try{const course=await getDoc(doc(db,'courses',feeCourse));feeRate=Number(course.exists()?course.data().monthlyFee:0)||0;const record=await getDoc(doc(db,'students',student.id));feeLedger=record.data()?.feeLedger||{};renderFeeMonths();$('studentFeesPanel').scrollIntoView({behavior:'smooth'});}catch(e){$('feeStatus').textContent='Unable to load fee records: '+e.message}}
 function renderFeeMonths(){const year=feeYear.value,records=feeLedger[year]||{},now=new Date(),currentYear=now.getFullYear(),currentMonth=now.getMonth();let paid=0,pending=0,collected=0;const root=$('feeMonths');root.replaceChildren();const table=document.createElement('div');table.className='fields';for(let i=0;i<12;i++){const entry=records[String(i+1)]||{},isPaid=entry.status==='Paid',due=(Number(year)<currentYear)||(Number(year)===currentYear&&i<=currentMonth);if(isPaid){paid++;collected+=Number(entry.amount)||0}else if(due)pending++;const box=document.createElement('div');box.className='record';box.innerHTML='<strong>'+monthNames[i]+' '+year+'</strong><p>Monthly fee: ₹'+feeRate.toLocaleString('en-IN')+'</p><p>Status: <strong>'+ (isPaid?'✅ Paid':'⏳ '+(due?'Pending':'Not due'))+'</strong></p>'+(isPaid?'<p>Received: ₹'+Number(entry.amount||0).toLocaleString('en-IN')+' · '+safe(entry.paidAt?.slice(0,10)||'')+'</p>':'')+'<button type="button">'+(isPaid?'↩ Undo Paid':'✓ Mark Paid')+'</button>'+(isPaid?'<button type="button" class="secondary">📄 PDF Receipt</button>':'');const btns=box.querySelectorAll('button');btns[0].onclick=()=>setFeeMonth(i+1,!isPaid);if(isPaid)btns[1].onclick=()=>receiptPdf(i+1,entry);table.append(box)}root.append(table);$('feeSummary').innerHTML='<span class="stat">Paid: '+paid+'/12 months</span><span class="stat">Pending: '+pending+' months</span><span class="stat">Collected: ₹'+collected.toLocaleString('en-IN')+'</span><span class="stat">Pending amount: ₹'+(pending*feeRate).toLocaleString('en-IN')+'</span>';$('feeStatus').textContent=feeRate>0?'Fee rate loaded from Course Details.':'⚠ Monthly fee is not set for this course. Set it in Course Details first.'}
 async function setFeeMonth(month,paid){if(!active||!feeStudent)return;if(!feeRate){alert('Set the monthly tuition fee in Course Details first.');return}if(!confirm((paid?'Confirm payment received for ':'Remove paid status for ')+monthNames[month-1]+' '+feeYear.value+'?'))return;const year=feeYear.value;const ledger=structuredClone(feeLedger);ledger[year]??={};if(paid)ledger[year][String(month)]={status:'Paid',amount:feeRate,paidAt:new Date().toISOString(),receiptId:'MIA-'+year+'-'+feeStudent.id.slice(0,8).toUpperCase()+'-'+String(month).padStart(2,'0')};else delete ledger[year][String(month)];$('feeStatus').textContent='Saving payment…';try{await setDoc(doc(db,'students',feeStudent.id),{feeLedger:ledger},{merge:true});feeLedger=ledger;renderFeeMonths();$('feeStatus').textContent='✓ Payment record saved. Use PDF Receipt to download and share.'}catch(e){$('feeStatus').textContent='Payment save failed: '+e.message}}
+async function ensurePdfLibrary(){
+ if(window.jspdf?.jsPDF)return;
+ const sources=['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js','https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js'];
+ for(const src of sources){try{await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(Error('CDN blocked'));document.head.appendChild(s)});if(window.jspdf?.jsPDF)return}catch(e){console.warn('PDF library source unavailable',src)}}
+ throw Error('PDF generator could not load. Please open this page directly in Chrome with internet access.');
+}
 async function receiptPdf(month,entry){
  const student=feeStudent.data(),year=feeYear.value;
  const status=$('feeStatus');status.textContent='Generating PDF receipt…';
  try{
-  if(!window.jspdf?.jsPDF)throw Error('PDF library is still loading. Please try again.');
+  await ensurePdfLibrary();
   const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const green=[23,59,43],gold=[180,154,88];
   pdf.setFillColor(...green);pdf.rect(0,0,210,8,'F');
@@ -96,7 +102,7 @@ async function receiptPdf(month,entry){
   link.href=url;link.download=filename;link.style.display='inline-flex';
   status.textContent='PDF ready. If the download did not start, tap “Download PDF again” below. For WhatsApp in-app browser, open this page in Chrome.';
   setTimeout(()=>{if(link.href===url){link.removeAttribute('href');link.style.display='none'}URL.revokeObjectURL(url)},300000);
- }catch(err){console.error(err);status.textContent='PDF download failed: '+err.message}
+ }catch(err){console.error(err);status.textContent='PDF download failed: '+err.message;alert('PDF download failed: '+err.message)}
 }
 
 $('refreshApplications').onclick=renderApplications;
