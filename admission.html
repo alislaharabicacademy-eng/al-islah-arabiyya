@@ -24,9 +24,12 @@ import{getFirestore,doc,getDoc}from'https://www.gstatic.com/firebasejs/11.6.0/fi
 try{
  const cfg=await fetch('firebase-config.json',{cache:'no-store'}).then(r=>r.json());
  const app=getApps().find(a=>a.options.projectId===cfg.projectId)||initializeApp(cfg,'admission-form-settings');
- const snap=await getDoc(doc(getFirestore(app),'courses','muallama'));
- if(!snap.exists())return;
- const data=snap.data(),fields=data.admissionFormFields;
+ let data=null;
+ for(const courseId of ['muallama','muballigha','alima','boys-hifz']){
+  try{const snap=await getDoc(doc(getFirestore(app),'courses',courseId));if(snap.exists()&&Array.isArray(snap.data().admissionFormCourses)){data=snap.data();break}}catch(e){console.warn('Course settings not public for',courseId,e.code||e.message)}
+ }
+ if(!data){console.warn('No publicly readable admission settings found');return}
+ const fields=data.admissionFormFields;
  if(Array.isArray(fields)){
  const holder=document.getElementById('customAdmissionFields');
  const defaults=new Set(['student','guardian','dob','age','phone','email','course','address','aadhaarLast4','notes']);
