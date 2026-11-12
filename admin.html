@@ -74,6 +74,31 @@ async function ensurePdfLibrary(){
  for(const src of sources){try{await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(Error('CDN blocked'));document.head.appendChild(s)});if(window.jspdf?.jsPDF)return}catch(e){console.warn('PDF library source unavailable',src)}}
  throw Error('PDF generator could not load. Please open this page directly in Chrome with internet access.');
 }
+async function decorateAcademyPdf(pdf){
+ const green=[23,59,43],gold=[180,154,88];
+ pdf.setFillColor(...green);pdf.rect(0,0,210,9,'F');
+ pdf.setFillColor(...gold);pdf.rect(0,9,210,1.1,'F');
+ pdf.setDrawColor(...gold);pdf.setLineWidth(.45);pdf.roundedRect(12,13,186,267,2,2,'S');
+ pdf.setDrawColor(225,214,184);pdf.setLineWidth(.18);pdf.roundedRect(14,15,182,263,2,2,'S');
+ try{
+  const img=document.getElementById('receiptLogoPreload');
+  if(img&&!img.complete)await new Promise(resolve=>{img.addEventListener('load',resolve,{once:true});img.addEventListener('error',resolve,{once:true});setTimeout(resolve,2000)});
+  if(img?.naturalWidth){
+   const cv=document.createElement('canvas');cv.width=img.naturalWidth;cv.height=img.naturalHeight;cv.getContext('2d').drawImage(img,0,0);
+   pdf.addImage(cv.toDataURL('image/png'),'PNG',19,18,29,29);
+   const wm=document.createElement('canvas');wm.width=600;wm.height=600;
+   const ctx=wm.getContext('2d');ctx.globalAlpha=.065;ctx.drawImage(img,0,0,600,600);
+   pdf.addImage(wm.toDataURL('image/png'),'PNG',53,99,104,104);
+  }
+ }catch(e){console.warn('Academy PDF logo unavailable',e)}
+ pdf.setTextColor(...green);pdf.setFont('times','bold');pdf.setFontSize(17);
+ pdf.text('MADRASA AL ISLAHUL ARABIYA',55,24);
+ pdf.setFont('times','italic');pdf.setFontSize(11);pdf.text("Women's Online Madrasa",55,31);
+ pdf.setFont('helvetica','normal');pdf.setFontSize(8.5);
+ pdf.text('Email: alislaharabicacademy@gmail.com',55,38);
+ pdf.text('Mobile: +91 78453 60505',55,44);
+ pdf.setDrawColor(...gold);pdf.setLineWidth(.75);pdf.line(18,54,192,54);
+}
 async function receiptPdf(month,entry){
  const student=feeStudent.data(),year=feeYear.value;
  const status=$('feeStatus');status.textContent='Generating PDF receipt…';
@@ -81,26 +106,15 @@ async function receiptPdf(month,entry){
   await ensurePdfLibrary();
   const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
   const green=[23,59,43],gold=[180,154,88];
-  pdf.setFillColor(...green);pdf.rect(0,0,210,8,'F');
-  try{
-   const img=document.getElementById('receiptLogoPreload');
-   if(img?.complete&&img.naturalWidth){const canvas=document.createElement('canvas');canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;canvas.getContext('2d').drawImage(img,0,0);pdf.addImage(canvas.toDataURL('image/png'),'PNG',17,17,31,31)}
-  }catch(logoError){console.warn('Logo could not be loaded',logoError)}
-
-  pdf.setTextColor(...green);pdf.setFont('helvetica','bold');pdf.setFontSize(15);
-  pdf.text('MADRASA AL ISLAHUL ARABIYA',53,23);
-  pdf.setFont('helvetica','normal');pdf.setFontSize(10);
-  pdf.text("Women's Online Madrasa",53,30);
-  pdf.text('Email: alislaharabicacademy@gmail.com',53,36);
-  pdf.text('Mobile: +91 78453 60505',53,42);
-  pdf.setDrawColor(...gold);pdf.setLineWidth(0.9);pdf.line(16,53,194,53);
-  pdf.setFont('helvetica','bold');pdf.setFontSize(17);pdf.text('MONTHLY FEE RECEIPT',105,67,{align:'center'});
+  await decorateAcademyPdf(pdf);
+  pdf.setTextColor(...green);pdf.setFont('times','bold');pdf.setFontSize(19);pdf.text('MONTHLY FEE RECEIPT',105,69,{align:'center'});
+  pdf.setDrawColor(...gold);pdf.setLineWidth(.35);pdf.line(67,73,143,73);
   const fields=[['Receipt No.',entry.receiptId||''],['Student Name',student.name||''],['Course',student.course||''],['Fee Month',monthNames[month-1]+' '+year],['Payment Date',entry.paidAt?.slice(0,10)||''],['Amount Received','INR '+Number(entry.amount||0).toLocaleString('en-IN')],['Payment Status','PAID']];
   let y=82;for(let i=0;i<fields.length;i++){
    if(i===5){pdf.setFillColor(236,244,236);pdf.rect(16,y-7,178,12,'F')}
    pdf.setDrawColor(222,229,221);pdf.setLineWidth(0.2);pdf.line(16,y+6,194,y+6);
-   pdf.setFontSize(i===5?12:11);pdf.setTextColor(...green);pdf.setFont('helvetica','bold');pdf.text(fields[i][0],20,y);
-   pdf.setFont('helvetica','normal');const lines=pdf.splitTextToSize(String(fields[i][1]),104);pdf.text(lines.slice(0,2),87,y);
+   pdf.setFontSize(i===5?12:11);pdf.setTextColor(...green);pdf.setFont('times','bold');pdf.text(fields[i][0],20,y);
+   pdf.setFont('times','normal');const lines=pdf.splitTextToSize(String(fields[i][1]),104);pdf.text(lines.slice(0,2),87,y);
    y+=i===1||i===2?17:15;
   }
   pdf.setDrawColor(...green);pdf.line(138,234,191,234);
@@ -184,15 +198,11 @@ async function renderTeacherPayroll(){
  const receipt=document.createElement('button');receipt.type='button';receipt.className='secondary';receipt.textContent='⬇ Download Salary PDF';receipt.onclick=async()=>{receipt.disabled=true;$('teacherPayrollStatus').textContent='Preparing salary PDF…';try{await ensurePdfLibrary();const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
 const green=[23,59,43],gold=[180,154,88],muted=[87,102,94];
 const paid=inputs.paid.checked,amount=Number(inputs.salary.value||t.salary||0),date=inputs.paidDate.value||'',receiptNo='SAL-'+month.replace('-','')+'-'+t.id.slice(-7).toUpperCase();
-pdf.setFillColor(...green);pdf.rect(0,0,210,8,'F');
-try{const img=document.getElementById('receiptLogoPreload');if(img&&!img.complete)await new Promise(resolve=>{img.addEventListener('load',resolve,{once:true});img.addEventListener('error',resolve,{once:true});setTimeout(resolve,2000)});if(img?.naturalWidth){const cv=document.createElement('canvas');cv.width=img.naturalWidth;cv.height=img.naturalHeight;cv.getContext('2d').drawImage(img,0,0);const logo=cv.toDataURL('image/png');pdf.addImage(logo,'PNG',17,17,31,31);const wm=document.createElement('canvas');wm.width=450;wm.height=450;const ctx=wm.getContext('2d');ctx.globalAlpha=.045;ctx.drawImage(img,0,0,450,450);pdf.addImage(wm.toDataURL('image/png'),'PNG',64,85,82,82)}}catch(err){console.warn('Receipt logo unavailable',err)}
-pdf.setTextColor(...green);pdf.setFont('helvetica','bold');pdf.setFontSize(15);pdf.text('MADRASA AL ISLAHUL ARABIYA',53,23);
-pdf.setFont('helvetica','normal');pdf.setFontSize(10);pdf.text("Women's Online Madrasa",53,30);
-pdf.setFontSize(9);pdf.text('Email: alislaharabicacademy@gmail.com',53,36);pdf.text('Mobile: +91 78453 60505',53,42);
-pdf.setDrawColor(...gold);pdf.setLineWidth(.9);pdf.line(16,53,194,53);
-pdf.setFont('helvetica','bold');pdf.setFontSize(17);pdf.text(paid?'MONTHLY SALARY RECEIPT':'MONTHLY SALARY STATEMENT',105,67,{align:'center'});
+await decorateAcademyPdf(pdf);
+pdf.setTextColor(...green);pdf.setFont('times','bold');pdf.setFontSize(19);pdf.text(paid?'MONTHLY SALARY RECEIPT':'MONTHLY SALARY STATEMENT',105,69,{align:'center'});
+pdf.setDrawColor(...gold);pdf.setLineWidth(.35);pdf.line(62,73,148,73);
 const fields=[['Receipt No.',receiptNo],['Teacher Name',t.name||'-'],['Subject / Course',t.subject||'-'],['Salary Month',month],['Payment Date',paid?(date||'Not recorded'):'Not paid'],['Salary Amount','INR '+amount.toLocaleString('en-IN')],['Payment Status',paid?'PAID':'PENDING'],['Attendance',String(attendance.length)+' day(s)'],['Absent / Leave',(inputs.absent.value||'0')+' / '+(inputs.leave.value||'0')]];
-let y=80;for(let i=0;i<fields.length;i++){const [label,value]=fields[i];if(i===5){pdf.setFillColor(236,244,236);pdf.rect(16,y-6,178,12,'F')}pdf.setFont('helvetica',i===5?'bold':'normal');pdf.setFontSize(i===5?11:10);pdf.setTextColor(...(i===5?green:muted));pdf.text(label,19,y+1);pdf.setFont('helvetica',i===5||i===6?'bold':'normal');pdf.setTextColor(...green);pdf.text(pdf.splitTextToSize(String(value),95)[0],94,y+1);pdf.setDrawColor(218,224,218);pdf.setLineWidth(.25);pdf.line(16,y+6,194,y+6);y+=13;}
+let y=80;for(let i=0;i<fields.length;i++){const [label,value]=fields[i];if(i===5){pdf.setFillColor(236,244,236);pdf.rect(16,y-6,178,12,'F')}pdf.setFont('times',i===5?'bold':'normal');pdf.setFontSize(i===5?11:10);pdf.setTextColor(...(i===5?green:muted));pdf.text(label,19,y+1);pdf.setFont('times',i===5||i===6?'bold':'normal');pdf.setTextColor(...green);pdf.text(pdf.splitTextToSize(String(value),95)[0],94,y+1);pdf.setDrawColor(218,224,218);pdf.setLineWidth(.25);pdf.line(16,y+6,194,y+6);y+=13;}
 pdf.setDrawColor(...green);pdf.setLineWidth(.45);pdf.line(133,226,194,226);pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.setTextColor(...green);pdf.text("Principal's Signature",163.5,233,{align:'center'});pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text('Madrasa Al Islahul Arabiya',163.5,239,{align:'center'});
 pdf.setDrawColor(220,226,220);pdf.line(16,252,194,252);pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(...muted);pdf.text(paid?'This receipt is generated from the academy salary register.':'This statement does not confirm salary payment.',105,259,{align:'center'});
 const blob=pdf.output('blob'),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Teacher_Salary_'+t.name.replace(/[^a-z0-9]/gi,'_')+'_'+month+'.pdf';document.body.append(a);a.click();a.remove();const fallback=document.createElement('a');fallback.href=url;fallback.download=a.download;fallback.textContent='⬇ Tap here if PDF did not download';root.append(fallback);setTimeout(()=>URL.revokeObjectURL(url),300000);$('teacherPayrollStatus').textContent='PDF ready. Download link shown below.'}catch(e){$('teacherPayrollStatus').textContent='PDF error: '+e.message;alert('PDF error: '+e.message)}finally{receipt.disabled=false}};
