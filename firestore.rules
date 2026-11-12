@@ -14,7 +14,38 @@ service cloud.firestore {
   }
   match /courses/{courseId} {
    allow read: if resource.data.published == true || isAdmin();
-   allow create, update, delete: if isAdmin() && courseId in ['muallama','muballigha','alima','boys-hifz'];
+   // Admin can manage any valid course ID, including newly created programmes.
+   // Public users can only read published courses; only verified academy admin can write.
+   allow create, update, delete: if isAdmin()
+    && courseId.matches('^[a-z0-9]+(-[a-z0-9]+)*
+  }
+  match /students/{studentId} { allow read, write: if isAdmin(); }
+  match /teachers/{teacherId} { allow read, write: if isAdmin(); }
+  match /teacherAccess/{teacherId} {
+   allow get: if isAdmin() || (request.auth != null
+      && request.auth.token.email_verified == true
+      && resource.data.email == request.auth.token.email);
+   allow list, create, update, delete: if isAdmin();
+  }
+  match /teacherAttendance/{teacherId}/days/{day} {
+   allow get: if isAdmin() || signedInTeacher(teacherId);
+   allow list: if isAdmin();
+   allow create: if signedInTeacher(teacherId)
+    && day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+    && request.resource.data.keys().hasOnly(['date','teacherId','email','markedAt'])
+    && request.resource.data.date == day
+    && request.resource.data.teacherId == teacherId
+    && request.resource.data.email == request.auth.token.email
+    && request.resource.data.markedAt == request.time;
+   allow update, delete: if isAdmin();
+  }
+  match /applications/{applicationId} {
+   allow read, update, delete: if isAdmin();
+   allow create: if false;
+  }
+ }
+}
+);
   }
   match /students/{studentId} { allow read, write: if isAdmin(); }
   match /teachers/{teacherId} { allow read, write: if isAdmin(); }
