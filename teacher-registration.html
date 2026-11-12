@@ -7,13 +7,13 @@ const fail=message=>{$('loading').textContent=message;$('formWrap').hidden=true}
 if(!token||!/^[a-f0-9]{64}$/.test(token))fail('Invalid registration link. Please request your private link from the academy.');
 else{try{
 const cfg=await fetch('firebase-config.json').then(r=>r.json()),app=initializeApp(cfg),db=getFirestore(app),storage=getStorage(app),inviteRef=doc(db,'teacherInvites',token),submissionRef=doc(db,'teacherSubmissions',token);
-const [invite,submitted]=await Promise.all([getDoc(inviteRef),getDoc(submissionRef).catch(()=>null)]);
-if(!invite.exists()||invite.data().revoked||invite.data().used||submitted?.exists())fail('This invitation is invalid, revoked or already submitted. Contact the academy admin.');
+const invite=await getDoc(inviteRef);
+if(!invite.exists()||invite.data().revoked||invite.data().used)fail('This invitation is invalid, revoked or already submitted. Contact the academy admin.');
 else{$('loading').hidden=true;$('formWrap').hidden=false;const form=$('registration');form.onsubmit=async e=>{e.preventDefault();const btn=$('submit');btn.disabled=true;$('status').textContent='Uploading files and submitting. Please wait…';try{
 const data={};for(const key of ['fullName','dob','phone','email','address','academicEducation','academicInstitution','academicYear','madrasaName','madrasaLocation','sanad','sanadInstitution','sanadYear','experience','previousInstitution','subjects','languages','notes'])data[key]=String(form.elements.namedItem(key).value).trim();
 for(const [inputKey,pathKey] of [['photo','photoPath'],['academic','academicPath'],['sanadFile','sanadPath']]){const file=form.elements.namedItem(inputKey).files[0];if(!file)continue;if(file.size>3*1024*1024)throw Error('Each file must be 3 MB or smaller.');if(!['image/jpeg','image/png','application/pdf'].includes(file.type)||inputKey==='photo'&&file.type==='application/pdf')throw Error('Unsupported file format.');const ext=file.type==='application/pdf'?'pdf':file.type==='image/png'?'png':'jpg';const path='teacher-registration/'+token+'/'+inputKey+'.'+ext;await uploadBytes(ref(storage,path),file,{contentType:file.type});data[pathKey]=path}
 data.submittedAt=new Date().toISOString();
-await runTransaction(db,async tx=>{const [inv,sub]=await Promise.all([tx.get(inviteRef),tx.get(submissionRef)]);if(!inv.exists()||inv.data().revoked||inv.data().used||sub.exists())throw Error('This link has already been used or revoked.');tx.set(submissionRef,data);tx.update(inviteRef,{used:true,usedAt:data.submittedAt})});
+await runTransaction(db,async tx=>{const inv=await tx.get(inviteRef);if(!inv.exists()||inv.data().revoked||inv.data().used)throw Error('This link has already been used or revoked.');tx.set(submissionRef,data);tx.update(inviteRef,{used:true,usedAt:data.submittedAt})});
 form.replaceWith(document.createElement('p'));$('formWrap').querySelector('.card').innerHTML='<h2>✓ Registration Submitted Successfully</h2><p>JazakAllahu Khairan! Your teacher details have been securely sent to the academy administrator. This link is now closed for further submissions or changes.</p>';window.scrollTo(0,0);
 }catch(err){$('status').textContent='Submission failed: '+err.message;btn.disabled=false}}}
 }catch(err){fail('Unable to validate invitation: '+err.message+' Please contact the academy administrator.')}} 
