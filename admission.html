@@ -19,7 +19,7 @@ let db=null;try{const config=await fetch('firebase-config.json').then(r=>r.json(
 window.saveAdmissionToDashboard=async p=>{if(!db)throw Error('Firestore unavailable');const record={reference:p.reference_number,studentName:p.student_name,guardianName:p.guardian_name,age:String(p.age),phone:p.phone,email:p.email,course:p.course,address:p.address,dob:p.dob,additionalFields:p.additional_fields,message:p.message,submittedAt:new Date().toISOString(),status:'New'};await setDoc(doc(db,'applications',p.reference_number),record)};
 </script><script type="module">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
-import{getFirestore,doc,getDoc}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import{getFirestore,doc,getDoc,collection,query,where,getDocs}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 (async()=>{
 try{
  const cfg=await fetch('firebase-config.json',{cache:'no-store'}).then(r=>r.json());
@@ -28,8 +28,15 @@ try{
  for(const courseId of ['muallama','muballigha','alima','boys-hifz']){
   try{const snap=await getDoc(doc(getFirestore(app),'courses',courseId));if(snap.exists()&&Array.isArray(snap.data().admissionFormCourses)){data=snap.data();break}}catch(e){console.warn('Course settings not public for',courseId,e.code||e.message)}
  }
- if(!data){console.warn('No publicly readable admission settings found');return}
- const fields=data.admissionFormFields;
+ // Published courses are the authoritative live catalogue. A query with the
+ // published filter is allowed by the existing Firestore public-read rule.
+ let liveCourses=[];
+ try{
+  const published=await getDocs(query(collection(getFirestore(app),'courses'),where('published','==',true)));
+  published.forEach(d=>{const v=d.data();if(v.name&&d.id!=='muallama'&&d.id!=='muballigha'&&d.id!=='alima'&&d.id!=='boys-hifz')liveCourses.push(String(v.name).trim())});
+ }catch(e){console.warn('Published course catalogue unavailable:',e.code||e.message)}
+ if(!data&&liveCourses.length===0){console.warn('No publicly readable admission settings found');return}
+ const fields=data?.admissionFormFields;
  if(Array.isArray(fields)){
  const holder=document.getElementById('customAdmissionFields');
  const defaults=new Set(['student','guardian','dob','age','phone','email','course','address','aadhaarLast4','notes']);
@@ -54,10 +61,10 @@ try{
  wrap.append(label,el);holder.append(wrap);
  }
  }
- const courses=data.admissionFormCourses;
+ const courses=[...(Array.isArray(data?.admissionFormCourses)?data.admissionFormCourses:[]),...liveCourses];
  if(Array.isArray(courses)&&courses.length){
  const select=document.getElementById('course');select.replaceChildren(new Option('Choose a course',''));
- for(const name of courses)select.add(new Option(String(name).slice(0,120)));
+ for(const name of [...new Set(courses.map(x=>String(x).trim()).filter(Boolean))])select.add(new Option(name.slice(0,120)));
  const requested=new URLSearchParams(location.search).get('course');
  if(requested){const match=[...select.options].find(o=>o.text.startsWith(requested));if(match)select.value=match.value}
  }
