@@ -100,7 +100,7 @@ $('saveAdmissionSettings').onclick=async()=>{
  if(fields.some(f=>!f.label))throw Error('Every field needs a label');
  const courses=$('admissionCourseList').value.split('\n').map(x=>x.trim()).filter(Boolean);
  if(!courses.length)throw Error('Add at least one course');
- await setDoc(doc(db,'courses','muallama'),{admissionFormFields:fields,admissionFormCourses:courses},{merge:true});
+ await Promise.all(['muallama','muballigha','alima','boys-hifz'].map(id=>setDoc(doc(db,'courses',id),{admissionFormFields:fields,admissionFormCourses:courses},{merge:true})));
  $('admissionSettingsStatus').textContent='✓ Saved! Admission Form will load these settings after refresh.';
  }catch(e){$('admissionSettingsStatus').textContent='Save failed: '+e.message}finally{btn.disabled=false}
 };
