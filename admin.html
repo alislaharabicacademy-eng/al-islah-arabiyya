@@ -14,6 +14,19 @@ input:not([type=checkbox]):not([type=radio]):focus,select:focus,textarea:focus{b
 nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 @media(max-width:600px){h1{line-height:1.16}button,.btn{min-height:42px}}
 @media(prefers-reduced-motion:reduce){button,.btn,a,input,select,textarea{transition:none!important}}
+</style><style id="teacher-profile-premium-style">
+.teacher-profile-card{background:linear-gradient(160deg,#fff,#f8fbf7);border:1px solid #d8e4da;border-radius:19px;padding:22px;margin:17px 0;box-shadow:0 9px 27px rgba(19,64,45,.07);overflow-wrap:anywhere}
+.teacher-profile-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}.teacher-profile-heading h4{font-family:'Playfair Display',Georgia,serif;font-size:25px;color:#174c36;margin:0 0 7px}.teacher-profile-heading p{margin:0;color:#66786d;font-size:14px}
+.teacher-profile-badge{background:#e8f1e6;color:#24583e;border:1px solid #c4d9c5;border-radius:100px;padding:7px 13px;font-size:12px;font-weight:800;white-space:nowrap}.teacher-profile-date{font-size:13px;color:#627368;margin:15px 0}
+.teacher-profile-actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0}.teacher-profile-actions button{font-size:13px;padding:10px 13px;min-height:40px}
+.teacher-profile-details[hidden]{display:none}.teacher-profile-details{margin-top:20px;border-top:1px solid #e0e9df;padding-top:8px}
+.teacher-profile-section{background:#fff;border:1px solid #e1e8df;border-radius:13px;padding:17px;margin:15px 0}
+.teacher-profile-section h4{font-size:19px;color:#164d37;margin:0 0 16px;padding-bottom:11px;border-bottom:2px solid #c6a66d;font-family:'Playfair Display',Georgia,serif}
+.teacher-profile-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.teacher-profile-field{background:#f6f9f5;border:1px solid #e7ede6;border-radius:9px;padding:12px;min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.teacher-profile-field strong{display:block;font-size:12px;color:#61766a;margin-bottom:6px;text-transform:uppercase;letter-spacing:.03em}
+.teacher-profile-field div{font-size:15px;color:#173b2d;font-weight:600}.teacher-profile-field input,.teacher-profile-field textarea{width:100%;box-sizing:border-box}
+@media(max-width:600px){.teacher-profile-grid{grid-template-columns:1fr}.teacher-profile-card{padding:16px}.teacher-profile-actions button{flex:1 1 140px}}
 </style></head><body><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button><div class="menu-shade hidden" id="menuShade"></div><aside class="side-menu" id="sideMenu" aria-label="Admin navigation"><h2>Academy Menu</h2><button type="button" data-tab="overview">🏠 Dashboard Overview</button><button type="button" data-tab="academic">📅 Academic Year</button><button type="button" data-tab="admissionSettings">📝 Admission Form Settings</button><button type="button" data-tab="courses">📚 Course Details</button><button type="button" data-tab="newcourse">➕ Add New Course</button><button type="button" data-tab="fees">💰 Fee Structure</button><button type="button" data-tab="teachers">👩‍🏫 Teacher Details</button><button type="button" data-tab="students">🎓 Student Details</button><button type="button" data-tab="applications">📩 New Applications</button><a href="index.html">↗ Website Home</a><a href="admission.html">↗ Admission Form</a></aside><header><div class="top"><div><img src="1_20261112_080707_0000.png" alt="Academy logo" style="width:74px;height:74px;object-fit:contain;float:right;margin-left:12px"><div class="brand">Madrasa Al Islahul Arabiya</div><h1 class="brand-title">Academy Control Center</h1><p class="subtitle">Secure course management dashboard</p></div><nav><a href="index.html">⌂ Home</a><a id="previewTop" href="courses.html?course=muallama" target="_blank" rel="noopener">↗ Course Preview</a></nav></div></header>
 <main><div class="hero"><div><h2>Course Management</h2><p>Update course information and control what students can see.</p></div><span class="badge">● ADMIN DASHBOARD</span></div>
 <div id="setup" class="card notice">Loading secure admin login…</div>
@@ -237,9 +250,67 @@ async function loadTeacherInvites(){
  try{const snap=await getDocs(collection(db,'teacherInvites'));for(const d of snap.docs){const row=document.createElement('div');row.className='record';appendInfo(row,'Teacher',d.data().name||'—');appendInfo(row,'Email',d.data().email||'—');appendInfo(row,'Link ID',d.id.slice(0,10)+'…');appendInfo(row,'Status',d.data().revoked?'Revoked':d.data().used?'Submitted':'Available');if(!d.data().used&&!d.data().revoked){const copy=document.createElement('button');copy.type='button';copy.textContent='📋 Copy Private Link';copy.onclick=()=>{const u=new URL('teacher-registration.html',location.href);u.searchParams.set('token',d.id);navigator.clipboard.writeText(u.href).then(()=>alert('Private link copied. Share with the intended teacher only.')).catch(()=>prompt('Copy link',u.href))};const revoke=document.createElement('button');revoke.type='button';revoke.className='secondary';revoke.textContent='Revoke';revoke.onclick=async()=>{if(!confirm('Revoke this invitation?'))return;await setDoc(doc(db,'teacherInvites',d.id),{revoked:true},{merge:true});loadTeacherInvites()};row.append(copy,revoke)}root.append(row)}if(snap.empty)root.textContent='No invitations yet.'}catch(e){root.textContent='Invitations could not load: '+e.message}
 }
 $('generateTeacherInvite').onclick=async()=>{if(!active)return;const b=$('generateTeacherInvite');b.disabled=true;try{const name=$('inviteTeacherName').value.trim(),address=$('inviteTeacherEmail').value.trim().toLowerCase();if(!name||!address||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address))throw Error('Enter teacher name and a valid email ID.');const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');await setDoc(doc(db,'teacherInvites',token),{name,email:address,createdAt:new Date().toISOString(),used:false,revoked:false});$('teacherInviteStatus').textContent='✓ Private invitation created. Copy the link below.';await loadTeacherInvites()}catch(e){$('teacherInviteStatus').textContent='Failed: '+e.message}finally{b.disabled=false}};
+const teacherProfileGroups=[
+ ['👤 Personal Information',[['Full Name','fullName'],['Date of Birth','dob'],['Phone Number','phone'],['Email Address','email'],['Full Address','address']]],
+ ['🎓 Academic Education',[['Academic Qualifications','academicEducation'],['School / College / University','academicInstitution'],['Year of Passing','academicYear']]],
+ ['📖 Islamic & Madrasa Education',[['Madrasa Name','madrasaName'],['Madrasa Location','madrasaLocation'],['Islamic Qualification / Sanad / Nisbat','sanad'],['Sanad Issuing Institution','sanadInstitution'],['Year of Completion','sanadYear']]],
+ ['👩‍🏫 Teaching Experience',[['Total Experience','experience'],['Previous Institution','previousInstitution'],['Subjects Taught','subjects'],['Languages Known','languages'],['Additional Details','notes']]]
+];
+const teacherProfileLabels=Object.fromEntries(teacherProfileGroups.flatMap(group=>group[1].map(([label,key])=>[key,label])));
+function teacherProfileSection(title,fields,data,editable=false){
+ const section=document.createElement('section');section.className='teacher-profile-section';
+ const heading=document.createElement('h4');heading.textContent=title;section.append(heading);
+ const grid=document.createElement('div');grid.className='teacher-profile-grid';
+ for(const [label,key] of fields){const item=document.createElement('div');item.className='teacher-profile-field';const b=document.createElement('strong');b.textContent=label;item.append(b);if(editable){const el=['address','academicEducation','notes'].includes(key)?document.createElement('textarea'):document.createElement('input');el.name=key;el.value=String(data[key]||'');el.maxLength=key==='address'?700:key==='notes'||key==='academicEducation'?1000:250;if(key==='email')el.type='email';item.append(el)}else{const value=document.createElement('div');value.textContent=String(data[key]||'Not provided');item.append(value)}grid.append(item)}section.append(grid);return section;
+}
+function teacherProfilePrintable(data){
+ const printable=document.createElement('div');printable.className='teacher-print-sheet';
+ const title=document.createElement('h2');title.textContent='Madrasa Al Islahul Arabiya';printable.append(title);
+ const sub=document.createElement('p');sub.textContent='Confidential Teacher Registration Profile';printable.append(sub);
+ const name=document.createElement('h3');name.textContent=data.fullName||'Teacher';printable.append(name);
+ for(const [title,fields] of teacherProfileGroups)printable.append(teacherProfileSection(title,fields,data));
+ const foot=document.createElement('p');foot.textContent='Submitted: '+(data.submittedAt?new Date(data.submittedAt).toLocaleString('en-IN'):'Not recorded');printable.append(foot);
+ return printable;
+}
+function printTeacherProfile(data){
+ const sheet=teacherProfilePrintable(data),win=window.open('','_blank');
+ if(!win){alert('Allow pop-ups to print this teacher profile.');return}
+ win.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Teacher Profile</title><style>body{font:14px Arial,sans-serif;color:#153c2e;padding:24px;max-width:850px;margin:auto}h2{text-align:center}h3{border-bottom:2px solid #b79a59;padding-bottom:12px}h4{background:#e8efe8;padding:10px}.teacher-profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.teacher-profile-field{border-bottom:1px solid #ddd;padding:8px;overflow-wrap:anywhere}.teacher-profile-field strong{display:block;font-size:12px;margin-bottom:5px}p{text-align:center}@media print{body{padding:0}}</style></head><body></body></html>');
+ win.document.body.append(win.document.importNode(sheet,true));win.document.close();win.focus();setTimeout(()=>win.print(),350);
+}
 async function loadTeacherSubmissions(){
- if(!active)return;const root=$('teacherSubmissions');root.textContent='Loading…';
- try{const snap=await getDocs(collection(db,'teacherSubmissions'));root.replaceChildren();if(snap.empty)root.textContent='No teacher submissions yet.';for(const d of snap.docs){const t=d.data(),row=document.createElement('div');row.className='record';const h=document.createElement('h4');h.textContent=t.fullName||'Teacher submission';row.append(h);for(const [label,key] of [['Submitted','submittedAt'],['Date of Birth','dob'],['Phone','phone'],['Email','email'],['Address','address'],['Academic Education','academicEducation'],['Academic Institution / University','academicInstitution'],['Academic Passing Year','academicYear'],['Madrasa Name','madrasaName'],['Madrasa Location','madrasaLocation'],['Islamic Qualification / Sanad','sanad'],['Sanad Issuing Institution','sanadInstitution'],['Sanad Completion Year','sanadYear'],['Teaching Experience','experience'],['Previous Institution','previousInstitution'],['Subjects','subjects'],['Languages','languages'],['Additional Notes','notes']])appendInfo(row,label,t[key]);for(const [label,key] of [['Photo','photoPath'],['Sanad Certificate','sanadPath'],['Academic Certificate','academicPath']])if(t[key]){const btn=document.createElement('button');btn.type='button';btn.className='secondary';btn.textContent='📎 View '+label;btn.onclick=async()=>{try{const {getStorage,ref,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-storage.js');const url=await getDownloadURL(ref(getStorage(app),t[key]));window.open(url,'_blank','noopener')}catch(e){alert('File access failed: '+e.message)}};row.append(btn)}const add=document.createElement('button');add.type='button';add.textContent='➕ Add to Teacher Directory';add.onclick=async()=>{if(!confirm('Add this submission to the teacher directory?'))return;try{await setDoc(doc(db,'teachers','registered_'+d.id),{name:t.fullName,subject:t.subjects||'',phone:t.phone||'',email:t.email||'',notes:'Registered via private teacher form. Submission ID: '+d.id,registrationId:d.id},{merge:true});alert('Teacher added to directory');loadTeacherDirectory()}catch(e){alert(e.message)}};row.append(add);root.append(row)}}catch(e){root.textContent='Could not load submissions: '+e.message}
+ if(!active)return;const root=$('teacherSubmissions');root.textContent='Loading teacher profiles…';
+ try{
+ const snap=await getDocs(collection(db,'teacherSubmissions'));root.replaceChildren();
+ if(snap.empty){root.textContent='No teacher submissions yet.';return}
+ for(const d of snap.docs){
+  const t=d.data(),card=document.createElement('article');card.className='teacher-profile-card';
+  const heading=document.createElement('div');heading.className='teacher-profile-heading';
+  const info=document.createElement('div');const name=document.createElement('h4');name.textContent=t.fullName||'Teacher';const summary=document.createElement('p');summary.textContent=[t.sanad,t.academicEducation,t.subjects].filter(Boolean).join(' • ')||'Teacher Registration';info.append(name,summary);
+  const badge=document.createElement('span');badge.className='teacher-profile-badge';badge.textContent=t.reviewStatus==='rejected'?'Rejected':t.reviewStatus==='approved'?'Approved':'Pending Review';heading.append(info,badge);card.append(heading);
+  const submitted=document.createElement('p');submitted.className='teacher-profile-date';submitted.textContent='Submitted: '+(t.submittedAt?new Date(t.submittedAt).toLocaleString('en-IN'):'Not recorded');card.append(submitted);
+  const buttons=document.createElement('div');buttons.className='teacher-profile-actions';
+  const view=document.createElement('button');view.type='button';view.textContent='👁 View Full Profile';
+  const print=document.createElement('button');print.type='button';print.className='secondary';print.textContent='🖨 Print / Save PDF';print.onclick=()=>printTeacherProfile(t);
+  const edit=document.createElement('button');edit.type='button';edit.className='secondary';edit.textContent='✏ Admin Edit';
+  const approve=document.createElement('button');approve.type='button';approve.textContent='✓ Approve';
+  const reject=document.createElement('button');reject.type='button';reject.className='secondary';reject.textContent='✕ Reject';
+  buttons.append(view,edit,print,approve,reject);card.append(buttons);
+  const detail=document.createElement('div');detail.className='teacher-profile-details';detail.hidden=true;for(const [title,fields] of teacherProfileGroups)detail.append(teacherProfileSection(title,fields,t));card.append(detail);
+  view.onclick=()=>{detail.hidden=!detail.hidden;view.textContent=detail.hidden?'👁 View Full Profile':'▴ Hide Full Profile'};
+  edit.onclick=()=>{
+   detail.replaceChildren();for(const [title,fields] of teacherProfileGroups)detail.append(teacherProfileSection(title,fields,t,true));
+   detail.hidden=false;view.textContent='▴ Hide Full Profile';
+   const save=document.createElement('button');save.type='button';save.textContent='💾 Save Admin Changes';
+   const cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.textContent='Cancel';
+   save.onclick=async()=>{const changes={};for(const el of detail.querySelectorAll('[name]'))changes[el.name]=el.value.trim();if(!changes.fullName||!changes.phone||!changes.address||!changes.madrasaName||!changes.sanad){alert('Required fields: Name, Phone, Address, Madrasa Name and Sanad.');return}save.disabled=true;try{await setDoc(doc(db,'teacherSubmissions',d.id),{...changes,lastEditedAt:new Date().toISOString()},{merge:true});await loadTeacherSubmissions()}catch(error){alert('Could not save: '+error.message);save.disabled=false}};
+   cancel.onclick=()=>loadTeacherSubmissions();detail.append(save,cancel);
+  };
+  approve.onclick=async()=>{if(!confirm('Approve this teacher and add to the private teacher directory?'))return;approve.disabled=true;try{await setDoc(doc(db,'teachers','registered_'+d.id),{name:t.fullName,subject:t.subjects||'',phone:t.phone||'',email:t.email||'',notes:'Approved teacher registration. Submission ID: '+d.id,registrationId:d.id},{merge:true});await setDoc(doc(db,'teacherSubmissions',d.id),{reviewStatus:'approved',reviewedAt:new Date().toISOString()},{merge:true});await loadTeacherDirectory()}catch(error){alert('Approval failed: '+error.message);approve.disabled=false}};
+  reject.onclick=async()=>{if(!confirm('Mark this teacher submission as rejected? The original record will be retained.'))return;reject.disabled=true;try{await setDoc(doc(db,'teacherSubmissions',d.id),{reviewStatus:'rejected',reviewedAt:new Date().toISOString()},{merge:true});await loadTeacherSubmissions()}catch(error){alert('Rejection failed: '+error.message);reject.disabled=false}};
+  root.append(card);
+ }
+ }catch(error){root.textContent='Could not load teacher profiles: '+error.message}
 }
 $('refreshTeacherSubmissions').onclick=loadTeacherSubmissions;
 
