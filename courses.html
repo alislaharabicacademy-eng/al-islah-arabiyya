@@ -20,4 +20,4 @@ const ready=Boolean(config.apiKey&&config.projectId&&config.appId);
 window.courseStore=ready?getFirestore(initializeApp(config)):null;
 window.courseGet=async id=>{if(!window.courseStore)return null;const s=await getDoc(doc(window.courseStore,'courses',id));return s.exists()?s.data():null};
 window.dispatchEvent(new Event('course-ready'));
-</script></body></html>
+</script><script type="module" src="./academic-year.js"></script></body></html>
