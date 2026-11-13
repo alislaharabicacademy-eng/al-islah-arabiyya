@@ -20,6 +20,7 @@ service cloud.firestore {
    allow get: if isAdmin() || (request.auth != null && request.auth.token.email_verified == true && resource.data.email == request.auth.token.email);
    allow list, create, update, delete: if isAdmin();
   }
+  match /classSubjects/{courseId} { allow read, write: if isAdmin(); }
   match /teacherRosters/{teacherId} {
    allow get: if isAdmin() || signedInTeacher(teacherId);
    allow list, create, update, delete: if isAdmin();
