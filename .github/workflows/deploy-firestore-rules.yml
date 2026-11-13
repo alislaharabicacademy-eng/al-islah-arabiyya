@@ -1,0 +1,39 @@
+name: Deploy Firebase Firestore Rules
+
+# Safety: manual trigger until repository rules are reconciled with live Firebase.
+# After first successful review and deployment, push automation can be enabled.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: firebase-firestore-rules
+  cancel-in-progress: false
+
+jobs:
+  deploy-firestore-rules:
+    runs-on: ubuntu-latest
+    environment: firebase-rules
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate with Google Cloud (keyless)
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: al-islah-arabic-academy
+          workload_identity_provider: projects/768903195557/locations/global/workloadIdentityPools/al-islah-github-deployment/providers/al-islah-github-actions
+          service_account: github-firebase-rules-deployer@al-islah-arabic-academy.iam.gserviceaccount.com
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Deploy only Firestore rules
+        run: npx --yes firebase-tools@latest deploy --only firestore:rules --project al-islah-arabic-academy --non-interactive
