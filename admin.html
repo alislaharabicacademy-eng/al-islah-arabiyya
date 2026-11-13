@@ -279,7 +279,7 @@ $('saveAdmissionSettings').onclick=async()=>{
  $('admissionSettingsStatus').textContent='✓ Saved! Admission Form will load these settings after refresh.';
  }catch(e){$('admissionSettingsStatus').textContent='Save failed: '+e.message}finally{btn.disabled=false}
 };
-function switchTab(tab){tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
+function switchTab(tab){if(tab!=='teachers'&&$('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
 $('openNewCourse').onclick=()=>{
  $('newCourseName').value='';$('newCourseId').value='';$('newCourseStatus').textContent='';
  switchTab('newcourse');
@@ -512,7 +512,7 @@ async function loadTeacherSubmissions(){
  }catch(error){root.textContent='Could not load teacher profiles: '+error.message}
 }
 $('refreshTeacherSubmissions').onclick=loadTeacherSubmissions;
-function showTeacherMode(mode){const profiles=mode==='profiles';$('teacherProfileMode').hidden=!profiles;$('teacherManagementMode').hidden=profiles;$('showTeacherProfiles').classList.toggle('secondary',!profiles);$('showTeacherManagement').classList.toggle('secondary',profiles);}
+function showTeacherMode(mode){if(mode!=='management'&&$('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();const profiles=mode==='profiles';$('teacherProfileMode').hidden=!profiles;$('teacherManagementMode').hidden=profiles;$('showTeacherProfiles').classList.toggle('secondary',!profiles);$('showTeacherManagement').classList.toggle('secondary',profiles);}
 $('showTeacherProfiles').onclick=()=>showTeacherMode('profiles');$('showTeacherManagement').onclick=()=>showTeacherMode('management');showTeacherMode('profiles');
 
 function getTeacherSubjects(){return [...document.querySelectorAll('#teacherSubjectRows .subject-choice')].map(x=>x.value.trim()).filter(Boolean)}
