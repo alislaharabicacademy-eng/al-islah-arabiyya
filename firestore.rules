@@ -25,18 +25,24 @@ service cloud.firestore {
    allow list: if isAdmin();
    allow create: if signedInTeacher(teacherId)
     && day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-    && request.resource.data.keys().hasOnly(['date','teacherId','email','markedAt','status','reason','leaveStatus'])
+    && request.resource.data.keys().hasOnly(['date','teacherId','email','markedAt','subjects'])
     && request.resource.data.date == day
     && request.resource.data.teacherId == teacherId
     && request.resource.data.email == request.auth.token.email
     && request.resource.data.markedAt == request.time
-    && request.resource.data.status in ['present','absent','leave']
-    && (request.resource.data.status == 'present'
-      || (request.resource.data.reason is string
-        && request.resource.data.reason.size() >= 5
-        && request.resource.data.reason.size() <= 500))
-    && (request.resource.data.status != 'leave' || request.resource.data.leaveStatus == 'pending');
-   allow update, delete: if isAdmin();
+    && request.resource.data.subjects is map
+    && request.resource.data.subjects.size() == 1;
+   allow update: if isAdmin() || (
+    signedInTeacher(teacherId)
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['subjects','markedAt'])
+    && request.resource.data.subjects is map
+    && resource.data.subjects is map
+    && request.resource.data.subjects.diff(resource.data.subjects).removedKeys().size() == 0
+    && request.resource.data.subjects.diff(resource.data.subjects).changedKeys().size() == 0
+    && request.resource.data.subjects.diff(resource.data.subjects).addedKeys().size() == 1
+    && request.resource.data.markedAt == request.time
+   );
+   allow delete: if isAdmin();
   }
   match /applications/{id} {
    allow read, update, delete: if isAdmin();
