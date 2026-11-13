@@ -1,8 +1,13 @@
 name: Deploy Firebase Firestore Rules
 
-# Safety: manual trigger until repository rules are reconciled with live Firebase.
-# After first successful review and deployment, push automation can be enabled.
+# Deploy only when Firebase Rules configuration changes on main.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'firestore.rules'
+      - 'firebase.json'
+      - '.github/workflows/deploy-firestore-rules.yml'
   workflow_dispatch:
 
 permissions:
