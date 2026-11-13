@@ -522,7 +522,7 @@ async function loadTeacherSubmissions(){
 }
 $('refreshTeacherSubmissions').onclick=loadTeacherSubmissions;
 function showTeacherMode(mode){if(mode!=='management'){if($('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();closeTeacherCatalog();}const profiles=mode==='profiles';$('teacherProfileMode').hidden=!profiles;$('teacherManagementMode').hidden=profiles;$('showTeacherProfiles').classList.toggle('secondary',!profiles);$('showTeacherManagement').classList.toggle('secondary',profiles);}
-$('showTeacherProfiles').onclick=()=>showTeacherMode('profiles');$('showTeacherManagement').onclick=()=>showTeacherMode('management');showTeacherMode('profiles');
+$('showTeacherProfiles').onclick=()=>showTeacherMode('profiles');$('showTeacherManagement').onclick=()=>showTeacherMode('management');
 
 function getTeacherSubjects(){return [...document.querySelectorAll('#teacherSubjectRows .subject-choice')].map(x=>x.value.trim()).filter(Boolean)}
 function readTeacherAssignmentRows(){
@@ -562,7 +562,7 @@ function setTeacherSubjects(value,assignments=[]){
  if(!$('teacherSubjectRows').children.length)addTeacherSubjectRow();
 }
 $('addTeacherSubject').onclick=()=>addTeacherSubjectRow();
-setTeacherSubjects('');loadSubjectCatalog();
+setTeacherSubjects('');loadSubjectCatalog();showTeacherMode('profiles');
 function resetTeacher(){
  selectedTeacher=null;
  editingTeacherOriginal=null;
