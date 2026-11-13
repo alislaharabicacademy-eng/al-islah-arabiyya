@@ -374,6 +374,181 @@ if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students
 if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+schemas[kind].filter(f=>f!=='Name'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';if(kind==='students'){updateStudentBatchVisibility();}$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{if(!confirm('Delete this '+singular+' record?'))return;try{await deleteDoc(doc(db,kind,d.id));if(kind==='students')await syncAllTeacherRosters();await renderRecords(kind)}catch(e){alert('Delete failed: '+e.message)}};if(kind==='students')el.querySelector('[data-fees]').onclick=()=>openFees(d);list.append(el)})}catch(err){list.textContent='Unable to load records: '+err.message}}
 
 $('studentAttendanceDate').value=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});$('loadStudentAttendance').onclick=async()=>{const day=$('studentAttendanceDate').value,root=$('studentAttendanceReport');root.textContent='Loading attendance…';try{const teachers=await getDocs(collection(db,'teachers'));root.replaceChildren();for(const t of teachers.docs){const snap=await getDoc(doc(db,'teacherAttendance',t.id,'days',day));if(!snap.exists())continue;for(const [subject,record] of Object.entries(snap.data().subjects||{})){const box=document.createElement('div');box.className='record';appendInfo(box,'Teacher',t.data().name);appendInfo(box,'Subject',subject.split('__').pop());appendInfo(box,'Class',record.course||'—');if(record.course==='maktab')appendInfo(box,'Batch',record.batch||'—');for(const s of Object.values(record.students||{}))appendInfo(box,s.name||'Student',s.status||'Not marked');const reset=document.createElement('button');reset.type='button';reset.textContent='↺ Reset this subject attendance';reset.onclick=async()=>{if(!confirm('Reset '+subject+' for '+(t.data().name||'teacher')+' on '+day+'?\nThe old attendance will be archived in this date record. The teacher can submit again.'))return;reset.disabled=true;try{await updateDoc(doc(db,'teacherAttendance',t.id,'days',day),{['subjects.'+subject]:deleteField(),resetHistory:arrayUnion({subject,record,resetAt:new Date().toISOString(),resetBy:auth.currentUser.email})});alert('Attendance reset. Teacher can refresh and submit again.');$('loadStudentAttendance').click()}catch(e){alert('Reset failed: '+e.message);reset.disabled=false}};box.append(reset);root.append(box)}}if(!root.children.length)root.textContent='No subject-wise student attendance found for this date.'}catch(e){root.textContent='Could not load attendance: '+e.message}};
+
+/* Monthly attendance uses actual teacher-marked class dates, never calendar days.
+   Each class/batch/date is counted once even when multiple subjects meet that day. */
+let monthlyAttendanceExport=[];
+const monthInIndia=()=>{
+ const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit'}).formatToParts(new Date());
+ return p.find(x=>x.type==='year').value+'-'+p.find(x=>x.type==='month').value;
+};
+$('monthlyAttendanceMonth').value=monthInIndia();
+function resetMonthlyStudentReport(){
+ $('monthlyStudentAttendanceReport').replaceChildren();
+ $('monthlyStudentAttendanceStatus').textContent='';
+ $('downloadMonthlyStudentAttendance').disabled=true;
+ monthlyAttendanceExport=[];
+}
+function updateMonthlyAttendanceBatch(){
+ const course=$('monthlyAttendanceCourse').value;
+ const wrap=$('monthlyAttendanceBatchWrap'),select=$('monthlyAttendanceBatch');
+ const show=course!=='all'&&isMaktabCourse(course);
+ wrap.hidden=!show;
+ select.replaceChildren(new Option('All Batches','all'));
+ if(show)for(const batch of batchOptions)select.add(new Option(batch,batch));
+ resetMonthlyStudentReport();
+}
+$('monthlyAttendanceMonth').onchange=resetMonthlyStudentReport;
+$('monthlyAttendanceCourse').onchange=updateMonthlyAttendanceBatch;
+$('monthlyAttendanceBatch').onchange=resetMonthlyStudentReport;
+function attendanceDayLabel(day){
+ return /^\d{4}-\d{2}-\d{2}$/.test(day)?day.slice(8,10)+'/'+day.slice(5,7)+'/'+day.slice(0,4):day;
+}
+function monthlyAttendanceTableCell(row,value,cls=''){
+ const cell=document.createElement('td');
+ cell.textContent=String(value);
+ if(cls)cell.className=cls;
+ row.append(cell);
+ return cell;
+}
+function monthlyDatesDetail(dates){
+ const root=document.createElement('details'),summary=document.createElement('summary');
+ summary.textContent='View dates';root.append(summary);
+ for(const [label,key] of [['✅ Present','present'],['❌ Absent','absent'],['🟡 Leave','leave'],['⚪ Not marked','unmarked']]){
+  const p=document.createElement('p');
+  p.textContent=label+': '+(dates[key].length?dates[key].map(attendanceDayLabel).join(', '):'—');
+  root.append(p);
+ }
+ return root;
+}
+async function loadMonthlyStudentReport(){
+ if(!active)return;
+ const month=$('monthlyAttendanceMonth').value,courseFilter=$('monthlyAttendanceCourse').value,batchFilter=$('monthlyAttendanceBatch').value;
+ const status=$('monthlyStudentAttendanceStatus'),root=$('monthlyStudentAttendanceReport');
+ if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){status.textContent='Choose a valid month.';return}
+ const btn=$('loadMonthlyStudentAttendance'),csv=$('downloadMonthlyStudentAttendance');
+ btn.disabled=true;csv.disabled=true;monthlyAttendanceExport=[];root.replaceChildren();
+ status.textContent='Loading student and teacher attendance records for '+month+'…';
+ try{
+  const [studentSnap,teacherSnap]=await Promise.all([getDocs(collection(db,'students')),getDocs(collection(db,'teachers'))]);
+  const groups=new Map();
+  const groupFor=(course,batch)=>{
+   const key=course+'|'+batch;
+   if(!groups.has(key))groups.set(key,{course,batch,days:new Map(),students:new Map()});
+   return groups.get(key);
+  };
+  // Include enrolled students even when no daily attendance was submitted.
+  for(const d of studentSnap.docs){
+   const student=d.data(),course=courseKey(student.course),batch=isMaktabCourse(course)?String(student.batch||'').trim():'';
+   if(!course||courseFilter!=='all'&&course!==courseFilter||batchFilter!=='all'&&isMaktabCourse(course)&&batch!==batchFilter)continue;
+   groupFor(course,batch).students.set(d.id,{id:d.id,name:student.name||'Student',historical:false});
+  }
+  const from=month+'-01',nextMonth=new Date(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7)),1)).toISOString().slice(0,7)+'-01';
+  // Query each teacher's day documents by document ID, so we read only the requested month.
+  const fetched=await Promise.allSettled(teacherSnap.docs.map(async teacher=>{
+   const days=await getDocs(query(collection(db,'teacherAttendance',teacher.id,'days'),where(documentId(),'>=',from),where(documentId(),'<',nextMonth)));
+   return days.docs;
+  }));
+  const failed=fetched.filter(x=>x.status==='rejected');
+  if(failed.length)throw Error('Could not load '+failed.length+' teacher attendance register(s): '+String(failed[0].reason?.message||failed[0].reason));
+  for(const result of fetched){
+   for(const dayDoc of result.value){
+    const day=dayDoc.id;
+    if(!day.startsWith(month+'-'))continue;
+    for(const record of Object.values(dayDoc.data().subjects||{})){
+     if(!record||record.status!=='present'||!record.students||!Object.keys(record.students).length)continue;
+     const course=courseKey(record.course),batch=isMaktabCourse(course)?String(record.batch||'').trim():'';
+     if(!course||courseFilter!=='all'&&course!==courseFilter||batchFilter!=='all'&&isMaktabCourse(course)&&batch!==batchFilter)continue;
+     const group=groupFor(course,batch);
+     if(!group.days.has(day))group.days.set(day,new Map());
+     const marked=group.days.get(day);
+     for(const [studentId,entry] of Object.entries(record.students)){
+      if(!entry||!['present','absent','leave'].includes(entry.status))continue;
+      if(!group.students.has(studentId))group.students.set(studentId,{id:studentId,name:entry.name||'Student (historical)',historical:true});
+      const old=marked.get(studentId);
+      // When several subjects share one day, combine into a single daily status.
+      // Any present mark wins; otherwise leave wins over absence.
+      const precedence={absent:1,leave:2,present:3};
+      if(!old||precedence[entry.status]>precedence[old])marked.set(studentId,entry.status);
+     }
+    }
+   }
+  }
+  const groupList=[...groups.values()].sort((a,b)=>{
+   const n=(courseRegistry.get(a.course)?.name||classNames[a.course]||a.course).localeCompare(courseRegistry.get(b.course)?.name||classNames[b.course]||b.course);
+   return n||a.batch.localeCompare(b.batch,undefined,{numeric:true});
+  });
+  let studentTotal=0,heldDateTotal=0;
+  for(const group of groupList){
+   const heldDates=[...group.days.keys()].sort(),held=heldDates.length;
+   const name=courseRegistry.get(group.course)?.name||classNames[group.course]||group.course;
+   const section=document.createElement('section');section.className='student-monthly-group';
+   const heading=document.createElement('h4');heading.textContent='🏫 '+name+(isMaktabCourse(group.course)?' · '+(group.batch||'Unassigned Batch'):'');section.append(heading);
+   const info=document.createElement('p');info.className='student-monthly-info';
+   info.textContent='Recorded class days: '+held+'  |  Dates: '+(heldDates.length?heldDates.map(attendanceDayLabel).join(', '):'None recorded this month');
+   section.append(info);
+   const scroll=document.createElement('div');scroll.className='student-monthly-scroll';
+   const table=document.createElement('table');table.className='student-monthly-table';
+   const head=document.createElement('thead'),headRow=document.createElement('tr');
+   for(const label of ['No.','Student Name','Held Days','Present','Absent','Leave','Not Marked','Attendance','Dates']){
+    const th=document.createElement('th');th.textContent=label;if(['Held Days','Present','Absent','Leave','Not Marked','Attendance'].includes(label))th.className='num';headRow.append(th);
+   }
+   head.append(headRow);table.append(head);const body=document.createElement('tbody');
+   const students=[...group.students.values()].sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+   for(const [idx,student] of students.entries()){
+    const dates={present:[],absent:[],leave:[],unmarked:[]};
+    for(const day of heldDates){const value=group.days.get(day).get(student.id)||'unmarked';dates[value].push(day)}
+    const rate=held?Math.round(100*dates.present.length/held):0;
+    const row=document.createElement('tr');
+    monthlyAttendanceTableCell(row,idx+1);
+    monthlyAttendanceTableCell(row,student.name+(student.historical?' (previous record)':''));
+    monthlyAttendanceTableCell(row,held,'num');
+    monthlyAttendanceTableCell(row,dates.present.length,'num');
+    monthlyAttendanceTableCell(row,dates.absent.length,'num');
+    monthlyAttendanceTableCell(row,dates.leave.length,'num');
+    monthlyAttendanceTableCell(row,dates.unmarked.length,'num');
+    monthlyAttendanceTableCell(row,held?rate+'%':'—','num');
+    const dateCell=document.createElement('td');dateCell.append(monthlyDatesDetail(dates));row.append(dateCell);
+    body.append(row);
+    monthlyAttendanceExport.push({month,course:name,batch:group.batch,student:student.name,held,rate:held?rate+'%':'',dates});
+   }
+   table.append(body);scroll.append(table);section.append(scroll);root.append(section);
+   heldDateTotal+=held;studentTotal+=students.length;
+  }
+  if(!groupList.length){
+   root.textContent='No students or recorded classes match this selection.';
+  }else{
+   const legend=document.createElement('p');legend.className='student-monthly-legend';
+   legend.textContent='Monthly totals use unique recorded class dates per class/batch. Multiple subjects on the same date count as one class day. Present takes priority if subjects disagree; Leave is counted only when the teacher explicitly selects Leave. Unmarked is not treated as absent.';
+   root.prepend(legend);
+  }
+  const label=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+  status.textContent='✓ '+label+': '+groupList.length+' class/batch group(s), '+studentTotal+' student(s), '+heldDateTotal+' recorded class date(s) across groups.';
+  csv.disabled=!monthlyAttendanceExport.length;
+ }catch(err){
+  root.replaceChildren();status.textContent='Could not generate the monthly report: '+err.message;
+  monthlyAttendanceExport=[];csv.disabled=true;
+ }finally{btn.disabled=false}
+}
+$('loadMonthlyStudentAttendance').onclick=loadMonthlyStudentReport;
+$('downloadMonthlyStudentAttendance').onclick=()=>{
+ if(!monthlyAttendanceExport.length)return;
+ const headers=['Month','Class','Batch','Student Name','Held Days','Present Days','Absent Days','Leave Days','Not Marked Days','Attendance %','Present Dates','Absent Dates','Leave Dates','Not Marked Dates'];
+ const csvCell=value=>{
+  let txt=String(value??'');
+  if(/^[\s]*[=+@-]/.test(txt))txt="'"+txt;
+  return '"'+txt.replace(/"/g,'""')+'"';
+ };
+ const data=[headers,...monthlyAttendanceExport.map(row=>[
+  row.month,row.course,row.batch,row.student,row.held,row.dates.present.length,row.dates.absent.length,row.dates.leave.length,row.dates.unmarked.length,row.rate,
+  ...['present','absent','leave','unmarked'].map(key=>row.dates[key].map(attendanceDayLabel).join(', '))
+ ])];
+ const blob=new Blob(['\ufeff'+data.map(row=>row.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download='Student_Monthly_Attendance_'+$('monthlyAttendanceMonth').value+'.csv';document.body.append(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),60000);
+};
+
 async function openFees(student){if(!active)return;feeStudent=student;const s=student.data();$('feeStudentName').value=s.name||student.id;feeCourse=courseKey(s.course);$('feeStatus').textContent='Loading fees…';try{const course=await getDoc(doc(db,'courses',feeCourse));feeRate=Number(course.exists()?course.data().monthlyFee:0)||0;const record=await getDoc(doc(db,'students',student.id));feeLedger=record.data()?.feeLedger||{};renderFeeMonths();$('studentFeesPanel').scrollIntoView({behavior:'smooth'});}catch(e){$('feeStatus').textContent='Unable to load fee records: '+e.message}}
 function renderFeeMonths(){const year=feeYear.value,records=feeLedger[year]||{},now=new Date(),currentYear=now.getFullYear(),currentMonth=now.getMonth();let paid=0,pending=0,collected=0;const root=$('feeMonths');root.replaceChildren();const table=document.createElement('div');table.className='fields';for(let i=0;i<12;i++){const entry=records[String(i+1)]||{},isPaid=entry.status==='Paid',due=(Number(year)<currentYear)||(Number(year)===currentYear&&i<=currentMonth);if(isPaid){paid++;collected+=Number(entry.amount)||0}else if(due)pending++;const box=document.createElement('div');box.className='record';box.innerHTML='<strong>'+monthNames[i]+' '+year+'</strong><p>Monthly fee: ₹'+feeRate.toLocaleString('en-IN')+'</p><p>Status: <strong>'+ (isPaid?'✅ Paid':'⏳ '+(due?'Pending':'Not due'))+'</strong></p>'+(isPaid?'<p>Received: ₹'+Number(entry.amount||0).toLocaleString('en-IN')+' · '+safe(entry.paidAt?.slice(0,10)||'')+'</p>':'')+'<button type="button">'+(isPaid?'↩ Undo Paid':'✓ Mark Paid')+'</button>'+(isPaid?'<button type="button" class="secondary">📄 PDF Receipt</button>':'');const btns=box.querySelectorAll('button');btns[0].onclick=()=>setFeeMonth(i+1,!isPaid);if(isPaid)btns[1].onclick=()=>{alert('PDF Receipt button pressed. Generating your PDF now.');Promise.resolve().then(()=>receiptPdf(i+1,entry)).catch(err=>alert('PDF error: '+err.message))};table.append(box)}root.append(table);$('feeSummary').innerHTML='<span class="stat">Paid: '+paid+'/12 months</span><span class="stat">Pending: '+pending+' months</span><span class="stat">Collected: ₹'+collected.toLocaleString('en-IN')+'</span><span class="stat">Pending amount: ₹'+(pending*feeRate).toLocaleString('en-IN')+'</span>';$('feeStatus').textContent=feeRate>0?'Fee rate loaded from Course Details.':'⚠ Monthly fee is not set for this course. Set it in Course Details first.'}
 async function setFeeMonth(month,paid){if(!active||!feeStudent)return;if(!feeRate){alert('Set the monthly tuition fee in Course Details first.');return}if(!confirm((paid?'Confirm payment received for ':'Remove paid status for ')+monthNames[month-1]+' '+feeYear.value+'?'))return;const year=feeYear.value;const ledger=structuredClone(feeLedger);ledger[year]??={};if(paid)ledger[year][String(month)]={status:'Paid',amount:feeRate,paidAt:new Date().toISOString(),receiptId:'MIA-'+year+'-'+feeStudent.id.slice(0,8).toUpperCase()+'-'+String(month).padStart(2,'0')};else delete ledger[year][String(month)];$('feeStatus').textContent='Saving payment…';try{await setDoc(doc(db,'students',feeStudent.id),{feeLedger:ledger},{merge:true});feeLedger=ledger;renderFeeMonths();$('feeStatus').textContent='✓ Payment record saved. Use PDF Receipt to download and share.'}catch(e){$('feeStatus').textContent='Payment save failed: '+e.message}}
