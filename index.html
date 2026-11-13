@@ -145,4 +145,42 @@ section.section#courses::before,section.section.about::before,section.section#co
   .catch(()=>{el.textContent='—';el.parentElement.title='Visit counter temporarily unavailable'})
   .finally(()=>clearTimeout(timer));
 })();
+</script><script type="module" id="academy-live-course-catalog">
+import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+import{getFirestore,collection,query,where,getDocs}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+const courseGrid=document.getElementById('homepageCourseGrid');
+const base=[
+ {id:'muallama',name:'Muallama',tamil:'முஅல்லமா'},
+ {id:'muballigha',name:'Muballigha',tamil:'முபல்லிகா'},
+ {id:'alima',name:'Alima'},
+ {id:'boys-hifz',name:'Boys Hifz Class'},
+ {id:'childrens-quran-maktab',name:"Children's Qur'an Maktab"},
+ {id:'tajweed-for-girls',name:'Tajweed For Girls'}
+];
+function displayCourses(courses){
+ if(!courseGrid)return;
+ courseGrid.replaceChildren();
+ for(const d of courses){
+  const article=document.createElement('article');article.className='course-card';
+  const icon=document.createElement('div');icon.className='course-icon';icon.textContent='✦';
+  const title=document.createElement('h3');title.textContent=d.name;
+  article.append(icon,title);
+  if(d.tamil){const t=document.createElement('p');t.className='course-tamil';t.textContent=d.tamil;article.append(t)}
+  const hint=document.createElement('p');hint.textContent='Discover course details, eligibility and class timings.';article.append(hint);
+  const details=document.createElement('a');details.href='courses.html?course='+encodeURIComponent(d.id);details.textContent='More Details →';
+  const apply=document.createElement('a');apply.href='admission.html?course='+encodeURIComponent(d.name);apply.textContent='Apply Now →';
+  apply.style.marginLeft='12px';article.append(details,apply);courseGrid.append(article);
+ }
+}
+displayCourses(base);
+try{
+ const config=await fetch('firebase-config.json',{cache:'no-store'}).then(r=>r.json());
+ if(config.apiKey&&config.projectId){
+  const app=getApps().find(a=>a.name==='academy-home-courses')||initializeApp(config,'academy-home-courses');
+  const snap=await getDocs(query(collection(getFirestore(app),'courses'),where('published','==',true)));
+  const byId=new Map(base.map(x=>[x.id,x]));
+  snap.forEach(item=>{const data=item.data();if(data.name)byId.set(item.id,{...byId.get(item.id),id:item.id,name:String(data.name).replace(/\\s*[—–-]\\s*\\d+\\s*years?\\s*$/i,'').trim()})});
+  displayCourses([...byId.values()]);
+ }
+}catch(err){console.warn('Live course catalogue unavailable:',err)}
 </script><script type="module" src="./academic-year.js"></script></body></html>
