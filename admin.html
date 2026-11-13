@@ -107,11 +107,16 @@ function registerCourseOption(id,details={}){
  for(const selectId of ['course','studentCourse','studentFilter','applicationFilter','catalogClass']){
   const dropdown=$(selectId);
   const existing=[...dropdown.options].find(o=>o.value===id);
-  const label=selectId==='course'?courseLabel:name;
+  const label=courseLabel;
   if(existing)existing.textContent=label;
   else dropdown.add(new Option(label,id));
  }
- if(typeof classNames!=='undefined')classNames[id]=name;
+ for(const dropdown of document.querySelectorAll('#teacherSubjectRows select.subject-class')){
+  const existing=[...dropdown.options].find(o=>o.value===id);
+  if(existing)existing.textContent=courseLabel;
+  else dropdown.add(new Option(courseLabel,id));
+ }
+ if(typeof classNames!=='undefined')classNames[id]=courseLabel;
 }
 const courseRegistry=new Map();
 function renderCourseList(){
@@ -210,7 +215,9 @@ function renderAdmissionEditor(){
 }
 $('addAdmissionField').onclick=()=>{admissionFields.push({id:'custom_'+Date.now(),label:'New Question',type:'text',visible:true,required:false});renderAdmissionEditor()};
 async function loadAdmissionSettings(){
- try{const s=await getDoc(doc(db,'courses','muallama'));const data=s.exists()?s.data():{};admissionFields=Array.isArray(data.admissionFormFields)&&data.admissionFormFields.length?data.admissionFormFields.map(f=>({...f})):admissionDefaults.map(f=>({...f}));$('admissionCourseList').value=(Array.isArray(data.admissionFormCourses)?data.admissionFormCourses:defaultAdmissionCourses).map(x=>String(x).replace(/\s*[—–-]\s*\d+\s*years?\s*$/i,'').trim()).filter((x,i,a)=>a.indexOf(x)===i).join('\n');renderAdmissionEditor()}catch(e){$('admissionSettingsStatus').textContent='Load failed: '+e.message}
+ try{const s=await getDoc(doc(db,'courses','muallama'));const data=s.exists()?s.data():{};admissionFields=Array.isArray(data.admissionFormFields)&&data.admissionFormFields.length?data.admissionFormFields.map(f=>({...f})):admissionDefaults.map(f=>({...f}));const existing=Array.isArray(data.admissionFormCourses)?data.admissionFormCourses:defaultAdmissionCourses;
+ const listed=[...existing,...[...courseRegistry.entries()].filter(([id,d])=>d.published===true||['muallama','muballigha','alima','boys-hifz','childrens-quran-maktab','tajweed-for-girls'].includes(id)).map(([id,d])=>d.name||id)];
+ $('admissionCourseList').value=[...new Set(listed.map(x=>String(x).replace(/\s*[—–-]\s*\d+\s*years?\s*$/i,'').trim()).filter(Boolean))].join('\n');renderAdmissionEditor()}catch(e){$('admissionSettingsStatus').textContent='Load failed: '+e.message}
 }
 $('saveAdmissionSettings').onclick=async()=>{
  if(!active)return;
@@ -245,6 +252,8 @@ $('createCourse').onclick=async()=>{
   if(previous.exists())throw Error('Course already exists in Firebase. Refresh Course Details.');
   await setDoc(doc(db,'courses',id),{name,published:true,kitabs:[],duration:'',description:'',eligibility:'',syllabus:'',fees:'',timings:''});
   registerCourseOption(id,{name});courseRegistry.set(id,{name,published:true});
+  const registered=$('admissionCourseList').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  if(!registered.includes(name))$('admissionCourseList').value=[...registered,name].join('\n');
   await openCourseEditor(id);
   $('status').textContent='✓ New course added across Admin and public course lists. Complete the details and click Save Changes.';
  }catch(err){$('newCourseStatus').textContent='Could not save course: '+err.message}
