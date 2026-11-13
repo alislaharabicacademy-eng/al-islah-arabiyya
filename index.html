@@ -179,7 +179,7 @@ try{
   const app=getApps().find(a=>a.name==='academy-home-courses')||initializeApp(config,'academy-home-courses');
   const snap=await getDocs(query(collection(getFirestore(app),'courses'),where('published','==',true)));
   const byId=new Map(base.map(x=>[x.id,x]));
-  snap.forEach(item=>{const data=item.data();if(data.name)byId.set(item.id,{...byId.get(item.id),id:item.id,name:String(data.name).replace(/\\s*[—–-]\\s*\\d+\\s*years?\\s*$/i,'').trim()})});
+  snap.forEach(item=>{const data=item.data();if(data.name)byId.set(item.id,{...byId.get(item.id),id:item.id,name:String(data.name).replace(/\s*[—–-]\s*\d+\s*years?\s*$/i,'').trim()})});
   displayCourses([...byId.values()]);
  }
 }catch(err){console.warn('Live course catalogue unavailable:',err)}
