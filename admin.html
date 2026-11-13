@@ -410,11 +410,21 @@ async function receiptPdf(month,entry){
 }
 
 $('refreshApplications').onclick=renderApplications;
+// Supports legacy ISO date strings and new trusted Firestore server timestamps.
+function applicationDateTime(value){
+ if(value&&typeof value.toMillis==='function')return value.toMillis();
+ const parsed=Date.parse(String(value||''));
+ return Number.isFinite(parsed)?parsed:0;
+}
+function applicationDateLabel(value){
+ const ms=applicationDateTime(value);
+ return ms?new Date(ms).toLocaleString('en-IN'):'Not recorded';
+}
 async function renderApplications(){
  const list=$('applicationList');list.textContent='Loading applications…';
  try{
   const snap=await getDocs(query(collection(db,'applications'),limit(200)));
-  const allRows=snap.docs.sort((a,b)=>String(b.data().submittedAt||'').localeCompare(String(a.data().submittedAt||'')));
+  const allRows=snap.docs.sort((a,b)=>applicationDateTime(b.data().submittedAt)-applicationDateTime(a.data().submittedAt));
   const rows=$('applicationFilter').value==='all'?allRows:allRows.filter(d=>courseKey(d.data().course)===$('applicationFilter').value);
   $('applicationFilterCount').textContent=rows.length+' applications';
   const pending=rows.filter(d=>!['Approved','Rejected'].includes(d.data().status));
@@ -424,7 +434,7 @@ async function renderApplications(){
   for(const d of rows){
    const a=d.data(),el=document.createElement('div');el.className='record';
    el.innerHTML='<strong>'+safe(a.studentName||'Unnamed applicant')+'</strong> <small>'+safe(a.reference||d.id)+'</small><p><strong>Status: '+safe(a.status||'New')+'</strong></p>'+
-    ['course','guardianName','age','phone','email','address','message','submittedAt'].map(k=>a[k]?'<p><small>'+safe(k)+':</small> '+safe(a[k])+'</p>':'').join('')+
+    ['course','guardianName','dob','age','phone','email','address','message','submittedAt'].map(k=>{const value=k==='submittedAt'?applicationDateLabel(a[k]):a[k];return value?'<p><small>'+safe(k)+':</small> '+safe(value)+'</p>':''}).join('')+
     '<div class="actions"><button type="button" data-action="approve">✓ Approve & Enrol</button> <button type="button" class="secondary" data-action="reject">✕ Reject</button></div><p class="status" aria-live="polite"></p>';
    const note=el.querySelector('.status');
    for(const action of ['approve','reject']){
