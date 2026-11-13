@@ -118,6 +118,8 @@ section.section#courses::before,section.section.about::before,section.section#co
 @media(max-width:360px){.academy-vision-mission .vm-panel{min-height:420px!important;padding:40px 25px!important}}
 </style><style id="luxury-course-card-motion">
 @keyframes academyCardReveal{from{opacity:0;transform:translateY(22px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+#homepageCourseGrid{grid-template-columns:repeat(2,minmax(0,1fr));max-width:920px;margin-left:auto;margin-right:auto}
+@media(max-width:750px){#homepageCourseGrid{grid-template-columns:1fr}}
 #homepageCourseGrid .course-card,.grid .card{position:relative;overflow:hidden;animation:academyCardReveal .7s cubic-bezier(.2,.75,.25,1) both;transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease}
 #homepageCourseGrid .course-card:nth-child(2),.grid .card:nth-child(2){animation-delay:.12s}
 .grid .card:nth-child(3n){animation-delay:.18s}
@@ -149,14 +151,12 @@ section.section#courses::before,section.section.about::before,section.section#co
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import{getFirestore,collection,query,where,getDocs}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 const courseGrid=document.getElementById('homepageCourseGrid');
+// Homepage must feature only two courses. New courses appear on Explore All Courses.
 const base=[
  {id:'muallama',name:'Muallama',tamil:'முஅல்லமா'},
- {id:'muballigha',name:'Muballigha',tamil:'முபல்லிகா'},
- {id:'alima',name:'Alima'},
- {id:'boys-hifz',name:'Boys Hifz Class'},
- {id:'childrens-quran-maktab',name:"Children's Qur'an Maktab"},
- {id:'tajweed-for-girls',name:'Tajweed For Girls'}
+ {id:'muballigha',name:'Muballigha',tamil:'முபல்லிகா'}
 ];
+const featuredCourseIds=new Set(base.map(course=>course.id));
 function displayCourses(courses){
  if(!courseGrid)return;
  courseGrid.replaceChildren();
@@ -179,8 +179,12 @@ try{
   const app=getApps().find(a=>a.name==='academy-home-courses')||initializeApp(config,'academy-home-courses');
   const snap=await getDocs(query(collection(getFirestore(app),'courses'),where('published','==',true)));
   const byId=new Map(base.map(x=>[x.id,x]));
-  snap.forEach(item=>{const data=item.data();if(data.name)byId.set(item.id,{...byId.get(item.id),id:item.id,name:String(data.name).replace(/\s*[—–-]\s*\d+\s*years?\s*$/i,'').trim()})});
-  displayCourses([...byId.values()]);
+  snap.forEach(item=>{
+    if(!featuredCourseIds.has(item.id))return;
+    const data=item.data();
+    if(data.name)byId.set(item.id,{...byId.get(item.id),id:item.id,name:String(data.name).replace(/\s*[—–-]\s*\d+\s*years?\s*$/i,'').trim()});
+   });
+  displayCourses(base.map(course=>byId.get(course.id)));
  }
 }catch(err){console.warn('Live course catalogue unavailable:',err)}
 </script><script type="module" src="./academic-year.js"></script></body></html>
