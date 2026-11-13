@@ -441,6 +441,7 @@ async function renderApplications(){
 }
 
 let teacherRecords=[],selectedTeacher=null,approvedTeacherIds=new Set();
+let editingTeacherOriginal=null,originalTeacherFieldValues={},originalTeacherAssignmentRows='';
 const teacherFields=['Name','Subject','Phone','Email','Notes','Salary'];
 const safeText=v=>String(v??'');
 const appendInfo=(root,label,value)=>{const p=document.createElement('p');const b=document.createElement('strong');b.textContent=label+': ';p.append(b,document.createTextNode(safeText(value)));root.append(p)};
@@ -516,6 +517,12 @@ function showTeacherMode(mode){if(mode!=='management'&&$('teacherEditorHost')&&!
 $('showTeacherProfiles').onclick=()=>showTeacherMode('profiles');$('showTeacherManagement').onclick=()=>showTeacherMode('management');showTeacherMode('profiles');
 
 function getTeacherSubjects(){return [...document.querySelectorAll('#teacherSubjectRows .subject-choice')].map(x=>x.value.trim()).filter(Boolean)}
+function readTeacherAssignmentRows(){
+ return [...document.querySelectorAll('#teacherSubjectRows .teacher-subject-row')].map(row=>{
+  const course=row.querySelector('.subject-class').value;
+  return {course,subject:row.querySelector('.subject-choice').value.trim(),batch:isMaktabCourse(course)?row.querySelector('.subject-batch').value.trim():'',timing:row.querySelector('.subject-timing').value.trim()};
+ });
+}
 let subjectCatalog={};const classNames={muallama:'Muallama',muballigha:'Muballigha',alima:'Alima','boys-hifz':'Boys Hifz Class',maktab:'Maktab Students'};
 async function loadSubjectCatalog(){try{const snap=await getDocs(collection(db,'classSubjects'));subjectCatalog={};snap.docs.forEach(d=>subjectCatalog[d.id]=Array.isArray(d.data().subjects)?d.data().subjects:[]);showCatalogClass();document.querySelectorAll('.teacher-subject-row').forEach(row=>updateSubjectChoices(row))}catch(e){$('catalogStatus').textContent='Unable to load subjects: '+e.message}}
 function showCatalogClass(){$('catalogSubjects').value=(subjectCatalog[$('catalogClass').value]||[]).join('\n')}
@@ -538,6 +545,9 @@ $('addTeacherSubject').onclick=()=>addTeacherSubjectRow();
 setTeacherSubjects('');loadSubjectCatalog();
 function resetTeacher(){
  selectedTeacher=null;
+ editingTeacherOriginal=null;
+ originalTeacherFieldValues={};
+ originalTeacherAssignmentRows='';
  document.querySelectorAll('.editingTeacherCard').forEach(row=>row.classList.remove('editingTeacherCard'));
  const host=$('teacherEditorHost');
  host.hidden=true;
@@ -556,6 +566,9 @@ function openTeacherEditor(teacher,card){
  $('teacherId').value=teacher.id;
  for(const f of teacherFields)if(f!=='Subject')$('teacher'+f).value=teacher[f.toLowerCase()]||'';
  setTeacherSubjects(teacher.subjectsList||teacher.subject,teacher.assignments||[]);
+ editingTeacherOriginal=teacher;
+ originalTeacherFieldValues=Object.fromEntries(teacherFields.filter(f=>f!=='Subject').map(f=>[f.toLowerCase(),$('teacher'+f).value.trim()]));
+ originalTeacherAssignmentRows=JSON.stringify(readTeacherAssignmentRows());
  $('teacherEditorTitle').textContent='✏️ Edit '+(teacher.name||'Teacher');
  card.append(host);
  card.classList.add('editingTeacherCard');
@@ -577,7 +590,47 @@ async function loadTeacherDirectory(){
 }
 async function syncAllTeacherRosters(){const teachers=await getDocs(collection(db,'teachers'));await Promise.all(teachers.docs.map(t=>syncTeacherRoster(t.id,t.data())))}
 async function syncTeacherRoster(id,teacher){const snap=await getDocs(collection(db,'students'));const assignments=(teacher.assignments||[]).map(a=>({subject:a.subject,course:a.course,courseName:(courseRegistry.get(a.course)?.name||classNames[a.course]||a.course).replace(/\s*[—–-]\s*\d+\s*years?\s*$/i,'').trim(),batch:isMaktabCourse(a.course)?a.batch||'':'',timing:a.timing||'',students:snap.docs.filter(d=>a.course&&courseKey(d.data().course)===a.course&&(!isMaktabCourse(a.course)||(a.batch&&d.data().batch===a.batch))&&d.data().state!=='Inactive').map(d=>({id:d.id,name:d.data().name||'Student'}))}));await setDoc(doc(db,'teacherRosters',id),{assignments,updatedAt:new Date().toISOString()});return assignments;}
-$('teacherForm').onsubmit=async e=>{e.preventDefault();if(!active)return;const data={};for(const f of teacherFields)if(f!=='Subject')data[f.toLowerCase()]=$('teacher'+f).value.trim();const subjects=getTeacherSubjects();if(new Set([...document.querySelectorAll('#teacherSubjectRows .teacher-subject-row')].map(row=>row.querySelector('.subject-class').value+'|'+row.querySelector('.subject-choice').value.toLowerCase()+'|'+(isMaktabCourse(row.querySelector('.subject-class').value)?row.querySelector('.subject-batch').value:''))).size!==subjects.length){$('teacherStatus').textContent='Duplicate subject names are not allowed.';return}data.subject=subjects.join(', ');data.subjectsList=subjects;data.assignments=[...document.querySelectorAll('#teacherSubjectRows .teacher-subject-row')].map(row=>({subject:row.querySelector('.subject-choice').value.trim(),course:row.querySelector('.subject-class').value,batch:isMaktabCourse(row.querySelector('.subject-class').value)?row.querySelector('.subject-batch').value.trim():'',timing:row.querySelector('.subject-timing').value.trim()})).filter(a=>a.subject);if(data.assignments.some(a=>!a.course||!(subjectCatalog[a.course]||[]).includes(a.subject)||(isMaktabCourse(a.course)&&!a.batch))){$('teacherStatus').textContent='Choose a class and one of its saved subjects for every assignment.';return}$('teacherStatus').textContent='Saving teacher…';try{const id=$('teacherId').value;if(!id||!approvedTeacherIds.has(id)){throw new Error('Select Edit on an approved registered teacher. Creating duplicate teacher records is disabled.')}await setDoc(doc(db,'teachers',id),data,{merge:true});await syncTeacherRoster(id,data);await setDoc(doc(db,'teacherAccess',id),{name:data.name,email:data.email.toLowerCase()});$('teacherStatus').textContent='✓ Teacher saved';resetTeacher();await loadTeacherDirectory()}catch(err){$('teacherStatus').textContent='Save failed: '+err.message}};
+$('teacherForm').onsubmit=async e=>{
+ e.preventDefault();
+ if(!active||!editingTeacherOriginal)return;
+ const id=$('teacherId').value;
+ if(!id||!approvedTeacherIds.has(id)){ $('teacherStatus').textContent='Select Edit on an approved registered teacher.';return }
+ const changes={};
+ for(const f of teacherFields){
+  if(f==='Subject')continue;
+  const key=f.toLowerCase(),value=$('teacher'+f).value.trim();
+  if(value!==originalTeacherFieldValues[key])changes[key]=value;
+ }
+ const rows=readTeacherAssignmentRows(),assignmentsChanged=JSON.stringify(rows)!==originalTeacherAssignmentRows;
+ if(assignmentsChanged){
+  if(rows.some(a=>(a.subject||a.course||a.batch||a.timing)&&(!a.course||!a.subject||!(subjectCatalog[a.course]||[]).includes(a.subject)||(isMaktabCourse(a.course)&&!a.batch)))){
+   $('teacherStatus').textContent='For each assignment, choose a class, saved subject, and Maktab batch when applicable.';return;
+  }
+  const assignments=rows.filter(a=>a.subject);
+  const keys=assignments.map(a=>a.course+'|'+a.subject.toLowerCase()+'|'+a.batch);
+  if(new Set(keys).size!==keys.length){$('teacherStatus').textContent='Duplicate class, subject and batch assignments are not allowed.';return}
+  const subjects=assignments.map(a=>a.subject);
+  changes.subject=subjects.join(', ');
+  changes.subjectsList=subjects;
+  changes.assignments=assignments;
+ }
+ if(!Object.keys(changes).length){$('teacherStatus').textContent='No changes to save.';return}
+ const button=$('teacherForm').querySelector('button[type="submit"]');
+ button.disabled=true;
+ $('teacherStatus').textContent='Saving changes…';
+ try{
+  await setDoc(doc(db,'teachers',id),changes,{merge:true});
+  if(assignmentsChanged)await syncTeacherRoster(id,{...editingTeacherOriginal,...changes});
+  if('name' in changes||'email' in changes){
+   const updated={...editingTeacherOriginal,...changes};
+   await setDoc(doc(db,'teacherAccess',id),{name:updated.name||'',email:String(updated.email||'').toLowerCase()},{merge:true});
+  }
+  resetTeacher();
+  await loadTeacherDirectory();
+  $('teacherPayrollStatus').textContent='✓ Selected teacher updated successfully. Other details remain unchanged.';
+ }catch(err){$('teacherStatus').textContent='Save failed: '+err.message}
+ finally{button.disabled=false}
+};
 $('teacherMonth').onchange=()=>{if(selectedTeacher)renderTeacherPayroll()};
 async function renderTeacherPayroll(){
  if(!selectedTeacher)return;const t=selectedTeacher,month=$('teacherMonth').value,root=$('teacherPayroll');root.textContent='Loading attendance and salary…';
