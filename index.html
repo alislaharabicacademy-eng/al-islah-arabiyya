@@ -153,8 +153,8 @@ import{getFirestore,collection,query,where,getDocs}from'https://www.gstatic.com/
 const courseGrid=document.getElementById('homepageCourseGrid');
 // Homepage must feature only two courses. New courses appear on Explore All Courses.
 const base=[
- {id:'muallama',name:'Muallama',tamil:'முஅல்லமா'},
- {id:'muballigha',name:'Muballigha',tamil:'முபல்லிகா'}
+ {id:'muallama',name:'Muallama',tamil:'முஅல்லமா',duration:'1 Year',description:'Foundational Islamic learning programme.'},
+ {id:'muballigha',name:'Muballigha',tamil:'முபல்லிகா',duration:'2 Years',description:'Two-year programme for continued Islamic study.'}
 ];
 const featuredCourseIds=new Set(base.map(course=>course.id));
 function displayCourses(courses){
@@ -166,7 +166,8 @@ function displayCourses(courses){
   const title=document.createElement('h3');title.textContent=d.name;
   article.append(icon,title);
   if(d.tamil){const t=document.createElement('p');t.className='course-tamil';t.textContent=d.tamil;article.append(t)}
-  const hint=document.createElement('p');hint.textContent='Discover course details, eligibility and class timings.';article.append(hint);
+  if(d.duration){const duration=document.createElement('div');duration.className='duration';duration.textContent=d.duration;article.append(duration)}
+  const hint=document.createElement('p');hint.textContent=d.description||'Discover course details, eligibility and class timings.';article.append(hint);
   const details=document.createElement('a');details.href='courses.html?course='+encodeURIComponent(d.id);details.textContent='More Details →';
   const apply=document.createElement('a');apply.href='admission.html?course='+encodeURIComponent(d.name);apply.textContent='Apply Now →';
   apply.style.marginLeft='12px';article.append(details,apply);courseGrid.append(article);
@@ -182,7 +183,7 @@ try{
   snap.forEach(item=>{
     if(!featuredCourseIds.has(item.id))return;
     const data=item.data();
-    if(data.name)byId.set(item.id,{...byId.get(item.id),id:item.id,name:String(data.name).replace(/\s*[—–-]\s*\d+\s*years?\s*$/i,'').trim()});
+    if(data.name)byId.set(item.id,{...byId.get(item.id),id:item.id,name:String(data.name).replace(/\s*[—–-]\s*\d+\s*years?\s*$/i,'').trim(),duration:data.duration||byId.get(item.id)?.duration,description:data.description||byId.get(item.id)?.description});
    });
   displayCourses(base.map(course=>byId.get(course.id)));
  }
