@@ -1,5 +1,6 @@
 
 import{doc,getDoc,setDoc,collection,getDocs,query,where}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import{normalizeStudentCode,validateStudentDOB,makeStudentDobVerifier}from'./student-dob-verifier.js';
 export function initStudentAccountAdmin({db}){
  const $=id=>document.getElementById(id);
  const panel=$('studentAccountPanel'),status=$('studentAccountStatus');
@@ -23,7 +24,7 @@ export function initStudentAccountAdmin({db}){
    previous=snap.exists()?snap.data():null;
    $('studentAccountEmail').value=previous?.email||'';
    $('studentAccountEnabled').checked=previous?previous.enabled===true:true;
-   msg(previous?(previous.enabled?'✓ Account enabled for '+previous.email:'Account disabled. Re-enable when ready.'):'No account linked yet. Enter an approved email address.');
+   msg(!student.studentCode||!student.dob?'First save this student with an ALIA ID and Date of Birth before enabling account login.':previous?(previous.enabled?'✓ Account enabled for '+previous.email+' · Student ID + DOB are required for login.':'Account disabled. Re-enable when ready.'):'No account linked yet. Approve a guardian email and students can enter ALIA Student ID + DOB first.');
   }catch(err){msg('Unable to read account: '+err.message)}
  }
  async function save(disable=false){
@@ -38,24 +39,40 @@ export function initStudentAccountAdmin({db}){
    const existing=await getDoc(doc(db,'students',selected.id));
    if(!existing.exists())throw Error('Student record not found. Refresh students.');
    const student=existing.data();
+   let dobVerifier=previous?.dobProof&&previous.dobProofVersion===1?{
+    dobSalt:previous.dobSalt,dobProof:previous.dobProof,dobProofVersion:previous.dobProofVersion
+   }:{};
+   if(enabled){
+    const studentCode=normalizeStudentCode(student.studentCode);
+    const dob=validateStudentDOB(student.dob);
+    // Rotate the verifier when access is newly approved. The approved grant
+    // remains readable only to the verified owner of the admin-approved email.
+    dobVerifier=await makeStudentDobVerifier(studentCode,dob);
+   }
    const resultIds=enabled?(await getDocs(query(collection(db,'examResults'),where('studentId','==',selected.id)))).docs.filter(d=>d.data().published===true).map(d=>d.id):[];
    const data={
-    studentId:selected.id,email,enabled,studentCode:String(student.studentCode||''),
+    studentId:selected.id,email,enabled,studentCode:String(student.studentCode||''),...dobVerifier,
     studentName:String(student.name||'Student'),course:String(student.course||''),
     batch:String(student.batch||''),state:String(student.state||'Active'),resultIds,
     createdAt:previous?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()
    };
    await setDoc(doc(db,'studentAccess',selected.id),data);
    previous=data;$('studentAccountEnabled').checked=enabled;
-   msg(enabled?'✓ Real Firebase student account access approved for '+email+'. The user must verify their email and sign in.':'✓ Student account disabled. Sign-in will no longer grant dashboard access.');
+   msg(enabled?'✓ Approved '+email+'. Students enter ALIA ID + Date of Birth first, then verify with this approved account (email/password or Google).':'✓ Student account disabled. This email can no longer enter the student dashboard.');
   }catch(err){msg('Account save failed: '+err.message)}
   finally{button.disabled=false;off.disabled=false}
  }
  async function syncStudent(studentId,data){
   const ref=doc(db,'studentAccess',studentId),snap=await getDoc(ref);
   if(!snap.exists())return;
-  await setDoc(ref,{studentName:String(data.name||'Student'),studentCode:String(data.studentCode||''),course:String(data.course||''),batch:String(data.batch||''),
-   state:String(data.state||'Active'),updatedAt:new Date().toISOString()},{merge:true});
+  const studentCode=String(data.studentCode||'');
+  const payload={
+   studentName:String(data.name||'Student'),studentCode,course:String(data.course||''),
+   batch:String(data.batch||''),state:String(data.state||'Active'),updatedAt:new Date().toISOString()
+  };
+  if(data.dob&&/^ALIA[0-9]{5}$/.test(studentCode))Object.assign(payload,await makeStudentDobVerifier(normalizeStudentCode(studentCode),validateStudentDOB(data.dob)));
+  else payload.enabled=false; // Never leave a stale DOB verifier enabled.
+  await setDoc(ref,payload,{merge:true});
  }
  function close(){selected=null;previous=null;panel.hidden=true;$('studentAccountEmail').value='';msg('')}
  $('studentAccountSave').addEventListener('click',()=>save(false));
