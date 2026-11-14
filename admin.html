@@ -14,6 +14,12 @@ input:not([type=checkbox]):not([type=radio]):focus,select:focus,textarea:focus{b
 nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 @media(max-width:600px){h1{line-height:1.16}button,.btn{min-height:42px}}
 @media(prefers-reduced-motion:reduce){button,.btn,a,input,select,textarea{transition:none!important}}
+</style><style id="official-student-id-style">
+.official-student-id-badge{display:inline-block;border-radius:9px;padding:7px 13px;margin:9px 0 12px;background:linear-gradient(125deg,#dfeddf,#f6faf2);color:#0d643b;border:1px solid #bed6c3;font:900 16px Arial,sans-serif;letter-spacing:.085em}
+.official-student-id-badge.pending{color:#80652f;background:#fff5e1;border-color:#ecd6a0;font-size:13px;letter-spacing:0}
+#studentOfficialId{color:#145d3c;font-weight:900;letter-spacing:.095em;background:#eaf5ed;cursor:default}
+#studentIdBatchStatus{line-height:1.7;white-space:normal}
+#generateMissingStudentIds{min-height:43px}
 </style><style id="student-account-administration-style">
 .student-account-panel[hidden]{display:none!important}
 .student-account-panel{padding:23px!important;border-radius:17px;border:1px solid #b7d8c1!important;background:linear-gradient(130deg,#eff8f0,#fcfffc)!important;margin:20px 0!important;box-shadow:0 9px 29px #0e513312}
@@ -338,7 +344,9 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
   <div id="examResultList"></div>
  </section>
 </div>
-<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Private enrolled-student records. Each student has a permanent, confidential Student ID. Enter Date of Birth to allow exam result lookup via Student ID + DOB. Give Student IDs only to the correct student or guardian.</p><form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields"><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Date of Birth (for secure exam result lookup)<input id="studentDob" type="date"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
+<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Official Student IDs are issued automatically on Save: <strong>AIL00001, AIL00002, AIL00003…</strong> (AIL + 5 digits). Existing students can be assigned IDs using the button below. These numbers are permanent, unique roll numbers — not login passwords. For online exam results, the separate private Exam Access ID and Date of Birth are used.</p>
+<div class="actions" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:15px 0"><button id="generateMissingStudentIds" class="secondary" type="button">✨ Generate AIL IDs for Existing Students</button><span id="studentIdBatchStatus" role="status" class="section-note"></span></div><form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields">
+<label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Date of Birth (for secure exam result lookup)<input id="studentDob" type="date"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
 <h3>🔐 Student Account · Approve &amp; Manage Login</h3>
 <p class="section-note">Only the student or approved guardian with this verified email can sign in to the real Firebase account. The academy does not create or store their password. Account access can be disabled anytime.</p>
 <strong id="studentAccountTitle"></strong>
@@ -411,6 +419,7 @@ import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,Ema
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
 import{initStudentAccountAdmin}from'./student-account-admin.js';
+import{ensureOfficialStudentId,validOfficialStudentId}from'./student-numbering.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
 const $=id=>document.getElementById(id),email='alislaharabicacademy@gmail.com';
 const defaults={"muallama":{"name":"Muallama","duration":"1 Year","description":"Foundational Islamic learning programme.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"muballigha":{"name":"Muballigha","duration":"2 Years","description":"Two-year programme for continued Islamic study.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"alima":{"name":"Alima","duration":"3 Years","description":"Extended programme for deeper Islamic learning.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"boys-hifz":{"name":"Boys Hifz Class","duration":"To be announced","description":"Qur'an memorisation (Hifz) programme for boys. Full course details will be published soon.","eligibility":"Eligibility criteria will be announced by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"childrens-quran-maktab":{"name":"Children's Qur'an Maktab","duration":"","description":"","eligibility":"","kitabs":[],"syllabus":"","fees":"","timings":""},"tajweed-for-girls":{"name":"Tajweed For Girls","duration":"","description":"","eligibility":"","kitabs":[],"syllabus":"","fees":"","timings":""}};
@@ -607,7 +616,7 @@ function updateStudentBatchVisibility(){
 }
 $('studentCourse').addEventListener('change',updateStudentBatchVisibility);
 updateStudentBatchVisibility();
-function resetRecord(kind){$(kind+'Form').reset();$(kind+'Id').value='';if(kind==='student')updateStudentBatchVisibility()}
+function resetRecord(kind){$(kind+'Form').reset();$(kind+'Id').value='';if(kind==='student'){updateStudentBatchVisibility();$('studentOfficialId').value=''}}
 for(const kind of ['teacher','student']){
  $(kind+'Clear').onclick=()=>resetRecord(kind);
  $(kind+'Form').onsubmit=async e=>{
@@ -619,6 +628,9 @@ for(const kind of ['teacher','student']){
   try{
    if(kind==='student'){
     const previous=await getDoc(doc(db,'students',id));
+    // Transactionally issue an official AIL00001-style ID once only.
+    // Keep the Firestore document ID and confidential exam access UUID unchanged.
+    data.studentCode=await ensureOfficialStudentId(db,doc(db,'students',id),data);
     const oldDOB=previous.exists()?String(previous.data().dob||''):'';
     const oldExamId=previous.exists()?String(previous.data().examid||id):'';
     const oldIdIsUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(oldExamId);
@@ -643,13 +655,33 @@ for(const kind of ['teacher','student']){
     }
    }else await setDoc(doc(db,plural,id),data);
    if(kind==='student'){await studentAccounts.syncStudent(id,data);await syncAllTeacherRosters();}
-   resetRecord(kind);$(kind+'Status').textContent='✓ Saved. Date of birth and Student ID are used only for private result lookup.';await renderRecords(plural);
+   const issuedCode=kind==='student'?data.studentCode:'';
+   resetRecord(kind);$(kind+'Status').textContent=kind==='student'?'✓ Student saved successfully. Official Student ID: '+issuedCode+' (permanent).':'✓ Saved successfully.';await renderRecords(plural);
   }catch(err){$(kind+'Status').textContent='Save failed: '+err.message}
  };
 }
+$('generateMissingStudentIds').onclick=async()=>{
+ if(!active)return;
+ const button=$('generateMissingStudentIds'),note=$('studentIdBatchStatus');
+ button.disabled=true;note.textContent='Checking existing student records…';
+ try{
+  const all=await getDocs(collection(db,'students'));
+  const pending=all.docs.filter(d=>!validOfficialStudentId(d.data().studentCode));
+  if(!pending.length){note.textContent='✓ All '+all.size+' registered students already have official AIL IDs.';await renderRecords('students');return}
+  if(!confirm('Generate permanent AIL 5-digit Student IDs for '+pending.length+' existing student(s)? Existing valid AIL numbers will not change.')){note.textContent='Cancelled. No student IDs changed.';return}
+  let done=0;
+  for(const student of pending){
+   const newCode=await ensureOfficialStudentId(db,doc(db,'students',student.id));
+   done++;note.textContent='Generating official student IDs… '+done+' / '+pending.length+' · Latest: '+newCode;
+  }
+  note.textContent='✓ Issued '+done+' permanent AIL IDs for existing students. All records are saved in Firebase.';
+  await renderRecords('students');
+ }catch(error){note.textContent='Stopped: '+error.message+'. Previously issued IDs are preserved. Retry to continue missing IDs.'}
+ finally{button.disabled=false}
+};
 async function renderRecords(kind){const singular=kind.slice(0,-1),list=$(singular+'List');list.textContent='Loading…';try{const snap=await getDocs(query(collection(db,kind),limit(150)));list.replaceChildren();const rows=kind==='students'&&$('studentFilter').value!=='all'?snap.docs.filter(d=>courseKey(d.data().course)===$('studentFilter').value):snap.docs;
 if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students';const counts={};for(const d of snap.docs){const s=d.data(),key=(s.course||'Unassigned')+(isMaktabCourse(s.course)?' · '+(s.batch||'Unassigned Batch'):'');counts[key]=(counts[key]||0)+1}$('studentBatchSummary').textContent='Batch-wise student totals: '+(Object.entries(counts).map(([key,n])=>key+': '+n).join(' | ')||'No students yet')}
-if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';if(kind==='students'){updateStudentBatchVisibility();}$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{
+if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'AIL ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';if(kind==='students'){updateStudentBatchVisibility();$('studentOfficialId').value=data.studentCode||'';}$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{
  if(!confirm('Delete this '+singular+' record?'))return;
  try{
   if(kind==='students'){
@@ -672,15 +704,23 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
   manage.textContent='🔐 Student Account Login';
   manage.onclick=()=>studentAccounts.open({id:d.id,...data});
   el.append(manage);
+  const copyOfficial=document.createElement('button');copyOfficial.type='button';copyOfficial.className='secondary';
+  copyOfficial.textContent='📋 Copy Official AIL Student ID';copyOfficial.disabled=!validOfficialStudentId(data.studentCode);
+  copyOfficial.onclick=async()=>{
+   if(!validOfficialStudentId(data.studentCode))return;
+   try{await navigator.clipboard.writeText(data.studentCode);$('studentStatus').textContent='✓ Official Student ID copied: '+data.studentCode}
+   catch(e){prompt('Copy Official Student ID:',data.studentCode)}
+  };
+  el.append(copyOfficial);
   const info=document.createElement('p');info.className='section-note';
-  info.textContent='Confidential Student ID (for exam checking): '+(data.examid||'Not issued. Edit and save this student to generate an Exam Student ID.');
+  info.textContent='Private Exam Result Access ID (different from official roll number): '+(data.examid||'Not issued. Edit and save to generate an Exam Access ID.');
   el.insertBefore(info,el.querySelector('button'));
   const copy=document.createElement('button');copy.type='button';copy.className='secondary';
-  copy.textContent='📋 Copy Student ID';
+  copy.textContent='🔑 Copy Private Exam Access ID';
   copy.disabled=!data.examid;
   copy.onclick=async()=>{
    if(!data.examid)return;
-   try{await navigator.clipboard.writeText(data.examid);alert('Confidential Exam Student ID copied. Share it only with the correct guardian.')}
+   try{await navigator.clipboard.writeText(data.examid);alert('Private Exam Access ID copied. Share it only with the correct guardian.')}
    catch(e){prompt('Copy the Student ID:',data.examid)}
   };
   el.append(copy);
@@ -1891,7 +1931,7 @@ async function adminEncryptedBackupDownload(){
  if(!$('adminBackupUnderstand').checked){status.textContent='Please confirm that you will store the password safely.';return}
  if(!globalThis.crypto?.subtle||!globalThis.crypto?.getRandomValues){status.textContent='Encryption is unavailable on this browser. Open the secure HTTPS website in Chrome.';return}
  button.disabled=true;
- const top=['courses','classSubjects','students','teachers','teacherAccess','teacherRosters','applications','teacherInvites','teacherSubmissions','teacherSalaryEvents','examResults','examResultLookups','studentAccess'];
+ const top=['courses','classSubjects','students','teachers','teacherAccess','teacherRosters','applications','teacherInvites','teacherSubmissions','teacherSalaryEvents','examResults','examResultLookups','studentAccess','academyCounters','studentIdRegistry'];
  const documents=[],teacherIds=new Set();
  try{
   for(const name of top){
