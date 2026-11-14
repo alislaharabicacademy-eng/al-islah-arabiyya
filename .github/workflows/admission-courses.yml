@@ -1,0 +1,27 @@
+name: Admission Course Regression Checks
+on:
+  pull_request:
+    paths:
+      - 'admission.html'
+      - 'admin.html'
+      - 'admission-course-utils.js'
+      - 'tests/admission-courses.test.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'admission.html'
+      - 'admin.html'
+      - 'admission-course-utils.js'
+      - 'tests/admission-courses.test.mjs'
+permissions:
+  contents: read
+jobs:
+  admission-course-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run Course Form Regression Checks
+        run: node --test tests/admission-courses.test.mjs
