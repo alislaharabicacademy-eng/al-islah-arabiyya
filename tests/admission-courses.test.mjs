@@ -60,3 +60,17 @@ test('Student dashboard displays the approved assigned course, not every availab
  const student=readFileSync(new URL('../student-login.html',import.meta.url),'utf8');
  assert.match(student,/access\.course/);
 });
+
+
+test('Public All Courses never fabricates unpublished course cards',()=>{
+ const catalog=readFileSync(new URL('../all-courses.html',import.meta.url),'utf8');
+ assert.match(catalog,/where\('published','==',true\)/);
+ assert.match(catalog,/const map=new Map\(\)/);
+ assert.doesNotMatch(catalog,/new Map\(defaults\.map/);
+ assert.doesNotMatch(catalog,/defaults\.forEach\(add\)/);
+});
+test('The student dashboard resolves a live published course name safely',()=>{
+ const student=readFileSync(new URL('../student-login.html',import.meta.url),'utf8');
+ assert.match(student,/getDoc\(doc\(db,'courses',access\.course\)\)/);
+ assert.match(student,/className=String\(catalog\.data\(\)\.name\)\.trim\(\)/);
+});
