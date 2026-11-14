@@ -1,146 +1,265 @@
-<!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#103c2c">
-<meta name="description" content="Madrasa Al Islahul Arabiya Student Portal — view your published exam results using your private Student ID and date of birth.">
-<title>Student Login | Madrasa Al Islahul Arabiya</title>
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f412e">
+<meta name="description" content="Secure student account login for Madrasa Al Islahul Arabiya. Students and approved guardians can sign in with a verified account to see their published exam results.">
+<title>Student Account Login | Madrasa Al Islahul Arabiya</title>
 <style>
-:root{--green:#0f4832;--gold:#c5a16b;--ink:#193c2b}
-*{box-sizing:border-box}
-body{margin:0;background:radial-gradient(ellipse at 20% -10%,#daeade 0%,transparent 54%),#f5f8f3;color:var(--ink);font-family:Arial,'Noto Sans',sans-serif;min-height:100vh}
-a{color:inherit;text-decoration:none}
-.top{background:linear-gradient(125deg,#082f24,#165c3e);border-bottom:3px solid var(--gold);padding:26px 20px 35px;text-align:center;color:#fff;position:relative;overflow:hidden}
-.top:before{content:'۞';position:absolute;font-size:340px;right:-36px;top:-130px;opacity:.055;pointer-events:none}
-.top img{position:relative;width:80px;height:80px;object-fit:contain;clip-path:circle(47% at 50% 50%)}
-.top h1{position:relative;margin:12px 0 6px;font:700 clamp(24px,4.5vw,35px) Georgia,serif;color:#f1dfae}
-.top p{position:relative;color:#cae2d1;font-size:13px;letter-spacing:.025em}
-.top nav{position:relative;display:flex;justify-content:center;flex-wrap:wrap;gap:13px;margin-top:19px}
-.top nav a{border:1px solid #d5bc7a66;padding:9px 13px;border-radius:9px;color:#f8ebce;font-size:12px}
-main{max-width:780px;margin:auto;padding:28px 18px 55px}
-.page-title{text-align:center;margin:4px 0 23px}.page-title h2{font:700 clamp(27px,5vw,37px) Georgia,serif;margin:0;color:#164b34}.page-title p{color:#587363;line-height:1.6;margin:10px auto;max-width:610px}
-.card{background:#fff;border:1px solid #d9e8db;border-radius:20px;padding:25px;box-shadow:0 15px 40px #0d3d2713;margin:18px 0}
-.headline{display:flex;gap:11px;align-items:center;margin:0 0 20px}.headline .icon{width:49px;height:49px;border-radius:14px;background:#e7f2e7;display:grid;place-items:center;font-size:26px}.headline h3{margin:0;color:#0c5435;font:700 22px Georgia,serif}.headline span{display:block;font-size:12px;color:#5a7761;margin-top:5px}
-#studentPortalForm{display:grid;gap:17px}
-label{display:block;font-size:12px;font-weight:800;color:#2b5740}
-input{display:block;width:100%;padding:13px 14px;min-height:48px;margin-top:8px;background:#f8fbf8;border:1px solid #b9cfc1;border-radius:10px;font:14px Arial,sans-serif;color:#163b29}
-input:focus{outline:3px solid #d5e6d8;border-color:#3f8560}
-button,.button{border:1px solid #13583c;min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#126342;color:#fff;border-radius:10px;padding:12px 18px;cursor:pointer;font:700 14px Arial,sans-serif;text-decoration:none}
-button.secondary,.button.secondary{background:#edf7ee;color:#125038;border-color:#b5d0bd}
-button:disabled{opacity:.56;cursor:wait}
-button:hover,.button:hover{filter:brightness(1.07)}
-.status{color:#527264;font-size:13px;line-height:1.65;min-height:20px;margin-top:12px}
-.status.good{color:#147042}.status.bad{color:#a1342d}
-.hint{font-size:12px;color:#647d68;line-height:1.7}
-.portal-banner{display:flex;gap:14px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-bottom:1px solid #dce9df;padding-bottom:16px}
-.portal-banner h3{margin:0;color:#144f34;font:700 23px Georgia,serif}
-.portal-banner p{color:#547661;font-size:13px;margin:7px 0 0}
-.exam-result{margin:16px 0;padding:17px;border:1px solid #d2e4d4;border-radius:14px;background:linear-gradient(120deg,#f7fcf8,#ecf6ef)}
-.exam-result h4{color:#134d33;font:700 21px Georgia,serif;margin:0 0 8px}
-.exam-result p{color:#536d5c;margin:6px 0;line-height:1.65;font-size:13px}
-.exam-result .pill{display:inline-block;margin-top:9px;font-size:11px;font-weight:850;border-radius:99px;padding:6px 11px;color:#13673a;background:#d9f2e1}
-.exam-result .pill.pending{background:#fff0d5;color:#845521}
-.exam-result .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
-.exam-result .actions a{font-size:12px}
-.note{margin:18px 0;background:#e8f1e8;border:1px solid #cee0d0;color:#526e57;font-size:12px;line-height:1.8;padding:15px;border-radius:13px}
-footer{background:#0a3427;color:#d7c69c;text-align:center;padding:22px 12px;font-size:12px;margin-top:20px}
+:root{--green:#114c34;--deep:#082f23;--gold:#c8aa72;--ink:#1b422f}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 45% -15%,#d8e8db 0%,transparent 55%),#f5f8f3;color:var(--ink);font-family:Arial,'Noto Sans',sans-serif}
+button,input,a{font:inherit}a{color:inherit;text-decoration:none}
+header{background:linear-gradient(120deg,#073224,#165c3e);color:white;text-align:center;padding:29px 16px 32px;border-bottom:4px solid var(--gold);position:relative;overflow:hidden}
+header::before{content:'۞';font-size:330px;position:absolute;right:-40px;top:-120px;opacity:.05;pointer-events:none}
+header img{position:relative;width:81px;height:81px;object-fit:contain;clip-path:circle(46% at 50% 50%)}
+header h1{position:relative;font:700 clamp(24px,5vw,37px) Georgia,serif;margin:12px 0;color:#f8e6ba}
+header p{position:relative;color:#d6e6d8;font-size:12px;letter-spacing:.11em}
+header nav{display:flex;position:relative;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:21px}
+header nav a{border:1px solid #dabd7f5e;padding:9px 13px;border-radius:9px;color:#f8eccf;font-size:12px}
+main{max-width:960px;margin:0 auto;padding:30px 18px 66px}.intro{text-align:center;margin-bottom:23px}
+.intro h2{font:700 clamp(27px,6vw,40px) Georgia,serif;color:#12472e;margin:5px 0 10px}
+.intro p{color:#5e7965;max-width:600px;line-height:1.75;margin:0 auto;font-size:14px}
+.card{padding:27px;background:#fff;border:1px solid #d5e6d9;border-radius:19px;box-shadow:0 13px 35px #0c402313;margin:19px auto}
+.card h3{font:700 24px Georgia,serif;color:#145337;margin:0 0 14px}
+.card p{line-height:1.65}
+.auth-switch{display:flex;gap:7px;flex-wrap:wrap;padding:5px;background:#edf5ee;border:1px solid #d3e4d7;border-radius:13px;margin-bottom:23px}
+.auth-switch button{flex:1 1 160px;background:transparent;border:0;min-height:41px;color:#3b6850;font-size:13px;font-weight:800;border-radius:10px}
+.auth-switch button[aria-selected="true"]{background:#fff;color:#115b3b;box-shadow:0 3px 11px #08291618}
+form{display:grid;gap:15px}form label{font-size:12px;font-weight:800;color:#28543c}
+form input{display:block;width:100%;border:1px solid #b9d0be;border-radius:11px;background:#f9fcf9;min-height:48px;padding:13px;font-size:14px;margin-top:8px;color:#16432c}
+form input:focus{outline:3px solid #d8eada;border-color:#2f7a50}
+button,.btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid #125c3d;border-radius:10px;background:#12613f;color:#fff;padding:12px 17px;min-height:45px;font:700 13px Arial,sans-serif;cursor:pointer;text-decoration:none}
+button.secondary,.btn.secondary{background:#eff7ef;color:#17563d;border-color:#bcd5c3}
+button.google{background:#fff;color:#214931;border-color:#c9d8cd}
+button:disabled{opacity:.55;cursor:wait}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px}
+.auth-help{font-size:12px;color:#637e69}
+.status{font-size:13px;color:#5b7764;line-height:1.7;min-height:18px;margin:14px 0}
+.status.error{color:#a1382e}.status.good{color:#147044}
+.note{background:#eaf4eb;color:#56715c;padding:15px;border:1px solid #d4e5d6;border-radius:13px;font-size:12px;line-height:1.8;margin:22px auto}
+.dashboard-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-bottom:1px solid #e1ece2;padding-bottom:16px}
+.dashboard-header h3{margin:0 0 8px}.dashboard-header small{color:#5e7a67}
+.student-card{padding:20px;background:linear-gradient(125deg,#f5fbf6,#edf6ef);border:1px solid #d6e9d8;border-radius:14px;margin-top:19px}
+.student-card h4{font:700 22px Georgia,serif;color:#15563a;margin:0 0 7px}
+.student-card p{font-size:13px;color:#54715e;margin:7px 0}
+.student-card .tag{display:inline-block;font-size:11px;font-weight:900;background:#dbece0;color:#14643f;border-radius:20px;padding:7px 12px}
+.exam-card{margin:14px 0;padding:15px;background:#fff;border:1px solid #dfe9df;border-radius:12px}
+.exam-card h5{font:700 18px Georgia,serif;margin:0 0 8px;color:#114d34}
+.exam-card p{color:#5d7461;font-size:12px;margin:6px 0}
+.exam-card a{margin-top:12px}
+#studentAuthCard{max-width:620px}
+#emailVerifyNotice{background:#fff8e9;border:1px solid #ecd8a5}
+footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font-size:12px}
 [hidden]{display:none!important}
-@media(max-width:540px){.card{padding:18px}.top{padding:20px 14px 28px}.page-title p{font-size:13px}.portal-banner h3{font-size:19px}.exam-result .actions a{width:100%}}
+@media(max-width:570px){.card{padding:17px}.actions button,.actions a{flex:1 1 140px}.dashboard-header button{width:100%}}
 </style></head><body>
-<header class="top">
-<img src="1_20261112_080707_0000.png" alt="Academy official logo">
-<h1>Madrasa Al Islahul Arabiya</h1>
-<p>STUDENT RESULT PORTAL · FAITH · LEARNING · EXCELLENCE</p>
-<nav aria-label="Student portal navigation">
-<a href="index.html">⌂ Home</a>
-<a href="exam-results.html">🏅 Exam Results</a>
-<a href="admission.html">✦ Admissions</a>
-</nav>
-</header>
+<header><img src="1_20261112_080707_0000.png" alt="Official Academy Logo">
+<h1>Madrasa Al Islahul Arabiya</h1><p>SECURE STUDENT ACCOUNT PORTAL</p>
+<nav><a href="index.html">⌂ Home</a><a href="exam-results.html">🏅 Public Exam Checker</a><a href="admission.html">Apply Now</a></nav></header>
 <main>
-<div class="page-title"><h2>🎓 Student Login</h2>
-<p>Check your published examination results and download your result PDF and certificate. Use the confidential Student ID issued by your Madrasa.</p></div>
-<section class="card" id="portalLogin">
-<div class="headline"><span class="icon" aria-hidden="true">🔐</span><div><h3>Student Result Access</h3><span>Student ID + Date of Birth</span></div></div>
-<form id="studentPortalForm">
-<label for="portalStudentId">Student ID
-<input id="portalStudentId" type="text" maxlength="50" placeholder="Enter your confidential Student ID" autocomplete="off" spellcheck="false" required></label>
-<label for="portalStudentDob">Date of Birth
-<input id="portalStudentDob" type="date" autocomplete="off" required></label>
-<button id="portalSignIn" type="submit">🔎 View My Published Results</button>
-</form>
-<p id="portalStatus" class="status" role="status" aria-live="polite"></p>
-<p class="hint">Don't have your Student ID? Ask your Madrasa administrator privately. Only examination results that have been published will appear.</p>
-</section>
-<section class="card" id="portalDashboard" aria-label="Student published examination results" hidden>
-<div class="portal-banner">
- <div><h3 id="portalWelcome">Published Exam Results</h3><p id="portalCount"></p></div>
- <button type="button" class="secondary" id="portalLogout">↩ Exit Student Portal</button>
+<div class="intro"><h2>🎓 Student Account Login</h2>
+<p>Students and approved guardians can sign in securely using their own email account. View your private student dashboard and published examination results.</p></div>
+<section class="card" id="studentAuthCard">
+<div class="auth-switch" role="tablist" aria-label="Account access options">
+<button type="button" id="authTabSignIn" aria-selected="true" role="tab">🔐 Sign In</button>
+<button type="button" id="authTabCreate" aria-selected="false" role="tab">✨ Create Account</button>
 </div>
-<div id="portalExamList"></div>
+<div id="authSignInPanel">
+<h3>Welcome Back</h3>
+<form id="studentEmailLogin">
+<label>Email Address<input id="studentLoginEmail" type="email" autocomplete="username" maxlength="200" placeholder="Your registered email address" required></label>
+<label>Password<input id="studentLoginPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="Enter your account password"></label>
+<button id="studentEmailSignIn" type="submit">🔐 Sign In to Student Account</button>
+</form>
+<div class="actions"><button id="studentGoogleSignIn" class="google" type="button">🌐 Continue with Google</button>
+<button id="studentResetPassword" class="secondary" type="button">Forgot Password?</button></div>
+</div>
+<div id="authCreatePanel" hidden><h3>Register Your Student Account</h3>
+<p class="auth-help">The Madrasa must approve your email in Student Details before the account can access any student records. Registration alone does not grant access.</p>
+<form id="studentCreateAccountForm">
+<label>Your Approved Email Address<input id="studentRegisterEmail" type="email" autocomplete="email" required maxlength="200"></label>
+<label>Create Password (12+ characters)<input id="studentRegisterPassword" type="password" autocomplete="new-password" minlength="12" required></label>
+<label>Confirm Password<input id="studentRegisterConfirm" type="password" autocomplete="new-password" minlength="12" required></label>
+<button id="studentRegisterButton" type="submit">✨ Create &amp; Verify Account</button>
+</form>
+<div class="actions"><button id="studentGoogleCreate" class="google" type="button">🌐 Use My Google Account Instead</button></div>
+</div>
+<p class="status" id="studentAuthStatus" role="status" aria-live="polite"></p>
 </section>
-<div class="note"><strong>Privacy:</strong> This Student Login is for <strong>published exam results only</strong>. It does not give access to private fee, attendance or personal academic records. Student ID and Date of Birth must be kept confidential; this is not a Firebase account password login.</div>
-</main>
-<footer>© Madrasa Al Islahul Arabiya · Student Examination Portal</footer>
+<section class="card" id="emailVerifyNotice" hidden>
+<h3>✉️ Verify Your Email</h3>
+<p>Verify your email address using the Firebase verification message. Until verified, you cannot access the student dashboard.</p>
+<div class="actions"><button id="studentSendVerification" type="button">Send Verification Email</button>
+<button class="secondary" id="studentVerificationRetry" type="button">✓ I Verified – Continue</button>
+<button class="secondary" id="studentVerifySignOut" type="button">Sign Out</button></div>
+<p class="status" id="studentVerifyStatus" role="status"></p>
+</section>
+<section class="card" id="studentPrivateDashboard" hidden>
+<div class="dashboard-header"><div><h3>🕌 My Madrasa Dashboard</h3>
+<small id="studentSignedEmail"></small></div><button id="studentDashboardSignOut" class="secondary" type="button">↩ Sign Out</button></div>
+<p class="status" id="studentDashboardStatus" role="status" aria-live="polite"></p>
+<div id="studentAccountCards"></div>
+<button id="studentRefreshDashboard" class="secondary" type="button">↻ Refresh My Results</button>
+</section>
+<p class="note"><strong>Account Security:</strong> A real Firebase Authentication account and verified email are required. The Madrasa administrator must separately approve the exact email address. Students cannot view other students' private information. If you only need to check a published exam by Student ID and Date of Birth, use the <a href="exam-results.html"><strong>Public Exam Checker</strong></a>.</p>
+</main><footer>© Madrasa Al Islahul Arabiya · Faith · Learning · Excellence</footer>
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
-import{getFirestore,doc,getDoc}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
-import{examStudentLookupKey}from'./exam-lookup.js';
+import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+import{getFirestore,collection,doc,getDoc,getDocs,query,where,limit}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 const $=id=>document.getElementById(id);
-let db=null,epoch=0;
-const status=$('portalStatus'),login=$('portalLogin'),dashboard=$('portalDashboard'),submit=$('portalSignIn');
-async function getDb(){
- if(db)return db;
- const cfg=await fetch('firebase-config.json').then(r=>{if(!r.ok)throw Error('Configuration is unavailable');return r.json()});
- db=getFirestore(initializeApp(cfg,'madrasa-student-portal'));
- return db;
+const authCard=$('studentAuthCard'),verification=$('emailVerifyNotice'),dashboard=$('studentPrivateDashboard');
+const authStatus=$('studentAuthStatus'),verifyStatus=$('studentVerifyStatus'),dashboardStatus=$('studentDashboardStatus');
+let auth=null,db=null,loadingToken=0,activeUser=null;
+function authMessage(value,error=false){authStatus.className='status'+(error?' error':'');authStatus.textContent=value}
+function verifyMessage(value,error=false){verifyStatus.className='status'+(error?' error':'');verifyStatus.textContent=value}
+function dashMessage(value,error=false){dashboardStatus.className='status'+(error?' error':'');dashboardStatus.textContent=value}
+function safeEmail(email){return String(email||'').trim().toLowerCase()}
+function showAuthTab(mode){
+ const login=mode==='signin';$('authSignInPanel').hidden=!login;$('authCreatePanel').hidden=login;
+ $('authTabSignIn').setAttribute('aria-selected',String(login));$('authTabCreate').setAttribute('aria-selected',String(!login));
+ authMessage('');
 }
-function escapeNothing(){}
-async function studentLogin(event){
- event.preventDefault();
- const attempt=++epoch;
- const userId=$('portalStudentId').value.trim().toLowerCase(),dob=$('portalStudentDob').value;
- dashboard.hidden=true;status.className='status';status.textContent='Checking published exam results…';submit.disabled=true;
+$('authTabSignIn').onclick=()=>showAuthTab('signin');
+$('authTabCreate').onclick=()=>showAuthTab('create');
+function openAuthenticatedState(user){
+ authCard.hidden=true;verification.hidden=!user||user.emailVerified;
+ dashboard.hidden=true;
+ if(user&&!user.emailVerified)verifyMessage('Please verify '+(user.email||'your email')+' before opening your Madrasa dashboard.');
+}
+function authError(err){
+ switch(err.code){
+ case 'auth/invalid-credential':case 'auth/wrong-password':return 'Incorrect email or password. Please try again or reset your password.';
+ case 'auth/email-already-in-use':return 'An account already exists for this email. Sign in or reset your password.';
+ case 'auth/operation-not-allowed':return 'Email-password registration is not enabled in Firebase. Please contact the Madrasa administrator.';
+ case 'auth/unauthorized-domain':return 'This domain must be allowed in Firebase Authentication authorized domains.';
+ case 'auth/popup-closed-by-user':return 'Google Sign-In was cancelled.';
+ case 'auth/too-many-requests':return 'Too many attempts. Try again later.';
+ default:return err.message||'Authentication failed.';
+ }
+}
+async function loadPrivateDashboard(user,token){
+ dashboard.hidden=false;authCard.hidden=true;verification.hidden=true;
+ $('studentSignedEmail').textContent='Verified account: '+String(user.email||'');
+ const target=$('studentAccountCards');target.replaceChildren();dashMessage('Checking academy-approved student access…');
  try{
-  const hash=await examStudentLookupKey(userId,dob);
-  const database=await getDb();
-  const lookup=await getDoc(doc(database,'examResultLookups',hash));
-  if(!lookup.exists()||lookup.data().enabled!==true)throw Error('No published results found. Check your Student ID and Date of Birth, or contact the Madrasa.');
-  const references=[...new Set(Array.isArray(lookup.data().resultIds)?lookup.data().resultIds:[])].filter(id=>/^RESULT-[a-f0-9]{24}$/.test(id)).slice(0,75);
-  if(!references.length)throw Error('No published examinations are currently available.');
-  const docs=await Promise.all(references.map(id=>getDoc(doc(database,'examResults',id)).catch(()=>null)));
-  if(attempt!==epoch)return;
-  const exams=docs.filter(snap=>snap&&snap.exists()&&snap.data().published===true);
-  if(!exams.length)throw Error('No published exam results are currently available. Please ask your Madrasa.');
-  exams.sort((a,b)=>String(b.data().examDate||'').localeCompare(String(a.data().examDate||'')));
-  const container=$('portalExamList');container.replaceChildren();
-  const name=String(exams[0].data().studentName||'Student');
-  $('portalWelcome').textContent='Assalamu Alaikum · '+name;
-  $('portalCount').textContent=exams.length+' published examination result(s) found.';
-  exams.forEach(snap=>{
-   const e=snap.data(),card=document.createElement('article');card.className='exam-result';
-   const title=document.createElement('h4');title.textContent=e.examTitle||'Academy Examination';
-   const course=document.createElement('p');course.textContent=[e.course,e.academicYear,e.examDate].filter(Boolean).join('  ·  ');
-   const marks=document.createElement('p');marks.textContent='Marks: '+e.total+' / '+e.maxTotal+'  |  '+Number(e.percent||0).toFixed(2)+'%  |  Grade: '+(e.grade||'—');
-   const badge=document.createElement('span');badge.className='pill'+(e.passed?'':' pending');badge.textContent=e.passed?'✓ PASS':'NEEDS IMPROVEMENT';
-   const actions=document.createElement('div');actions.className='actions';
-   const link=document.createElement('a');link.className='button';link.href='exam-results.html?id='+encodeURIComponent(snap.id);
-   link.textContent='📕 View Result & Download PDFs →';
-   actions.append(link);card.append(title,course,marks,badge,actions);container.append(card);
-  });
-  // Clear DOB after verification; it is never written to localStorage or URL.
-  $('portalStudentDob').value='';
-  login.hidden=true;dashboard.hidden=false;
-  dashboard.scrollIntoView({behavior:'smooth',block:'start'});
-  status.className='status good';status.textContent='✓ Published results loaded.';
- }catch(err){
-  if(attempt===epoch){status.className='status bad';status.textContent=err.code==='permission-denied'?'Results unavailable. Verify Student ID, DOB and publication status.':err.message}
- }finally{if(attempt===epoch)submit.disabled=false}
+  await user.getIdToken(true);
+  const email=safeEmail(user.email);
+  if(!user.emailVerified||!email)throw Error('Email verification is required.');
+  const snap=await getDocs(query(collection(db,'studentAccess'),where('email','==',email),where('enabled','==',true),limit(30)));
+  if(token!==loadingToken)return;
+  if(snap.empty){
+   dashMessage('Your Firebase account is verified, but this email has not been approved for Student Login by the Madrasa. Ask the admin to open Student Details → Student Account Login and approve '+email+'.');
+   return;
+  }
+  let visible=0;
+  for(const accessDoc of snap.docs){
+   if(token!==loadingToken)return;
+   const access=accessDoc.data();
+   if(access.enabled!==true||access.email!==email)continue;
+   const card=document.createElement('article');card.className='student-card';
+   const title=document.createElement('h4');title.textContent=access.studentName||'Student';
+   const details=document.createElement('p');details.textContent='Class: '+(access.course||'—')+(access.batch?' · Batch: '+access.batch:'')+' · Status: '+(access.state||'Active');
+   const label=document.createElement('span');label.className='tag';label.textContent='✓ Verified Student Account';
+   card.append(title,details,label);
+   const heading=document.createElement('h4');heading.textContent='🏅 Published Examination Results';heading.style.marginTop='23px';heading.style.fontSize='18px';card.append(heading);
+   const refs=[...new Set(Array.isArray(access.resultIds)?access.resultIds:[])].filter(id=>/^RESULT-[a-f0-9]{24}$/.test(id)).slice(0,75);
+   let count=0;
+   for(const id of refs){
+    const result=await getDoc(doc(db,'examResults',id)).catch(()=>null);
+    if(token!==loadingToken)return;
+    if(!result?.exists()||result.data().published!==true||result.data().studentId!==access.studentId)continue;
+    const e=result.data(),row=document.createElement('section');row.className='exam-card';
+    const name=document.createElement('h5');name.textContent=e.examTitle||'Madrasa Examination';
+    const info=document.createElement('p');info.textContent=[e.examDate,e.academicYear,e.course].filter(Boolean).join(' · ');
+    const score=document.createElement('p');score.textContent='Marks '+e.total+' / '+e.maxTotal+' · '+Number(e.percent||0).toFixed(2)+'% · Grade '+String(e.grade||'—')+' · '+(e.passed?'PASS':'NEEDS IMPROVEMENT');
+    const action=document.createElement('a');action.href='exam-results.html?id='+encodeURIComponent(id);action.className='btn';action.textContent='📕 View Result & Download Certificate';
+    row.append(name,info,score,action);card.append(row);count++;
+   }
+   if(!count){const p=document.createElement('p');p.textContent='No published examination results yet.';card.append(p)}
+   target.append(card);visible++;
+  }
+  dashMessage('✓ '+visible+' authorized student profile(s) loaded. Your account can view published results only.');
+ }catch(err){if(token===loadingToken)dashMessage('Unable to load student dashboard: '+(err.code==='permission-denied'?'Permission denied. Please confirm email verification and administrator approval.':err.message),true)}
 }
-$('studentPortalForm').addEventListener('submit',studentLogin);
-$('portalLogout').addEventListener('click',()=>{
- epoch++;login.hidden=false;dashboard.hidden=true;$('portalExamList').replaceChildren();
- $('studentPortalForm').reset();status.textContent='Session cleared on this page.';status.className='status';
- submit.disabled=false;login.scrollIntoView({behavior:'smooth',block:'start'});
-});
-</script>
-</body></html>
+async function refreshAuthState(){
+ const user=auth?.currentUser;if(!user)return;
+ verifyMessage('Checking email verification…');
+ try{
+  await user.reload();await user.getIdToken(true);
+  if(user.emailVerified){openAuthenticatedState(user);await loadPrivateDashboard(user,++loadingToken)}
+  else verifyMessage('Your email has not been verified yet. Open the verification email, then select I Verified.');
+ }catch(err){verifyMessage(authError(err),true)}
+}
+async function googleSignIn(){
+ authMessage('Opening secure Google Sign-In…');
+ try{await signInWithPopup(auth,new GoogleAuthProvider())}
+ catch(err){
+  if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(err.code)){
+   try{await signInWithRedirect(auth,new GoogleAuthProvider());return}
+   catch(redirectErr){authMessage(authError(redirectErr),true);return}
+  }
+  authMessage(authError(err),true);
+ }
+}
+$('studentGoogleSignIn').onclick=googleSignIn;
+$('studentGoogleCreate').onclick=googleSignIn;
+$('studentEmailLogin').onsubmit=async event=>{
+ event.preventDefault();
+ const btn=$('studentEmailSignIn');btn.disabled=true;authMessage('Signing into your account…');
+ try{
+  await signInWithEmailAndPassword(auth,safeEmail($('studentLoginEmail').value),$('studentLoginPassword').value);
+  $('studentLoginPassword').value='';
+ }catch(err){authMessage(authError(err),true)}
+ finally{btn.disabled=false}
+};
+$('studentCreateAccountForm').onsubmit=async event=>{
+ event.preventDefault();
+ const password=$('studentRegisterPassword').value,confirm=$('studentRegisterConfirm').value;
+ if(password!==confirm)return authMessage('Passwords do not match.',true);
+ if(password.length<12)return authMessage('Use a password of at least 12 characters.',true);
+ const btn=$('studentRegisterButton');btn.disabled=true;authMessage('Creating secure Firebase account…');
+ try{
+  const result=await createUserWithEmailAndPassword(auth,safeEmail($('studentRegisterEmail').value),password);
+  $('studentRegisterPassword').value='';$('studentRegisterConfirm').value='';
+  await sendEmailVerification(result.user);
+  authMessage('✓ Account created! Verification email sent. Verify it before opening your student dashboard.');
+ }catch(err){authMessage(authError(err),true)}
+ finally{btn.disabled=false}
+};
+$('studentResetPassword').onclick=async()=>{
+ const email=safeEmail($('studentLoginEmail').value);
+ if(!email)return authMessage('Enter your email address above, then click Forgot Password.',true);
+ authMessage('Sending Firebase password reset email…');
+ try{await sendPasswordResetEmail(auth,email);authMessage('If this account exists, Firebase will send a password reset email.')}
+ catch(err){authMessage(authError(err),true)}
+};
+$('studentSendVerification').onclick=async()=>{
+ if(!auth.currentUser)return;
+ const btn=$('studentSendVerification');btn.disabled=true;
+ try{await sendEmailVerification(auth.currentUser);verifyMessage('✓ Verification email sent. Check inbox and spam.')}
+ catch(err){verifyMessage(authError(err),true)}
+ finally{btn.disabled=false}
+};
+$('studentVerificationRetry').onclick=refreshAuthState;
+async function logout(){
+ ++loadingToken;activeUser=null;
+ try{await signOut(auth)}catch(err){dashMessage(authError(err),true)}
+ $('studentLoginPassword').value='';$('studentAccountCards').replaceChildren();
+}
+$('studentDashboardSignOut').onclick=logout;$('studentVerifySignOut').onclick=logout;
+$('studentRefreshDashboard').onclick=()=>{if(auth.currentUser&&auth.currentUser.emailVerified)loadPrivateDashboard(auth.currentUser,++loadingToken)};
+try{
+ const conf=await fetch('firebase-config.json',{cache:'no-store'}).then(r=>r.json());
+ const app=initializeApp(conf),mod=await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
+ auth=getAuth(app);db=getFirestore(app);
+ onAuthStateChanged(auth,async user=>{
+  const token=++loadingToken;activeUser=user;
+  if(!user){
+   authCard.hidden=false;verification.hidden=true;dashboard.hidden=true;
+   $('studentAccountCards').replaceChildren();return;
+  }
+  if(!user.emailVerified){openAuthenticatedState(user);return}
+  await loadPrivateDashboard(user,token);
+ });
+}catch(err){authMessage('Unable to start secure student login: '+err.message,true)}
+</script></body></html>
