@@ -48,6 +48,7 @@ button:disabled{opacity:.55;cursor:wait}
 .dashboard-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-bottom:1px solid #e1ece2;padding-bottom:16px}
 .dashboard-header h3{margin:0 0 8px}.dashboard-header small{color:#5e7a67}
 .student-card{padding:20px;background:linear-gradient(125deg,#f5fbf6,#edf6ef);border:1px solid #d6e9d8;border-radius:14px;margin-top:19px}
+.student-card>.academy-profile-avatar{width:94px;height:94px;float:right;object-fit:cover;border-radius:16px;border:3px solid #d5e7d7;margin:0 0 10px 12px}
 .student-card h4{font:700 22px Georgia,serif;color:#15563a;margin:0 0 7px}
 .student-card p{font-size:13px;color:#54715e;margin:7px 0}
 .student-card .tag{display:inline-block;font-size:11px;font-weight:900;background:#dbece0;color:#14643f;border-radius:20px;padding:7px 12px}
@@ -131,6 +132,7 @@ footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,collection,doc,getDoc,getDocs,query,where,limit}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import{photoAvatar}from'./profile-photo.js';
 import{normalizeStudentCode,validateStudentDOB,matchStudentDobVerifier}from'./student-dob-verifier.js';
 const $=id=>document.getElementById(id);
 const identityCard=$('studentIdentityCard'),identityStatus=$('studentIdentityStatus');
@@ -226,7 +228,7 @@ async function loadPrivateDashboard(user,token){
    const title=document.createElement('h4');title.textContent=access.studentName||'Student';
    const details=document.createElement('p');details.textContent='Official Student ID: '+(access.studentCode||'Not assigned yet')+'  ·  Class: '+(access.course||'—')+(access.batch?' · Batch: '+access.batch:'')+' · Status: '+(access.state||'Active');
    const label=document.createElement('span');label.className='tag';label.textContent='✓ Verified Student Account';
-   card.append(title,details,label);
+   card.append(photoAvatar(access.photoData,'Student profile photograph'),title,details,label);
    const heading=document.createElement('h4');heading.textContent='🏅 Published Examination Results';heading.style.marginTop='23px';heading.style.fontSize='18px';card.append(heading);
    const refs=[...new Set(Array.isArray(access.resultIds)?access.resultIds:[])].filter(id=>/^RESULT-[a-f0-9]{24}$/.test(id)).slice(0,75);
    let count=0;
