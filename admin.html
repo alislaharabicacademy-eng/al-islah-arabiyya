@@ -752,9 +752,9 @@ for(const kind of ['teacher','student']){
      await setDoc(doc(db,'students',id),data,{merge:true});
     }
    }else await setDoc(doc(db,plural,id),data);
+   let promotionNote='';
    if(kind==='student'){
-    let syncedData=data;
-    let promotionNote='';
+    let syncedData=(await getDoc(doc(db,'students',id))).data();
     if(data.state==='Completed'){
      try{
       const p=await maybePromoteStudent(db,id);
@@ -768,7 +768,7 @@ for(const kind of ['teacher','student']){
     await syncAllTeacherRosters();
    }
    const issuedCode=kind==='student'?data.studentCode:'';
-   resetRecord(kind);$(kind+'Status').textContent=kind==='student'?'✓ Student saved successfully. Official Student ID: '+issuedCode+' (permanent).'+(typeof promotionNote==='string'?promotionNote:''):'✓ Saved successfully.';await renderRecords(plural);
+   resetRecord(kind);$(kind+'Status').textContent=kind==='student'?'✓ Student saved successfully. Official Student ID: '+issuedCode+' (permanent).'+promotionNote:'✓ Saved successfully.';await renderRecords(plural);
   }catch(err){$(kind+'Status').textContent='Save failed: '+err.message}
  };
 }
