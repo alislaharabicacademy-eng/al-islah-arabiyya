@@ -47,3 +47,22 @@ Existing students without DOB need their DOB recorded in Student Details. Publis
 The public homepage has a responsive **Menu** button for phones and small laptops. Its **Student Access** section links to **Student Login** (`student-login.html`) and **Online Exam Results** (`exam-results.html`). On wide desktop screens both links are also available in the top navigation.
 
 The Student Login page validates the confidential Exam Student ID and DOB **only for finding published exam results**. It lists the student's published examinations and links to the printable result and certificate. It intentionally does not expose attendance, fee balances, address, phone number or private student records. It is **not a Firebase Authentication user account**, and DOB must not be treated as a strong password. Admin issues the independent confidential Exam Student ID from Student Details after saving the student's DOB; share privately with the guardian.
+
+## Real student Firebase account login (new)
+
+**Student Login** at `student-login.html` now uses Firebase Authentication, not just a Student ID + Date of Birth check. Google Sign-In and email/password login are supported; email/password users may create their own accounts, must verify their email, and may reset their password. Authentication alone **does not give access** to a Madrasa student profile.
+
+**How admin approves a student account:**
+
+1. Go to **Admin Panel → Teachers & Students → Student Details**.
+2. Locate the enrolled student and press **🔐 Student Account Login** on the student's card.
+3. Enter the student's or an approved guardian's actual email address. One guardian email can be granted access to more than one student where appropriate.
+4. Press **Save & Approve Account** and confirm. The email owner creates/signs in to their own Firebase account and verifies their email. **Do not collect or set student passwords in Admin.**
+5. The student then opens the homepage menu **Student Login**, signs in with verified email and password (or Google), and sees authorized student profile cards and **published** examination results. They can open each result to download its result PDF and certificate.
+6. Use **Disable Account Access** at any time to revoke the student's private dashboard access. Deleting a student also deletes their student account access grant.
+
+**Security:** Firestore `studentAccess/{studentId}` documents are written only by the verified academy administrator. Student reads require a verified Firebase Auth email matching the document's `email` exactly and `enabled == true`; list queries restrict both fields. These documents include only a student name, course, batch, enrollment status and a list of *published* exam references. No DOB, contact number, guardian details, fees, attendance, password or private student profile is exposed through this access grant. The original `students` collection stays admin-only. Published results are retrieved individually and always rechecked for publication and student ownership in the app.
+
+The public Student ID + DOB exam checker remains separately available at `exam-results.html`. It is **not** the account login. Student access to fees, private attendance and other records is not included in this release and requires separate explicit security rules and UI work.
+
+**Important operational check:** Firebase Authentication must have the desired sign-in methods enabled (Email/Password and/or Google), and this GitHub Pages domain must be in Firebase Authentication authorized domains. Google admin login and password login are already integrated in the project, but real student signup / login should be tested with an administrator-approved verified test email.
