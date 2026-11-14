@@ -1849,6 +1849,12 @@ $('teacherForm').onsubmit=async e=>{
   const key=f.toLowerCase(),value=$('teacher'+f).value.trim();
   if(value!==originalTeacherFieldValues[key])changes[key]=value;
  }
+ if('email' in changes&&changes.email){
+  try{
+   const email=teacherGoogleEmail(changes.email);
+   if(teacherRecords.some(t=>t.id!==id&&t.recordStatus!=='archived'&&String(t.email||'').trim().toLowerCase()===email))throw Error('This Gmail is already assigned to another teacher.');
+  }catch(err){$('teacherStatus').textContent='Cannot save teacher email: '+err.message;return}
+ }
  const rows=readTeacherAssignmentRows(),assignmentsChanged=JSON.stringify(rows)!==originalTeacherAssignmentRows;
  if(photoToSave('teacher')!==String(editingTeacherOriginal.photoData||''))changes.photoData=photoToSave('teacher');
  if(assignmentsChanged){
