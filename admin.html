@@ -920,18 +920,21 @@ async function monthlyPdfBlob(){
   base(group,kind);
  }
  function dateBlock(rec,num){
-  const h=131,x=inner;
+  const h=155,x=inner;
   round(x,y,contentWidth,h-8,10,num%2?'#f6faf7':'#ffffff');
   txt(num+'. '+fit(rec.student,935,'bold 25px Arial'),x+18,y+31,'bold 25px Arial',colors.dark);
   txt('Attendance: '+(rec.rate||'—'),x+1180,y+31,'bold 22px Arial',colors.green);
+  // Each date is shown as its day of the selected month, like the dashboard mockup.
+  // Even all 31 days fit within one row; no recorded dates are omitted.
+  const dayList=key=>rec.dates[key].length?rec.dates[key].map(day=>day.slice(-2)).join(', '):'—';
   const display=(title,key,yy,color)=>{
    txt(title,x+24,y+yy,'bold 18px Arial',color);
-   txt(fit(monthlyExportDateList(rec.dates[key])||'—',1220,'18px Arial'),x+198,y+yy,'18px Arial',colors.ink);
+   txt(dayList(key),x+198,y+yy,'18px Arial',colors.ink);
   };
-  display('Present:', 'present',58,'#187648');
-  display('Absent:', 'absent',80,'#b8402d');
-  display('Leave:', 'leave',102,'#b07c1e');
-  txt('Not Marked: '+fit(monthlyExportDateList(rec.dates.unmarked)||'—',1125,'17px Arial'),x+930,y+102,'17px Arial',colors.muted);
+  display('Present:', 'present',59,'#187648');
+  display('Absent:', 'absent',82,'#b8402d');
+  display('Leave:', 'leave',105,'#b07c1e');
+  display('Not Marked:', 'unmarked',128,colors.muted);
   y+=h;
  }
  for(const group of groups){
@@ -942,9 +945,9 @@ async function monthlyPdfBlob(){
    flush();
   }
   // Extra pages preserve each student's actual dates without truncation.
-  for(let i=0;i<group.records.length;i+=4){
+  for(let i=0;i<group.records.length;i+=3){
    startPage(group,'dates');
-   group.records.slice(i,i+4).forEach((rec,offset)=>dateBlock(rec,i+offset+1));
+   group.records.slice(i,i+3).forEach((rec,offset)=>dateBlock(rec,i+offset+1));
    flush();
   }
  }
