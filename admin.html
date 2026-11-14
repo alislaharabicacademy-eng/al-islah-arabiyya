@@ -1524,7 +1524,9 @@ $('teacherForm').onsubmit=async e=>{
 // Salary register: verified monthly payment records from the private teachers collection.
 const teacherSalaryReportState={mode:'',month:'',year:'',rows:[]};
 const teacherSalaryMonthPicker=$('allTeacherSalaryMonth'),teacherSalaryYearPicker=$('allTeacherSalaryYear');
-teacherSalaryMonthPicker.value=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit'}).format(new Date()).slice(0,7);
+const teacherSalaryToday=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+const teacherSalaryTodayPart=type=>teacherSalaryToday.find(part=>part.type===type)?.value||'';
+teacherSalaryMonthPicker.value=teacherSalaryTodayPart('year')+'-'+teacherSalaryTodayPart('month');
 const teacherSalaryCurrentYear=Number(teacherSalaryMonthPicker.value.slice(0,4));
 for(let year=teacherSalaryCurrentYear+1;year>=teacherSalaryCurrentYear-10;year--)teacherSalaryYearPicker.add(new Option(String(year),String(year)));
 teacherSalaryYearPicker.value=String(teacherSalaryCurrentYear);
@@ -1847,7 +1849,21 @@ async function renderTeacherPayroll(){
  try{const snap=await getDoc(doc(db,'teachers',t.id));const records=snap.data()?.payroll||{};const rec=records[month]||{};const daysInMonth=new Date(Number(month.slice(0,4)),Number(month.slice(5,7)),0).getDate();const dateIds=Array.from({length:daysInMonth},(_,i)=>month+'-'+String(i+1).padStart(2,'0'));const attendanceResults=await Promise.allSettled(dateIds.map(day=>getDoc(doc(db,'teacherAttendance',t.id,'days',day))));const attendance=attendanceResults.filter(x=>x.status==='fulfilled'&&x.value.exists()).map(x=>x.value.data());const failedAttendance=attendanceResults.filter(x=>x.status==='rejected');if(failedAttendance.length)throw Error('Attendance reading failed: '+failedAttendance[0].reason.message);root.replaceChildren();const count=document.createElement('p');const present=attendance.filter(x=>!x.status||x.status==='present').length,absent=attendance.filter(x=>x.status==='absent').length,leave=attendance.filter(x=>x.status==='leave').length;count.textContent='🟢 Present: '+present+'  |  🔴 Absent: '+absent+'  |  🟡 Leave Requests: '+leave+'  |  ⚪ Not Marked: '+Math.max(0,daysInMonth-attendance.length);root.append(count);for(const a of attendance.filter(x=>x.status==='absent'||x.status==='leave')){const line=document.createElement('div');line.className='record';appendInfo(line,a.date+' — '+(a.status==='leave'?'Leave Request':'Absent'),a.reason||'No reason');if(a.status==='leave'){appendInfo(line,'Decision',a.leaveStatus||'pending');if(!['approved','rejected'].includes(a.leaveStatus)){for(const decision of ['approved','rejected']){const b=document.createElement('button');b.type='button';b.textContent=decision==='approved'?'✓ Approve Leave':'✕ Reject Leave';b.onclick=async()=>{try{await setDoc(doc(db,'teacherAttendance',t.id,'days',a.date),{leaveStatus:decision},{merge:true});await renderTeacherPayroll()}catch(e){alert(e.message)}};line.append(b)}}}root.append(line)}const title=document.createElement('h4');title.textContent=t.name+' — '+month;root.append(title);
  const fields=[['salary','Monthly Salary (₹)','number'],['present','Present Days','number'],['absent','Absent Days','number'],['leave','Leave Days','number'],['paid','Salary Paid','checkbox'],['paidDate','Payment Date','date'],['remarks','Remarks','text']];
  const inputs={};for(const [key,label,type] of fields){const l=document.createElement('label');l.textContent=label+' ';const input=document.createElement('input');input.type=type;input.id='teacherPay_'+key;if(type==='checkbox')input.checked=!!rec[key];else input.value=rec[key]??(key==='salary'?t.salary||'':'');if(type==='number'){input.min='0';input.step=key==='salary'?'0.01':'1'}l.append(input);root.append(l,document.createElement('br'));inputs[key]=input}
- const save=document.createElement('button');save.type='button';save.textContent='💾 Save Attendance & Salary';save.onclick=async()=>{const value={};for(const [key,,type] of fields)value[key]=type==='checkbox'?inputs[key].checked:type==='number'?Number(inputs[key].value||0):inputs[key].value;const updated={...records,[month]:value};$('teacherPayrollStatus').textContent='Saving…';try{await setDoc(doc(db,'teachers',t.id),{payroll:updated},{merge:true});$('teacherPayrollStatus').textContent='✓ Attendance and salary saved'}catch(e){$('teacherPayrollStatus').textContent='Save failed: '+e.message}};
+ const save=document.createElement('button');save.type='button';save.textContent='💾 Save Attendance & Salary';save.onclick=async()=>{
+   const value={};
+   for(const [key,,type] of fields)value[key]=type==='checkbox'?inputs[key].checked:type==='number'?Number(inputs[key].value||0):inputs[key].value;
+   // Use the actual saved payment flag; never infer paid status from a receipt download.
+   if(value.paid&&!value.paidDate)value.paidDate=[teacherSalaryTodayPart('year'),teacherSalaryTodayPart('month'),teacherSalaryTodayPart('day')].join('-');
+   if(!value.paid)value.paidDate='';
+   const updated={...records,[month]:value};
+   $('teacherPayrollStatus').textContent='Saving…';save.disabled=true;
+   try{
+    await setDoc(doc(db,'teachers',t.id),{payroll:updated},{merge:true});
+    $('teacherPayrollStatus').textContent='✓ '+t.name+' salary saved for '+month+(value.paid?' · PAID '+value.paidDate:' · NOT PAID')+'. Refresh the all-teachers register to review.';
+    await renderTeacherPayroll();
+   }catch(e){$('teacherPayrollStatus').textContent='Save failed: '+e.message}
+   finally{save.disabled=false}
+  };
  const receipt=document.createElement('button');receipt.type='button';receipt.className='secondary';receipt.textContent='⬇ Download Salary PDF';receipt.onclick=async()=>{receipt.disabled=true;$('teacherPayrollStatus').textContent='Preparing salary PDF…';try{await ensurePdfLibrary();const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
 const green=[23,59,43],gold=[180,154,88],muted=[87,102,94];
 const paid=inputs.paid.checked,amount=Number(inputs.salary.value||t.salary||0),date=inputs.paidDate.value||'',receiptNo='SAL-'+month.replace('-','')+'-'+t.id.slice(-7).toUpperCase();
