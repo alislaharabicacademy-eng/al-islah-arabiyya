@@ -67,7 +67,7 @@ export function initExamAdmin({db,auth}){
  }
  function fillStudentSummary(){
   const st=shownStudent();
-  $('examStudentSummary').textContent=st?'Student: '+st.name+'  |  Class: '+(courseNames.get(st.course)||st.course||'—')+'  |  Batch: '+(st.batch||'—')+'  |  Student ID: '+(st.examid||'Not issued — save student in Student Details')+'  |  DOB: '+(st.dob?'Recorded':'Missing — Student ID + DOB lookup needs DOB in Student Details'):'Choose a student to show their class and batch.';
+  $('examStudentSummary').textContent=st?'Student: '+st.name+'  |  Official ID: '+(st.studentCode||'Not assigned')+'  |  Class: '+(courseNames.get(st.course)||st.course||'—')+'  |  Batch: '+(st.batch||'—')+'  |  Student ID: '+(st.examid||'Not issued — save student in Student Details')+'  |  DOB: '+(st.dob?'Recorded':'Missing — Student ID + DOB lookup needs DOB in Student Details'):'Choose a student to show their class and batch.';
  }
  function reset(){
   form.reset();$('examResultId').value='';$('examResultPass').value='40';
@@ -109,7 +109,7 @@ export function initExamAdmin({db,auth}){
   if(!Number.isFinite(passPercent)||passPercent<0||passPercent>100)throw Error('Pass percentage must be between 0 and 100.');
   const subjects=validateSubjects(true),scores=resultMath(subjects,passPercent);
   return {
-   studentId:student.id,studentName:student.name||'Student',course:courseNames.get(student.course)||student.course||'—',
+   studentId:student.id,studentCode:student.studentCode||'',studentName:student.name||'Student',course:courseNames.get(student.course)||student.course||'—',
    courseId:student.course||'',batch:student.batch||'',examTitle,examDate,academicYear,
    subjects,passPercent,...scores,published
   };
