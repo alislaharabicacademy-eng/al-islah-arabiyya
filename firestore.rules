@@ -34,6 +34,13 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Immutable salary audit trail: admin can add and read historical changes,
+    // but no client is permitted to rewrite or delete a recorded event.
+    match /teacherSalaryEvents/{eventId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
     match /teacherAccess/{teacherId} {
       allow get: if isAdmin()
         || (request.auth != null
