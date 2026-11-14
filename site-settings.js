@@ -14,7 +14,7 @@ export const SITE_DEFAULTS=Object.freeze({
  programmesDescription:'Structured online Islamic education for women, taught by female teachers. Learn from home in a supportive environment.',
  aboutHeading:'A Place to Learn with Purpose',
  aboutParagraph:"Madrasa Al Islahul Arabiya is a Women's Online Madrasa with a focus on Islamic education. Our website is designed to make it easier for prospective learners to discover the institute and express interest in joining.",
- contactHeading:'Connect with Our Madrasa',
+ contactHeading:'Begin Your Learning Journey',
  contactDescription:'',
  email:'alislaharabicacademy@gmail.com',
  phone:'+91 78453 60505',
