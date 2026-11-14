@@ -2,10 +2,20 @@
 import{doc,getDoc,setDoc,collection,getDocs,query,where}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{normalizeStudentCode,validateStudentDOB,makeStudentDobVerifier}from'./student-dob-verifier.js';
 import{isProfilePhoto}from'./profile-photo.js';
+import{validFeeLedger}from'./fee-ledger-utils.js';
 export function initStudentAccountAdmin({db}){
  const $=id=>document.getElementById(id);
  const panel=$('studentAccountPanel'),status=$('studentAccountStatus');
  let selected=null,previous=null;
+ async function feeSnapshot(student){
+  let monthlyFee=0;
+  try{
+   const courseId=String(student.course||'').trim();
+   if(courseId){const course=await getDoc(doc(db,'courses',courseId));if(course.exists())monthlyFee=Math.max(0,Number(course.data().monthlyFee)||0)}
+  }catch(err){console.warn('Monthly fee not available:',err.code||err.message)}
+  return {feeLedger:validFeeLedger(student.feeLedger),feeMonthlyRate:monthlyFee,
+   feeEnrollmentDate:String(student.approvedAt||student.enrollmentDate||student.admittedAt||'').slice(0,24)};
+ }
  function msg(value){status.textContent=value}
  function emailValue(){
   const value=$('studentAccountEmail').value.trim().toLowerCase();
@@ -51,8 +61,9 @@ export function initStudentAccountAdmin({db}){
     dobVerifier=await makeStudentDobVerifier(studentCode,dob);
    }
    const resultIds=enabled?(await getDocs(query(collection(db,'examResults'),where('studentId','==',selected.id)))).docs.filter(d=>d.data().published===true).map(d=>d.id):[];
+   const fees=await feeSnapshot(student);
    const data={
-    studentId:selected.id,email,enabled,studentCode:String(student.studentCode||''),...dobVerifier,
+    studentId:selected.id,email,enabled,studentCode:String(student.studentCode||''),...dobVerifier,...fees,
     studentName:String(student.name||'Student'),photoData:isProfilePhoto(student.photoData)?student.photoData:'',course:String(student.course||''),
     batch:String(student.batch||''),state:String(student.state||'Active'),resultIds,
     promotionHistory:Array.isArray(student.promotionHistory)?student.promotionHistory:[],
@@ -69,7 +80,8 @@ export function initStudentAccountAdmin({db}){
   const ref=doc(db,'studentAccess',studentId),snap=await getDoc(ref);
   if(!snap.exists())return;
   const studentCode=String(data.studentCode||'');
-  const payload={
+  const fees=await feeSnapshot(data);
+  const payload={...fees,
    studentName:String(data.name||'Student'),studentCode,photoData:isProfilePhoto(data.photoData)?data.photoData:'',course:String(data.course||''),
    batch:String(data.batch||''),state:String(data.state||'Active'),
    promotionHistory:Array.isArray(data.promotionHistory)?data.promotionHistory:[],
