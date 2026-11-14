@@ -331,7 +331,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
   <div id="examResultList"></div>
  </section>
 </div>
-<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Private enrolled-student records. Each student has a permanent, confidential Student ID. Enter Date of Birth to allow exam result lookup via Student ID + DOB. Give Student IDs only to the correct student or guardian.</p><form id="studentForm"><input type="hidden" id="studentId"><div class="fields"><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Date of Birth (for secure exam result lookup)<input id="studentDob" type="date"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
+<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Private enrolled-student records. Each student has a permanent, confidential Student ID. Enter Date of Birth to allow exam result lookup via Student ID + DOB. Give Student IDs only to the correct student or guardian.</p><form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields"><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Date of Birth (for secure exam result lookup)<input id="studentDob" type="date"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
 <details id="monthlyStudentAttendancePanel" class="section student-monthly-panel">
  <summary>📊 Monthly Student Attendance Report</summary>
  <div class="monthly-report-shell">
@@ -571,7 +571,7 @@ function courseKey(value){const v=String(value||'').trim().toLowerCase().replace
 $('studentFilter').onchange=()=>renderRecords('students');
 $('applicationFilter').onchange=renderApplications;
 let feeStudent=null,feeLedger={},feeRate=0,feeCourse='';const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];const feeYear=$('feeYear');for(let y=new Date().getFullYear()-2;y<=new Date().getFullYear()+2;y++)feeYear.add(new Option(String(y),String(y)));feeYear.value=String(new Date().getFullYear());feeYear.onchange=()=>{if(feeStudent)openFees(feeStudent)};
-const schemas={teachers:['Name','Subject','Phone','Email','Notes'],students:['Name','Course','Batch','Guardian','Dob','Phone','State','Reference']};
+const schemas={teachers:['Name','Subject','Phone','Email','Notes'],students:['Name','Course','Batch','Guardian','Dob','Phone','State','Reference','ExamId']};
 const isMaktabCourse=course=>['maktab','childrens-quran-maktab'].includes(courseKey(course));
 const batchOptions=Array.from({length:30},(_,i)=>'Batch '+(i+1));
 for(const label of batchOptions)$('studentBatch').add(new Option(label,label));
@@ -590,24 +590,26 @@ for(const kind of ['teacher','student']){
   e.preventDefault();if(!active)return;
   const plural=kind+'s',id=$(kind+'Id').value||crypto.randomUUID(),data={};
   for(const field of schemas[plural])data[field.toLowerCase()]=$(kind+field).value.trim();
-  if(kind==='student')data.batch=isMaktabCourse(data.course)?data.batch:'';
+  if(kind==='student'){data.batch=isMaktabCourse(data.course)?data.batch:'';if(!data.examid)data.examid=crypto.randomUUID();}
   $(kind+'Status').textContent='Saving…';
   try{
    if(kind==='student'){
     const previous=await getDoc(doc(db,'students',id));
     const oldDOB=previous.exists()?String(previous.data().dob||''):'';
+    const oldExamId=previous.exists()?String(previous.data().examid||id):'';
+    const newExamId=String(data.examid||'');
     const newDOB=String(data.dob||'');
-    if(oldDOB!==newDOB&&previous.exists()){
+    if((oldDOB!==newDOB||oldExamId!==newExamId)&&previous.exists()){
      const examSnap=await getDocs(collection(db,'examResults'));
      const ids=examSnap.docs.filter(d=>d.data().studentId===id&&d.data().published===true).map(d=>d.id);
      const batch=writeBatch(db);
      batch.set(doc(db,'students',id),data);
      if(oldDOB){
-      const oldHash=await examStudentLookupKey(id,oldDOB);
+      const oldHash=await examStudentLookupKey(oldExamId,oldDOB);
       batch.set(doc(db,'examResultLookups',oldHash),{enabled:false,updatedAt:new Date().toISOString()},{merge:true});
      }
      if(newDOB){
-      const key=await examStudentLookupKey(id,newDOB);
+      const key=await examStudentLookupKey(newExamId,newDOB);
       batch.set(doc(db,'examResultLookups',key),{enabled:true,resultIds:ids,updatedAt:new Date().toISOString()},{merge:true});
      }
      await batch.commit();
@@ -626,7 +628,7 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
  if(!confirm('Delete this '+singular+' record?'))return;
  try{
   if(kind==='students'&&data.dob){
-   const key=await examStudentLookupKey(d.id,data.dob),batch=writeBatch(db);
+   const key=await examStudentLookupKey(data.examid||d.id,data.dob),batch=writeBatch(db);
    batch.delete(doc(db,kind,d.id));
    batch.set(doc(db,'examResultLookups',key),{enabled:false,updatedAt:new Date().toISOString()},{merge:true});
    await batch.commit();
@@ -638,13 +640,15 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
  if(kind==='students'){
   el.querySelector('[data-fees]').onclick=()=>openFees(d);
   const info=document.createElement('p');info.className='section-note';
-  info.textContent='Confidential Student ID (for exam checking): '+d.id;
+  info.textContent='Confidential Student ID (for exam checking): '+(data.examid||'Not issued. Edit and save this student to generate an Exam Student ID.');
   el.insertBefore(info,el.querySelector('button'));
   const copy=document.createElement('button');copy.type='button';copy.className='secondary';
   copy.textContent='📋 Copy Student ID';
+  copy.disabled=!data.examid;
   copy.onclick=async()=>{
-   try{await navigator.clipboard.writeText(d.id);alert('Student ID copied. Share it only with the correct guardian.')}
-   catch(e){prompt('Copy the Student ID:',d.id)}
+   if(!data.examid)return;
+   try{await navigator.clipboard.writeText(data.examid);alert('Confidential Exam Student ID copied. Share it only with the correct guardian.')}
+   catch(e){prompt('Copy the Student ID:',data.examid)}
   };
   el.append(copy);
  }
