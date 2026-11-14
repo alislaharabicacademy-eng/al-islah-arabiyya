@@ -54,23 +54,70 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 #teacherCatalogPanel{border-color:#cfdecf;background:#fbfdf9}
 @media(max-width:640px){#teacherEditorHost .fields{grid-template-columns:1fr}#teacherEditorHost .teacher-subject-row label{min-width:100%!important}}
 </style><style id="monthly-student-attendance-style">
-.student-monthly-panel{border:1px solid #d9e3d7!important;background:#f9fcf8!important}
-.student-monthly-panel>summary{cursor:pointer;font-weight:800;font-size:18px;color:#174631;padding:8px 0;list-style-position:inside}
-.student-monthly-panel .fields{margin-top:16px}
-#monthlyAttendanceBatchWrap[hidden]{display:none!important}
-.student-monthly-group{background:white;border:1px solid #dce8df;border-radius:15px;margin:18px 0;padding:18px;box-shadow:0 6px 16px rgba(13,50,30,.06)}
-.student-monthly-group h4{color:#174631;margin:0 0 8px;font-size:17px}
-.student-monthly-info{color:#586e5f;margin:7px 0 12px;font-size:13px;line-height:1.6}
-.student-monthly-scroll{width:100%;overflow-x:auto}
-.student-monthly-table{width:100%;border-collapse:collapse;font-size:13px;min-width:700px}
-.student-monthly-table th{background:#edf4ed;text-align:left;color:#1b513b;font-weight:800}
-.student-monthly-table th,.student-monthly-table td{padding:10px 9px;border-bottom:1px solid #e5ebe5;vertical-align:top}
+.student-monthly-panel{border:1px solid #cbdccf!important;background:#f7fbf8!important;padding:12px!important;overflow:visible}
+.student-monthly-panel>summary{cursor:pointer;font-weight:800;font-size:18px;color:#174631;padding:12px 10px;list-style-position:inside}
+.student-monthly-panel>summary:hover{color:#08704b}
+.student-monthly-panel[open]>summary{margin-bottom:12px;border-bottom:1px solid #dce8df}
+.student-monthly-panel .monthly-report-shell{display:grid;grid-template-columns:188px minmax(0,1fr);border:1px solid #d3e6d9;border-radius:19px;overflow:hidden;background:#fbfefd;box-shadow:0 16px 45px rgba(14,53,33,.08);font-family:system-ui,-apple-system,Arial,sans-serif}
+.monthly-report-rail{min-width:0;background:linear-gradient(165deg,#084c36 0%,#073e2e 50%,#09684b 100%);color:#fff;padding:25px 14px;display:flex;flex-direction:column;align-items:stretch;position:relative}
+.monthly-report-brand{text-align:center;padding:8px 4px 21px;border-bottom:1px solid #ffffff3b}
+.monthly-report-brand-icon{font-size:34px;line-height:1.2;color:#d5eecb;display:block}
+.monthly-report-brand strong{display:block;font-size:15px;line-height:1.24;margin-top:10px;letter-spacing:-.025em}
+.monthly-report-brand small{display:block;letter-spacing:.12em;font-size:9px;margin-top:8px;color:#d0e4d9}
+.monthly-report-rail-title{font-size:11px;letter-spacing:.12em;font-weight:750;color:#b6dbcb;text-transform:uppercase;margin:30px 7px 12px}
+.monthly-report-navitem{display:flex;gap:10px;align-items:center;font-size:13px;margin:8px 0;padding:11px 9px;border-radius:11px;color:#e4f5ea}
+.monthly-report-navitem.on{background:#e4f5e7;color:#104a34;font-weight:800;box-shadow:0 5px 15px #052e2060}
+.monthly-report-navitem .ico{font-size:19px}
+.monthly-rail-bottom{margin-top:auto;text-align:center;padding-top:60px;color:#d2eddb;font-size:48px;opacity:.36}
+.monthly-report-main{min-width:0;padding:23px 24px 24px;background:linear-gradient(135deg,#fbfefd,#f5faf7)}
+.monthly-report-banner{display:flex;align-items:center;gap:16px;padding:10px 6px 20px;position:relative;overflow:hidden;border-bottom:1px solid #cfe6d9;margin-bottom:18px}
+.monthly-report-banner:after{content:'☪';position:absolute;right:3%;top:-28px;font-size:145px;color:#bbdbc9;opacity:.33;pointer-events:none}
+.monthly-report-banner .calendar-icon{display:grid;place-items:center;font-size:29px;min-width:61px;height:61px;border-radius:16px;background:#d9f0df;border:1px solid #c8e9d1}
+.monthly-report-banner h3{margin:0 0 6px;color:#10291f;font-size:clamp(23px,2.6vw,32px);line-height:1.18;letter-spacing:-.03em}
+.monthly-report-banner .tagline{font-size:13px;font-weight:750;color:#176341}
+.monthly-report-banner .academy-mini{font-size:12px;margin-top:4px;color:#60766c}
+.monthly-report-filterbox{background:#fff;padding:18px;border:1px solid #d9e7dd;border-radius:15px;box-shadow:0 7px 21px #173d2e0b}
+.monthly-report-filterbox .fields{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr));gap:12px;margin:0}
+.monthly-report-filterbox label{font-size:13px;color:#24533d;font-weight:800;min-width:0}
+.monthly-report-filterbox select,.monthly-report-filterbox input{margin-top:6px;border:1px solid #cadcd1;background:#f9fcfa;min-width:0;width:100%;border-radius:10px;min-height:45px;font-size:14px;padding:10px}
+#monthlyAttendanceBatchWrap[hidden],#monthlyAttendanceSummary[hidden]{display:none!important}
+.monthly-report-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:16px 0 0!important}
+.monthly-report-actions button{min-height:44px;margin:0;border-radius:10px;padding:11px 14px;font-size:13px;box-shadow:none}
+.monthly-report-actions #loadMonthlyStudentAttendance{background:#116541;color:#fff;font-weight:800}
+.monthly-report-actions #downloadMonthlyStudentBoth{background:#194c39;color:#fff;border:1px solid #b99d64;font-weight:800}
+.monthly-report-actions button.secondary{background:#eff7f0;color:#18573c;border:1px solid #cfe1d2}
+.monthly-report-actions button:disabled{opacity:.45;cursor:not-allowed}
+.monthly-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0 10px}
+.monthly-kpi-card{background:#fff;border:1px solid #d6e7d9;border-radius:15px;padding:15px 13px;display:flex;gap:11px;align-items:center;box-shadow:0 6px 18px rgba(20,65,39,.05);min-width:0}
+.monthly-kpi-icon{flex-shrink:0;display:grid;place-items:center;width:45px;height:45px;border-radius:13px;background:linear-gradient(145deg,#cfe9d6,#eff8f0);font-size:24px}
+.monthly-kpi-label{font-size:11px;font-weight:750;color:#4a6656;line-height:1.3}
+.monthly-kpi-value{font-size:clamp(21px,2.5vw,29px);line-height:1.2;font-weight:900;color:#103b2a;margin-top:6px}
+#monthlyStudentAttendanceStatus{margin:12px 0;font-size:13px;color:#214e35}
+.student-monthly-group{background:white;border:1px solid #d6e6d9;border-radius:16px;margin:18px 0;padding:17px 12px;box-shadow:0 6px 18px rgba(13,50,30,.05)}
+.student-monthly-group h4{color:#123e2b;margin:0 0 5px;font-size:19px}
+.student-monthly-info{color:#617a69;margin:7px 4px 16px;font-size:12px;line-height:1.65}
+.student-monthly-scroll{width:100%;overflow:auto;border-radius:11px;border:1px solid #e2ebe4}
+.student-monthly-table{width:100%;border-collapse:collapse;font-size:12px;min-width:830px;background:#fff}
+.student-monthly-table th{background:#e3f1e8;text-align:left;color:#173e2b;font-weight:900;padding:13px 9px;white-space:nowrap;font-size:12px}
+.student-monthly-table td{padding:12px 9px;border-bottom:1px solid #e6ece7;vertical-align:middle}
+.student-monthly-table tbody tr:nth-child(even){background:#fafcfa}
+.student-monthly-table tbody tr:hover{background:#f2faf2}
+.student-monthly-table td:nth-child(2){font-weight:800;color:#183f2b}
 .student-monthly-table td.num,.student-monthly-table th.num{text-align:center;white-space:nowrap}
-.student-monthly-table details{min-width:170px}
-.student-monthly-table summary{cursor:pointer;font-weight:700;color:#245b42}
-.student-monthly-table details p{margin:5px 0;font-size:12px;white-space:normal}
-.student-monthly-legend{background:#edf3ec;border-radius:10px;padding:10px 12px;color:#476351;font-size:12px;line-height:1.7;margin:14px 0}
-@media(max-width:640px){.student-monthly-group{padding:12px}.student-monthly-panel>summary{font-size:16px}}
+.monthly-attendance-badge{display:inline-block;padding:6px 12px;min-width:62px;text-align:center;border-radius:9px;font-weight:900;font-size:12px;background:#d7f1da;color:#0b5c2d}
+.monthly-attendance-badge.moderate{background:#ffebb8;color:#7e5010}
+.monthly-attendance-badge.low{background:#ffe3d8;color:#a13c24}
+.student-monthly-table details{position:relative;min-width:110px}
+.student-monthly-table details>summary{cursor:pointer;color:#17613d;white-space:nowrap;font-weight:800;list-style:disclosure-closed}
+.student-monthly-table details[open]>summary{list-style:disclosure-open}
+.student-monthly-table details p{margin:5px 0;font-size:12px;white-space:normal;color:#3b6250;line-height:1.6}
+.student-monthly-table details p:first-of-type{margin-top:11px}
+.student-monthly-legend{background:#e7f3e8;border:1px solid #d0e8d6;border-radius:11px;padding:14px;color:#2b5b40;font-size:12px;line-height:1.75;margin:14px 0}
+.monthly-report-footer{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:22px;font-size:11px;color:#709184}
+.monthly-report-footer span{font-size:21px;color:#1e744f}
+@media(max-width:1070px){.student-monthly-panel .monthly-report-shell{grid-template-columns:145px minmax(0,1fr)}.monthly-report-main{padding:15px}.monthly-report-rail{padding:19px 10px}.monthly-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.student-monthly-panel .monthly-report-shell{grid-template-columns:1fr}.monthly-report-rail{padding:13px 15px;display:flex;flex-direction:row;justify-content:space-between;align-items:center}.monthly-report-brand{padding:0;border:0;display:flex;align-items:center;gap:9px;text-align:left}.monthly-report-brand-icon{font-size:22px}.monthly-report-brand strong{font-size:12px;margin:0}.monthly-report-brand small{display:none}.monthly-report-rail-title,.monthly-report-navitem,.monthly-rail-bottom{display:none}.monthly-report-rail .monthly-report-navitem.on{display:block;font-size:11px;margin:0;padding:9px}.monthly-report-main{padding:13px}.monthly-report-banner{gap:10px;padding:8px 4px 14px}.monthly-report-banner .calendar-icon{min-width:47px;height:47px;font-size:22px}.monthly-report-banner h3{font-size:21px}.monthly-report-filterbox{padding:12px}.monthly-report-filterbox .fields{grid-template-columns:1fr 1fr}.monthly-kpi-grid{gap:8px}.monthly-kpi-card{padding:11px 9px;gap:7px}.monthly-kpi-icon{width:36px;height:36px;font-size:19px}.monthly-kpi-value{font-size:23px}.monthly-kpi-label{font-size:10px}.monthly-report-actions button{font-size:12px;flex-grow:1}.student-monthly-group{padding:12px 8px}.student-monthly-panel>summary{font-size:15px}}
+@media(max-width:420px){.monthly-report-filterbox .fields{grid-template-columns:1fr}.monthly-report-banner h3{font-size:18px}.monthly-report-actions button{width:100%}}
 </style><style id="subject-editor-style">.teacher-subject-row{display:flex;align-items:center;gap:9px;margin:9px 0}.teacher-subject-row input{flex:1;min-width:0}.teacher-subject-row button{flex-shrink:0}@media(max-width:460px){.teacher-subject-row button{padding:10px;font-size:12px}}</style></head><body><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button><div class="menu-shade hidden" id="menuShade"></div><aside class="side-menu" id="sideMenu" aria-label="Admin navigation">
 <div class="academy-menu-brand"><span class="academy-menu-kicker">AL ISLAHUL ARABIYA</span><h2>Academy Menu</h2><p>Management Control Center</p></div>
 <div class="academy-menu-groups">
@@ -158,21 +205,52 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <p id="teacherManagementStatus" class="status" role="status" aria-live="polite"></p><div id="teacherList"></div><hr><h3>📅 Teacher Attendance & Salary</h3><p class="section-note">Select a teacher below to record attendance, monthly salary, and download a PDF salary receipt.</p><label>Month <input type="month" id="teacherMonth"></label><div id="teacherPayroll"></div><p id="teacherPayrollStatus" role="status"></p></div></div><div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Private enrolled-student records.</p><form id="studentForm"><input type="hidden" id="studentId"><div class="fields"><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
 <details id="monthlyStudentAttendancePanel" class="section student-monthly-panel">
  <summary>📊 Monthly Student Attendance Report</summary>
- <p class="section-note">See each student's present, absent, leave and unmarked days, along with the exact dates. Class days are calculated from recorded teacher attendance; holidays and unrecorded days are not counted as classes.</p>
- <div class="fields">
-  <label>Month <input type="month" id="monthlyAttendanceMonth"></label>
-  <label>Class <select id="monthlyAttendanceCourse"><option value="all">All Classes</option></select></label>
-  <label id="monthlyAttendanceBatchWrap" hidden>Batch <select id="monthlyAttendanceBatch"><option value="all">All Batches</option></select></label>
+ <div class="monthly-report-shell">
+  <aside class="monthly-report-rail" aria-label="Attendance report">
+   <div class="monthly-report-brand">
+    <span class="monthly-report-brand-icon" aria-hidden="true">☪</span>
+    <div><strong>Madrasa<br>Al Islahul Arabiya</strong><small>ISLAMIC ACADEMY</small></div>
+   </div>
+   <p class="monthly-report-rail-title">Academy Reports</p>
+   <div class="monthly-report-navitem"><span class="ico">▦</span> Dashboard</div>
+   <div class="monthly-report-navitem"><span class="ico">♙</span> Students</div>
+   <div class="monthly-report-navitem"><span class="ico">▤</span> Classes</div>
+   <div class="monthly-report-navitem on"><span class="ico">▣</span> Monthly Report</div>
+   <div class="monthly-rail-bottom" aria-hidden="true">☪</div>
+  </aside>
+  <div class="monthly-report-main">
+   <div class="monthly-report-banner">
+    <span class="calendar-icon" aria-hidden="true">🗓️</span>
+    <div><h3>Monthly Student Attendance Report</h3>
+      <div class="tagline">Live Academy Report · Premium Preview</div>
+      <div class="academy-mini">Madrasa Al Islahul Arabiya</div>
+    </div>
+   </div>
+   <div class="monthly-report-filterbox">
+    <div class="fields">
+     <label>📅 Month <input type="month" id="monthlyAttendanceMonth"></label>
+     <label>📚 Class <select id="monthlyAttendanceCourse"><option value="all">All Classes</option></select></label>
+     <label id="monthlyAttendanceBatchWrap" hidden>👥 Batch <select id="monthlyAttendanceBatch"><option value="all">All Batches</option></select></label>
+    </div>
+    <div class="monthly-report-actions">
+     <button type="button" id="loadMonthlyStudentAttendance">⌕ View Monthly Report</button>
+     <button type="button" class="secondary" id="downloadMonthlyStudentExcel" disabled>📗 Excel (.xlsx)</button>
+     <button type="button" class="secondary" id="downloadMonthlyStudentPDF" disabled>📕 Premium PDF</button>
+     <button type="button" id="downloadMonthlyStudentBoth" disabled>⬇ Excel + PDF (.zip)</button>
+     <button type="button" class="secondary" id="downloadMonthlyStudentAttendance" disabled>CSV</button>
+    </div>
+   </div>
+   <div id="monthlyAttendanceSummary" class="monthly-kpi-grid" hidden aria-label="Monthly attendance summary">
+     <div class="monthly-kpi-card"><span class="monthly-kpi-icon">🗓️</span><div><div class="monthly-kpi-label">Recorded Class Days</div><div class="monthly-kpi-value" id="monthlyKpiDays">—</div></div></div>
+     <div class="monthly-kpi-card"><span class="monthly-kpi-icon">👥</span><div><div class="monthly-kpi-label">Total Students</div><div class="monthly-kpi-value" id="monthlyKpiStudents">—</div></div></div>
+     <div class="monthly-kpi-card"><span class="monthly-kpi-icon">▥</span><div><div class="monthly-kpi-label">Average Attendance</div><div class="monthly-kpi-value" id="monthlyKpiAttendance">—</div></div></div>
+     <div class="monthly-kpi-card"><span class="monthly-kpi-icon">☑</span><div><div class="monthly-kpi-label">Leave Entries</div><div class="monthly-kpi-value" id="monthlyKpiLeave">—</div></div></div>
+   </div>
+   <p id="monthlyStudentAttendanceStatus" class="status" role="status" aria-live="polite"></p>
+   <div id="monthlyStudentAttendanceReport"></div>
+   <div class="monthly-report-footer"><span>☪</span> Faith · Learning · Excellence</div>
+  </div>
  </div>
- <div class="actions" style="margin:18px 0">
-  <button type="button" id="loadMonthlyStudentAttendance">📋 View Monthly Report</button>
-  <button type="button" class="secondary" id="downloadMonthlyStudentExcel" disabled>📗 Download Excel (.xlsx)</button>
-  <button type="button" class="secondary" id="downloadMonthlyStudentPDF" disabled>📕 Download PDF (.pdf)</button>
-  <button type="button" id="downloadMonthlyStudentBoth" disabled>⬇ Download Both (.zip)</button>
-  <button type="button" class="secondary" id="downloadMonthlyStudentAttendance" disabled>⬇ CSV</button>
- </div>
- <p id="monthlyStudentAttendanceStatus" class="status" role="status" aria-live="polite"></p>
- <div id="monthlyStudentAttendanceReport"></div>
 </details><section class="section" id="studentFeesPanel"><h3>💳 Student Monthly Fee Ledger · 12 Months</h3><p class="section-note">Select a student using “Fees / Receipt” in the list. Monthly fee is taken from Course Details. Mark paid only after receiving payment.</p><div class="fields"><label>Selected Student<input id="feeStudentName" readonly placeholder="Select a student below"></label><label>Fee Year<select id="feeYear"></select></label></div><div id="feeSummary" class="stats" style="margin:15px 0"></div><div id="feeMonths"></div><p id="feeStatus" class="status" role="status"></p></section></div><div id="tab-applications" class="tabpage hidden"><h3>New Student Applications</h3><div class="filterbar"><label for="applicationFilter">📩 Filter Applications by Course</label><select id="applicationFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option></select><span id="applicationFilterCount" class="badge">Loading…</span></div><p class="section-note">Applications submitted from the admission form will appear here after Firestore submission is configured.</p><button id="refreshApplications">↻ Refresh Applications</button><p id="applicationStatus" role="status"></p><div class="stats"><span class="stat" id="applicationCount">Applications: —</span></div><div id="applicationList"></div></div></div></main><footer>© Madrasa Al Islahul Arabiya · Secure Course Management</footer><script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,EmailAuthProvider,linkWithCredential,sendEmailVerification,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
