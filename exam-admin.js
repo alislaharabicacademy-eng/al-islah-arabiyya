@@ -254,7 +254,12 @@ export function initExamAdmin({db,auth,onPromotion}){
   }
  }
  form.addEventListener('submit',event=>{event.preventDefault();save(false)});
- studentDropdown.addEventListener('change',fillStudentSummary);
+ studentDropdown.addEventListener('change',()=>{
+  fillStudentSummary();
+  $('examHomeWinnerConsent').checked=false;
+  $('examHomeWinnerPhoto').value='';
+  $('examHomeWinnerUploadStatus').textContent='Select this student’s photo if needed, and confirm their own guardian permission.';
+ });
  $('examHomeWinnerFeature').addEventListener('change',()=>{$('examHomeWinnerOptions').classList.toggle('hidden',!$('examHomeWinnerFeature').checked)});
  $('examHomeWinnerPhoto').addEventListener('change',()=>{
   $('examHomeWinnerUploadStatus').textContent=$('examHomeWinnerPhoto').files?.[0]?'Selected: '+$('examHomeWinnerPhoto').files[0].name+'. It will be resized on publish.':'The existing student photo will be used.';
