@@ -1548,10 +1548,10 @@ function teacherGoogleEmail(value){
  return email;
 }
 function teacherGoogleLookupId(email){return 'google-email-'+encodeURIComponent(teacherGoogleEmail(email));}
-async function enableTeacherGoogleAccess(t){
- if(!approvedTeacherIds.has(t.id))throw Error('Approve this teacher registration before enabling Google Login.');
+async function enableTeacherGoogleAccess(t,manualApproval=false){
+ if(!manualApproval&&!approvedTeacherIds.has(t.id))throw Error('Approve this teacher registration before enabling Google Login.');
  const email=teacherGoogleEmail(t.email);
- const duplicate=teacherRecords.find(other=>other.id!==t.id&&other.recordStatus!=='archived'&&approvedTeacherIds.has(other.id)&&String(other.email||'').trim().toLowerCase()===email);
+ const duplicate=teacherRecords.find(other=>other.id!==t.id&&other.recordStatus!=='archived'&&String(other.email||'').trim().toLowerCase()===email);
  if(duplicate)throw Error('This Google email is also assigned to another teacher. Give each teacher a unique Gmail.');
  const batch=writeBatch(db);
  batch.set(doc(db,'teacherAccess',t.id),{name:t.name||'Teacher',email},{merge:true});
@@ -1832,8 +1832,7 @@ async function loadTeacherDirectory(){
   };
   const payroll=document.createElement('button');payroll.type='button';payroll.className='secondary';payroll.textContent='📅 Attendance / Salary';payroll.onclick=()=>{selectedTeacher=t;renderTeacherPayroll();$('teacherPayroll').scrollIntoView({behavior:'smooth',block:'center'})};
  const share=document.createElement('button');share.type='button';share.className='secondary';share.textContent='🔐 Enable Google Login';
- share.disabled=!approvedTeacherIds.has(t.id);
- share.onclick=async()=>{share.disabled=true;try{await enableTeacherGoogleAccess(t);alert('✓ Google Login enabled for '+t.name+' ('+teacherGoogleEmail(t.email)+'). The teacher can now use Homepage → Teacher Login → Continue with Google. No ID or registration link needed.')}catch(err){alert('Could not enable teacher Google Login: '+err.message)}finally{share.disabled=!approvedTeacherIds.has(t.id)}};
+ share.onclick=async()=>{share.disabled=true;try{await enableTeacherGoogleAccess(t,true);alert('✓ Google Login enabled for '+t.name+' ('+teacherGoogleEmail(t.email)+'). The teacher can now use Homepage → Teacher Login → Continue with Google. No ID or registration link needed.')}catch(err){alert('Could not enable teacher Google Login: '+err.message)}finally{share.disabled=false}};
  const sync=document.createElement('button');sync.type='button';sync.className='secondary';sync.textContent='🔄 Refresh Class Students';sync.onclick=async()=>{try{const result=await syncTeacherRoster(t.id,t);alert('Teacher roster refreshed:\n'+(result.length?result.map(a=>a.course+' / '+(a.batch||'All batches')+' / '+a.subject+': '+a.students.length+' students').join('\n'):'No class/subject assignments saved for this teacher. Edit and save the teacher first.'))}catch(e){alert(e.message)}};const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='🗑 Delete Teacher';remove.onclick=async()=>{const name=t.name||'Teacher';if(!confirm('Remove '+name+' from active teachers?\n\nTheir login access will be revoked. Attendance and salary history will be kept.'))return;remove.disabled=true;try{await setDoc(doc(db,'teachers',t.id),{recordStatus:'archived',archivedAt:new Date().toISOString()},{merge:true});await deleteDoc(doc(db,'teacherAccess',t.id));if(t.email){await deleteDoc(doc(db,'teacherAccess',teacherGoogleLookupId(t.email)))}await deleteDoc(doc(db,'teacherRosters',t.id));if(t.registrationId){await setDoc(doc(db,'teacherSubmissions',t.registrationId),{reviewStatus:'archived',archivedAt:new Date().toISOString()},{merge:true})}if(selectedTeacher?.id===t.id)resetTeacher();alert(name+' removed from active teacher directory. Historical attendance and salary data retained.');await loadTeacherDirectory()}catch(err){alert('Could not complete removal: '+err.message);remove.disabled=false}};row.append(edit,profilePdf,payroll,share,sync,remove);root.append(row)}
  }catch(e){root.textContent='Teacher loading failed: '+e.message}
 }
@@ -1873,7 +1872,8 @@ $('teacherForm').onsubmit=async e=>{
   if(assignmentsChanged)await syncTeacherRoster(id,{...editingTeacherOriginal,...changes});
   if('name' in changes||'email' in changes){
    const updated={...editingTeacherOriginal,...changes};
-   await enableTeacherGoogleAccess({...updated,id});
+   if(updated.email)await enableTeacherGoogleAccess({...updated,id});
+   else await setDoc(doc(db,'teacherAccess',id),{name:updated.name||'',email:''},{merge:true});
    if('email' in changes&&editingTeacherOriginal.email&&String(editingTeacherOriginal.email).trim().toLowerCase()!==String(updated.email).trim().toLowerCase())await deleteDoc(doc(db,'teacherAccess',teacherGoogleLookupId(editingTeacherOriginal.email)));
   }
   resetTeacher();
