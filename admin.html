@@ -359,13 +359,13 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
   <div id="examResultList"></div>
  </section>
  <section class="section" id="competitionCertificatesPanel">
-  <h3>🏆 Competition &amp; Participation Certificates</h3>
-  <p class="section-note">Issue participation, 1st/2nd/3rd prize, winner and appreciation certificates. Certificates are saved privately and can be downloaded from the approved Student Dashboard. Issuing a certificate does not change exam marks or promotion eligibility.</p>
+  <h3>🏆 Competition, Participation &amp; Event Certificates</h3>
+  <p class="section-note">Issue premium, individually styled competition winners, participation and event recognition certificates. Certificates are saved privately and can be downloaded from the approved Student Dashboard. Exam results remain separate. Event and participation certificate layouts differ from competition winners. Issuing a certificate does not change exam marks or promotion eligibility.</p>
   <div class="fields">
    <label>Student *<select id="competitionStudent"><option value="">Select Registered Student</option></select></label>
    <label>Competition / Event *<input id="competitionEvent" maxlength="120" placeholder="e.g. Qur'an Recitation Competition"></label>
    <label>Event Date *<input id="competitionDate" type="date"></label>
-   <label>Certificate / Prize Type *<select id="competitionAward"><option>Participation</option><option>Winner</option><option>First Prize</option><option>Second Prize</option><option>Third Prize</option><option>Appreciation</option><option>Best Performance</option></select></label>
+   <label>Certificate / Prize Type *<select id="competitionAward"><optgroup label="Competition Achievement"><option>Winner</option><option>First Prize</option><option>Second Prize</option><option>Third Prize</option><option>Best Performance</option><option>Appreciation</option></optgroup><optgroup label="Competition Participation"><option selected>Participation</option></optgroup><optgroup label="Events &amp; Programmes"><option>Event Participation</option><option>Event Appreciation</option><option>Event Volunteer</option><option>Event Organizer</option></optgroup></select></label>
   </div>
   <div class="actions"><button type="button" id="competitionIssue">🏅 Issue &amp; Download Certificate</button><button type="button" class="secondary" id="competitionRefresh">↻ Refresh Students</button></div>
   <p class="status" id="competitionStatus" role="status"></p><div id="competitionCertificatesList"></div>
