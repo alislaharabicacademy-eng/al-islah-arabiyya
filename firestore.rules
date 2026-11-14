@@ -229,7 +229,7 @@ service cloud.firestore {
           'academicInstitution', 'academicYear', 'madrasaName',
           'madrasaLocation', 'sanad', 'sanadInstitution', 'sanadYear',
           'experience', 'previousInstitution', 'subjects', 'languages',
-          'notes', 'photoPath', 'academicPath', 'sanadPath', 'submittedAt'
+          'notes', 'photoPath', 'photoData', 'academicPath', 'sanadPath', 'submittedAt'
         ])
         && request.resource.data.fullName is string
         && request.resource.data.fullName.size() > 0
@@ -250,6 +250,14 @@ service cloud.firestore {
           !('photoPath' in request.resource.data)
           || request.resource.data.photoPath.matches(
             '^teacher-registration/' + token + '/photo\\.(jpg|png)$'
+          )
+        )
+        && (
+          !('photoData' in request.resource.data)
+          || (
+            request.resource.data.photoData is string
+            && request.resource.data.photoData.size() <= 105000
+            && request.resource.data.photoData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
           )
         )
         && (
