@@ -1917,7 +1917,11 @@ async function renderTeacherPayroll(){
   if(inputs.paid.checked){
    const current=await getDoc(doc(db,'teachers',t.id));
    const saved=current.data()?.payroll?.[month];
-   if(!saved?.paid||Number(saved.salary||0)!==Number(inputs.salary.value||0)||String(saved.paidDate||'')!==String(inputs.paidDate.value||'')){
+   if(!saved?.paid||Number(saved.salary||0)!==Number(inputs.salary.value||0)
+   ||Number(saved.paidAmount??saved.salary??0)!==Number(inputs.paidAmount.value||inputs.salary.value||0)
+   ||String(saved.paidDate||'')!==String(inputs.paidDate.value||'')
+   ||String(saved.paymentMethod||'')!==String(inputs.paymentMethod.value||'')
+   ||String(saved.transactionRef||'')!==String(inputs.transactionRef.value||'')){
     throw Error('Save this month as PAID with the correct amount and payment date before generating a paid salary receipt.');
    }
   }
@@ -1934,7 +1938,37 @@ let y=80;for(let i=0;i<fields.length;i++){const [label,value]=fields[i];if(i===5
 pdf.setDrawColor(...green);pdf.setLineWidth(.45);pdf.line(133,226,194,226);pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.setTextColor(...green);pdf.text("Principal's Signature",163.5,233,{align:'center'});pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text('Madrasa Al Islahul Arabiya',163.5,239,{align:'center'});
 pdf.setDrawColor(220,226,220);pdf.line(16,252,194,252);pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(...muted);pdf.text(paid?'This receipt is generated from the academy salary register.':'This statement does not confirm salary payment.',105,259,{align:'center'});
 const blob=pdf.output('blob'),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Teacher_Salary_'+t.name.replace(/[^a-z0-9]/gi,'_')+'_'+month+'.pdf';document.body.append(a);a.click();a.remove();const fallback=document.createElement('a');fallback.href=url;fallback.download=a.download;fallback.textContent='⬇ Tap here if PDF did not download';root.append(fallback);setTimeout(()=>URL.revokeObjectURL(url),300000);$('teacherPayrollStatus').textContent='PDF ready. Download link shown below.'}catch(e){$('teacherPayrollStatus').textContent='PDF error: '+e.message;alert('PDF error: '+e.message)}finally{receipt.disabled=false}};
- root.append(save,receipt)
+ const history=document.createElement('button');
+ history.type='button';history.className='secondary';history.textContent='📜 View Salary Payment History';
+ const historyPanel=document.createElement('div');historyPanel.className='teacher-salary-history';
+ history.onclick=async()=>{
+  if(historyPanel.childNodes.length){historyPanel.replaceChildren();history.textContent='📜 View Salary Payment History';return}
+  history.disabled=true;history.textContent='Loading payment history…';
+  try{
+   const events=await getDocs(query(collection(db,'teacherSalaryEvents'),where('teacherId','==',t.id)));
+   const items=events.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.changedAt?.toMillis?.()||0)-(a.changedAt?.toMillis?.()||0));
+   const title=document.createElement('h4');title.textContent=t.name+' · Salary Change History';historyPanel.append(title);
+   const note=document.createElement('p');note.className='section-note';note.textContent='Append-only records are saved whenever Admin changes a teacher salary. Older salary months remain in the monthly register, but edits from before this feature have no audit history.';
+   historyPanel.append(note);
+   if(!items.length){const empty=document.createElement('p');empty.textContent='No salary change history recorded yet.';historyPanel.append(empty)}
+   for(const item of items){
+    const card=document.createElement('div');card.className='record',after=item.after||{},before=item.before||{};
+    const when=item.changedAt?.toDate?.().toLocaleString('en-IN')||'Date unavailable';
+    appendInfo(card,'Month',item.month||'—');
+    appendInfo(card,'Changed At',when);
+    appendInfo(card,'Admin',item.changedBy||'—');
+    appendInfo(card,'Status',(before.paid?'Paid':'Not paid')+' → '+(after.paid?'Paid':'Not paid'));
+    appendInfo(card,'Salary / Amount Paid',teacherSalaryMoney(after.salary||0)+' / '+teacherSalaryMoney(after.paidAmount??(after.paid?after.salary:0)));
+    appendInfo(card,'Payment Method / Ref',[after.paymentMethod,after.transactionRef].filter(Boolean).join(' · ')||'Not recorded');
+    appendInfo(card,'Payment Date',after.paidDate||'Not paid');
+    appendInfo(card,'Remarks',after.remarks||'—');
+    historyPanel.append(card);
+   }
+   history.textContent='✕ Hide Salary Payment History';
+  }catch(err){historyPanel.textContent='Unable to load salary history: '+err.message;history.textContent='📜 View Salary Payment History'}
+  finally{history.disabled=false}
+ };
+ root.append(save,receipt,history,historyPanel)
  }catch(e){root.textContent='Unable to load salary details: '+e.message}
 }
 
