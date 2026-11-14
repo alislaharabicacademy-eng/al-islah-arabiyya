@@ -5,7 +5,7 @@
 import{doc,runTransaction,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 const PATTERN=/^ALIA[0-9]{5}$/;
 export function validOfficialStudentId(value){
- return typeof value==='string'&&PATTERN.test(value)&&Number(value.slice(3))>=1;
+ return typeof value==='string'&&PATTERN.test(value)&&Number(value.slice(4))>=1;
 }
 export async function ensureOfficialStudentId(db,studentRef,initialData={}){
  const sequenceRef=doc(db,'academyCounters','studentIds');
