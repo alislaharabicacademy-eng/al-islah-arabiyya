@@ -776,12 +776,12 @@ async function monthlyExcelBlob(){
  const bytes=XLSX.write(workbook,{bookType:'xlsx',type:'array',compression:true});
  return new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
-async function monthlyPdfBlob(){
+async function monthlyPdfBlob(individualStudent=null){
  await ensureMonthlyExportLibrary('pdf');
  // Draw text and all UI decorations as native PDF paths: pages remain razor-sharp
  // when zoomed or printed. Only the academy's existing PNG logo is embedded as an image.
  const doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
- const meta=monthlyExportMeta(),groups=monthlyReportGroups();
+ const meta=monthlyExportMeta(),groups=individualStudent?[{course:individualStudent.course,batch:individualStudent.batch,records:[individualStudent]}]:monthlyReportGroups();
  const C={dark:'#0C402D',rail:'#0A4A33',green:'#176D47',gold:'#C5A969',paper:'#F8FCF9',light:'#EDF7F0',line:'#DCE9E0',ink:'#193B2B',muted:'#63796A',white:'#FFFFFF',amber:'#FFF0C5',red:'#FFE1D8'};
  const rgb=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
  const fill=(hex)=>doc.setFillColor(...rgb(hex));
@@ -820,7 +820,7 @@ async function monthlyPdfBlob(){
  // The logo itself is a PNG source. Keep it at its source resolution;
  // do not rasterize the text, tables, backgrounds or any other page graphics.
  const logoCanvas=document.createElement('canvas');
- const side=Math.min(academyLogo.naturalWidth,academyLogo.naturalHeight,1500);
+ const side=Math.min(academyLogo.naturalWidth,academyLogo.naturalHeight,700);
  logoCanvas.width=side;logoCanvas.height=side;
  const logoCtx=logoCanvas.getContext('2d');
  if(!logoCtx)throw Error('The browser cannot prepare the academy logo.');
@@ -868,7 +868,7 @@ async function monthlyPdfBlob(){
   box(49,7,14.5,14.5,'#DBEEE0',3);
   stroke(C.dark);doc.setLineWidth(.65);doc.roundedRect(53,11,7,7,1,1,'S');
   doc.line(53,13,60,13);doc.line(55,10,55,12);doc.line(58,10,58,12);
-  print(kind==='dates'?'Attendance Date Details':'Monthly Student Attendance Report',67,15.2,18,C.dark,true);
+  print(kind==='dates'?'Attendance Date Details':kind==='individual'?'Individual Student Attendance':'Monthly Student Attendance Report',67,15.2,18,C.dark,true);
   print('Madrasa Al Islahul Arabiya',67,22.1,9,C.green);
   print('ACADEMY MONTHLY REPORT',67,28.6,7,C.muted,true);
   fill(C.white);doc.circle(279,17,10.8,'F');stroke(C.gold);doc.circle(279,17,11.2,'S');
@@ -895,7 +895,7 @@ async function monthlyPdfBlob(){
    print(label,x+15,67,7,C.muted,true);
    print(value,x+15,76.5,14,C.dark,true);
   });
-  print(kind==='dates'?'PRESENT / ABSENT / LEAVE - FULL DATES':'STUDENT ATTENDANCE DETAILS',49,89,10.5,C.dark,true);
+  print(kind==='dates'?'PRESENT / ABSENT / LEAVE - FULL DATES':kind==='individual'?'INDIVIDUAL STUDENT ATTENDANCE DETAILS':'STUDENT ATTENDANCE DETAILS',49,89,10.5,C.dark,true);
   print(fit(group.course+(group.batch?' - '+group.batch:''),70,7),214,88.5,7,C.muted);
   box(49,195,240,10,C.light,2);
   print('Present = attended   |   Absent = not attended   |   Leave = teacher-marked leave',52,199.1,7,C.dark);
@@ -954,7 +954,14 @@ async function monthlyPdfBlob(){
   return h;
  };
  for(const group of groups){
-  // Native PDF text and shapes: accessible, selectable and crisp at every zoom.
+  // Every student PDF includes ONLY the requested student, on one branded vector PDF page.
+  if(individualStudent){
+   page(group,'individual');heading();
+   tableRow(individualStudent,1,104);
+   dateBlock(individualStudent,1,120);
+   continue;
+  }
+  // Class summary export remains available as a separate choice.
   const students=group.records;
   for(let i=0;i<students.length;i+=9){
    page(group,'summary');heading();
@@ -984,36 +991,82 @@ function monthlyDownloadBlob(blob,name){
  document.body.append(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),90000);
 }
+function monthlyStudentPdfFileName(record,index){
+ const clean=value=>String(value||'').trim()
+  .replace(/[<>:"/\\|?*\u0000-\u001F]/g,'')
+  .replace(/\s+/g,'_')
+  .slice(0,60)||'Student';
+ const number=String(index+1).padStart(3,'0');
+ return 'Attendance_'+clean(record.month)+'_'+number+'_'+clean(record.student)+'_'+clean(record.course)+(record.batch?'_'+clean(record.batch):'')+'.pdf';
+}
+async function monthlyDownloadSingleStudentPdf(record,button){
+ if(!record||!monthlyAttendanceExport.includes(record))return;
+ const status=$('monthlyStudentAttendanceStatus');
+ button.disabled=true;
+ const originalText=button.textContent;
+ button.textContent='Preparing PDF…';
+ status.textContent='Creating a separate PDF for '+record.student+'…';
+ try{
+  const index=monthlyAttendanceExport.indexOf(record);
+  const blob=await monthlyPdfBlob(record);
+  monthlyDownloadBlob(blob,monthlyStudentPdfFileName(record,index));
+  status.textContent='✓ Individual PDF downloaded for '+record.student+'. No other students are included.';
+ }catch(err){
+  console.error('Individual student PDF error:',err);
+  status.textContent='Could not download '+record.student+' PDF: '+err.message;
+ }finally{
+  button.disabled=false;
+  button.textContent=originalText;
+ }
+}
+async function monthlyStudentPdfsZip(includeExcel=false){
+ // One ZIP avoids mobile browser blocking dozens of separate download prompts.
+ await ensureMonthlyExportLibrary('zip');
+ const zip=new window.JSZip(),folder=zip.folder('Individual_Student_PDFs');
+ const snapshot=[...monthlyAttendanceExport],total=snapshot.length;
+ if(!total)throw Error('No attendance records available for export.');
+ if(includeExcel){
+  $('monthlyStudentAttendanceStatus').textContent='Creating Excel summary…';
+  zip.file(monthlyExportName()+'.xlsx',await monthlyExcelBlob());
+ }
+ for(let i=0;i<total;i++){
+  const student=snapshot[i];
+  $('monthlyStudentAttendanceStatus').textContent='Creating separate PDF '+(i+1)+' / '+total+': '+student.student+'…';
+  // One record per PDF. Never mix different students in one file.
+  const blob=await monthlyPdfBlob(student);
+  folder.file(monthlyStudentPdfFileName(student,i),blob);
+  // Yield periodically so the mobile browser can redraw export progress.
+  if(i%3===2)await new Promise(resolve=>setTimeout(resolve,0));
+ }
+ $('monthlyStudentAttendanceStatus').textContent='Packing '+total+' individual student PDFs into ZIP…';
+ return await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:5}});
+}
 async function monthlyRunExport(buttonId,kind){
  if(!monthlyAttendanceExport.length)return;
- const status=$('monthlyStudentAttendanceStatus'),button=$(buttonId);
+ const status=$('monthlyStudentAttendanceStatus'),button=$(buttonId),filename=monthlyExportName();
  button.disabled=true;
- const filename=monthlyExportName();
- status.textContent='Preparing '+(kind==='zip'?'Excel and PDF files':kind.toUpperCase()+' file')+'…';
+ status.textContent='Preparing '+(kind==='students'?'separate student PDFs':kind==='zip'?'Excel + individual student PDFs':kind==='pdf'?'class summary PDF':kind.toUpperCase())+'…';
  try{
   if(kind==='xlsx'){
    monthlyDownloadBlob(await monthlyExcelBlob(),filename+'.xlsx');
   }else if(kind==='pdf'){
-   monthlyDownloadBlob(await monthlyPdfBlob(),filename+'.pdf');
+   monthlyDownloadBlob(await monthlyPdfBlob(),filename+'_Class_Summary.pdf');
+  }else if(kind==='students'){
+   monthlyDownloadBlob(await monthlyStudentPdfsZip(false),filename+'_Individual_Student_PDFs.zip');
   }else if(kind==='zip'){
-   const excel=await monthlyExcelBlob(),pdf=await monthlyPdfBlob();
-   await ensureMonthlyExportLibrary('zip');
-   const archive=new window.JSZip();
-   archive.file(filename+'.xlsx',excel);
-   archive.file(filename+'.pdf',pdf);
-   const blob=await archive.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
-   monthlyDownloadBlob(blob,filename+'_Excel_and_PDF.zip');
+   monthlyDownloadBlob(await monthlyStudentPdfsZip(true),filename+'_Excel_and_Individual_Student_PDFs.zip');
   }
-  status.textContent='✓ Download prepared: '+(kind==='zip'?'Excel + PDF together in one ZIP file':kind.toUpperCase())+'. Check your Downloads folder.';
+  status.textContent=kind==='students'||kind==='zip'
+   ?'✓ Downloaded '+monthlyAttendanceExport.length+' separate student PDFs'+(kind==='zip'?' and one Excel workbook':'')+' in a ZIP file. Extract ZIP to open each student PDF.'
+   :'✓ '+(kind==='pdf'?'Class Summary PDF':kind.toUpperCase())+' downloaded. Check your Downloads folder.';
  }catch(err){
   console.error('Monthly attendance '+kind+' download failed:',err);
   status.textContent='Download failed: '+err.message;
- }finally{
-  button.disabled=!monthlyAttendanceExport.length;
- }
+ }finally{button.disabled=!monthlyAttendanceExport.length}
 }
 $('downloadMonthlyStudentExcel').onclick=()=>monthlyRunExport('downloadMonthlyStudentExcel','xlsx');
 $('downloadMonthlyStudentPDF').onclick=()=>monthlyRunExport('downloadMonthlyStudentPDF','pdf');
+$('downloadMonthlyStudentIndividualPDFs').onclick=()=>monthlyRunExport('downloadMonthlyStudentIndividualPDFs','students');
 $('downloadMonthlyStudentBoth').onclick=()=>monthlyRunExport('downloadMonthlyStudentBoth','zip');
 
 async function openFees(student){if(!active)return;feeStudent=student;const s=student.data();$('feeStudentName').value=s.name||student.id;feeCourse=courseKey(s.course);$('feeStatus').textContent='Loading fees…';try{const course=await getDoc(doc(db,'courses',feeCourse));feeRate=Number(course.exists()?course.data().monthlyFee:0)||0;const record=await getDoc(doc(db,'students',student.id));feeLedger=record.data()?.feeLedger||{};renderFeeMonths();$('studentFeesPanel').scrollIntoView({behavior:'smooth'});}catch(e){$('feeStatus').textContent='Unable to load fee records: '+e.message}}
