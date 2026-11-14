@@ -146,6 +146,11 @@ function showIdentityStep(){
  identityMessage('Enter your official ALIA Student ID and DOB to continue.');
  identityCard.scrollIntoView({behavior:'smooth',block:'start'});
 }
+$('studentOfficialCode').addEventListener('input',event=>{
+ const field=event.target,caret=field.selectionStart;
+ field.value=field.value.toUpperCase().replace(/\s/g,'').slice(0,9);
+ try{field.setSelectionRange(caret,caret)}catch{}
+});
 $('studentIdentityForm').addEventListener('submit',async event=>{
  event.preventDefault();
  const button=$('studentIdentityContinue');button.disabled=true;
