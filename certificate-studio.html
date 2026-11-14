@@ -1,0 +1,110 @@
+
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#102B48"><title>Premium Certificate Studio | Al Islah Arabic Academy</title>
+<style>
+:root{--n:#102A4A;--p:#4E1658;--g:#0C654A;--gold:#D5A451}
+*{box-sizing:border-box}
+body{margin:0;background:#F4F3EF;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#22384B}
+header{background:linear-gradient(117deg,#0B1F3E,#4B1757);padding:21px 5vw;color:#FFF1CF;border-bottom:5px solid #CE9F4D;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{font-family:Georgia,serif;font-size:clamp(21px,3vw,34px);margin:0}
+header a{color:#FFF1CF;border:1px solid #E4BA74;padding:9px 15px;border-radius:10px;text-decoration:none}
+main{max-width:1440px;margin:28px auto;padding:0 17px}
+.notice{border-left:5px solid var(--gold);background:#FFF7E5;padding:12px 18px;border-radius:10px;font-size:13px}
+.toolbar{background:white;border:1px solid #DADBD3;border-radius:16px;padding:21px;margin:18px 0;box-shadow:0 10px 35px #0B23440C}
+h2{font-family:Georgia,serif;color:var(--n);margin:0 0 14px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:15px}
+label{display:block;font-size:12px;font-weight:700;color:#325041}
+input,select{width:100%;min-height:44px;padding:10px;border:1px solid #CCD5C9;border-radius:8px;background:#FFFEFB;margin-top:4px;font:inherit}
+button{min-height:45px;border:0;border-radius:9px;background:var(--g);color:white;font:700 14px system-ui;padding:11px 16px;cursor:pointer}
+button.secondary{background:var(--n)}
+button.gold{background:#B98829;color:white}
+button:disabled{opacity:.55;cursor:wait}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.status{font-size:13px;color:#2F6445;white-space:pre-line;min-height:20px}
+.previewBox{background:#DADFE4;border:1px solid #C7D0D4;border-radius:16px;padding:20px;display:grid;gap:18px;place-items:center}
+.sheet{width:min(100%,1050px);background:white;box-shadow:0 15px 35px #07234733}
+.sheet svg{display:block;width:100%;height:auto}
+.sheet.portrait{max-width:720px}
+.details{font-size:12px;color:#526775;margin:15px 0}
+@media print{
+ @page{size:A4 landscape;margin:0}
+ html,body{margin:0!important;padding:0!important;background:white!important}
+ header,.notice,.toolbar,.details{display:none!important}
+ main{max-width:none!important;padding:0!important;margin:0!important}
+ .previewBox{display:block!important;border:0!important;padding:0!important;background:white!important;border-radius:0}
+ .sheet,.sheet.portrait{width:100%!important;max-width:none!important;margin:0!important;box-shadow:none!important;break-after:page!important;page-break-after:always!important}
+ .sheet svg{display:block!important;width:100%!important;height:auto!important}
+}
+</style>
+<style id="printOrientation"></style></head><body>
+<header><h1>✦ AL ISLAH ARABIC ACADEMY · PREMIUM CERTIFICATE STUDIO</h1><a href="admin.html">← Admin Dashboard</a></header>
+<main>
+<p class="notice">These are editable <strong>sample previews</strong> only. Official exam and competition certificates are generated from the approved Academy records through the existing Admin and Student pages. Decorations and text are vector objects in exported PDFs; the original Academy logo remains an embedded image.</p>
+<section class="toolbar"><h2>Five Premium Certificate Designs</h2>
+<div class="fields">
+<label>Certificate Design<select id="kind"><option value="exam">🎓 Academic Excellence</option><option value="winner">🏆 Competition Winner</option><option value="participation">🎗 Participation</option><option value="event">🕌 Event Appreciation</option><option value="results">📊 Exam Result Statement</option></select></label>
+<label>Student Name<input id="studentName" maxlength="100" autocomplete="off"></label>
+<label>Official Student ID<input id="studentCode" maxlength="30" autocomplete="off"></label>
+<label>Class / Course<input id="course" maxlength="45"></label>
+<label>Exam / Event Title<input id="eventName" maxlength="95"></label>
+<label>Event / Exam Date<input id="eventDate" type="date"></label>
+<label>Academic Year<input id="academicYear" maxlength="30"></label>
+<label>Prize / Role<select id="award"><option>First Prize</option><option>Second Prize</option><option>Third Prize</option><option>Winner</option><option>Participation</option><option>Event Appreciation</option><option>Event Volunteer</option><option>Event Organizer</option></select></label>
+</div>
+<div class="actions"><button id="vectorDownload" class="gold">⬇ Download Vector PDF</button><button id="print" class="secondary">🖨 Print / Save as PDF</button><button id="reset">↻ Restore Sample</button></div>
+<p class="status" id="status" role="status" aria-live="polite"></p>
+</section>
+<div class="previewBox" id="preview" aria-label="Editable academy certificate preview"></div>
+<p class="details">The browser print option preserves vector SVG lines and text when saved as PDF. For names containing Tamil, Arabic or Urdu characters, use Chrome Print → Save as PDF if your device has the relevant font; the direct PDF generator has limited non-Latin font support.</p>
+</main>
+<script type="module">
+import{premiumCertificatePages,sampleCertificate,createPremiumVectorPdf}from'./premium-certificate-svg.js';
+const $=id=>document.getElementById(id),fields=['studentName','studentCode','course','eventName','eventDate','academicYear','award'];
+const queryType=new URLSearchParams(location.search).get('type');if(['exam','winner','participation','event','results'].includes(queryType))$('kind').value=queryType;
+const sample=()=>sampleCertificate($('kind').value);
+function reset(){
+ const r=sample();
+ $('studentName').value=r.studentName||'';
+ $('studentCode').value=r.studentCode||'';
+ $('course').value=r.course||'';
+ $('eventName').value=r.eventName||r.examTitle||'';
+ $('eventDate').value=r.eventDate||r.examDate||'';
+ $('academicYear').value=r.academicYear||'';
+ $('award').value=r.award||'First Prize';
+ render();
+}
+function record(){
+ const r=sample();
+ Object.assign(r,{studentName:$('studentName').value.trim(),studentCode:$('studentCode').value.trim(),course:$('course').value.trim(),examTitle:$('eventName').value.trim(),eventName:$('eventName').value.trim(),academicYear:$('academicYear').value.trim(),examDate:$('eventDate').value,eventDate:$('eventDate').value,award:$('award').value});
+ return r;
+}
+function render(){
+ try{
+  const kind=$('kind').value,pages=premiumCertificatePages(kind,record()),root=$('preview');root.replaceChildren();
+  for(const markup of pages){
+   const doc=new DOMParser().parseFromString(markup,'image/svg+xml');
+   if(doc.querySelector('parsererror'))throw Error('Certificate template is invalid.');
+   const holder=document.createElement('div');holder.className='sheet'+(kind==='results'?' portrait':'');
+   holder.append(document.importNode(doc.documentElement,true));root.append(holder);
+  }
+  $('printOrientation').textContent=kind==='results'?'@media print{@page{size:A4 portrait;margin:0}}':'';
+  $('status').textContent='✓ Premium vector preview ready: '+pages.length+' A4 page(s). No student data is being saved by this sample page.';
+ }catch(e){$('status').textContent='Could not create preview: '+e.message}
+}
+$('kind').onchange=reset;$('reset').onclick=reset;
+for(const id of fields)$(id).addEventListener('input',render);
+$('print').onclick=()=>window.print();
+$('vectorDownload').onclick=async()=>{
+ const button=$('vectorDownload');button.disabled=true;$('status').textContent='Building print-sharp vector PDF…';
+ try{const type=$('kind').value,blob=await createPremiumVectorPdf(type,record());
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;
+  a.download='ALIA_'+type.toUpperCase()+'_VECTOR_PREVIEW.pdf';document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  $('status').textContent='✓ Vector PDF generated. Inspect the downloaded file at 200% zoom and print-test before issuing official certificates.';
+ }catch(e){$('status').textContent='Vector PDF error: '+e.message+'. Use Print / Save as PDF in Chrome as an alternative.'}
+ finally{button.disabled=false}
+};
+reset();
+</script>
+</body></html>

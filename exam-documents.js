@@ -1,3 +1,4 @@
+import{createPremiumVectorPdf,classifyCompetitionAward}from'./premium-certificate-svg.js';
 /* Madrasa Al Islahul Arabiya — private/admin and published-result PDF builder.
    Vector drawings and Latin text; only original logo and non-Latin glyphs are rasterized. */
 let jspdfLoad=null,brandCache=null;
@@ -202,108 +203,15 @@ function signedExamBadge(pdf,record){
 }
 
 export async function createExamResultPdf(record){
- const JS=await readyPdf(),brand=await logoPair();
- const pdf=new JS({unit:'mm',format:'a4',orientation:'portrait',compress:true});
- const subjects=marks(record);
- let page=0,y=0,finalPage=1;
- function resultPage(){
-  if(page)pdf.addPage();page++;
-  premiumFrame(pdf,210,297,INK);watermark(pdf,brand,210,297,80);
-  academyMasthead(pdf,brand,210,ROYAL);
-  fill(pdf,ROYAL);pdf.roundedRect(21,58,168,17,3,3,'F');stroke(pdf,GOLD,.55);
-  pdf.roundedRect(21,58,168,17,3,3,'S');
-  setColor(pdf,GOLD);fitText(pdf,'OFFICIAL EXAM RESULT STATEMENT',105,70,16,160,11,{bold:true,align:'center'});
-  labelChip(pdf,'Student ID',String(record.studentCode||'-'),17,81,55);
-  labelChip(pdf,'Student Name',String(record.studentName||'-'),77,81,116);
-  labelChip(pdf,'Course',String(record.course||'-'),17,101,84);
-  labelChip(pdf,'Academic Year',String(record.academicYear||'-'),107,101,86);
-  setColor(pdf,INK);fitText(pdf,String(record.examTitle||'Academy Examination'),105,124,11,175,8,{bold:true,align:'center'});
-  setColor(pdf,MID);fitText(pdf,'EXAM DATE: '+String(record.examDate||'-'),105,131,8,175,7,{align:'center'});
-  fill(pdf,ROYAL);pdf.roundedRect(15,138,180,12,2,2,'F');
-  setColor(pdf,WHITE);text(pdf,'SUBJECT',20,146.3,9,{bold:true});
-  text(pdf,'MAX',149,146.3,9,{bold:true});
-  text(pdf,'OBTAINED',167,146.3,8.5,{bold:true});
-  y=153;
- }
- resultPage();
- for(let i=0;i<subjects.length;i++){
-  if(y+10>242)resultPage();
-  const s=subjects[i];
-  fill(pdf,i%2===0?[249,246,240]:WHITE);pdf.rect(16,y-1,178,9,'F');
-  stroke(pdf,[230,219,197],.2);pdf.line(16,y+8,194,y+8);
-  setColor(pdf,INK);
-  fitText(pdf,s.name,20,y+5,9,122,7.5);
-  fitText(pdf,String(s.max),150,y+5,9,14,7.5);
-  fitText(pdf,String(s.score),169,y+5,9,20,7.5);
-  y+=10;
- }
- if(y>219)resultPage();
- const sy=Math.max(y+4,164);finalPage=page;
- fill(pdf,[236,247,238]);pdf.roundedRect(16,sy,178,32,4,4,'F');
- stroke(pdf,GOLD,.65);pdf.roundedRect(16,sy,178,32,4,4,'S');
- setColor(pdf,EMERALD);
- fitText(pdf,'TOTAL  '+String(record.total??'-')+' / '+String(record.maxTotal??'-'),22,sy+11,12,77,9,{bold:true});
- fitText(pdf,'PERCENTAGE  '+Number(record.percent||0).toFixed(2)+'%',22,sy+24,10,77,8,{bold:true});
- fitText(pdf,'GRADE  '+String(record.grade||'-'),117,sy+11,11,70,9,{bold:true});
- setColor(pdf,record.passed?EMERALD:[165,50,45]);
- fitText(pdf,'RESULT  '+gradeLabel(record),117,sy+24,11,74,8,{bold:true});
- stroke(pdf,GOLD,.55);pdf.line(22,265,83,265);pdf.line(127,265,188,265);
- setColor(pdf,INK);text(pdf,'ACADEMY RECORD',105,266.5,7.5,{align:'center',bold:true});
- setColor(pdf,MID);
- fitText(pdf,'REFERENCE: '+String(record.id||'-'),105,276,7,180,6,{align:'center'});
- const url=new URL('exam-results.html?id='+encodeURIComponent(String(record.id||'')),location.href).href;
- fitText(pdf,'RESULT LINK: '+url,105,284,6.8,183,6.0,{align:'center'});
- return pdf.output('blob');
+ return createPremiumVectorPdf('results',record);
 }
-
 export async function createExamCertificatePdf(record){
- if(!record?.published)throw Error('Publish the result before issuing an official certificate.');
- const JS=await readyPdf(),brand=await logoPair();
- const pdf=new JS({unit:'mm',format:'a4',orientation:'landscape',compress:true});
- landscapeTemplate(pdf,brand,{
-  accent:ROYAL,
-  heading:record.passed?'CERTIFICATE OF ACADEMIC EXCELLENCE':'CERTIFICATE OF EXAMINATION PARTICIPATION',
-  subtitle:'This certificate is proudly presented to',
-  studentName:String(record.studentName||'Student'),studentCode:String(record.studentCode||'-'),
-  course:String(record.course||'-'),date:String(record.examDate||'-'),
-  reference:'CERT-'+String(record.id||'').slice(-16).toUpperCase(),mode:'participation'
- });
- singleText(pdf,record.passed?'for successfully completing the Academy examination':'for taking part in the Academy examination',126,10);
- singleText(pdf,String(record.examTitle||'Academy Examination'),139,14,ROYAL);
- signedExamBadge(pdf,record);
- setColor(pdf,INK);
- fitText(pdf,'Score: '+String(record.total??'-')+' / '+String(record.maxTotal??'-')+'   |   Grade: '+String(record.grade||'-')+'   |   '+Number(record.percent||0).toFixed(2)+'%',
-  148.5,181.2,8,185,7,{align:'center'});
- return pdf.output('blob');
+ if(!record?.published)throw Error('Publish the examination result before issuing a certificate.');
+ return createPremiumVectorPdf('exam',record);
 }
-
 export async function createCompetitionCertificatePdf(certificate){
- if(!certificate?.id||!certificate?.studentName||!certificate?.eventName||!certificate?.eventDate)throw Error('A complete issued competition certificate is required.');
- const JS=await readyPdf(),brand=await logoPair();
- const pdf=new JS({unit:'mm',format:'a4',orientation:'landscape',compress:true});
- const award=String(certificate.award||'Participation');
- const isParticipant=award==='Participation';
- const isEvent=/^Event /.test(award);
- const mode=isEvent?'event':isParticipant?'participation':'winner';
- const heading=isEvent?'CERTIFICATE OF EVENT RECOGNITION':isParticipant?'CERTIFICATE OF PARTICIPATION':'CERTIFICATE OF EXCELLENCE';
- const subtitle=isEvent?'For dedication, service and contribution to Academy activities':
-  isParticipant?'For enthusiastic participation and sincere effort':
-  'In recognition of outstanding achievement and distinction';
- const accent=isEvent?INK:isParticipant?EMERALD:ROYAL;
- landscapeTemplate(pdf,brand,{
-  accent,heading,subtitle,mode,
-  studentName:String(certificate.studentName),
-  course:String(certificate.course||'-'),studentCode:String(certificate.studentCode||'-'),
-  date:String(certificate.eventDate),reference:String(certificate.id)
- });
- const intro=isEvent?'For valuable contribution to':isParticipant?'For active participation in':'For exceptional performance in';
- singleText(pdf,intro,126,10);
- singleText(pdf,String(certificate.eventName),138,14,accent);
- const ribbon=isEvent?award.replace(/^Event /,'').toUpperCase():isParticipant?'PARTICIPANT':award.toUpperCase();
- fill(pdf,accent);pdf.roundedRect(90,145,117,15,5,5,'F');
- stroke(pdf,GOLD,.7);pdf.roundedRect(90,145,117,15,5,5,'S');
- setColor(pdf,GOLD);fitText(pdf,ribbon,148.5,155.6,13,110,9,{bold:true,align:'center'});
- return pdf.output('blob');
+ if(!certificate?.id||!certificate?.studentName||!certificate?.eventName||!certificate?.eventDate)throw Error('A complete, issued competition certificate is required.');
+ return createPremiumVectorPdf(classifyCompetitionAward(certificate.award),certificate);
 }
 export function downloadExamBlob(blob,filename){
  if(!(blob instanceof Blob)||!blob.size)throw Error('The PDF is empty.');
