@@ -41,3 +41,9 @@ Student DOB is stored in admin-only **students** data. The public Firestore look
 The displayed confidential Exam Student ID is generated as a separate random UUID and is **different from the internal Firestore document ID** (which may appear in published result record metadata). This prevents a person with one result reference from deriving the login lookup key from a public record. Enter or update the DOB in the Student Details form and Save to automatically create the confidential Exam Student ID for older students, too. When DOB changes, saving the student record disables the old lookup key and regenerates the index for the new DOB. When a result is unpublished, its reference is removed from the index. Result records themselves remain the source of truth; a lookup cannot bypass the published-only Firestore rule.
 
 Existing students without DOB need their DOB recorded in Student Details. Published exams are indexed when DOB is added or a result is published. For privacy, no public search by student name or list of all students exists.
+
+## Homepage Menu and Student Result Login
+
+The public homepage has a responsive **Menu** button for phones and small laptops. Its **Student Access** section links to **Student Login** (`student-login.html`) and **Online Exam Results** (`exam-results.html`). On wide desktop screens both links are also available in the top navigation.
+
+The Student Login page validates the confidential Exam Student ID and DOB **only for finding published exam results**. It lists the student's published examinations and links to the printable result and certificate. It intentionally does not expose attendance, fee balances, address, phone number or private student records. It is **not a Firebase Authentication user account**, and DOB must not be treated as a strong password. Admin issues the independent confidential Exam Student ID from Student Details after saving the student's DOB; share privately with the guardian.
