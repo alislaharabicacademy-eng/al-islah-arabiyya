@@ -1864,7 +1864,15 @@ async function renderTeacherPayroll(){
    }catch(e){$('teacherPayrollStatus').textContent='Save failed: '+e.message}
    finally{save.disabled=false}
   };
- const receipt=document.createElement('button');receipt.type='button';receipt.className='secondary';receipt.textContent='⬇ Download Salary PDF';receipt.onclick=async()=>{receipt.disabled=true;$('teacherPayrollStatus').textContent='Preparing salary PDF…';try{await ensurePdfLibrary();const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+ const receipt=document.createElement('button');receipt.type='button';receipt.className='secondary';receipt.textContent='⬇ Download Salary PDF';receipt.onclick=async()=>{receipt.disabled=true;$('teacherPayrollStatus').textContent='Preparing salary PDF…';try{
+  if(inputs.paid.checked){
+   const current=await getDoc(doc(db,'teachers',t.id));
+   const saved=current.data()?.payroll?.[month];
+   if(!saved?.paid||Number(saved.salary||0)!==Number(inputs.salary.value||0)||String(saved.paidDate||'')!==String(inputs.paidDate.value||'')){
+    throw Error('Save this month as PAID with the correct amount and payment date before generating a paid salary receipt.');
+   }
+  }
+  await ensurePdfLibrary();const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
 const green=[23,59,43],gold=[180,154,88],muted=[87,102,94];
 const paid=inputs.paid.checked,amount=Number(inputs.salary.value||t.salary||0),date=inputs.paidDate.value||'',receiptNo='SAL-'+month.replace('-','')+'-'+t.id.slice(-7).toUpperCase();
 await decorateAcademyPdf(pdf);
