@@ -67,7 +67,7 @@ export function initExamAdmin({db,auth}){
  }
  function fillStudentSummary(){
   const st=shownStudent();
-  $('examStudentSummary').textContent=st?'Student: '+st.name+'  |  Class: '+(courseNames.get(st.course)||st.course||'—')+'  |  Batch: '+(st.batch||'—')+'  |  Student ID: '+st.id+'  |  DOB: '+(st.dob?'Recorded':'Missing — Student ID + DOB lookup needs DOB in Student Details'):'Choose a student to show their class and batch.';
+  $('examStudentSummary').textContent=st?'Student: '+st.name+'  |  Class: '+(courseNames.get(st.course)||st.course||'—')+'  |  Batch: '+(st.batch||'—')+'  |  Student ID: '+(st.examid||'Not issued — save student in Student Details')+'  |  DOB: '+(st.dob?'Recorded':'Missing — Student ID + DOB lookup needs DOB in Student Details'):'Choose a student to show their class and batch.';
  }
  function reset(){
   form.reset();$('examResultId').value='';$('examResultPass').value='40';
@@ -136,8 +136,8 @@ export function initExamAdmin({db,auth}){
    batch.set(doc(db,'examResults',id),payload);
    const beforeStudent=students.find(student=>student.id===old?.studentId);
    const afterStudent=students.find(student=>student.id===record.studentId);
-   const beforeKey=old?.published&&beforeStudent?.dob?await examStudentLookupKey(beforeStudent.id,beforeStudent.dob):null;
-   const afterKey=published&&afterStudent?.dob?await examStudentLookupKey(afterStudent.id,afterStudent.dob):null;
+   const beforeKey=old?.published&&beforeStudent?.dob&&beforeStudent?.examid?await examStudentLookupKey(beforeStudent.examid,beforeStudent.dob):null;
+   const afterKey=published&&afterStudent?.dob&&afterStudent?.examid?await examStudentLookupKey(afterStudent.examid,afterStudent.dob):null;
    if(beforeKey&&beforeKey!==afterKey)batch.set(doc(db,'examResultLookups',beforeKey),
     {resultIds:arrayRemove(id),updatedAt:now},{merge:true});
    if(afterKey)batch.set(doc(db,'examResultLookups',afterKey),
@@ -145,7 +145,8 @@ export function initExamAdmin({db,auth}){
    await batch.commit();
    $('examResultId').value=id;
    await load();
-   const lookupNote=published&&!afterKey?' Student ID + DOB lookup is unavailable until DOB is added in Student Details and this result is republished.':'';
+   const lookupNote=published&&!afterKey?' Student ID + DOB lookup needs both DOB and a confidential Student ID. Open Student Details, edit and save the student.':'';
+
    status((published?'✓ Result PUBLISHED.':'✓ Private draft saved.')+' Reference: '+id+(published?'  |  Copy the result link below to share privately.':'')+lookupNote);
    $('examResultList').scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){status('Could not save exam result: '+e.message)}finally{button.disabled=false}
@@ -172,8 +173,8 @@ export function initExamAdmin({db,auth}){
    const now=new Date().toISOString(),batch=writeBatch(db);
    batch.set(doc(db,'examResults',record.id),{...current.data(),published:false,updatedAt:now});
    const student=students.find(s=>s.id===current.data().studentId);
-   if(student?.dob){
-    const key=await examStudentLookupKey(student.id,student.dob);
+   if(student?.dob&&student?.examid){
+    const key=await examStudentLookupKey(student.examid,student.dob);
     batch.set(doc(db,'examResultLookups',key),{resultIds:arrayRemove(record.id),updatedAt:now},{merge:true});
    }
    await batch.commit();
