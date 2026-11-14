@@ -41,6 +41,25 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 .side-menu .academy-menu-submenu button,.side-menu .academy-menu-submenu a{background:#ffffff08;border:1px solid #ffffff1a;border-radius:9px;padding:12px 14px;font-size:14px;font-weight:600;margin:5px 0;color:#e7f2e8;min-height:44px}
 .side-menu .academy-menu-submenu button.active{background:#d5b67822;border-color:#e1c68c;color:#fff}
 @media(max-width:600px){.side-menu{width:min(85vw,340px)!important}.side-menu .academy-menu-group-toggle{font-size:15px}}
+</style><style id="teacher-salary-register-style">
+.teacher-salary-register{background:linear-gradient(150deg,#f8fcf9,#eef6f0);border:1px solid #ceded2;border-radius:17px;margin-top:26px;padding:18px}
+.teacher-salary-register .fields{margin:13px 0;display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:12px}
+.teacher-salary-register .actions{display:flex;flex-wrap:wrap;gap:9px;margin:15px 0}
+.teacher-salary-register .actions button{border-radius:9px;min-height:43px;padding:11px 14px}
+.teacher-salary-totals{display:grid;grid-template-columns:repeat(4,minmax(130px,1fr));gap:10px;margin:13px 0}
+.teacher-salary-stat{background:#fff;border:1px solid #d7e5da;border-radius:12px;padding:12px}
+.teacher-salary-stat strong{display:block;font-size:20px;color:#13472d}.teacher-salary-stat small{color:#5d7867;font-size:11px;font-weight:750}
+.teacher-salary-scroll{overflow-x:auto;width:100%;border:1px solid #d5e3d9;border-radius:11px;background:#fff;margin-top:12px}
+.teacher-salary-table{min-width:790px;width:100%;border-collapse:collapse;background:#fff;font-size:12px}
+.teacher-salary-table th{background:#dff1e6;color:#12452d;font-weight:850;white-space:nowrap;text-align:left;padding:12px}
+.teacher-salary-table td{padding:11px 12px;border-bottom:1px solid #e5efe8;vertical-align:middle}
+.teacher-salary-table tbody tr:nth-child(even){background:#f7fbf8}
+.teacher-salary-paid{background:#dbf1dd;color:#0a5c2e;font-weight:800;padding:5px 9px;border-radius:7px;white-space:nowrap}
+.teacher-salary-pending{background:#ffecd4;color:#895622;font-weight:800;padding:5px 9px;border-radius:7px;white-space:nowrap}
+.teacher-salary-empty{background:#edf0ed;color:#677669;font-weight:800;padding:5px 9px;border-radius:7px;white-space:nowrap}
+.teacher-salary-table th.num,.teacher-salary-table td.num{text-align:right}
+.teacher-salary-report-note{font-size:12px;color:#63786a;margin:13px 0;line-height:1.6}
+@media(max-width:720px){.teacher-salary-register{padding:12px}.teacher-salary-totals{grid-template-columns:repeat(2,minmax(0,1fr))}.teacher-salary-register .fields{grid-template-columns:1fr}}
 </style><style id="teacher-management-mode-style">.teacher-mode-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}.teacher-mode-switch button{min-height:65px;border-radius:13px;font-weight:800}.teacher-mode-switch button.secondary{background:#eef3eb;color:#1d5039;border:1px solid #c6d5c8}#teacherProfileMode[hidden],#teacherManagementMode[hidden]{display:none!important}@media(max-width:500px){.teacher-mode-switch{grid-template-columns:1fr}}</style><style id="teacher-inline-editor-style">
 #teacherEditorHost[hidden],#teacherEditorMount[hidden]{display:none!important}
 #teacherEditorHost:not([hidden]){display:block;background:#f7faf6;border:1px solid #cbb77e;border-radius:17px;padding:18px 16px;margin-top:18px;box-shadow:0 8px 24px rgba(14,51,32,.08)}
@@ -207,7 +226,25 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
     <p id="teacherStatus" role="status" aria-live="polite"></p>
   </section>
 </div>
-<p id="teacherManagementStatus" class="status" role="status" aria-live="polite"></p><div id="teacherList"></div><hr><h3>📅 Teacher Attendance & Salary</h3><p class="section-note">Select a teacher below to record attendance, monthly salary, and download a PDF salary receipt.</p><label>Month <input type="month" id="teacherMonth"></label><div id="teacherPayroll"></div><p id="teacherPayrollStatus" role="status"></p></div></div><div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Private enrolled-student records.</p><form id="studentForm"><input type="hidden" id="studentId"><div class="fields"><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
+<p id="teacherManagementStatus" class="status" role="status" aria-live="polite"></p><div id="teacherList"></div><hr><h3>📅 Teacher Attendance & Salary</h3><p class="section-note">Select a teacher below to record attendance, monthly salary, and download a PDF salary receipt.</p><label>Month <input type="month" id="teacherMonth"></label><div id="teacherPayroll"></div><p id="teacherPayrollStatus" role="status"></p>
+<section class="section teacher-salary-register" id="teacherSalaryRegister">
+ <h3>📊 Teacher Salary Register · All Teachers</h3>
+ <p class="section-note">After recording each teacher's salary payment above, choose a month to check every teacher together, or select a year to review January–December payment status. Paid is confirmed only by saved salary records.</p>
+ <div class="fields">
+  <label>Salary Month <input type="month" id="allTeacherSalaryMonth"></label>
+  <label>Salary Year <select id="allTeacherSalaryYear"></select></label>
+ </div>
+ <div class="actions">
+  <button type="button" id="viewAllTeacherSalaryMonth">📋 View Monthly Salary Register</button>
+  <button type="button" class="secondary" id="downloadAllTeacherSalaryMonth" disabled>📕 Download Monthly PDF · Landscape</button>
+  <button type="button" class="secondary" id="viewTeacherSalaryYear">📅 Check All 12 Months</button>
+  <button type="button" class="secondary" id="downloadTeacherSalaryYear" disabled>📕 Download Yearly PDF · Landscape</button>
+ </div>
+ <p class="status" id="teacherSalaryRegisterStatus" role="status"></p>
+ <div id="teacherSalaryRegisterSummary"></div>
+ <div id="teacherSalaryRegisterReport"></div>
+</section>
+</div></div><div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Private enrolled-student records.</p><form id="studentForm"><input type="hidden" id="studentId"><div class="fields"><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
 <details id="monthlyStudentAttendancePanel" class="section student-monthly-panel">
  <summary>📊 Monthly Student Attendance Report</summary>
  <div class="monthly-report-shell">
