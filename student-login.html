@@ -35,6 +35,15 @@ button:disabled{opacity:.55;cursor:wait}
 .auth-help{font-size:12px;color:#637e69}
 .status{font-size:13px;color:#5b7764;line-height:1.7;min-height:18px;margin:14px 0}
 .status.error{color:#a1382e}.status.good{color:#147044}
+.student-id-illustration{display:flex;align-items:center;gap:15px;background:linear-gradient(112deg,#0d4b33,#176a45);color:#fff;border-radius:14px;padding:16px 18px;margin-bottom:20px}
+.student-id-illustration span{font-size:29px}
+.student-id-illustration strong{font-size:19px;letter-spacing:.085em}
+.student-id-illustration small{display:block;font-size:11px;color:#cce1cf;margin-top:5px;letter-spacing:0}
+#studentIdentityForm{display:grid;gap:17px}
+#studentOfficialCode{text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:#13543a}
+#studentIdentityCard{max-width:620px}
+#studentIdentityCard .identity-hint{font-size:12px;line-height:1.7;color:#657c6b;margin:12px 0 0}
+#studentIdentityBack{font-size:12px}
 .note{background:#eaf4eb;color:#56715c;padding:15px;border:1px solid #d4e5d6;border-radius:13px;font-size:12px;line-height:1.8;margin:22px auto}
 .dashboard-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-bottom:1px solid #e1ece2;padding-bottom:16px}
 .dashboard-header h3{margin:0 0 8px}.dashboard-header small{color:#5e7a67}
@@ -57,8 +66,24 @@ footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font
 <nav><a href="index.html">⌂ Home</a><a href="exam-results.html">🏅 Public Exam Checker</a><a href="admission.html">Apply Now</a></nav></header>
 <main>
 <div class="intro"><h2>🎓 Student Account Login</h2>
-<p>Students and approved guardians can sign in securely using their own email account. View your private student dashboard and published examination results.</p></div>
-<section class="card" id="studentAuthCard">
+<p>Enter your official <strong>ALIA Student ID</strong> and <strong>Date of Birth</strong> to begin your secure student account login.</p></div>
+<section class="card" id="studentIdentityCard">
+<div class="student-id-illustration"><span aria-hidden="true">🎓</span><div><strong>ALIA00001</strong><small>OFFICIAL STUDENT ID · EXAMPLE</small></div></div>
+<h3>🔐 Login with Student ID &amp; DOB</h3>
+<form id="studentIdentityForm">
+<label>Official Student ID
+<input id="studentOfficialCode" type="text" required maxlength="9" minlength="9" pattern="ALIA[0-9]{5}" placeholder="ALIA00001" autocomplete="off" spellcheck="false" aria-describedby="studentIdentityHint"></label>
+<label>Date of Birth
+<input id="studentIdentityDOB" type="date" required autocomplete="bday"></label>
+<button id="studentIdentityContinue" type="submit">🔒 Continue to Secure Login →</button>
+</form>
+<p id="studentIdentityStatus" class="status" role="status" aria-live="polite"></p>
+<p class="identity-hint" id="studentIdentityHint">Enter your permanent ID issued by the Madrasa. The next step confirms your identity with your administrator-approved account, so someone who guesses your ID and birth date cannot open your private dashboard.</p>
+</section>
+<section class="card" id="studentAuthCard" hidden>
+<h3>✅ Verify Your Approved Account</h3>
+<p class="auth-help">Student ID and Date of Birth received. For your privacy, sign in with the student/guardian email approved by your Madrasa. This protects student data even if someone knows your birth date.</p>
+<button id="studentIdentityBack" type="button" class="secondary">← Change Student ID / DOB</button>
 <div class="auth-switch" role="tablist" aria-label="Account access options">
 <button type="button" id="authTabSignIn" aria-selected="true" role="tab">🔐 Sign In</button>
 <button type="button" id="authTabCreate" aria-selected="false" role="tab">✨ Create Account</button>
@@ -95,21 +120,50 @@ footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font
 </section>
 <section class="card" id="studentPrivateDashboard" hidden>
 <div class="dashboard-header"><div><h3>🕌 My Madrasa Dashboard</h3>
-<small id="studentSignedEmail"></small></div><button id="studentDashboardSignOut" class="secondary" type="button">↩ Sign Out</button></div>
+<small id="studentSignedEmail"></small></div><div class="actions"><button id="studentChangeId" class="secondary" type="button">🔑 Change Student ID</button><button id="studentDashboardSignOut" class="secondary" type="button">↩ Sign Out</button></div></div>
 <p class="status" id="studentDashboardStatus" role="status" aria-live="polite"></p>
 <div id="studentAccountCards"></div>
 <button id="studentRefreshDashboard" class="secondary" type="button">↻ Refresh My Results</button>
 </section>
-<p class="note"><strong>Account Security:</strong> A real Firebase Authentication account and verified email are required. The Madrasa administrator must separately approve the exact email address. Students cannot view other students' private information. If you only need to check a published exam by Student ID and Date of Birth, use the <a href="exam-results.html"><strong>Public Exam Checker</strong></a>.</p>
+<p class="note"><strong>Account Security:</strong> Your official ALIA Student ID and Date of Birth are the first login step. A verified, Madrasa-approved email or Google account is also required for private dashboard access. The five-digit Student ID and DOB alone are not secure passwords. To view a public published result without an account, use the <a href="exam-results.html"><strong>Exam Checker</strong></a> with its separate private Exam Access ID or result reference code.</p>
 </main><footer>© Madrasa Al Islahul Arabiya · Faith · Learning · Excellence</footer>
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,collection,doc,getDoc,getDocs,query,where,limit}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import{normalizeStudentCode,validateStudentDOB,matchStudentDobVerifier}from'./student-dob-verifier.js';
 const $=id=>document.getElementById(id);
+const identityCard=$('studentIdentityCard'),identityStatus=$('studentIdentityStatus');
 const authCard=$('studentAuthCard'),verification=$('emailVerifyNotice'),dashboard=$('studentPrivateDashboard');
 const authStatus=$('studentAuthStatus'),verifyStatus=$('studentVerifyStatus'),dashboardStatus=$('studentDashboardStatus');
-let auth=null,db=null,loadingToken=0,activeUser=null;
+let auth=null,db=null,loadingToken=0,activeUser=null,identityGate=null;
+function identityMessage(value,error=false){identityStatus.className='status'+(error?' error':'');identityStatus.textContent=value}
+function showIdentityStep(){
+ ++loadingToken;identityGate=null;
+ $('studentIdentityDOB').value='';
+ identityCard.hidden=false;authCard.hidden=true;verification.hidden=true;dashboard.hidden=true;
+ $('studentAccountCards').replaceChildren();
+ identityMessage('Enter your official ALIA Student ID and DOB to continue.');
+ identityCard.scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('studentIdentityForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const button=$('studentIdentityContinue');button.disabled=true;
+ try{
+  const studentCode=normalizeStudentCode($('studentOfficialCode').value);
+  const dob=validateStudentDOB($('studentIdentityDOB').value);
+  identityGate={studentCode,dob};
+  identityMessage('✓ Details entered. Confirming your academy-approved account…');
+  identityCard.hidden=true;$('studentIdentityDOB').value='';
+  if(auth?.currentUser){
+   if(!auth.currentUser.emailVerified)openAuthenticatedState(auth.currentUser);
+   else await loadPrivateDashboard(auth.currentUser,++loadingToken);
+  }else{authCard.hidden=false;verification.hidden=true;dashboard.hidden=true;}
+ }catch(err){identityMessage(err.message,true)}
+ finally{button.disabled=false}
+});
+$('studentIdentityBack').addEventListener('click',showIdentityStep);
+$('studentChangeId').addEventListener('click',showIdentityStep);
 function authMessage(value,error=false){authStatus.className='status'+(error?' error':'');authStatus.textContent=value}
 function verifyMessage(value,error=false){verifyStatus.className='status'+(error?' error':'');verifyStatus.textContent=value}
 function dashMessage(value,error=false){dashboardStatus.className='status'+(error?' error':'');dashboardStatus.textContent=value}
@@ -122,6 +176,7 @@ function showAuthTab(mode){
 $('authTabSignIn').onclick=()=>showAuthTab('signin');
 $('authTabCreate').onclick=()=>showAuthTab('create');
 function openAuthenticatedState(user){
+ identityCard.hidden=!!identityGate;
  authCard.hidden=true;verification.hidden=!user||user.emailVerified;
  dashboard.hidden=true;
  if(user&&!user.emailVerified)verifyMessage('Please verify '+(user.email||'your email')+' before opening your Madrasa dashboard.');
@@ -138,7 +193,9 @@ function authError(err){
  }
 }
 async function loadPrivateDashboard(user,token){
- dashboard.hidden=false;authCard.hidden=true;verification.hidden=true;
+ if(!identityGate){showIdentityStep();return}
+ const entered={...identityGate};
+ identityCard.hidden=true;dashboard.hidden=false;authCard.hidden=true;verification.hidden=true;
  $('studentSignedEmail').textContent='Verified account: '+String(user.email||'');
  const target=$('studentAccountCards');target.replaceChildren();dashMessage('Checking academy-approved student access…');
  try{
@@ -148,14 +205,18 @@ async function loadPrivateDashboard(user,token){
   const snap=await getDocs(query(collection(db,'studentAccess'),where('email','==',email),where('enabled','==',true),limit(30)));
   if(token!==loadingToken)return;
   if(snap.empty){
-   dashMessage('Your Firebase account is verified, but this email has not been approved for Student Login by the Madrasa. Ask the admin to open Student Details → Student Account Login and approve '+email+'.');
+   dashMessage('This account has not been approved for the entered Student ID. Ask the Madrasa admin to approve your email in Student Details → Student Account Login.',true);
    return;
   }
   let visible=0;
   for(const accessDoc of snap.docs){
    if(token!==loadingToken)return;
    const access=accessDoc.data();
-   if(access.enabled!==true||access.email!==email)continue;
+   if(access.enabled!==true||access.email!==email||access.studentCode!==entered.studentCode)continue;
+   // The DOB check is performed only after verified Firebase authentication
+   // and admin approval. Neither DOB nor the code is sent to a public endpoint.
+   if(!await matchStudentDobVerifier(entered.studentCode,entered.dob,access))continue;
+   if(token!==loadingToken)return;
    const card=document.createElement('article');card.className='student-card';
    const title=document.createElement('h4');title.textContent=access.studentName||'Student';
    const details=document.createElement('p');details.textContent='Official Student ID: '+(access.studentCode||'Not assigned yet')+'  ·  Class: '+(access.course||'—')+(access.batch?' · Batch: '+access.batch:'')+' · Status: '+(access.state||'Active');
@@ -178,7 +239,13 @@ async function loadPrivateDashboard(user,token){
    if(!count){const p=document.createElement('p');p.textContent='No published examination results yet.';card.append(p)}
    target.append(card);visible++;
   }
-  dashMessage('✓ '+visible+' authorized student profile(s) loaded. Your account can view published results only.');
+  // Never retain DOB for longer than the current entry/verification step.
+  if(token===loadingToken&&visible){
+   identityGate={studentCode:entered.studentCode,dob:entered.dob};
+   dashMessage('✓ ALIA Student ID, DOB and approved email verified. Published results loaded.');
+  }else if(token===loadingToken){
+   dashMessage('The ALIA Student ID, Date of Birth and approved email do not match. Check the details with the Madrasa. Use Change Student ID to try again.',true);
+  }
  }catch(err){if(token===loadingToken)dashMessage('Unable to load student dashboard: '+(err.code==='permission-denied'?'Permission denied. Please confirm email verification and administrator approval.':err.message),true)}
 }
 async function refreshAuthState(){
@@ -186,7 +253,7 @@ async function refreshAuthState(){
  verifyMessage('Checking email verification…');
  try{
   await user.reload();await user.getIdToken(true);
-  if(user.emailVerified){openAuthenticatedState(user);await loadPrivateDashboard(user,++loadingToken)}
+  if(user.emailVerified){openAuthenticatedState(user);if(identityGate)await loadPrivateDashboard(user,++loadingToken);else showIdentityStep()}
   else verifyMessage('Your email has not been verified yet. Open the verification email, then select I Verified.');
  }catch(err){verifyMessage(authError(err),true)}
 }
@@ -242,12 +309,13 @@ $('studentSendVerification').onclick=async()=>{
 };
 $('studentVerificationRetry').onclick=refreshAuthState;
 async function logout(){
- ++loadingToken;activeUser=null;
+ ++loadingToken;activeUser=null;identityGate=null;
  try{await signOut(auth)}catch(err){dashMessage(authError(err),true)}
  $('studentLoginPassword').value='';$('studentAccountCards').replaceChildren();
+ showIdentityStep();
 }
 $('studentDashboardSignOut').onclick=logout;$('studentVerifySignOut').onclick=logout;
-$('studentRefreshDashboard').onclick=()=>{if(auth.currentUser&&auth.currentUser.emailVerified)loadPrivateDashboard(auth.currentUser,++loadingToken)};
+$('studentRefreshDashboard').onclick=()=>{if(auth.currentUser&&auth.currentUser.emailVerified&&identityGate)loadPrivateDashboard(auth.currentUser,++loadingToken)};
 try{
  const conf=await fetch('firebase-config.json',{cache:'no-store'}).then(r=>r.json());
  const app=initializeApp(conf),mod=await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
@@ -255,8 +323,13 @@ try{
  onAuthStateChanged(auth,async user=>{
   const token=++loadingToken;activeUser=user;
   if(!user){
-   authCard.hidden=false;verification.hidden=true;dashboard.hidden=true;
+   authCard.hidden=!identityGate;identityCard.hidden=!!identityGate;
+   verification.hidden=true;dashboard.hidden=true;
    $('studentAccountCards').replaceChildren();return;
+  }
+  if(!identityGate){
+   identityCard.hidden=false;authCard.hidden=true;verification.hidden=true;dashboard.hidden=true;
+   return;
   }
   if(!user.emailVerified){openAuthenticatedState(user);return}
   await loadPrivateDashboard(user,token);
