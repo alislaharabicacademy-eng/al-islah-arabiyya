@@ -13,7 +13,7 @@ export function initStudentAccountAdmin({db}){
  async function open(student){
   if(!student?.id)throw Error('Save the student first.');
   selected={...student};previous=null;panel.hidden=false;
-  $('studentAccountTitle').textContent=(student.name||'Student')+' · '+(student.course||'No class');
+  $('studentAccountTitle').textContent=(student.name||'Student')+' · '+(student.studentCode||'AIL ID pending')+' · '+(student.course||'No class');
   $('studentAccountEmail').value='';$('studentAccountEnabled').checked=true;
   msg('Loading student access…');
   panel.scrollIntoView({behavior:'smooth',block:'start'});
@@ -40,7 +40,7 @@ export function initStudentAccountAdmin({db}){
    const student=existing.data();
    const resultIds=enabled?(await getDocs(query(collection(db,'examResults'),where('studentId','==',selected.id)))).docs.filter(d=>d.data().published===true).map(d=>d.id):[];
    const data={
-    studentId:selected.id,email,enabled,
+    studentId:selected.id,email,enabled,studentCode:String(student.studentCode||''),
     studentName:String(student.name||'Student'),course:String(student.course||''),
     batch:String(student.batch||''),state:String(student.state||'Active'),resultIds,
     createdAt:previous?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()
@@ -54,7 +54,7 @@ export function initStudentAccountAdmin({db}){
  async function syncStudent(studentId,data){
   const ref=doc(db,'studentAccess',studentId),snap=await getDoc(ref);
   if(!snap.exists())return;
-  await setDoc(ref,{studentName:String(data.name||'Student'),course:String(data.course||''),batch:String(data.batch||''),
+  await setDoc(ref,{studentName:String(data.name||'Student'),studentCode:String(data.studentCode||''),course:String(data.course||''),batch:String(data.batch||''),
    state:String(data.state||'Active'),updatedAt:new Date().toISOString()},{merge:true});
  }
  function close(){selected=null;previous=null;panel.hidden=true;$('studentAccountEmail').value='';msg('')}
