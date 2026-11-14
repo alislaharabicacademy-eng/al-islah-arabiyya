@@ -30,7 +30,7 @@ service cloud.firestore {
       // Full student and guardian information remains admin only.
       allow read, write: if isAdmin();
     }
-    // One atomic counter and permanent reservation per AIL00001–AIL99999.
+    // One atomic counter and permanent reservation per ALIA00001–ALIA99999.
     // Student IDs are never used as passwords or authentication secrets.
     match /academyCounters/{counterId} {
       allow read, write: if isAdmin();
@@ -38,7 +38,7 @@ service cloud.firestore {
     match /studentIdRegistry/{officialId} {
       // Once an ID is issued, no web client can edit, delete or reuse it.
       allow read, create: if isAdmin()
-        && officialId.matches('^AIL[0-9]{5}$');
+        && officialId.matches('^ALIA[0-9]{5}$');
       allow update, delete: if false;
     }
 
