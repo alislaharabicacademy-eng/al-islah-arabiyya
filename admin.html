@@ -309,7 +309,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
    <label>Password <input id="adminBackupPassword" type="password" minlength="14" autocomplete="new-password" placeholder="At least 14 characters"></label>
    <label>Confirm Password <input id="adminBackupPasswordConfirm" type="password" minlength="14" autocomplete="new-password" placeholder="Repeat backup password"></label>
   </div>
-  <label><input type="checkbox" id="adminBackupUnderstand"> I will keep the password safely. This download does not include Firebase Storage files (photos or certificates).</label>
+  <label><input type="checkbox" id="adminBackupUnderstand"> I will keep the password safely. This encrypted Firestore backup includes saved compact teacher/student profile photos, but does not include separate Firebase Storage uploads or certificates.</label>
   <div class="actions">
    <button type="button" id="downloadAdminEncryptedBackup">🔐 Download Encrypted Firestore Backup</button>
    <a class="btn secondary" href="https://github.com/alislaharabicacademy-eng/al-islah-arabiyya/actions/workflows/enable-managed-firestore-backups.yml" target="_blank" rel="noopener">⚙ Configure Automatic Daily Backups ↗</a>
