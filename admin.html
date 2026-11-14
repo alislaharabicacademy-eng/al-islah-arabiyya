@@ -616,6 +616,16 @@ function updateStudentBatchVisibility(){
 }
 $('studentCourse').addEventListener('change',updateStudentBatchVisibility);
 updateStudentBatchVisibility();
+async function syncOfficialCodeToExamResults(studentId,officialCode){
+ if(!validOfficialStudentId(officialCode))return;
+ const found=await getDocs(query(collection(db,'examResults'),where('studentId','==',studentId)));
+ const outdated=found.docs.filter(entry=>entry.data().studentCode!==officialCode);
+ for(let offset=0;offset<outdated.length;offset+=400){
+  const batch=writeBatch(db);
+  for(const record of outdated.slice(offset,offset+400))batch.set(record.ref,{studentCode:officialCode},{merge:true});
+  await batch.commit();
+ }
+}
 function resetRecord(kind){$(kind+'Form').reset();$(kind+'Id').value='';if(kind==='student'){updateStudentBatchVisibility();$('studentOfficialId').value=''}}
 for(const kind of ['teacher','student']){
  $(kind+'Clear').onclick=()=>resetRecord(kind);
@@ -654,7 +664,12 @@ for(const kind of ['teacher','student']){
      await setDoc(doc(db,'students',id),data);
     }
    }else await setDoc(doc(db,plural,id),data);
-   if(kind==='student'){await studentAccounts.syncStudent(id,data);await syncAllTeacherRosters();}
+   if(kind==='student'){
+    await studentAccounts.syncStudent(id,data);
+    // Newly corrected prefix appears on previous result PDFs and certificates too.
+    await syncOfficialCodeToExamResults(id,data.studentCode);
+    await syncAllTeacherRosters();
+   }
    const issuedCode=kind==='student'?data.studentCode:'';
    resetRecord(kind);$(kind+'Status').textContent=kind==='student'?'✓ Student saved successfully. Official Student ID: '+issuedCode+' (permanent).':'✓ Saved successfully.';await renderRecords(plural);
   }catch(err){$(kind+'Status').textContent='Save failed: '+err.message}
@@ -673,6 +688,7 @@ $('generateMissingStudentIds').onclick=async()=>{
   for(const student of pending){
    const newCode=await ensureOfficialStudentId(db,doc(db,'students',student.id));
    await studentAccounts.syncStudent(student.id,{...student.data(),studentCode:newCode});
+   await syncOfficialCodeToExamResults(student.id,newCode);
    done++;note.textContent='Generating official student IDs… '+done+' / '+pending.length+' · Latest: '+newCode;
   }
   note.textContent='✓ Issued '+done+' permanent ALIA IDs for existing students. All records are saved in Firebase.';
