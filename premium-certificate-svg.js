@@ -205,9 +205,15 @@ export async function createPremiumVectorPdf(type,record){
  for(let i=0;i<pages.length;i++){
   if(i)pdf.addPage('a4',landscape?'landscape':'portrait');
   const svgText=pages[i].replaceAll('href="'+LOGO+'"','href="'+logo+'"');
-  const svg=new DOMParser().parseFromString(svgText,'image/svg+xml').documentElement;
-  if(svg.querySelector('parsererror'))throw Error('Certificate vector layout is invalid');
-  await pdf.svg(svg,{x:0,y:0,width:landscape?297:210,height:landscape?210:297});
+  const parsed=new DOMParser().parseFromString(svgText,'image/svg+xml');
+  if(parsed.querySelector('parsererror'))throw Error('Certificate vector layout is invalid');
+  const svg=document.importNode(parsed.documentElement,true);
+  const mount=document.createElement('div');
+  mount.style.cssText='position:fixed;left:-15000px;top:0;opacity:0;pointer-events:none;width:1414px;height:1414px;overflow:hidden';
+  mount.append(svg);document.body.append(mount);
+  try{
+   await pdf.svg(svg,{x:0,y:0,width:landscape?297:210,height:landscape?210:297});
+  }finally{mount.remove()}
  }
  const blob=pdf.output('blob');
  if(!(blob instanceof Blob)||blob.size<1000)throw Error('Generated vector PDF is invalid');
