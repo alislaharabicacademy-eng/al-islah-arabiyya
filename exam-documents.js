@@ -122,7 +122,8 @@ export async function createExamCertificatePdf(record){
  pdf.setTextColor(50,73,55);text(pdf,'Date: '+String(record.examDate||'-'),65,189,8,{align:'center'});
  text(pdf,'Authorized Signatory',232.5,189,9,{align:'center'});
  pdf.setFont('helvetica','normal');pdf.setFontSize(7.2);pdf.setTextColor(94,111,100);
- pdf.text('Certificate ID: CERT-'+String(record.id||'').slice(-16).toUpperCase(),148.5,195,{align:'center'});
+ pdf.text('Certificate ID: CERT-'+String(record.id||'').slice(-16).toUpperCase(),148.5,192.5,{align:'center'});
+ pdf.setFontSize(6.8);pdf.text('Verify at: exam-results.html   |   Reference: '+String(record.id||''),148.5,198,{align:'center'});
  return pdf.output('blob');
 }
 export function downloadExamBlob(blob,filename){
