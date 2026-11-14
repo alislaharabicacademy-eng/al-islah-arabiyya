@@ -30,11 +30,11 @@ function cornerPanel(x,y,mirror=1,scale=1){
 }
 function sideLattice(x,y,height){
  let stars='';
- for(let row=0;row<Math.floor(height/61);row++)for(let col=0;col<2;col++){
-  const xx=x+24+col*46,yy=y+row*61+(col?26:0);
+ for(let row=0;row<Math.floor(height/56);row++){
+  const xx=x+25,yy=y+row*56;
   stars+=`<path d="M${xx} ${yy-12}l12 12l-12 12l-12-12Z" fill="none" stroke="#DBB769" stroke-width="1.7"/>`;
  }
- return `<rect x="${x}" y="${y}" width="105" height="${height}" fill="#064536" stroke="#C99A42" stroke-width="4"/>${stars}`;
+ return `<rect x="${x}" y="${y}" width="50" height="${height}" fill="#064536" stroke="#C99A42" stroke-width="4"/>${stars}`;
 }
 function leafWreath(cx,cy,s=1){
  let out=`<g transform="translate(${cx} ${cy}) scale(${s})" fill="none" stroke="#E6B455" stroke-width="4">`;
@@ -58,7 +58,7 @@ function eventCrescent(cx,cy){
 function participationRosette(cx,cy,label='PARTICIPANT'){
  let petals='';
  for(let i=0;i<18;i++)petals+=`<path d="M0-105Q-21-76 0-52Q21-76 0-105Z" fill="${i%2?'#B99036':'#ECD387'}" stroke="#7D274F" stroke-width="2" transform="rotate(${i*20})"/>`;
- return `<g transform="translate(${cx} ${cy})">${petals}
+ return `<g transform="translate(${cx} ${cy}) scale(.72)">${petals}
  <circle r="61" fill="url(#purple)" stroke="#D8AB50" stroke-width="8"/>
  <circle r="43" fill="#F7D37A" stroke="#F6E6BA" stroke-width="3"/>
  ${diamond(0,-14,19)}
@@ -93,9 +93,9 @@ function frame(w,h){
  <rect x="25" y="25" width="${w-50}" height="${h-50}" rx="10" fill="none" stroke="#DFB65F" stroke-width="3"/>
  <path d="${p}" fill="url(#cream)" stroke="url(#gold)" stroke-width="14"/>
  <path d="${p}" fill="url(#mosaic)" stroke="#FFF2CC" stroke-width="3"/>
- ${sideLattice(36,235,h-326)}${sideLattice(w-141,235,h-326)}
+ ${sideLattice(36,235,h-326)}${sideLattice(w-86,235,h-326)}
  ${skyline(w,h)}
- ${cornerPanel(23,22,1,a?.82:.61)}${cornerPanel(w-23,22,-1,a?.82:.61)}
+ ${cornerPanel(23,22,1,a?.95:.67)}${cornerPanel(w-23,22,-1,a?.95:.67)}
  ${flowers(24,h-134,.69,1)}${flowers(w-24,h-134,.69,-1)}
  ${lantern(w*.108,292,a?1:.78)}${lantern(w*.892,292,a?1:.78)}
  ${diamond(w/2,h-37,10)}
@@ -171,18 +171,18 @@ function certificate(kind,r){
  [['Student ID',r.studentCode],['Class',r.course],['Event',event||'Academy Event'],['Date',dt],
  ['Award / Role',kind==='winner'?award:kind==='event'?award.replace('Event ',''):'PARTICIPANT']];
  cards.forEach(([label,value],i)=>s+=chip(44+i*267,712,255,label,String(value||'—').slice(0,64)));
- if(kind==='winner')s+=trophy(w*.23,805,award);
- else if(kind==='event')s+=eventCrescent(w*.22,812);
- else if(kind==='participation'||kind==='exam-participation')s+=participationRosette(w*.22,824,'PARTICIPANT');
- else s+=participationRosette(w*.22,824,'EXCELLENCE');
-  s+=stamp(w/2,835);
+ if(kind==='winner')s+=trophy(w*.23,843,award);
+ else if(kind==='event')s+=eventCrescent(w*.22,890);
+ else if(kind==='participation'||kind==='exam-participation')s+=participationRosette(w*.22,886,'PARTICIPANT');
+ else s+=participationRosette(w*.22,886,'EXCELLENCE');
+  s+=stamp(w/2,892,70);
  const signer=r.principal&&typeof r.principal==='object'?r.principal:{};
  const signed=typeof signer.signatureData==='string'&&/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signer.signatureData);
- if(signed&&!r.previewMode)s+=`<image x="${w*.652}" y="792" width="${w*.205}" height="77" preserveAspectRatio="xMidYMid meet" href="${E(signer.signatureData)}" />`;
- s+=`<path d="M${w*.65} 870h${w*.21}" stroke="#1C2D50" stroke-width="3"/>
- ${T(w*.755,901,signer.name||'AUTHORIZED SIGNATORY',String(signer.name||'').length>30?17:22,'font-family="Georgia,serif" text-anchor="middle" fill="#1B2A50"')}
- ${T(w*.755,925,signer.name?(signer.designation||'Principal'):'Principal Signature',17,'font-family="Georgia,serif" font-style="italic" text-anchor="middle" fill="#425572"')}
- ${T(w/2,960,'CERTIFICATE ID: '+String(r.id||'ALIA-DEMO').slice(0,55),16,'font-family="Arial,sans-serif" text-anchor="middle" fill="#263D56"')}`;
+ if(signed&&!r.previewMode)s+=`<image x="${w*.652}" y="842" width="${w*.205}" height="77" preserveAspectRatio="xMidYMid meet" href="${E(signer.signatureData)}" />`;
+ s+=`<path d="M${w*.65} 917h${w*.21}" stroke="#1C2D50" stroke-width="3"/>
+ ${T(w*.755,944,signer.name||'AUTHORIZED SIGNATORY',String(signer.name||'').length>30?17:22,'font-family="Georgia,serif" text-anchor="middle" fill="#1B2A50"')}
+ ${T(w*.755,967,signer.name?(signer.designation||'Principal'):'Principal Signature',17,'font-family="Georgia,serif" font-style="italic" text-anchor="middle" fill="#425572"')}
+ ${T(100,970,'CERTIFICATE ID: '+String(r.id||'ALIA-DEMO').slice(0,55),14,'font-family="Arial,sans-serif" text-anchor="start" fill="#263D56"')}`;
  return `<svg xmlns="${NS}" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${defs()}${s}</svg>`;
 }
 function resultPage(r,subjects,page,totalPages){
