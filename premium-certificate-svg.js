@@ -150,14 +150,27 @@ function resultPage(r,subjects,page,totalPages){
  s+=T(w/2,h-83,'RESULT REFERENCE: '+String(r.id||'ALIA-DEMO').slice(0,53),17,'text-anchor="middle" font-family="Arial,sans-serif" fill="#213656"');
  return `<svg xmlns="${NS}" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${defs()}${s}</svg>`;
 }
+function previewWatermark(markup,portrait){
+ const w=portrait?1000:1414,h=portrait?1414:1000;
+ const warning='<g opacity=".28" transform="translate('+w/2+' '+h/2+') rotate(-21)"><text x="0" y="0" font-size="'+(portrait?89:100)+'" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" fill="#7D2444">SAMPLE - NOT VALID</text></g>';
+ const tag='<g><rect x="42" y="38" width="'+(portrait?214:232)+'" height="42" rx="10" fill="#6B193D" stroke="#E8BD77" stroke-width="3"/><text x="'+(portrait?149:158)+'" y="66" font-size="21" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle" fill="#FFF5DA">SAMPLE PREVIEW</text></g>';
+ return markup.replace('</svg>',warning+tag+'</svg>');
+}
 export function premiumCertificatePages(type,record={}){
- if(type==='results'){const items=Array.isArray(record.subjects)?record.subjects:[];const pages=Math.max(1,Math.ceil(items.length/7));return Array.from({length:pages},(_,i)=>resultPage(record,items,i,pages))}
- if(!['exam','winner','participation','event'].includes(type))throw Error('Unknown certificate type');
- return [certificate(type,record)];
+ let pages=[];
+ if(type==='results'){
+  const items=Array.isArray(record.subjects)?record.subjects:[];
+  const count=Math.max(1,Math.ceil(items.length/7));
+  pages=Array.from({length:count},(_,i)=>resultPage(record,items,i,count));
+ }else{
+  if(!['exam','winner','participation','event'].includes(type))throw Error('Unknown certificate type');
+  pages=[certificate(type,record)];
+ }
+ return record.previewMode?pages.map(s=>previewWatermark(s,type==='results')):pages;
 }
 export function classifyCompetitionAward(award){return String(award||'') .startsWith('Event ')?'event':award==='Participation'?'participation':'winner'}
 export function sampleCertificate(type='exam'){
- const base={id:'ALIA-SAMPLE-001',studentName:'Muhsin A',studentCode:'ALIA00037',course:'Muallama',academicYear:'2026-2027',examTitle:'Annual Examination',examDate:'2026-03-15',passed:true,published:true,total:183,maxTotal:200,percent:91.5,grade:'A+',subjects:[{name:'Arabic Language',score:46,max:50},{name:"Qur'an Tajweed",score:48,max:50},{name:'Hadith',score:44,max:50},{name:'Deeniyat',score:45,max:50}]};
+ const base={previewMode:true,id:'ALIA-SAMPLE-001',studentName:'Muhsin A',studentCode:'ALIA00037',course:'Muallama',academicYear:'2026-2027',examTitle:'Annual Examination',examDate:'2026-03-15',passed:true,published:true,total:183,maxTotal:200,percent:91.5,grade:'A+',subjects:[{name:'Arabic Language',score:46,max:50},{name:"Qur'an Tajweed",score:48,max:50},{name:'Hadith',score:44,max:50},{name:'Deeniyat',score:45,max:50}]};
  if(type==='winner')return {...base,id:'COMP-SAMPLE-001',studentName:'Farhana B',studentCode:'ALIA00021',award:'First Prize',eventName:"Qur'an Recitation Competition",eventDate:'2026-03-20'};
  if(type==='participation')return {...base,id:'COMP-SAMPLE-002',studentName:'Aakifa S',studentCode:'ALIA00018',award:'Participation',eventName:'Islamic Quiz Competition',eventDate:'2026-03-18'};
  if(type==='event')return {...base,id:'COMP-SAMPLE-003',studentName:'Syed T',studentCode:'ALIA00015',award:'Event Volunteer',eventName:'Ramadan Programme',eventDate:'2026-02-08'};
