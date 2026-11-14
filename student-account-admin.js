@@ -80,7 +80,10 @@ export function initStudentAccountAdmin({db}){
   const ref=doc(db,'studentAccess',studentId),snap=await getDoc(ref);
   if(!snap.exists())return;
   const studentCode=String(data.studentCode||'');
-  const fees=await feeSnapshot(data);
+  // The edit form omits feeLedger. Read the saved full student record so
+  // routine Student edits NEVER erase historical payments from guardian access.
+  const latest=await getDoc(doc(db,'students',studentId));
+  const fees=await feeSnapshot(latest.exists()?latest.data():data);
   const payload={...fees,
    studentName:String(data.name||'Student'),studentCode,photoData:isProfilePhoto(data.photoData)?data.photoData:'',course:String(data.course||''),
    batch:String(data.batch||''),state:String(data.state||'Active'),
