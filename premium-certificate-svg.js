@@ -152,11 +152,12 @@ function trophy(cx,cy,label='First Prize'){
  ${T(cx,cy+119,String(label).toUpperCase(),22,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#FFE5A6"')}`;
 }
 function certificate(kind,r){
- const w=1414,h=1000,competition=kind!=='exam';
- const title=kind==='exam'?'CERTIFICATE OF ACADEMIC EXCELLENCE':kind==='winner'?'CERTIFICATE OF EXCELLENCE':kind==='participation'?'CERTIFICATE OF PARTICIPATION':'CERTIFICATE OF APPRECIATION';
+ const w=1414,h=1000,competition=!['exam','exam-participation'].includes(kind);
+ const title=kind==='exam'?'CERTIFICATE OF ACADEMIC EXCELLENCE':kind==='exam-participation'?'CERTIFICATE OF EXAMINATION PARTICIPATION':kind==='winner'?'CERTIFICATE OF EXCELLENCE':kind==='participation'?'CERTIFICATE OF PARTICIPATION':'CERTIFICATE OF APPRECIATION';
  const event=competition?r.eventName:r.examTitle,dt=competition?r.eventDate:r.examDate;
  const award=r.award||'First Prize';
- const desc=kind==='exam'?'for excellent academic performance and successful completion':
+ const desc=kind==='exam'?'for excellent academic performance in the Academy Examination':
+ kind==='exam-participation'?'for participation in the Academy Examination':
  kind==='winner'?'for securing '+award+' in the':
  kind==='participation'?'for active participation and sincere effort in the':
  'for dedication and valuable service in the';
@@ -165,12 +166,15 @@ function certificate(kind,r){
  s+=studentName(w,551,r.studentName);
  s+=T(w/2,624,desc,29,'text-anchor="middle" font-family="Georgia,serif" font-style="italic" fill="#222B50"');
  s+=T(w/2,677,event||'Academy Programme',String(event||'').length>42?26:35,'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" fill="#4F1764"');
- const cards=kind==='exam'?[['Student ID',r.studentCode],['Class',r.course],['Academic Year',r.academicYear],['Result',r.passed?'PASS':'PARTICIPATED']]:
- [['Student ID',r.studentCode],['Class',r.course],['Event Date',dt],['Award',kind==='winner'?award:kind==='event'?award.replace('Event ',''):'PARTICIPANT']];
- cards.forEach(([label,value],i)=>s+=chip(67+i*322,714,303,label,value));
- if(kind==='winner')s+=trophy(w*.23,797,award);
- else if(kind==='event')s+=lantern(w*.23,826,1.5);
- else s+=`<circle cx="${w*.23}" cy="795" r="66" fill="url(#gold)" stroke="#6C2456" stroke-width="9"/>${diamond(w*.23,795,27)}`;
+ const cards=!competition?
+ [['Student ID',r.studentCode],['Class',r.course],['Academic Year',r.academicYear],['Exam Date',dt],['Result',r.passed?'PASS':'PARTICIPATED']]:
+ [['Student ID',r.studentCode],['Class',r.course],['Event',event||'Academy Event'],['Date',dt],
+ ['Award / Role',kind==='winner'?award:kind==='event'?award.replace('Event ',''):'PARTICIPANT']];
+ cards.forEach(([label,value],i)=>s+=chip(44+i*267,712,255,label,String(value||'—').slice(0,64)));
+ if(kind==='winner')s+=trophy(w*.23,805,award);
+ else if(kind==='event')s+=eventCrescent(w*.22,812);
+ else if(kind==='participation'||kind==='exam-participation')s+=participationRosette(w*.22,824,'PARTICIPANT');
+ else s+=participationRosette(w*.22,824,'EXCELLENCE');
   s+=stamp(w/2,835);
  const signer=r.principal&&typeof r.principal==='object'?r.principal:{};
  const signed=typeof signer.signatureData==='string'&&/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signer.signatureData);
@@ -226,7 +230,7 @@ export function premiumCertificatePages(type,record={}){
   const count=Math.max(1,Math.ceil(items.length/7));
   pages=Array.from({length:count},(_,i)=>resultPage(record,items,i,count));
  }else{
-  if(!['exam','winner','participation','event'].includes(type))throw Error('Unknown certificate type');
+  if(!['exam','exam-participation','winner','participation','event'].includes(type))throw Error('Unknown certificate type');
   pages=[certificate(type,record)];
  }
  return record.previewMode?pages.map(s=>previewWatermark(s,type==='results')):pages;
