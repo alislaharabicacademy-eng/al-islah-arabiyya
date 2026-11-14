@@ -1,5 +1,6 @@
 /* Admin-only examination result manager. No public student list is exposed. */
-import{collection,getDocs,getDoc,doc,setDoc}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import{collection,getDocs,getDoc,doc,setDoc,writeBatch,arrayUnion,arrayRemove}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import{examStudentLookupKey}from'./exam-lookup.js';
 import{createExamResultPdf,createExamCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
 export function initExamAdmin({db,auth}){
  const $=id=>document.getElementById(id);
@@ -66,7 +67,7 @@ export function initExamAdmin({db,auth}){
  }
  function fillStudentSummary(){
   const st=shownStudent();
-  $('examStudentSummary').textContent=st?'Student: '+st.name+'  |  Class: '+(courseNames.get(st.course)||st.course||'—')+'  |  Batch: '+(st.batch||'—'):'Choose a student to show their class and batch.';
+  $('examStudentSummary').textContent=st?'Student: '+st.name+'  |  Class: '+(courseNames.get(st.course)||st.course||'—')+'  |  Batch: '+(st.batch||'—')+'  |  Student ID: '+st.id+'  |  DOB: '+(st.dob?'Recorded':'Missing — Student ID + DOB lookup needs DOB in Student Details'):'Choose a student to show their class and batch.';
  }
  function reset(){
   form.reset();$('examResultId').value='';$('examResultPass').value='40';
@@ -121,18 +122,31 @@ export function initExamAdmin({db,auth}){
  async function save(published){
   const button=$(published?'examPublish':'examSaveDraft');button.disabled=true;
   try{
-   const oldId=$('examResultId').value,old=results.find(r=>r.id===oldId);
-   const record=collect(published);
+   const oldId=$('examResultId').value,record=collect(published);
+   const existing=oldId?await getDoc(doc(db,'examResults',oldId)):null;
+   const old=existing?.exists()?{id:oldId,...existing.data()}:null;
    if(!published&&old?.published&&!confirm('Saving a draft will UNPUBLISH this result until it is published again. Continue?'))return;
    if(published&&!confirm('Publish '+record.studentName+' examination marks? Anyone with the unique result link can view their name and scores.'))return;
    const id=oldId||makeId();
    if(!allowedId.test(id))throw Error('Invalid result reference. Create a new result.');
    const now=new Date().toISOString();
    const payload={...record,createdAt:old?.createdAt||now,updatedAt:now};
-   await setDoc(doc(db,'examResults',id),payload);
+   // Single atomic transaction keeps publication and confidential lookup index aligned.
+   const batch=writeBatch(db);
+   batch.set(doc(db,'examResults',id),payload);
+   const beforeStudent=students.find(student=>student.id===old?.studentId);
+   const afterStudent=students.find(student=>student.id===record.studentId);
+   const beforeKey=old?.published&&beforeStudent?.dob?await examStudentLookupKey(beforeStudent.id,beforeStudent.dob):null;
+   const afterKey=published&&afterStudent?.dob?await examStudentLookupKey(afterStudent.id,afterStudent.dob):null;
+   if(beforeKey&&beforeKey!==afterKey)batch.set(doc(db,'examResultLookups',beforeKey),
+    {resultIds:arrayRemove(id),updatedAt:now},{merge:true});
+   if(afterKey)batch.set(doc(db,'examResultLookups',afterKey),
+    {enabled:true,resultIds:arrayUnion(id),updatedAt:now},{merge:true});
+   await batch.commit();
    $('examResultId').value=id;
    await load();
-   status((published?'✓ Result PUBLISHED.':'✓ Private draft saved.')+' Reference: '+id+(published?'  |  Copy the result link below to share privately.':''));
+   const lookupNote=published&&!afterKey?' Student ID + DOB lookup is unavailable until DOB is added in Student Details and this result is republished.':'';
+   status((published?'✓ Result PUBLISHED.':'✓ Private draft saved.')+' Reference: '+id+(published?'  |  Copy the result link below to share privately.':'')+lookupNote);
    $('examResultList').scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){status('Could not save exam result: '+e.message)}finally{button.disabled=false}
  }
@@ -155,8 +169,15 @@ export function initExamAdmin({db,auth}){
   try{
    const current=await getDoc(doc(db,'examResults',record.id));
    if(!current.exists())throw Error('Record no longer exists.');
-   await setDoc(doc(db,'examResults',record.id),{...current.data(),published:false,updatedAt:new Date().toISOString()});
-   status('✓ Result unpublished.');await load();
+   const now=new Date().toISOString(),batch=writeBatch(db);
+   batch.set(doc(db,'examResults',record.id),{...current.data(),published:false,updatedAt:now});
+   const student=students.find(s=>s.id===current.data().studentId);
+   if(student?.dob){
+    const key=await examStudentLookupKey(student.id,student.dob);
+    batch.set(doc(db,'examResultLookups',key),{resultIds:arrayRemove(record.id),updatedAt:now},{merge:true});
+   }
+   await batch.commit();
+   status('✓ Result unpublished and removed from Student ID + DOB result lookup.');await load();
   }catch(e){status('Could not unpublish: '+e.message)}
  }
  function button(label,fn,secondary=true){
