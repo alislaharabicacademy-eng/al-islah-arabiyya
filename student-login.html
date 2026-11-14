@@ -158,7 +158,7 @@ async function loadPrivateDashboard(user,token){
    if(access.enabled!==true||access.email!==email)continue;
    const card=document.createElement('article');card.className='student-card';
    const title=document.createElement('h4');title.textContent=access.studentName||'Student';
-   const details=document.createElement('p');details.textContent='Class: '+(access.course||'—')+(access.batch?' · Batch: '+access.batch:'')+' · Status: '+(access.state||'Active');
+   const details=document.createElement('p');details.textContent='Official Student ID: '+(access.studentCode||'Not assigned yet')+'  ·  Class: '+(access.course||'—')+(access.batch?' · Batch: '+access.batch:'')+' · Status: '+(access.state||'Active');
    const label=document.createElement('span');label.className='tag';label.textContent='✓ Verified Student Account';
    card.append(title,details,label);
    const heading=document.createElement('h4');heading.textContent='🏅 Published Examination Results';heading.style.marginTop='23px';heading.style.fontSize='18px';card.append(heading);
