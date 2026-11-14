@@ -91,3 +91,13 @@ ALIA official roll numbers are sequential and dates of birth can often be learne
 4. Student: open **Homepage → Menu → Student Login**. Enter **ALIA Student ID + Date of Birth**, click Continue, sign in with the approved verified email/password or Google, and open the published results dashboard.
 
 Never send student passwords to administrators. A student whose official ID/DOB/email does not match the academy's saved and approved data is denied dashboard access.
+
+## Private Teacher and Student Profile Photos
+
+The Admin Panel supports optional profile photo uploads for **teachers** (Teachers & Students → Teacher Details → Teacher Directory & Management → Edit Teacher → Name, Salary, Contact & Notes) and **students** (Teachers & Students → Student Details → Add/Edit Student). Images may be JPG, PNG or WebP up to 8 MB before processing. The browser crops and compresses each image to a small square JPEG thumbnail (normally below ~80 KB), previews it, and saves or removes it **only after** the administrator clicks the existing Save button. The original image file is never uploaded.
+
+The invitation-only teacher registration form also allows an **optional Teacher Profile Photograph**. After teacher submission and administrator approval, the photo is copied to that teacher's private directory profile and appears on the administrator's teacher profile PDF.
+
+Student photos appear on private Admin student cards and in the student's own verified, administrator-approved account dashboard (the approved `studentAccess` record carries only a compressed thumbnail). Student photos are **not** added to public examination results or public webpages. Teachers' photos remain in administrator-only `teacherSubmissions` and `teachers` Firestore records.
+
+Thumbnails are stored directly in Firestore (`photoData`) to avoid depending on Firebase Storage deployment or billing. The admin's encrypted Firestore backup includes these compact thumbnails. Photos do not become public by default. Always get student/guardian consent before uploading a child's photo. For a student with no photo, the interface shows the academy's logo instead.
