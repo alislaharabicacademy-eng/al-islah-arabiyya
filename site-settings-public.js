@@ -94,9 +94,23 @@ function updateHome(s){
  contact(s);
  principalCard(s.principal);
 }
+function secondaryPage(s){
+ const names=document.querySelectorAll('header h1,header strong,header .nav strong,header .brand strong,footer');
+ names.forEach(el=>{
+  if(el.children.length)return;
+  const old=el.textContent.trim();
+  if(old.toLowerCase()==='madrasa al islahul arabiya')el.textContent=old===old.toUpperCase()?s.instituteName.toUpperCase():s.instituteName;
+  else if(el.tagName==='FOOTER'&&old.toLowerCase()==='© madrasa al islahul arabiya')el.textContent='© '+s.instituteName;
+ });
+ const tel=s.phone.replace(/[^+\d]/g,'');
+ const whats='https://wa.me/'+s.whatsapp+'?text='+encodeURIComponent('Assalamu Alaikum, I would like to enquire about admission.');
+ document.querySelectorAll('a[href^="tel:"]').forEach(a=>{a.href='tel:'+tel;if(/^\+?[0-9\s-]{7,}$/.test(a.textContent.trim()))a.textContent=s.phone});
+ document.querySelectorAll('a[href^="mailto:"]').forEach(a=>{a.href='mailto:'+s.email});
+ document.querySelectorAll('a[href^="https://wa.me/"]').forEach(a=>{a.href=whats});
+}
 try{
  const settings=await loadSiteSettings();
- setTheme(settings.theme);
- if($('#home.hero'))updateHome(settings);
+ if($('#home.hero')){setTheme(settings.theme);updateHome(settings)}
+ else secondaryPage(settings);
  if(document.title.includes('Madrasa Al Islahul Arabiya'))document.title=document.title.replaceAll('Madrasa Al Islahul Arabiya',settings.instituteName);
 }catch(error){console.warn('Published Academy website settings are not available; original site remains intact.',error)}
