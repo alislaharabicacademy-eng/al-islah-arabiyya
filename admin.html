@@ -220,6 +220,32 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 .site-settings-quicklinks{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
 .site-settings-quicklinks a{padding:9px 13px;border:1px solid #b9d1bf;border-radius:9px;background:#f5fbf5;color:#175038;font-weight:800;text-decoration:none}
 @media(max-width:650px){.site-settings-fields,.site-settings-profile-images{grid-template-columns:1fr}.site-settings-group{padding:15px}.site-settings-actions button{flex:1 1 140px}}
+</style><style id="homepage-achievers-admin">
+#homepageWinnersPanel{border:1px solid #cdb27b;background:linear-gradient(140deg,#fffcf5,#f2f9f3);border-radius:20px;padding:clamp(16px,3vw,28px)}
+#homepageWinnersPanel h3{font:700 27px Georgia,serif;margin:0 0 10px}
+#homepageWinnersPanel .winner-info{padding:14px;background:#eaf5eb;border-left:4px solid #c9a66b;border-radius:10px;font-size:13px;line-height:1.65}
+.homepage-rank-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0}
+.homepage-rank-editor{min-width:0;background:#fff;border:1px solid #d7d5c9;padding:16px;border-radius:14px}
+.homepage-rank-editor h4{font-size:17px;color:#917037;margin:0 0 13px}
+.homepage-rank-editor>label{display:block;font-size:12px;font-weight:800;margin:10px 0}
+.homepage-rank-editor select,.homepage-rank-editor input[type=file]{width:100%;padding:11px 9px;border:1px solid #cbdccf;border-radius:9px;background:#fbfdfb}
+.homepage-rank-photo{display:flex;justify-content:center;align-items:center;text-align:center;border:1px dashed #abc4b1;border-radius:13px;background:#f5faf6;min-height:128px;padding:10px;color:#587264;font-size:12px}
+.homepage-rank-photo img{height:105px;width:105px;object-fit:cover;border:3px solid #ddbf83;border-radius:50%}
+.homepage-rank-meta{font-size:12px;min-height:34px;color:#536b60}
+.homepage-rank-consent{display:flex!important;align-items:flex-start;gap:8px;line-height:1.6;background:#fffaed;padding:11px;border-radius:9px}
+.homepage-rank-consent input{width:18px;height:18px;flex-shrink:0;margin:2px 0}
+#homepageWinnersPanel .actions{display:flex;gap:10px;flex-wrap:wrap}#homepageWinnersPanel .actions button{margin:0}
+#homepageWinnersStatus{padding:14px;border-radius:10px;background:#eaf5eb;color:#205339;line-height:1.65}
+#homepageWinnersStatus.error{background:#fff0ed;color:#9a3f30}
+.home-feature-result{background:#fffbf0;border:1px solid #d6c194;border-radius:13px;margin:15px 0;padding:15px}
+.home-feature-result h4{margin:0 0 10px;color:#17533d}
+.home-feature-result .option-line{display:flex;align-items:flex-start;gap:10px;line-height:1.6;font-size:13px;font-weight:750;margin:11px 0}
+.home-feature-result .option-line input{width:19px;height:19px;flex-shrink:0;margin:2px 0}
+.home-feature-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.home-feature-fields label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:750}
+.home-feature-fields input,.home-feature-fields select{width:100%;max-width:100%;padding:10px;border:1px solid #ccd9ca;border-radius:9px}
+#examHomeWinnerUploadStatus{font-size:12px;color:#5b6a5d}
+@media(max-width:900px){.homepage-rank-grid,.home-feature-fields{grid-template-columns:1fr}}
 </style></head><body><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button><div class="menu-shade hidden" id="menuShade"></div><aside class="side-menu" id="sideMenu" aria-label="Admin navigation">
 <div class="academy-menu-brand"><span class="academy-menu-kicker">AL ISLAHUL ARABIYA</span><h2>Academy Menu</h2><p>Management Control Center</p></div>
 <div class="academy-menu-groups">
@@ -423,6 +449,14 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
    <div id="examSubjectRows"></div>
    <button type="button" class="secondary" id="examAddSubject">＋ Add Another Subject</button>
    <div id="examResultCalculation" class="exam-live-total" aria-live="polite">Add marks to calculate total, percentage, grade and pass status.</div>
+<div class="home-feature-result"><h4>🏅 Also Feature This Result on the Homepage? (Optional)</h4>
+<p class="section-note">Normal exam results remain accessible through private result links. Enable this only to publicly display a student's First, Second or Third position, name and photo.</p>
+<label class="option-line"><input type="checkbox" id="examHomeWinnerFeature"><span>When publishing this result, feature this student on the homepage</span></label>
+<div id="examHomeWinnerOptions" class="hidden">
+<div class="home-feature-fields"><label>Position<select id="examHomeWinnerRank"><option value="1">🥇 First</option><option value="2">🥈 Second</option><option value="3">🥉 Third</option></select></label>
+<label>Photo (optional if Student Details has one)<input type="file" id="examHomeWinnerPhoto" accept="image/jpeg,image/png,image/webp"></label></div>
+<p id="examHomeWinnerUploadStatus">The student profile photo is used unless you select a different photo here.</p>
+<label class="option-line"><input type="checkbox" id="examHomeWinnerConsent"><span>I have student/guardian permission to publicly display this name, rank and photo.</span></label></div></div>
    <div class="actions exam-result-actionbar">
     <button type="button" id="examSaveDraft" class="secondary">💾 Save Private Draft</button>
     <button type="button" id="examPublish">🌐 Publish Result</button>
@@ -432,7 +466,15 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
    <p class="status" id="examEditorStatus" role="status" aria-live="polite"></p>
   </form>
  </section>
- <section class="section">
+ <section class="section" id="homepageWinnersPanel">
+<h3>🏆 Homepage Top Achievers · First / Second / Third</h3>
+<p class="winner-info"><strong>Flexible selection:</strong> First only, Second only, Third only, or any combination. Unselected ranks never appear. Select from published examination results; every featured student requires a photo and guardian permission. All displayed winners should belong to the same examination, year and course.</p>
+<div class="fields"><label>Heading<input id="homepageWinnersTitle" maxlength="90" value="Our Top Achievers"></label><label>Subtitle<input id="homepageWinnersSubtitle" maxlength="160" value="Celebrating excellence in Islamic learning"></label></div>
+<label style="display:flex;align-items:center;gap:10px;margin:14px 0;font-weight:750"><input type="checkbox" id="homepageWinnersVisible" style="width:20px;height:20px"> Show the selected winners on the public homepage</label>
+<div id="homepageWinnersRankGrid" class="homepage-rank-grid"></div>
+<div class="actions"><button type="button" id="homepageWinnersSave">💾 Save &amp; Publish Winners</button><button type="button" class="secondary" id="homepageWinnersHide">🙈 Hide Winners Immediately</button><button type="button" class="secondary" id="homepageWinnersRefresh">↻ Refresh Published Results</button><a class="btn secondary" href="index.html#home-winners" target="_blank" rel="noopener">↗ Preview Website</a></div>
+<p id="homepageWinnersStatus" role="status" aria-live="polite">Open Examination Results to manage winners.</p></section>
+  <section class="section">
   <h3>📋 Saved Results &amp; Certificates</h3>
   <p class="section-note">Drafts are private. Published results are accessible only to people who have their unique result link. Official PDFs use the approved five-type vector certificate designs, original Academy logo, and editable vector text. <a href="certificate-studio.html" target="_blank" rel="noopener">Preview all five vector designs →</a></p>
   <div class="fields">
