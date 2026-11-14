@@ -1,0 +1,64 @@
+name: Enable Firestore Daily Managed Backups
+
+# One-time opt-in only: this changes billable Firestore backup settings.
+# It must be run manually by the repository owner after approving backup cost
+# and granting the deployment service account the minimum required IAM role.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: firestore-managed-backup-setup
+  cancel-in-progress: false
+
+jobs:
+  setup-backup-schedule:
+    runs-on: ubuntu-latest
+    environment: firebase-rules
+    steps:
+      - name: Authenticate to the existing Firebase project using keyless identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: al-islah-arabic-academy
+          workload_identity_provider: projects/768903195557/locations/global/workloadIdentityPools/al-islah-github-deployment/providers/al-islah-github-actions
+          service_account: github-firebase-rules-deployer@al-islah-arabic-academy.iam.gserviceaccount.com
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>= 470.0.0'
+
+      - name: Set up an idempotent daily backup schedule
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT='al-islah-arabic-academy'
+          DATABASE='(default)'
+          echo "Checking existing Cloud Firestore backup schedules..."
+          SCHEDULES="$(gcloud firestore backups schedules list --project="$PROJECT" --database="$DATABASE" --format=json)"
+          if echo "$SCHEDULES" | jq -e 'any(.[]; has("dailyRecurrence"))' >/dev/null; then
+            echo "Daily managed backups already configured; leaving schedule unchanged."
+          else
+            echo "Creating daily backups with 28-day retention..."
+            gcloud firestore backups schedules create \
+              --project="$PROJECT" \
+              --database="$DATABASE" \
+              --recurrence=daily \
+              --retention=28d
+          fi
+
+      - name: Verify schedule configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud firestore backups schedules list \
+            --project='al-islah-arabic-academy' \
+            --database='(default)' \
+            --format='table(name,retention,dailyRecurrence)'
+          echo "The managed Firestore service makes the backups on its own schedule."
+          echo "A schedule is not proof of an already completed recovery point."
