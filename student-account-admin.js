@@ -13,7 +13,7 @@ export function initStudentAccountAdmin({db}){
  async function open(student){
   if(!student?.id)throw Error('Save the student first.');
   selected={...student};previous=null;panel.hidden=false;
-  $('studentAccountTitle').textContent=(student.name||'Student')+' · '+(student.studentCode||'AIL ID pending')+' · '+(student.course||'No class');
+  $('studentAccountTitle').textContent=(student.name||'Student')+' · '+(student.studentCode||'ALIA ID pending')+' · '+(student.course||'No class');
   $('studentAccountEmail').value='';$('studentAccountEnabled').checked=true;
   msg('Loading student access…');
   panel.scrollIntoView({behavior:'smooth',block:'start'});
