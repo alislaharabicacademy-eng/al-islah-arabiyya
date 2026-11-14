@@ -869,7 +869,7 @@ async function monthlyPdfBlob(individualStudent=null,combineIndividualPages=fals
   box(49,7,14.5,14.5,'#DBEEE0',3);
   stroke(C.dark);doc.setLineWidth(.65);doc.roundedRect(53,11,7,7,1,1,'S');
   doc.line(53,13,60,13);doc.line(55,10,55,12);doc.line(58,10,58,12);
-  print(kind==='dates'?'Attendance Date Details':kind==='individual'?'Individual Student Attendance':'Monthly Student Attendance Report',67,15.2,18,C.dark,true);
+  print(kind==='dates'?'Attendance Date Details':kind==='individual'||kind==='combined'?'Individual Student Attendance':'Monthly Student Attendance Report',67,15.2,18,C.dark,true);
   print('Madrasa Al Islahul Arabiya',67,22.1,9,C.green);
   print('ACADEMY MONTHLY REPORT',67,28.6,7,C.muted,true);
   fill(C.white);doc.circle(279,17,10.8,'F');stroke(C.gold);doc.circle(279,17,11.2,'S');
@@ -880,7 +880,7 @@ async function monthlyPdfBlob(individualStudent=null,combineIndividualPages=fals
   print('MONTH',53,43,6.6,C.muted,true);print(fit(month,47,10,true),53,51,10,C.dark,true);
   print('CLASS',118,43,6.6,C.muted,true);print(fit(group.course,76,10,true),118,51,10,C.dark,true);
   print('BATCH',211,43,6.6,C.muted,true);print(fit(group.batch||'All',28,9.4,true),211,51,9.4,C.dark,true);
-  box(251,43,34,9,C.green,2);print('MONTHLY',255,48.7,7,C.white,true);
+  box(251,43,34,9,C.green,2);print(kind==='combined'?'STUDENT '+combinedStudentNumber+'/'+combinedStudentTotal:'MONTHLY',254.1,48.7,kind==='combined'?7:7,C.white,true);
   const rows=group.records,total=rows.length;
   const present=rows.reduce((n,r)=>n+r.dates.present.length,0),leave=rows.reduce((n,r)=>n+r.dates.leave.length,0);
   const heldTotal=rows.reduce((n,r)=>n+r.held,0);
@@ -896,7 +896,7 @@ async function monthlyPdfBlob(individualStudent=null,combineIndividualPages=fals
    print(label,x+15,67,7,C.muted,true);
    print(value,x+15,76.5,14,C.dark,true);
   });
-  print(kind==='dates'?'PRESENT / ABSENT / LEAVE - FULL DATES':kind==='individual'?'INDIVIDUAL STUDENT ATTENDANCE DETAILS':'STUDENT ATTENDANCE DETAILS',49,89,10.5,C.dark,true);
+  print(kind==='dates'?'PRESENT / ABSENT / LEAVE - FULL DATES':kind==='individual'||kind==='combined'?'INDIVIDUAL STUDENT ATTENDANCE DETAILS':'STUDENT ATTENDANCE DETAILS',49,89,10.5,C.dark,true);
   print(fit(group.course+(group.batch?' - '+group.batch:''),70,7),214,88.5,7,C.muted);
   box(49,195,240,10,C.light,2);
   print('Present = attended   |   Absent = not attended   |   Leave = teacher-marked leave',52,199.1,7,C.dark);
@@ -962,10 +962,7 @@ async function monthlyPdfBlob(individualStudent=null,combineIndividualPages=fals
   if(individualStudent||combineIndividualPages){
    for(const student of group.records){
     combinedStudentNumber++;
-    page(group,'individual');heading();
-    if(combineIndividualPages){
-     print('STUDENT '+combinedStudentNumber+' OF '+combinedStudentTotal,231,89,8,C.green,true);
-    }
+    page(group,combineIndividualPages?'combined':'individual');heading();
     tableRow(student,1,104);
     dateBlock(student,1,120);
    }
