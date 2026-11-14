@@ -470,6 +470,7 @@ const monthInIndia=()=>{
 };
 $('monthlyAttendanceMonth').value=monthInIndia();
 function resetMonthlyStudentReport(){
+ $('monthlyAttendanceSummary').hidden=true;
  $('monthlyStudentAttendanceReport').replaceChildren();
  $('monthlyStudentAttendanceStatus').textContent='';
  setMonthlyExportButtonsDisabled(true);
@@ -513,7 +514,7 @@ async function loadMonthlyStudentReport(){
  const status=$('monthlyStudentAttendanceStatus'),root=$('monthlyStudentAttendanceReport');
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){status.textContent='Choose a valid month.';return}
  const btn=$('loadMonthlyStudentAttendance');
- btn.disabled=true;setMonthlyExportButtonsDisabled(true);monthlyAttendanceExport=[];root.replaceChildren();
+ btn.disabled=true;setMonthlyExportButtonsDisabled(true);monthlyAttendanceExport=[];root.replaceChildren();$('monthlyAttendanceSummary').hidden=true;
  status.textContent='Loading student and teacher attendance records for '+month+'…';
  try{
   const [studentSnap,teacherSnap]=await Promise.all([getDocs(collection(db,'students')),getDocs(collection(db,'teachers'))]);
@@ -564,7 +565,7 @@ async function loadMonthlyStudentReport(){
    const n=(courseRegistry.get(a.course)?.name||classNames[a.course]||a.course).localeCompare(courseRegistry.get(b.course)?.name||classNames[b.course]||b.course);
    return n||a.batch.localeCompare(b.batch,undefined,{numeric:true});
   });
-  let studentTotal=0,heldDateTotal=0;
+  let studentTotal=0,heldDateTotal=0,totalPresent=0,totalPossible=0,totalLeave=0;
   for(const group of groupList){
    const heldDates=[...group.days.keys()].sort(),held=heldDates.length;
    const name=courseRegistry.get(group.course)?.name||classNames[group.course]||group.course;
@@ -593,9 +594,12 @@ async function loadMonthlyStudentReport(){
     monthlyAttendanceTableCell(row,dates.absent.length,'num');
     monthlyAttendanceTableCell(row,dates.leave.length,'num');
     monthlyAttendanceTableCell(row,dates.unmarked.length,'num');
-    monthlyAttendanceTableCell(row,held?rate+'%':'—','num');
+    const attendanceCell=monthlyAttendanceTableCell(row,'','num');
+    const attendanceBadge=document.createElement('span');attendanceBadge.className='monthly-attendance-badge'+(rate<75?' low':rate<85?' moderate':'');
+    attendanceBadge.textContent=held?rate+'%':'—';attendanceCell.append(attendanceBadge);
     const dateCell=document.createElement('td');dateCell.append(monthlyDatesDetail(dates));row.append(dateCell);
     body.append(row);
+    totalPresent+=dates.present.length;totalPossible+=held;totalLeave+=dates.leave.length;
     monthlyAttendanceExport.push({month,course:name,batch:group.batch,student:student.name,held,rate:held?rate+'%':'',dates});
    }
    table.append(body);scroll.append(table);section.append(scroll);root.append(section);
@@ -610,9 +614,15 @@ async function loadMonthlyStudentReport(){
   }
   const label=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'});
   status.textContent='✓ '+label+': '+groupList.length+' class/batch group(s), '+studentTotal+' student(s), '+heldDateTotal+' recorded class date(s) across groups.';
+  $('monthlyKpiDays').textContent=String(heldDateTotal);
+  $('monthlyKpiStudents').textContent=String(studentTotal);
+  $('monthlyKpiAttendance').textContent=totalPossible?Math.round(totalPresent*100/totalPossible)+'%':'—';
+  $('monthlyKpiLeave').textContent=String(totalLeave);
+  $('monthlyAttendanceSummary').hidden=!groupList.length;
   setMonthlyExportButtonsDisabled(!monthlyAttendanceExport.length);
  }catch(err){
   root.replaceChildren();status.textContent='Could not generate the monthly report: '+err.message;
+  $('monthlyAttendanceSummary').hidden=true;
   monthlyAttendanceExport=[];setMonthlyExportButtonsDisabled(true);
  }finally{btn.disabled=false}
 }
