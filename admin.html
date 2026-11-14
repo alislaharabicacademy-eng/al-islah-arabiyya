@@ -242,7 +242,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
      <button type="button" id="loadMonthlyStudentAttendance">⌕ View Monthly Report</button>
      <button type="button" class="secondary" id="downloadMonthlyStudentExcel" disabled>📗 Excel (.xlsx)</button>
      <button type="button" id="downloadMonthlyStudentCombinedPDF" disabled>📕 All Students – One PDF</button>
-     <button type="button" class="secondary" id="downloadMonthlyStudentPDF" disabled>📄 Class Summary PDF</button>
+     <button type="button" class="secondary" id="downloadMonthlyStudentPDF" disabled>📋 Monthly Attendance Table PDF (Only)</button>
      <button type="button" class="secondary" id="downloadMonthlyStudentIndividualPDFs" disabled>📕 Separate Student PDFs (.zip)</button>
      <button type="button" id="downloadMonthlyStudentBoth" disabled>⬇ Excel + Student PDFs (.zip)</button>
      <button type="button" class="secondary" id="downloadMonthlyStudentAttendance" disabled>CSV</button>
@@ -968,25 +968,13 @@ async function monthlyPdfBlob(individualStudent=null,combineIndividualPages=fals
    }
    continue;
   }
-  // Class summary PDF remains available as an independent export.
+  // Standalone print-ready table: the exact dashboard layout in the reference.
+  // One page for up to nine students; subsequent students continue on another
+  // table page ONLY. Detailed per-student date pages belong to other PDF exports.
   const students=group.records;
   for(let i=0;i<students.length;i+=9){
    page(group,'summary');heading();
    students.slice(i,i+9).forEach((rec,j)=>tableRow(rec,i+j+1,104+j*9.5));
-  }
-  // Full dates always included; move complete student detail blocks to next page.
-  let y=0;
-  for(let i=0;i<students.length;i++){
-   if(i===0||y>155){page(group,'dates');y=95;}
-   doc.setFont('helvetica','normal');doc.setFontSize(7.6);
-   const est=students[i].dates;
-   const fullRows=['present','absent','leave','unmarked'].map(key=>{
-    const days=est[key].length?est[key].map(v=>v.slice(-2)).join(', '):'-';
-    return doc.splitTextToSize(days,171).length;
-   });
-   const height=14+fullRows.reduce((sum,n)=>sum+Math.max(1,n)*4+1.5,0);
-   if(y+height>192){page(group,'dates');y=95;}
-   y+=dateBlock(students[i],i+1,y)+3;
   }
  }
  return doc.output('blob');
@@ -1052,12 +1040,12 @@ async function monthlyRunExport(buttonId,kind){
  if(!monthlyAttendanceExport.length)return;
  const status=$('monthlyStudentAttendanceStatus'),button=$(buttonId),filename=monthlyExportName();
  button.disabled=true;
- status.textContent='Preparing '+(kind==='combined'?'one PDF with every student on a separate page':kind==='students'?'separate student PDFs':kind==='zip'?'Excel + individual student PDFs':kind==='pdf'?'class summary PDF':kind.toUpperCase())+'…';
+ status.textContent='Preparing '+(kind==='combined'?'one PDF with every student on a separate page':kind==='students'?'separate student PDFs':kind==='zip'?'Excel + individual student PDFs':kind==='pdf'?'standalone monthly attendance table PDF':kind.toUpperCase())+'…';
  try{
   if(kind==='xlsx'){
    monthlyDownloadBlob(await monthlyExcelBlob(),filename+'.xlsx');
   }else if(kind==='pdf'){
-   monthlyDownloadBlob(await monthlyPdfBlob(),filename+'_Class_Summary.pdf');
+   monthlyDownloadBlob(await monthlyPdfBlob(),filename+'_Attendance_Table_Only.pdf');
   }else if(kind==='combined'){
    monthlyDownloadBlob(await monthlyPdfBlob(null,true),filename+'_All_Students_One_File.pdf');
   }else if(kind==='students'){
@@ -1069,7 +1057,7 @@ async function monthlyRunExport(buttonId,kind){
    ?'✓ Downloaded '+monthlyAttendanceExport.length+' separate student PDFs'+(kind==='zip'?' and one Excel workbook':'')+' in a ZIP file. Extract ZIP to open each student PDF.'
    :kind==='combined'
    ?'✓ All '+monthlyAttendanceExport.length+' students included in one PDF: Student 1, Student 2, Student 3… each on a separate page.'
-   :'✓ '+(kind==='pdf'?'Class Summary PDF':kind.toUpperCase())+' downloaded. Check your Downloads folder.';
+   :'✓ '+(kind==='pdf'?'Monthly Attendance Table PDF (no student detail pages)':kind.toUpperCase())+' downloaded. Check your Downloads folder.';
  }catch(err){
   console.error('Monthly attendance '+kind+' download failed:',err);
   status.textContent='Download failed: '+err.message;
