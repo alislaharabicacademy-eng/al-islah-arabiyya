@@ -1503,7 +1503,9 @@ async function createTeacherProfilePdf(profile,directory={}){
  data.notes=profile.notes||directory.notes||'';
  data.directoryNotes=directory.notes||'';
  data.teacherId=directory.id||profile.registrationId||'';
- const fields=teacherProfileGroups.map(([title,items])=>({title,items}));
+ // jsPDF's built-in Helvetica font cannot render emoji section icons.
+ // Use clean ASCII headings in PDF; retain icons in the web-based profile.
+ const fields=teacherProfileGroups.map(([title,items])=>({title:title.replace(/^[^A-Za-z]+/,'').trim(),items}));
  fields.push({title:'ADMIN DIRECTORY',items:[['Teacher ID','teacherId'],['Monthly Salary (INR)','salary'],['Assigned Subjects','subjects'],['Review Status','reviewStatus'],['Submission Date','submittedAt'],['Directory Notes','directoryNotes']]});
  if(Array.isArray(directory.assignments)&&directory.assignments.length){
   fields.push({title:'CLASS, BATCH, SUBJECT & TIMING',items:directory.assignments.map((a,i)=>{
