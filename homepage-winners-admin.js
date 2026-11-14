@@ -58,7 +58,7 @@ export function initHomepageWinners({db}){
    const pick=state.picks.find(x=>x.rank===rank)||{rank,resultId:'',consent:false,photoOverride:''};
    ui.pick={...pick};
    ui.select.replaceChildren(new Option('— Do not display this position —',''));
-   results.filter(r=>r.published).sort((a,b)=>a.studentName.localeCompare(b.studentName)).forEach(r=>
+   results.filter(r=>r.published).sort((a,b)=>String(a.studentName||'').localeCompare(String(b.studentName||''))).forEach(r=>
      ui.select.add(new Option(r.studentName+' — '+r.examTitle+' ('+r.academicYear+')',r.id))
    );
    ui.select.value=pick.resultId;
@@ -79,8 +79,10 @@ export function initHomepageWinners({db}){
    const resultId=ui.select.value;
    if(resultId)obj.picks.push({rank,resultId,consent:ui.consent.checked,photoOverride:ui.pick.photoOverride||''});
   }
+  const rawCount=obj.picks.length;
+  const uniqueResults=new Set(obj.picks.map(p=>p.resultId));
+  if(rawCount!==uniqueResults.size)throw Error('A student result cannot occupy two positions. Choose a different student or clear one rank.');
   obj.picks=cleanPicks(obj.picks);
-  if(obj.picks.length!==new Set(obj.picks.map(p=>p.resultId)).size)throw Error('Choose each student result only once.');
   return obj;
  }
  async function entriesFor(config,{pending=null}={}){
