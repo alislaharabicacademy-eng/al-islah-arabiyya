@@ -1,6 +1,7 @@
 
 import{doc,getDoc,setDoc,collection,getDocs,query,where}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{normalizeStudentCode,validateStudentDOB,makeStudentDobVerifier}from'./student-dob-verifier.js';
+import{isProfilePhoto}from'./profile-photo.js';
 export function initStudentAccountAdmin({db}){
  const $=id=>document.getElementById(id);
  const panel=$('studentAccountPanel'),status=$('studentAccountStatus');
@@ -52,7 +53,7 @@ export function initStudentAccountAdmin({db}){
    const resultIds=enabled?(await getDocs(query(collection(db,'examResults'),where('studentId','==',selected.id)))).docs.filter(d=>d.data().published===true).map(d=>d.id):[];
    const data={
     studentId:selected.id,email,enabled,studentCode:String(student.studentCode||''),...dobVerifier,
-    studentName:String(student.name||'Student'),course:String(student.course||''),
+    studentName:String(student.name||'Student'),photoData:isProfilePhoto(student.photoData)?student.photoData:'',course:String(student.course||''),
     batch:String(student.batch||''),state:String(student.state||'Active'),resultIds,
     createdAt:previous?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()
    };
@@ -67,7 +68,7 @@ export function initStudentAccountAdmin({db}){
   if(!snap.exists())return;
   const studentCode=String(data.studentCode||'');
   const payload={
-   studentName:String(data.name||'Student'),studentCode,course:String(data.course||''),
+   studentName:String(data.name||'Student'),studentCode,photoData:isProfilePhoto(data.photoData)?data.photoData:'',course:String(data.course||''),
    batch:String(data.batch||''),state:String(data.state||'Active'),updatedAt:new Date().toISOString()
   };
   if(data.dob&&/^ALIA[0-9]{5}$/.test(studentCode))Object.assign(payload,await makeStudentDobVerifier(normalizeStudentCode(studentCode),validateStudentDOB(data.dob)));
