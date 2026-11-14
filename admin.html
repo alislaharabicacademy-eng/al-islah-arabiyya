@@ -1771,6 +1771,76 @@ async function buildTeacherMonthlySalaryPdf(){
  return pdf.output('blob');
 }
 
+
+async function buildTeacherYearlySalaryPdf(){
+ const state=teacherSalaryReportState;
+ if(state.mode!=='year'||!state.rows.length)throw Error('Select Check All 12 Months first.');
+ await ensurePdfLibrary();
+ const images=await teacherSalaryPdfLogo();
+ const pdf=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
+ const rows=state.rows,year=state.year,months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+ const statusAt=(teacher,j)=>teacherSalaryMonthStatus(teacher,year+'-'+String(j+1).padStart(2,'0'));
+ const paidCount=rows.reduce((n,t)=>n+months.filter((_,j)=>statusAt(t,j).paid).length,0);
+ const total=rows.reduce((n,t)=>n+months.reduce((sum,_,j)=>sum+statusAt(t,j).amount,0),0);
+ const widths=[9,46,...months.map(()=>14),17,29];
+ let page=0,y=0;
+ function header(){
+  if(page)pdf.addPage();page++;
+  teacherSalaryPdfTheme(pdf,images,'YEARLY TEACHER SALARY REGISTER',year,page);
+  teacherSalaryPdfStats(pdf,[['Year',year],['Teachers',rows.length],['Paid Teacher-Months',paidCount],['Total Paid',teacherSalaryMoney(total)]]);
+  pdf.setFillColor(217,239,225);pdf.rect(14,80,269,9,'F');
+  const heads=['No.','Teacher Name',...months,'Paid','Total Paid INR'];
+  let x=14;
+  heads.forEach((title,i)=>{
+   pdf.setFont('helvetica','bold');pdf.setFontSize(7);pdf.setTextColor(21,71,45);
+   pdf.text(teacherSalaryPdfFit(pdf,title,widths[i]-3,7),x+2,86);x+=widths[i];
+  });y=90;
+ }
+ header();
+ rows.forEach((teacher,i)=>{
+  if(y+12>189)header();
+  if(i%2){pdf.setFillColor(245,250,246);pdf.rect(14,y,269,12,'F')}
+  let x=14,paid=0,received=0;
+  pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(23,64,42);
+  pdf.text(String(i+1),x+2,y+7.5);x+=widths[0];
+  pdf.setFont('helvetica','bold');pdf.text(teacherSalaryPdfFit(pdf,teacher.name||'Teacher',widths[1]-4,8),x+2,y+7.5);x+=widths[1];
+  for(let j=0;j<12;j++){
+   const m=statusAt(teacher,j),width=widths[j+2];
+   if(m.paid){paid++;received+=m.amount}
+   if(m.hasEntry){
+    pdf.setFillColor(...(m.paid?[218,242,222]:[255,236,211]));
+    pdf.roundedRect(x+1,y+2,width-2,7,1,1,'F');
+   }
+   pdf.setFont('helvetica','bold');pdf.setFontSize(8);
+   pdf.setTextColor(...(m.paid?[11,108,51]:[120,95,73]));
+   pdf.text(m.paid?'P':m.hasEntry?'U':'-',x+width/2,y+7.5,{align:'center'});
+   x+=width;
+  }
+  pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(24,66,43);
+  pdf.text(paid+'/12',x+2,y+7.5);x+=widths[14];
+  pdf.text(teacherSalaryPdfFit(pdf,received.toLocaleString('en-IN'),widths[15]-4,8),x+2,y+7.5);
+  pdf.setDrawColor(220,231,221);pdf.line(14,y+12,283,y+12);y+=12;
+ });
+ pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(84,110,95);
+ pdf.text('P = Paid    U = Pending (unpaid)    - = No salary record saved',14,192);
+ return pdf.output('blob');
+}
+async function downloadAllTeacherSalaryPdf(kind){
+ const status=$('teacherSalaryRegisterStatus'),button=kind==='month'?$('downloadAllTeacherSalaryMonth'):$('downloadTeacherSalaryYear');
+ button.disabled=true;status.textContent='Creating high-clarity landscape salary PDF…';
+ try{
+  const expected=kind==='month'?'month':'year';
+  if(teacherSalaryReportState.mode!==expected)throw Error('View the '+expected+' report first.');
+  const blob=kind==='month'?await buildTeacherMonthlySalaryPdf():await buildTeacherYearlySalaryPdf();
+  const name=kind==='month'?'Teacher_Salary_Register_'+teacherSalaryReportState.month+'.pdf':'Teacher_Salary_12_Months_'+teacherSalaryReportState.year+'.pdf';
+  monthlyDownloadBlob(blob,name);
+  status.textContent='✓ Teacher salary landscape PDF downloaded.';
+ }catch(err){status.textContent='Salary PDF error: '+err.message}
+ finally{button.disabled=teacherSalaryReportState.mode!==kind||!teacherSalaryReportState.rows.length}
+}
+$('downloadAllTeacherSalaryMonth').onclick=()=>downloadAllTeacherSalaryPdf('month');
+$('downloadTeacherSalaryYear').onclick=()=>downloadAllTeacherSalaryPdf('year');
+
 $('teacherMonth').onchange=()=>{if(selectedTeacher)renderTeacherPayroll()};
 async function renderTeacherPayroll(){
  if(!selectedTeacher)return;const t=selectedTeacher,month=$('teacherMonth').value,root=$('teacherPayroll');root.textContent='Loading attendance and salary…';
