@@ -640,15 +640,16 @@ $('cleanAdmissionCourses').onclick=()=>{
 };
 async function loadAdmissionSettings(){
  try{
-  const snap=await getDoc(doc(db,'courses','muallama'));
-  const data=snap.exists()?snap.data():{};
+  const config=await getDoc(doc(db,'courses','admission-form-config'));
+  const legacy=config.exists()?null:await getDoc(doc(db,'courses','muallama'));
+  const data=config.exists()?config.data():(legacy?.exists()?legacy.data():{});
   admissionFields=Array.isArray(data.admissionFormFields)&&data.admissionFormFields.length
    ?data.admissionFormFields.map(f=>({...f})):admissionDefaults.map(f=>({...f}));
   // Never merge back every published/default course; it reintroduced courses
   // already removed by Admin and caused the two Tajweed For Girls options.
   const raw=Array.isArray(data.admissionFormCourses)?data.admissionFormCourses:defaultAdmissionCourses;
   $('admissionCourseList').value=uniqueAdmissionCourses(raw).join('\n');
-  renderAdmissionCourseRows();renderAdmissionEditor();
+  renderAdmissionCourseRows();renderAdmissionEditor();renderCourseList();
   if(Array.isArray(data.admissionFormCourses)&&raw.length!==uniqueAdmissionCourses(raw).length)
    $('admissionSettingsStatus').textContent='Duplicates were hidden in the editor. Click Save & Publish to clean the actual saved list.';
  }catch(e){$('admissionSettingsStatus').textContent='Load failed: '+e.message}
@@ -659,6 +660,12 @@ async function publishAdmissionSettings(){
  const courses=admissionNamesFromEditor();
  if(courses.length<2)throw Error('Add at least one Academy course besides Other enquiry.');
  const batch=writeBatch(db);
+ // Published public document is readable even when Muallama itself is unpublished.
+ batch.set(doc(db,'courses','admission-form-config'),{
+  published:true,admissionFormFields:fields,admissionFormCourses:courses,updatedAt:serverTimestamp()
+ },{merge:true});
+ // Mirror only to legacy documents for old website versions; never use them
+ // as the new canonical source of course choices.
  for(const id of ['muallama','muballigha','alima','boys-hifz']){
   batch.set(doc(db,'courses',id),{admissionFormFields:fields,admissionFormCourses:courses},{merge:true});
  }
@@ -678,12 +685,19 @@ $('saveAdmissionSettings').onclick=async()=>{
  finally{btn.disabled=false}
 };
 async function setCourseAdmissionVisibility(name,visible){
- const snap=await getDoc(doc(db,'courses','muallama'));
- const names=uniqueAdmissionCourses(snap.exists()&&Array.isArray(snap.data().admissionFormCourses)?snap.data().admissionFormCourses:defaultAdmissionCourses,{otherEnquiry:false});
+ const config=await getDoc(doc(db,'courses','admission-form-config'));
+ const snap=config.exists()?config:await getDoc(doc(db,'courses','muallama'));
+ const original=snap.exists()?snap.data():{};
+ const names=uniqueAdmissionCourses(Array.isArray(original.admissionFormCourses)?original.admissionFormCourses:defaultAdmissionCourses,{otherEnquiry:false});
  const key=admissionCourseKey(name);
  const next=visible?uniqueAdmissionCourses([...names,name]):uniqueAdmissionCourses(names.filter(n=>admissionCourseKey(n)!==key));
  if(next.length<2)throw Error('Cannot remove the final Academy course.');
  const batch=writeBatch(db);
+ batch.set(doc(db,'courses','admission-form-config'),{
+  published:true,admissionFormCourses:next,
+  admissionFormFields:Array.isArray(original.admissionFormFields)?original.admissionFormFields:admissionDefaults,
+  updatedAt:serverTimestamp()
+ },{merge:true});
  for(const id of ['muallama','muballigha','alima','boys-hifz'])batch.set(doc(db,'courses',id),{admissionFormCourses:next},{merge:true});
  await batch.commit();
  $('admissionCourseList').value=next.join('\n');renderAdmissionCourseRows();renderCourseList();
