@@ -142,6 +142,16 @@ export function initExamAdmin({db,auth}){
     {resultIds:arrayRemove(id),updatedAt:now},{merge:true});
    if(afterKey)batch.set(doc(db,'examResultLookups',afterKey),
     {enabled:true,resultIds:arrayUnion(id),updatedAt:now},{merge:true});
+   // Real verified email accounts use a private, admin-approved result index.
+   // The student sees only their own published result references.
+   if(old?.studentId&&old.studentId!==record.studentId){
+    const former=await getDoc(doc(db,'studentAccess',old.studentId));
+    if(former.exists())batch.set(doc(db,'studentAccess',old.studentId),
+      {resultIds:arrayRemove(id),updatedAt:now},{merge:true});
+   }
+   const studentAccount=await getDoc(doc(db,'studentAccess',record.studentId));
+   if(studentAccount.exists())batch.set(doc(db,'studentAccess',record.studentId),
+     {resultIds:published?arrayUnion(id):arrayRemove(id),updatedAt:now},{merge:true});
    await batch.commit();
    $('examResultId').value=id;
    await load();
@@ -177,6 +187,9 @@ export function initExamAdmin({db,auth}){
     const key=await examStudentLookupKey(student.examid,student.dob);
     batch.set(doc(db,'examResultLookups',key),{resultIds:arrayRemove(record.id),updatedAt:now},{merge:true});
    }
+   const access=await getDoc(doc(db,'studentAccess',current.data().studentId));
+   if(access.exists())batch.set(doc(db,'studentAccess',current.data().studentId),
+     {resultIds:arrayRemove(record.id),updatedAt:now},{merge:true});
    await batch.commit();
    status('✓ Result unpublished and removed from Student ID + DOB result lookup.');await load();
   }catch(e){status('Could not unpublish: '+e.message)}
