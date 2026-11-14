@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#103c2c">
+<meta name="description" content="Madrasa Al Islahul Arabiya Student Portal — view your published exam results using your private Student ID and date of birth.">
+<title>Student Login | Madrasa Al Islahul Arabiya</title>
+<style>
+:root{--green:#0f4832;--gold:#c5a16b;--ink:#193c2b}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 20% -10%,#daeade 0%,transparent 54%),#f5f8f3;color:var(--ink);font-family:Arial,'Noto Sans',sans-serif;min-height:100vh}
+a{color:inherit;text-decoration:none}
+.top{background:linear-gradient(125deg,#082f24,#165c3e);border-bottom:3px solid var(--gold);padding:26px 20px 35px;text-align:center;color:#fff;position:relative;overflow:hidden}
+.top:before{content:'۞';position:absolute;font-size:340px;right:-36px;top:-130px;opacity:.055;pointer-events:none}
+.top img{position:relative;width:80px;height:80px;object-fit:contain;clip-path:circle(47% at 50% 50%)}
+.top h1{position:relative;margin:12px 0 6px;font:700 clamp(24px,4.5vw,35px) Georgia,serif;color:#f1dfae}
+.top p{position:relative;color:#cae2d1;font-size:13px;letter-spacing:.025em}
+.top nav{position:relative;display:flex;justify-content:center;flex-wrap:wrap;gap:13px;margin-top:19px}
+.top nav a{border:1px solid #d5bc7a66;padding:9px 13px;border-radius:9px;color:#f8ebce;font-size:12px}
+main{max-width:780px;margin:auto;padding:28px 18px 55px}
+.page-title{text-align:center;margin:4px 0 23px}.page-title h2{font:700 clamp(27px,5vw,37px) Georgia,serif;margin:0;color:#164b34}.page-title p{color:#587363;line-height:1.6;margin:10px auto;max-width:610px}
+.card{background:#fff;border:1px solid #d9e8db;border-radius:20px;padding:25px;box-shadow:0 15px 40px #0d3d2713;margin:18px 0}
+.headline{display:flex;gap:11px;align-items:center;margin:0 0 20px}.headline .icon{width:49px;height:49px;border-radius:14px;background:#e7f2e7;display:grid;place-items:center;font-size:26px}.headline h3{margin:0;color:#0c5435;font:700 22px Georgia,serif}.headline span{display:block;font-size:12px;color:#5a7761;margin-top:5px}
+#studentPortalForm{display:grid;gap:17px}
+label{display:block;font-size:12px;font-weight:800;color:#2b5740}
+input{display:block;width:100%;padding:13px 14px;min-height:48px;margin-top:8px;background:#f8fbf8;border:1px solid #b9cfc1;border-radius:10px;font:14px Arial,sans-serif;color:#163b29}
+input:focus{outline:3px solid #d5e6d8;border-color:#3f8560}
+button,.button{border:1px solid #13583c;min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#126342;color:#fff;border-radius:10px;padding:12px 18px;cursor:pointer;font:700 14px Arial,sans-serif;text-decoration:none}
+button.secondary,.button.secondary{background:#edf7ee;color:#125038;border-color:#b5d0bd}
+button:disabled{opacity:.56;cursor:wait}
+button:hover,.button:hover{filter:brightness(1.07)}
+.status{color:#527264;font-size:13px;line-height:1.65;min-height:20px;margin-top:12px}
+.status.good{color:#147042}.status.bad{color:#a1342d}
+.hint{font-size:12px;color:#647d68;line-height:1.7}
+.portal-banner{display:flex;gap:14px;justify-content:space-between;align-items:center;flex-wrap:wrap;border-bottom:1px solid #dce9df;padding-bottom:16px}
+.portal-banner h3{margin:0;color:#144f34;font:700 23px Georgia,serif}
+.portal-banner p{color:#547661;font-size:13px;margin:7px 0 0}
+.exam-result{margin:16px 0;padding:17px;border:1px solid #d2e4d4;border-radius:14px;background:linear-gradient(120deg,#f7fcf8,#ecf6ef)}
+.exam-result h4{color:#134d33;font:700 21px Georgia,serif;margin:0 0 8px}
+.exam-result p{color:#536d5c;margin:6px 0;line-height:1.65;font-size:13px}
+.exam-result .pill{display:inline-block;margin-top:9px;font-size:11px;font-weight:850;border-radius:99px;padding:6px 11px;color:#13673a;background:#d9f2e1}
+.exam-result .pill.pending{background:#fff0d5;color:#845521}
+.exam-result .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+.exam-result .actions a{font-size:12px}
+.note{margin:18px 0;background:#e8f1e8;border:1px solid #cee0d0;color:#526e57;font-size:12px;line-height:1.8;padding:15px;border-radius:13px}
+footer{background:#0a3427;color:#d7c69c;text-align:center;padding:22px 12px;font-size:12px;margin-top:20px}
+[hidden]{display:none!important}
+@media(max-width:540px){.card{padding:18px}.top{padding:20px 14px 28px}.page-title p{font-size:13px}.portal-banner h3{font-size:19px}.exam-result .actions a{width:100%}}
+</style></head><body>
+<header class="top">
+<img src="1_20261112_080707_0000.png" alt="Academy official logo">
+<h1>Madrasa Al Islahul Arabiya</h1>
+<p>STUDENT RESULT PORTAL · FAITH · LEARNING · EXCELLENCE</p>
+<nav aria-label="Student portal navigation">
+<a href="index.html">⌂ Home</a>
+<a href="exam-results.html">🏅 Exam Results</a>
+<a href="admission.html">✦ Admissions</a>
+</nav>
+</header>
+<main>
+<div class="page-title"><h2>🎓 Student Login</h2>
+<p>Check your published examination results and download your result PDF and certificate. Use the confidential Student ID issued by your Madrasa.</p></div>
+<section class="card" id="portalLogin">
+<div class="headline"><span class="icon" aria-hidden="true">🔐</span><div><h3>Student Result Access</h3><span>Student ID + Date of Birth</span></div></div>
+<form id="studentPortalForm">
+<label for="portalStudentId">Student ID
+<input id="portalStudentId" type="text" maxlength="50" placeholder="Enter your confidential Student ID" autocomplete="off" spellcheck="false" required></label>
+<label for="portalStudentDob">Date of Birth
+<input id="portalStudentDob" type="date" autocomplete="off" required></label>
+<button id="portalSignIn" type="submit">🔎 View My Published Results</button>
+</form>
+<p id="portalStatus" class="status" role="status" aria-live="polite"></p>
+<p class="hint">Don't have your Student ID? Ask your Madrasa administrator privately. Only examination results that have been published will appear.</p>
+</section>
+<section class="card" id="portalDashboard" aria-label="Student published examination results" hidden>
+<div class="portal-banner">
+ <div><h3 id="portalWelcome">Published Exam Results</h3><p id="portalCount"></p></div>
+ <button type="button" class="secondary" id="portalLogout">↩ Exit Student Portal</button>
+</div>
+<div id="portalExamList"></div>
+</section>
+<div class="note"><strong>Privacy:</strong> This Student Login is for <strong>published exam results only</strong>. It does not give access to private fee, attendance or personal academic records. Student ID and Date of Birth must be kept confidential; this is not a Firebase account password login.</div>
+</main>
+<footer>© Madrasa Al Islahul Arabiya · Student Examination Portal</footer>
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+import{getFirestore,doc,getDoc}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import{examStudentLookupKey}from'./exam-lookup.js';
+const $=id=>document.getElementById(id);
+let db=null,epoch=0;
+const status=$('portalStatus'),login=$('portalLogin'),dashboard=$('portalDashboard'),submit=$('portalSignIn');
+async function getDb(){
+ if(db)return db;
+ const cfg=await fetch('firebase-config.json').then(r=>{if(!r.ok)throw Error('Configuration is unavailable');return r.json()});
+ db=getFirestore(initializeApp(cfg,'madrasa-student-portal'));
+ return db;
+}
+function escapeNothing(){}
+async function studentLogin(event){
+ event.preventDefault();
+ const attempt=++epoch;
+ const userId=$('portalStudentId').value.trim().toLowerCase(),dob=$('portalStudentDob').value;
+ dashboard.hidden=true;status.className='status';status.textContent='Checking published exam results…';submit.disabled=true;
+ try{
+  const hash=await examStudentLookupKey(userId,dob);
+  const database=await getDb();
+  const lookup=await getDoc(doc(database,'examResultLookups',hash));
+  if(!lookup.exists()||lookup.data().enabled!==true)throw Error('No published results found. Check your Student ID and Date of Birth, or contact the Madrasa.');
+  const references=[...new Set(Array.isArray(lookup.data().resultIds)?lookup.data().resultIds:[])].filter(id=>/^RESULT-[a-f0-9]{24}$/.test(id)).slice(0,75);
+  if(!references.length)throw Error('No published examinations are currently available.');
+  const docs=await Promise.all(references.map(id=>getDoc(doc(database,'examResults',id)).catch(()=>null)));
+  if(attempt!==epoch)return;
+  const exams=docs.filter(snap=>snap&&snap.exists()&&snap.data().published===true);
+  if(!exams.length)throw Error('No published exam results are currently available. Please ask your Madrasa.');
+  exams.sort((a,b)=>String(b.data().examDate||'').localeCompare(String(a.data().examDate||'')));
+  const container=$('portalExamList');container.replaceChildren();
+  const name=String(exams[0].data().studentName||'Student');
+  $('portalWelcome').textContent='Assalamu Alaikum · '+name;
+  $('portalCount').textContent=exams.length+' published examination result(s) found.';
+  exams.forEach(snap=>{
+   const e=snap.data(),card=document.createElement('article');card.className='exam-result';
+   const title=document.createElement('h4');title.textContent=e.examTitle||'Academy Examination';
+   const course=document.createElement('p');course.textContent=[e.course,e.academicYear,e.examDate].filter(Boolean).join('  ·  ');
+   const marks=document.createElement('p');marks.textContent='Marks: '+e.total+' / '+e.maxTotal+'  |  '+Number(e.percent||0).toFixed(2)+'%  |  Grade: '+(e.grade||'—');
+   const badge=document.createElement('span');badge.className='pill'+(e.passed?'':' pending');badge.textContent=e.passed?'✓ PASS':'NEEDS IMPROVEMENT';
+   const actions=document.createElement('div');actions.className='actions';
+   const link=document.createElement('a');link.className='button';link.href='exam-results.html?id='+encodeURIComponent(snap.id);
+   link.textContent='📕 View Result & Download PDFs →';
+   actions.append(link);card.append(title,course,marks,badge,actions);container.append(card);
+  });
+  // Clear DOB after verification; it is never written to localStorage or URL.
+  $('portalStudentDob').value='';
+  login.hidden=true;dashboard.hidden=false;
+  dashboard.scrollIntoView({behavior:'smooth',block:'start'});
+  status.className='status good';status.textContent='✓ Published results loaded.';
+ }catch(err){
+  if(attempt===epoch){status.className='status bad';status.textContent=err.code==='permission-denied'?'Results unavailable. Verify Student ID, DOB and publication status.':err.message}
+ }finally{if(attempt===epoch)submit.disabled=false}
+}
+$('studentPortalForm').addEventListener('submit',studentLogin);
+$('portalLogout').addEventListener('click',()=>{
+ epoch++;login.hidden=false;dashboard.hidden=true;$('portalExamList').replaceChildren();
+ $('studentPortalForm').reset();status.textContent='Session cleared on this page.';status.className='status';
+ submit.disabled=false;login.scrollIntoView({behavior:'smooth',block:'start'});
+});
+</script>
+</body></html>
