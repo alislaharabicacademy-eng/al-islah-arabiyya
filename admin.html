@@ -114,6 +114,9 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 .student-monthly-table details[open]>summary{list-style:disclosure-open}
 .student-monthly-table details p{margin:5px 0;font-size:12px;white-space:normal;color:#3b6250;line-height:1.6}
 .student-monthly-table details p:first-of-type{margin-top:11px}
+.monthly-student-pdf-btn{display:block;margin-top:7px!important;padding:8px 10px!important;width:100%;min-width:123px;border-radius:8px!important;background:#e9f5ed!important;border:1px solid #bad7c5!important;color:#145d3a!important;font-size:11px!important;font-weight:800!important;cursor:pointer}
+.monthly-student-pdf-btn:hover{background:#d5eddf!important}
+.monthly-student-pdf-btn:disabled{opacity:.45;cursor:wait}
 .student-monthly-legend{background:#e7f3e8;border:1px solid #d0e8d6;border-radius:11px;padding:14px;color:#2b5b40;font-size:12px;line-height:1.75;margin:14px 0}
 .monthly-report-footer{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:22px;font-size:11px;color:#709184}
 .monthly-report-footer span{font-size:21px;color:#1e744f}
@@ -238,8 +241,9 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
     <div class="monthly-report-actions">
      <button type="button" id="loadMonthlyStudentAttendance">⌕ View Monthly Report</button>
      <button type="button" class="secondary" id="downloadMonthlyStudentExcel" disabled>📗 Excel (.xlsx)</button>
-     <button type="button" class="secondary" id="downloadMonthlyStudentPDF" disabled>📕 Premium PDF</button>
-     <button type="button" id="downloadMonthlyStudentBoth" disabled>⬇ Excel + PDF (.zip)</button>
+     <button type="button" class="secondary" id="downloadMonthlyStudentPDF" disabled>📕 Class Summary PDF</button>
+     <button type="button" class="secondary" id="downloadMonthlyStudentIndividualPDFs" disabled>📕 Separate Student PDFs (.zip)</button>
+     <button type="button" id="downloadMonthlyStudentBoth" disabled>⬇ Excel + Student PDFs (.zip)</button>
      <button type="button" class="secondary" id="downloadMonthlyStudentAttendance" disabled>CSV</button>
     </div>
    </div>
@@ -460,7 +464,7 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
 $('studentAttendanceDate').value=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});$('loadStudentAttendance').onclick=async()=>{const day=$('studentAttendanceDate').value,root=$('studentAttendanceReport');root.textContent='Loading attendance…';try{const teachers=await getDocs(collection(db,'teachers'));root.replaceChildren();for(const t of teachers.docs){const snap=await getDoc(doc(db,'teacherAttendance',t.id,'days',day));if(!snap.exists())continue;for(const [subject,record] of Object.entries(snap.data().subjects||{})){const box=document.createElement('div');box.className='record';appendInfo(box,'Teacher',t.data().name);appendInfo(box,'Subject',subject.split('__').pop());appendInfo(box,'Class',record.course||'—');if(record.course==='maktab')appendInfo(box,'Batch',record.batch||'—');for(const s of Object.values(record.students||{}))appendInfo(box,s.name||'Student',s.status||'Not marked');const reset=document.createElement('button');reset.type='button';reset.textContent='↺ Reset this subject attendance';reset.onclick=async()=>{if(!confirm('Reset '+subject+' for '+(t.data().name||'teacher')+' on '+day+'?\nThe old attendance will be archived in this date record. The teacher can submit again.'))return;reset.disabled=true;try{await updateDoc(doc(db,'teacherAttendance',t.id,'days',day),{['subjects.'+subject]:deleteField(),resetHistory:arrayUnion({subject,record,resetAt:new Date().toISOString(),resetBy:auth.currentUser.email})});alert('Attendance reset. Teacher can refresh and submit again.');$('loadStudentAttendance').click()}catch(e){alert('Reset failed: '+e.message);reset.disabled=false}};box.append(reset);root.append(box)}}if(!root.children.length)root.textContent='No subject-wise student attendance found for this date.'}catch(e){root.textContent='Could not load attendance: '+e.message}};
 
 function setMonthlyExportButtonsDisabled(disabled){
- for(const id of ['downloadMonthlyStudentAttendance','downloadMonthlyStudentExcel','downloadMonthlyStudentPDF','downloadMonthlyStudentBoth']){
+ for(const id of ['downloadMonthlyStudentAttendance','downloadMonthlyStudentExcel','downloadMonthlyStudentPDF','downloadMonthlyStudentIndividualPDFs','downloadMonthlyStudentBoth']){
   $(id).disabled=disabled;
  }
 }
@@ -600,10 +604,18 @@ async function loadMonthlyStudentReport(){
     const attendanceCell=monthlyAttendanceTableCell(row,'','num');
     const attendanceBadge=document.createElement('span');attendanceBadge.className='monthly-attendance-badge'+(rate<75?' low':rate<85?' moderate':'');
     attendanceBadge.textContent=held?rate+'%':'—';attendanceCell.append(attendanceBadge);
-    const dateCell=document.createElement('td');dateCell.append(monthlyDatesDetail(dates));row.append(dateCell);
+    const dateCell=document.createElement('td');
+    const recordExport={month,course:name,batch:group.batch,student:student.name,studentId:student.id,held,rate:held?rate+'%':'',dates};
+    dateCell.append(monthlyDatesDetail(dates));
+    const studentPdfButton=document.createElement('button');
+    studentPdfButton.type='button';studentPdfButton.className='monthly-student-pdf-btn';
+    studentPdfButton.textContent='📕 Student PDF';
+    studentPdfButton.title='Download only '+student.name+' attendance as an individual PDF';
+    studentPdfButton.onclick=()=>monthlyDownloadSingleStudentPdf(recordExport,studentPdfButton);
+    dateCell.append(studentPdfButton);row.append(dateCell);
     body.append(row);
     totalPresent+=dates.present.length;totalPossible+=held;totalLeave+=dates.leave.length;
-    monthlyAttendanceExport.push({month,course:name,batch:group.batch,student:student.name,held,rate:held?rate+'%':'',dates});
+    monthlyAttendanceExport.push(recordExport);
    }
    table.append(body);scroll.append(table);section.append(scroll);root.append(section);
    heldDateTotal+=held;studentTotal+=students.length;
