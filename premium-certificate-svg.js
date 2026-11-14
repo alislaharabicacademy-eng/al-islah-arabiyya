@@ -209,7 +209,7 @@ export async function createPremiumVectorPdf(type,record){
   if(parsed.querySelector('parsererror'))throw Error('Certificate vector layout is invalid');
   const svg=document.importNode(parsed.documentElement,true);
   const mount=document.createElement('div');
-  mount.style.cssText='position:fixed;left:-15000px;top:0;opacity:0;pointer-events:none;width:1414px;height:1414px;overflow:hidden';
+  mount.style.cssText='position:fixed;left:-15000px;top:0;pointer-events:none;width:1414px;height:1414px;overflow:hidden';
   mount.append(svg);document.body.append(mount);
   try{
    await pdf.svg(svg,{x:0,y:0,width:landscape?297:210,height:landscape?210:297});
