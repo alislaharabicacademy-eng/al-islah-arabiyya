@@ -1541,7 +1541,8 @@ function teacherSalaryMonthStatus(teacher,month){
  const hasEntry=!!entry&&typeof entry==='object',salary=hasEntry?Number(entry.salary||0):Number(teacher.salary||0);
  const paid=hasEntry&&entry.paid===true;
  const date=hasEntry?String(entry.paidDate||''):'';
- return {hasEntry,paid,salary,amount:paid?salary:0,date,
+ const paidAmount=paid?Number(entry.paidAmount??entry.salary??teacher.salary??0):0;
+ return {hasEntry,paid,salary,amount:paidAmount,date,paymentMethod:hasEntry?String(entry.paymentMethod||''):'',transactionRef:hasEntry?String(entry.transactionRef||''):'',
   present:hasEntry?Number(entry.present||0):null,
   absent:hasEntry?Number(entry.absent||0):null,
   leave:hasEntry?Number(entry.leave||0):null,
@@ -1607,16 +1608,18 @@ async function renderAllTeacherSalaryMonth(){
   const paid=rows.filter(t=>t.monthly.paid);
   const expected=rows.reduce((sum,t)=>sum+t.monthly.salary,0),received=paid.reduce((sum,t)=>sum+t.monthly.amount,0);
   teacherSalarySummary([['Teachers',rows.length],['Salary Paid',paid.length],['Not Paid / Unrecorded',rows.length-paid.length],['Total Paid',teacherSalaryMoney(received)]]);
-  const {scroll,body}=teacherSalaryTable(['No.','Teacher Name','Subjects / Classes','Monthly Salary','Present','Absent','Leave','Payment Date','Status','Remarks']);
+  const {scroll,body}=teacherSalaryTable(['No.','Teacher Name','Subjects / Classes','Monthly Salary','Amount Paid','Present','Absent','Leave','Payment Date','Method / Ref','Status','Remarks']);
   rows.forEach((t,i)=>{
    const row=document.createElement('tr'),m=t.monthly;
    teacherSalaryCell(row,i+1);teacherSalaryCell(row,t.name||'Teacher');
    teacherSalaryCell(row,t.subject||'Not assigned');
    teacherSalaryCell(row,teacherSalaryMoney(m.salary));
+   teacherSalaryCell(row,teacherSalaryMoney(m.amount));
    teacherSalaryCell(row,m.present===null?'—':m.present);
    teacherSalaryCell(row,m.absent===null?'—':m.absent);
    teacherSalaryCell(row,m.leave===null?'—':m.leave);
    teacherSalaryCell(row,m.paid?m.date||'Date missing':'—');
+   teacherSalaryCell(row,m.paid?[m.paymentMethod,m.transactionRef].filter(Boolean).join(' · ')||'—':'—');
    teacherSalaryStatusCell(row,m.status,m.paid?'Paid '+(m.date||'date not set'):'Not marked as paid');
    teacherSalaryCell(row,m.remarks||'—');
    body.append(row);
@@ -1869,7 +1872,10 @@ async function renderTeacherPayroll(){
    if(value.paid){
     // For older records and first-time payments, use full salary unless a specific amount is entered.
     if(!inputs.paidAmount.value.trim())value.paidAmount=value.salary;
-    if(!(value.paidAmount>0))throw Error('Enter a positive Amount Paid before marking salary as paid.');
+    if(!(value.paidAmount>0)){
+     $('teacherPayrollStatus').textContent='Enter a positive Amount Paid before marking salary as paid.';
+     return;
+    }
    }else value.paidAmount=0;
    // Use the actual saved payment flag; never infer paid status from a receipt download.
    if(value.paid&&!value.paidDate){
@@ -1917,12 +1923,14 @@ async function renderTeacherPayroll(){
   }
   await ensurePdfLibrary();const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
 const green=[23,59,43],gold=[180,154,88],muted=[87,102,94];
-const paid=inputs.paid.checked,amount=Number(inputs.salary.value||t.salary||0),date=inputs.paidDate.value||'',receiptNo='SAL-'+month.replace('-','')+'-'+t.id.slice(-7).toUpperCase();
+const paid=inputs.paid.checked;
+ const amount=paid?Number(inputs.paidAmount.value||inputs.salary.value||t.salary||0):Number(inputs.salary.value||t.salary||0);
+ const date=inputs.paidDate.value||'',receiptNo='SAL-'+month.replace('-','')+'-'+t.id.slice(-7).toUpperCase();
 await decorateAcademyPdf(pdf);
 pdf.setTextColor(...green);pdf.setFont('times','bold');pdf.setFontSize(19);pdf.text(paid?'MONTHLY SALARY RECEIPT':'MONTHLY SALARY STATEMENT',105,69,{align:'center'});
 pdf.setDrawColor(...gold);pdf.setLineWidth(.35);pdf.line(62,73,148,73);
-const fields=[['Receipt No.',receiptNo],['Teacher Name',t.name||'-'],['Subject / Course',t.subject||'-'],['Salary Month',month],['Payment Date',paid?(date||'Not recorded'):'Not paid'],['Salary Amount','INR '+amount.toLocaleString('en-IN')],['Payment Status',paid?'PAID':'PENDING'],['Attendance',String(attendance.length)+' day(s)'],['Absent / Leave',(inputs.absent.value||'0')+' / '+(inputs.leave.value||'0')]];
-let y=80;for(let i=0;i<fields.length;i++){const [label,value]=fields[i];if(i===5){pdf.setFillColor(236,244,236);pdf.rect(16,y-6,178,12,'F')}pdf.setFont('times',i===5?'bold':'normal');pdf.setFontSize(i===5?11:10);pdf.setTextColor(...(i===5?green:muted));pdf.text(label,19,y+1);pdf.setFont('times',i===5||i===6?'bold':'normal');pdf.setTextColor(...green);pdf.text(pdf.splitTextToSize(String(value),95)[0],94,y+1);pdf.setDrawColor(218,224,218);pdf.setLineWidth(.25);pdf.line(16,y+6,194,y+6);y+=13;}
+const fields=[['Receipt No.',receiptNo],['Teacher Name',t.name||'-'],['Subject / Course',t.subject||'-'],['Salary Month',month],['Payment Date',paid?(date||'Not recorded'):'Not paid'],['Salary Amount','INR '+Number(inputs.salary.value||t.salary||0).toLocaleString('en-IN')],['Amount Paid','INR '+(paid?amount:0).toLocaleString('en-IN')],['Payment Method',paid?inputs.paymentMethod.value||'Not recorded':'—'],['Transaction ID',paid?inputs.transactionRef.value||'Not recorded':'—'],['Payment Status',paid?'PAID':'PENDING'],['Attendance',String(attendance.length)+' day(s)'],['Absent / Leave',(inputs.absent.value||'0')+' / '+(inputs.leave.value||'0')]];
+let y=80;for(let i=0;i<fields.length;i++){const [label,value]=fields[i];if(i===5){pdf.setFillColor(236,244,236);pdf.rect(16,y-6,178,12,'F')}pdf.setFont('times',i===5?'bold':'normal');pdf.setFontSize(i===5?11:10);pdf.setTextColor(...(i===5?green:muted));pdf.text(label,19,y+1);pdf.setFont('times',i===5||i===6?'bold':'normal');pdf.setTextColor(...green);pdf.text(pdf.splitTextToSize(String(value),95)[0],94,y+1);pdf.setDrawColor(218,224,218);pdf.setLineWidth(.25);pdf.line(16,y+6,194,y+6);y+=11;}
 pdf.setDrawColor(...green);pdf.setLineWidth(.45);pdf.line(133,226,194,226);pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.setTextColor(...green);pdf.text("Principal's Signature",163.5,233,{align:'center'});pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text('Madrasa Al Islahul Arabiya',163.5,239,{align:'center'});
 pdf.setDrawColor(220,226,220);pdf.line(16,252,194,252);pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(...muted);pdf.text(paid?'This receipt is generated from the academy salary register.':'This statement does not confirm salary payment.',105,259,{align:'center'});
 const blob=pdf.output('blob'),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Teacher_Salary_'+t.name.replace(/[^a-z0-9]/gi,'_')+'_'+month+'.pdf';document.body.append(a);a.click();a.remove();const fallback=document.createElement('a');fallback.href=url;fallback.download=a.download;fallback.textContent='⬇ Tap here if PDF did not download';root.append(fallback);setTimeout(()=>URL.revokeObjectURL(url),300000);$('teacherPayrollStatus').textContent='PDF ready. Download link shown below.'}catch(e){$('teacherPayrollStatus').textContent='PDF error: '+e.message;alert('PDF error: '+e.message)}finally{receipt.disabled=false}};
