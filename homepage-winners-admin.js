@@ -221,7 +221,18 @@ export function initHomepageWinners({db}){
   }
   if(!record.published)config.picks=config.picks.filter(p=>p.resultId!==id);
   if(!config.picks.length)config.visible=false;
-  await store(config,{batch,pending:{id,record,student}});
+  if(!record.published){
+   try{await store(config,{batch,pending:{id,record,student}})}
+   catch(e){
+    // Never block unpublishing a student's private result due to another rank's
+    // stale photo or consent data. Hide all public winners instead (fail closed).
+    const safe={...config,visible:false};
+    const now=new Date().toISOString();
+    batch.set(privateRef(db),{...safe,updatedAt:now});
+    batch.set(publicRef(db),{visible:false,title:safe.title,subtitle:safe.subtitle,entries:[],updatedAt:now});
+    state=safe;
+   }
+  }else await store(config,{batch,pending:{id,record,student}});
   return true;
  }
  setup();
