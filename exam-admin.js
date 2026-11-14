@@ -70,7 +70,8 @@ export function initExamAdmin({db,auth}){
  }
  function reset(){
   form.reset();$('examResultId').value='';$('examResultPass').value='40';
-  $('examResultDate').value=new Date().toLocaleDateString('en-CA');
+  const today=new Date();
+  $('examResultDate').value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
   $('examResultYear').value=$('academicYearSelect')?.value||'2026–2027';
   subjectRows.replaceChildren();subjectRow();fillStudentSummary();
   status('New result. Save privately first, then publish after verification.');
@@ -193,6 +194,7 @@ export function initExamAdmin({db,auth}){
    card.append(h,badge,description,performance,ref,actions);target.append(card);
   }
  }
+ form.addEventListener('submit',event=>{event.preventDefault();save(false)});
  studentDropdown.addEventListener('change',fillStudentSummary);
  $('examAddSubject').onclick=()=>{if(subjectRows.children.length>=30){status('Maximum 30 subjects.');return}subjectRow()};
  $('examResultPass').addEventListener('input',calc);
