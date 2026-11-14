@@ -31,9 +31,17 @@ test('Competition roles map to distinct premium templates',()=>{
 });
 test('Failed exam never receives an excellence certificate',()=>{
  const source=readFileSync(new URL('../exam-documents.js',import.meta.url),'utf8');
- assert.match(source,/record\.passed===true\?'exam':'exam-participation'/);
+ assert.match(source,/const kind=record\.passed===true/);
+ assert.match(source,/'exam-achievement'/);
+ assert.match(source,/'exam-participation'/);
  const svg=studio.premiumCertificatePages('exam-participation',{...studio.sampleCertificate('exam'),passed:false,previewMode:false})[0];
  assert.match(svg,/EXAMINATION PARTICIPATION/);
+ assert.doesNotMatch(svg,/ACADEMIC EXCELLENCE/);
+});
+test('Ordinary passing exams receive ACHIEVEMENT, not an inflated EXCELLENCE award',()=>{
+ const svg=studio.premiumCertificatePages('exam-achievement',{...studio.sampleCertificate('exam'),percent:55,passed:true,previewMode:false})[0];
+ assert.match(svg,/CERTIFICATE OF/);
+ assert.match(svg,/ACHIEVEMENT/);
  assert.doesNotMatch(svg,/ACADEMIC EXCELLENCE/);
 });
 test('Portrait result statement paginates large marksheets to avoid rows overlapping totals',()=>{
