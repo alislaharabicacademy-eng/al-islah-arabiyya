@@ -152,11 +152,12 @@ function trophy(cx,cy,label='First Prize'){
  ${T(cx,cy+119,String(label).toUpperCase(),22,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#FFE5A6"')}`;
 }
 function certificate(kind,r){
- const w=1414,h=1000,competition=!['exam','exam-participation'].includes(kind);
- const title=kind==='exam'?'CERTIFICATE OF ACADEMIC EXCELLENCE':kind==='exam-participation'?'CERTIFICATE OF EXAMINATION PARTICIPATION':kind==='winner'?'CERTIFICATE OF EXCELLENCE':kind==='participation'?'CERTIFICATE OF PARTICIPATION':'CERTIFICATE OF APPRECIATION';
+ const w=1414,h=1000,competition=!['exam','exam-achievement','exam-participation'].includes(kind);
+ const title=kind==='exam'?'CERTIFICATE OF ACADEMIC EXCELLENCE':kind==='exam-achievement'?'CERTIFICATE OF ACHIEVEMENT':kind==='exam-participation'?'CERTIFICATE OF EXAMINATION PARTICIPATION':kind==='winner'?'CERTIFICATE OF EXCELLENCE':kind==='participation'?'CERTIFICATE OF PARTICIPATION':'CERTIFICATE OF APPRECIATION';
  const event=competition?r.eventName:r.examTitle,dt=competition?r.eventDate:r.examDate;
  const award=r.award||'First Prize';
  const desc=kind==='exam'?'for excellent academic performance in the Academy Examination':
+ kind==='exam-achievement'?'for successfully passing the Academy Examination':
  kind==='exam-participation'?'for participation in the Academy Examination':
  kind==='winner'?'for securing '+award+' in the':
  kind==='participation'?'for active participation and sincere effort in the':
@@ -230,14 +231,14 @@ export function premiumCertificatePages(type,record={}){
   const count=Math.max(1,Math.ceil(items.length/7));
   pages=Array.from({length:count},(_,i)=>resultPage(record,items,i,count));
  }else{
-  if(!['exam','exam-participation','winner','participation','event'].includes(type))throw Error('Unknown certificate type');
+  if(!['exam','exam-achievement','exam-participation','winner','participation','event'].includes(type))throw Error('Unknown certificate type');
   pages=[certificate(type,record)];
  }
  return record.previewMode?pages.map(s=>previewWatermark(s,type==='results')):pages;
 }
 export function classifyCompetitionAward(award){return String(award||'') .startsWith('Event ')?'event':award==='Participation'?'participation':'winner'}
 export function sampleCertificate(type='exam'){
- const base={previewMode:true,id:'ALIA-SAMPLE-001',studentName:'Muhsin A',studentCode:'ALIA00037',course:'Muallama',academicYear:'2026-2027',examTitle:'Annual Examination',examDate:'2026-03-15',passed:true,published:true,total:183,maxTotal:200,percent:91.5,grade:'A+',subjects:[{name:'Arabic Language',score:46,max:50},{name:"Qur'an Tajweed",score:48,max:50},{name:'Hadith',score:44,max:50},{name:'Deeniyat',score:45,max:50}]};
+ const base={previewMode:true,id:'ALIA-SAMPLE-001',studentName:'Muhsin A',studentCode:'ALIA00037',course:'Muallama',academicYear:'2026-2027',examTitle:'Annual Examination',examDate:'2026-03-15',passed:true,published:true,total:320,maxTotal:350,percent:91.43,grade:'A+',subjects:[{name:'Arabic Language',score:46,max:50},{name:"Qur'an Tajweed",score:48,max:50},{name:'Hadith',score:44,max:50},{name:'Deeniyat',score:45,max:50},{name:'Hifz',score:46,max:50},{name:'Seerah',score:48,max:50},{name:'Islamic Studies',score:43,max:50}]};
  if(type==='winner')return {...base,id:'COMP-SAMPLE-001',studentName:'Farhana B',studentCode:'ALIA00021',award:'First Prize',eventName:"Qur'an Recitation Competition",eventDate:'2026-03-20'};
  if(type==='participation')return {...base,id:'COMP-SAMPLE-002',studentName:'Aakifa S',studentCode:'ALIA00018',award:'Participation',eventName:'Islamic Quiz Competition',eventDate:'2026-03-18'};
  if(type==='event')return {...base,id:'COMP-SAMPLE-003',studentName:'Syed T',studentCode:'ALIA00015',award:'Event Volunteer',eventName:'Ramadan Programme',eventDate:'2026-02-08'};
