@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#102d23">
+<meta name="description" content="Secure Google sign-in for approved Madrasa Al Islahul Arabiya teachers.">
+<title>Teacher Login | Madrasa Al Islahul Arabiya</title>
+<style>
+:root{--ink:#173c2b;--deep:#0b291e;--green:#145038;--gold:#c6a568;--bg:#f5f7f0}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 90% -10%,#dceadf 0%,transparent 48%),var(--bg);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--ink)}
+a{text-decoration:none;color:inherit}
+button,input{font:inherit}
+header{background:linear-gradient(120deg,#09271c,#194f37);color:white;border-bottom:4px solid var(--gold);padding:20px 18px}
+.head{max-width:1050px;margin:auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.brand{display:flex;align-items:center;gap:13px}
+.brand img{width:64px;height:64px;object-fit:contain;clip-path:circle(46% at 50% 50%)}
+.brand strong{display:block;font:700 clamp(19px,2.5vw,27px)/1.15 Georgia,serif;color:#f6e7c2}
+.brand small{color:#ccdacc;font-size:10px;letter-spacing:.16em}
+.head a.back{color:#f6e7c2;border:1px solid #ffffff65;border-radius:11px;padding:10px 16px;font-weight:700}
+main{max-width:1050px;margin:40px auto 70px;padding:0 18px}
+.eyebrow{font-size:11px;color:#a17d3a;font-weight:800;letter-spacing:.2em;text-transform:uppercase}
+h1,h2,h3{font-family:Georgia,serif;line-height:1.2}
+h1{font-size:clamp(32px,5vw,52px);margin:12px 0;color:#14392b}
+.intro{max-width:720px;margin-bottom:26px}
+.intro p{color:#5c7665;font-size:16px}
+.grid{display:grid;grid-template-columns:minmax(0,1.22fr) minmax(0,.78fr);gap:24px;align-items:start}
+.card{background:#fff;border-radius:20px;border:1px solid #e1e8da;box-shadow:0 14px 45px #183a2712;padding:31px}
+.card h2{font-size:25px;margin:0 0 12px}
+.card p{color:#617467}
+label{display:block;font-weight:750;margin:22px 0 8px}
+input{display:block;width:100%;min-height:51px;padding:13px 15px;border-radius:10px;border:1px solid #cbd9cd;background:#f9fbf8;color:var(--ink)}
+input:focus,button:focus-visible,a:focus-visible{outline:3px solid #c9a765;outline-offset:3px}
+button,.button{display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:48px;padding:12px 18px;border-radius:11px;border:0;background:var(--green);color:white;font-weight:800;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+.google{width:100%;margin-top:16px;background:#fff;color:#224834;border:1px solid #bbd0c0;box-shadow:0 5px 15px #13372210;font-size:16px}
+.g{display:inline-grid;place-items:center;width:27px;height:27px;border:1px solid #e4e8e1;border-radius:50%;color:#4285f4;font-weight:900;font-family:Arial,sans-serif;font-size:20px}
+.hint{font-size:12px!important;line-height:1.8}
+.status{padding:13px 16px;background:#ecf6ef;border:1px solid #c7e2ce;border-radius:10px;font-size:13px;line-height:1.6;margin-top:17px;white-space:pre-wrap}
+.status.error{background:#fff1eb;border-color:#efb9a6;color:#983b22}
+.aside{background:linear-gradient(160deg,#153f30,#0a2a1f);color:#f7f1df;position:relative;overflow:hidden}
+.aside:before{content:"۞";position:absolute;right:-60px;top:-100px;font-size:370px;opacity:.045}
+.aside h2{color:#f8dfab}
+.aside p,.aside li{color:#d9e5d8}
+.aside ul{margin:16px 0 0;padding-left:22px}
+.aside li{margin:11px 0}
+.pill{display:inline-block;border:1px solid #d0ad75;color:#f7e6bd;padding:7px 12px;border-radius:50px;font-size:11px;font-weight:800;letter-spacing:.1em}
+[hidden]{display:none!important}
+.profile{display:flex;align-items:center;gap:17px;margin:12px 0 22px}
+.avatar{width:76px;height:76px;border-radius:50%;border:3px solid #d7bd85;background:#e7f1e6;display:grid;place-items:center;color:#185138;font-size:30px;font-weight:800;overflow:hidden;flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.profile h2{margin:0;font-size:27px}
+.profile p{margin:5px 0 0;overflow-wrap:anywhere}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0}
+.stat{background:#f1f7f0;padding:16px;border-radius:12px}
+.stat strong{display:block;font-size:26px;color:#13452e}
+.stat small{color:#61806a}
+.assignment{border:1px solid #e1e9db;padding:14px;border-radius:12px;margin:10px 0;background:#fbfdf9}
+.assignment strong{display:block;color:#184a32}
+.assignment small{color:#708475}
+.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+.secondary{background:#eaf1e9;color:#1d593c}
+footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
+@media(max-width:750px){.grid{grid-template-columns:1fr}.card{padding:24px}main{margin-top:30px}.head{gap:10px}.brand img{width:52px;height:52px}.brand strong{font-size:19px}}
+@media(prefers-reduced-motion:no-preference){.card{animation:arrive .5s ease-out both}@keyframes arrive{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}}
+</style>
+</head>
+<body>
+<header><div class="head"><div class="brand"><img src="1_20261112_080707_0000.png" alt="Academy logo"><span><strong>Madrasa Al Islahul Arabiya</strong><small>PRIVATE TEACHER PORTAL</small></span></div><a class="back" href="index.html">⌂ Homepage</a></div></header>
+<main>
+<section class="intro"><span class="eyebrow">Faith · Learning · Excellence</span><h1>Teacher Login</h1><p>Assalamu Alaikum. Sign in securely with your <strong>Academy-approved Google account</strong> to view your assigned classes and access attendance.</p></section>
+<div class="grid">
+<section class="card" id="loginCard">
+<h2>👩‍🏫 Welcome, Teacher</h2>
+<p>Your Google email must match the one registered by the Academy administrator.</p>
+<form id="teacherAccessForm">
+<label for="teacherId">Your Teacher ID</label>
+<input id="teacherId" autocomplete="off" maxlength="200" placeholder="Enter ID or use the link shared by Admin" required>
+<p class="hint">The Admin can copy your personal Teacher Login link from Teacher Management. A Teacher ID is an identifier, not a password.</p>
+<button class="google" id="googleLogin" type="submit"><span class="g" aria-hidden="true">G</span> Continue with Google</button>
+</form>
+<p id="loginStatus" class="status" role="status" aria-live="polite">Enter your Teacher ID, then continue with Google.</p>
+</section>
+<section class="card aside" id="loginInfo">
+<span class="pill">SECURE ACADEMY ACCESS</span>
+<h2>Simple &amp; Safe Login</h2>
+<ul><li>Use your approved Google account.</li><li>No separate Academy password to create or change.</li><li>Only your own approved teacher profile and assignments can open.</li><li>Attendance remains protected by account permissions.</li></ul>
+</section>
+<section class="card" id="dashboard" hidden>
+<div class="profile"><span class="avatar" id="teacherAvatar" aria-hidden="true">👩‍🏫</span><span><h2 id="teacherName">Teacher Dashboard</h2><p id="teacherEmail"></p></span></div>
+<div class="stats"><div class="stat"><strong id="classCount">0</strong><small>Assigned Classes</small></div><div class="stat"><strong id="subjectCount">0</strong><small>Assigned Subjects</small></div></div>
+<h3>📚 My Classes &amp; Subjects</h3>
+<div id="teacherAssignments"></div>
+<div class="actions"><a class="button" id="attendanceLink" href="teacher-attendance.html">📋 Open Attendance</a><button id="logout" type="button" class="secondary">Sign Out</button><button id="changeTeacherId" type="button" class="secondary">Change Teacher ID</button></div>
+<p class="hint">Results, marks and certificates will appear here when those teacher permissions are implemented. Your current access includes assigned classes and attendance.</p>
+</section>
+</div>
+</main>
+<footer>© Madrasa Al Islahul Arabiya · Authorized Teachers Only</footer>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+import {getFirestore,doc,getDoc} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+
+const $ = id => document.getElementById(id);
+const form=$('teacherAccessForm'),login=$('loginCard'),dashboard=$('dashboard'),info=$('loginInfo');
+const queryId=new URLSearchParams(location.search).get('id');
+const key='academy_approved_teacher_id';
+const saved=(()=>{try{return localStorage.getItem(key)||''}catch{return ''}})();
+$('teacherId').value=queryId||saved;
+let auth=null,db=null,checkVersion=0;
+function status(message,error=false){const el=$('loginStatus');el.textContent=message;el.className='status'+(error?' error':'')}
+function validTeacherId(v){const id=String(v||'').trim();if(!id||id.length>200||id.includes('/'))throw Error('Enter the Teacher ID or use the personal link shared by Admin.');return id;}
+function showLogin(){login.hidden=false;info.hidden=false;dashboard.hidden=true;}
+function friendlyError(e){
+ if(e.code==='permission-denied')return 'This Teacher ID is not approved for your Google account. Please ask the Academy Admin to share your Teacher Login link.';
+ if(e.code==='auth/unauthorized-domain')return 'This website domain is not enabled in Firebase Authentication. Contact Admin.';
+ if(e.code==='auth/popup-closed-by-user')return 'Google sign-in was cancelled.';
+ return e.message||'Could not verify teacher access.';
+}
+async function loadDashboard(user){
+ const version=++checkVersion;
+ showLogin();
+ if(!user){status('Enter your Teacher ID and sign in with your approved Google account.');return}
+ if(!user.emailVerified){status('Please use a Google account with a verified email.',true);return}
+ let id;
+ try{id=validTeacherId($('teacherId').value)}catch(e){status(e.message,true);return}
+ status('Checking Teacher ID and Academy approval…');
+ try{
+  const token=await user.getIdTokenResult(true);
+  if(token.signInProvider!=='google.com')throw Error('Sign in with Google to open your teacher dashboard.');
+  const grant=await getDoc(doc(db,'teacherAccess',id));
+  if(!grant.exists())throw Error('Teacher account not found. Contact Admin.');
+  const profile=grant.data();
+  if(String(profile.email||'').trim().toLowerCase()!==String(user.email||'').trim().toLowerCase())throw Error('Use the Google account approved by Admin for this Teacher ID.');
+  const roster=await getDoc(doc(db,'teacherRosters',id));
+  if(version!==checkVersion)return;
+  const assignments=Array.isArray(roster.exists()?roster.data().assignments:null)?roster.data().assignments:[];
+  $('teacherName').textContent=profile.name||user.displayName||'Teacher';
+  $('teacherEmail').textContent=user.email||'';
+  const avatar=$('teacherAvatar');avatar.replaceChildren();
+  if(user.photoURL){const img=document.createElement('img');img.src=user.photoURL;img.alt='';img.referrerPolicy='no-referrer';avatar.append(img)}
+  else avatar.textContent='👩‍🏫';
+  const classes=new Set(assignments.filter(a=>a.course).map(a=>[a.course,a.batch||''].join('|')));
+  const subjects=new Set(assignments.map(a=>a.subject).filter(Boolean));
+  $('classCount').textContent=String(classes.size);
+  $('subjectCount').textContent=String(subjects.size);
+  const root=$('teacherAssignments');root.replaceChildren();
+  if(!assignments.length){const p=document.createElement('p');p.textContent='No class assignments have been published yet. Contact your Admin.';root.append(p)}
+  else for(const a of assignments){
+   const row=document.createElement('article');row.className='assignment';
+   const title=document.createElement('strong');title.textContent=(a.courseName||a.course||'Class')+(a.batch?' · '+a.batch:'');
+   const details=document.createElement('small');details.textContent=[a.subject||'Subject not assigned',a.timing||'',Array.isArray(a.students)?a.students.length+' students':''].filter(Boolean).join(' · ');
+   row.append(title,details);root.append(row);
+  }
+  const link=new URL('teacher-attendance.html',location.href);link.searchParams.set('id',id);$('attendanceLink').href=link.href;
+  try{localStorage.setItem(key,id)}catch{}
+  login.hidden=true;info.hidden=true;dashboard.hidden=false;
+ }catch(e){if(version===checkVersion)status(friendlyError(e),true)}
+}
+form.addEventListener('submit',async e=>{
+ e.preventDefault();
+ try{validTeacherId($('teacherId').value)}catch(err){status(err.message,true);return}
+ if(!auth)return status('Google login is still initializing. Please try again.',true);
+ const button=$('googleLogin');button.disabled=true;status('Opening Google sign-in…');
+ try{if(auth.currentUser)await signOut(auth);await signInWithPopup(auth,new GoogleAuthProvider())}
+ catch(e){
+  if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(e.code)){
+   try{await signInWithRedirect(auth,new GoogleAuthProvider());return}catch(redirectError){status(friendlyError(redirectError),true)}
+  }else status(friendlyError(e),true);
+ }finally{button.disabled=false}
+});
+$('logout').onclick=async()=>{++checkVersion;try{await signOut(auth)}catch(e){status(friendlyError(e),true)}showLogin()};
+$('changeTeacherId').onclick=()=>{++checkVersion;try{localStorage.removeItem(key)}catch{}$('teacherId').value='';showLogin();status('Enter the new Teacher ID and continue with your approved Google account.');$('teacherId').focus()};
+try{
+ const conf=await fetch('firebase-config.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Firebase configuration unavailable.');return r.json()});
+ const app=initializeApp(conf);auth=getAuth(app);db=getFirestore(app);
+ onAuthStateChanged(auth,user=>loadDashboard(user));
+}catch(e){status('Teacher login unavailable: '+friendlyError(e),true)}
+</script>
+</body>
+</html>
