@@ -3,7 +3,7 @@
  * studentAccess record for Student Dashboard PDF downloads. No public list. */
 import {collection,getDocs,doc,getDoc,runTransaction} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {createCompetitionCertificatePdf,downloadExamBlob,safePdfName} from './exam-documents.js';
-const ALLOWED_AWARDS=new Set(['Participation','Winner','First Prize','Second Prize','Third Prize','Appreciation','Best Performance']);
+const ALLOWED_AWARDS=new Set(['Participation','Winner','First Prize','Second Prize','Third Prize','Appreciation','Best Performance','Event Participation','Event Appreciation','Event Volunteer','Event Organizer']);
 const MAX_CERTS=60;
 function makeCertificateId(){
  const bytes=crypto.getRandomValues(new Uint8Array(10));
