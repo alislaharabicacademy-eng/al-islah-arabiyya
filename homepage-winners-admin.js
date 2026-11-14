@@ -174,7 +174,7 @@ export function initHomepageWinners({db}){
    box.append(heading,label,meta,photo,uploadLabel,clear,consentLabel);grid.append(box);
    const ui={select,meta,photo,file:upload,consent,pick:{rank,resultId:'',photoOverride:''}};
    rows.set(rank,ui);
-   select.addEventListener('change',()=>{ui.pick.photoOverride='';upload.value='';dirty=true;updateRow(rank)});
+   select.addEventListener('change',()=>{ui.pick.photoOverride='';upload.value='';consent.checked=false;ui.pick.consent=false;dirty=true;updateRow(rank)});
    clear.onclick=()=>{ui.pick.photoOverride='';upload.value='';dirty=true;updateRow(rank)};
    upload.addEventListener('change',async()=>{
     if(!upload.files?.[0])return;
