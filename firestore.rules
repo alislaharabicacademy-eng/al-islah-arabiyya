@@ -30,6 +30,16 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Published exam result only through an unguessable 96-bit document code.
+    // Public visitors cannot list or search student records or drafts.
+    match /examResults/{resultId} {
+      allow get: if isAdmin()
+        || (resultId.matches('^RESULT-[a-f0-9]{24}$')
+          && resource.data.published == true);
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
     match /teachers/{teacherId} {
       allow read, write: if isAdmin();
     }
