@@ -16,6 +16,15 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/teacherAccess/$(teacherId)).data.email == request.auth.token.email;
     }
 
+    // Published website appearance and principal signatory profile.
+    // Public read is intentional because official certificate PDFs can be downloaded
+    // through unguessable published result links. Only verified Academy admin writes.
+    match /siteSettings/{settingId} {
+      allow get: if settingId == 'public' || isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin() && settingId == 'public';
+    }
+
     match /courses/{courseId} {
       allow read: if resource.data.published == true || isAdmin();
       allow create, update, delete: if isAdmin()
