@@ -93,7 +93,7 @@ function show(data,id){
  $('viewResultStatus').textContent=record.passed?'✓ PASS':'NEEDS IMPROVEMENT';
  $('viewResultStatus').className='pill'+(record.passed?'':' fail');
  const details=$('examResultInfo');details.replaceChildren();
- for(const [label,value] of [['Course',record.course],['Batch',record.batch||'—'],['Academic Year',record.academicYear],['Exam Date',record.examDate]])details.append(info(label,value));
+ for(const [label,value] of [['Official Student ID',record.studentCode||'Not recorded'],['Course',record.course],['Batch',record.batch||'—'],['Academic Year',record.academicYear],['Exam Date',record.examDate]])details.append(info(label,value));
  const body=$('publicExamSubjects');body.replaceChildren();
  for(const row of record.subjects||[]){
   const tr=document.createElement('tr');
