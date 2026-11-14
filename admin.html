@@ -61,7 +61,9 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 .student-monthly-panel .monthly-report-shell{display:grid;grid-template-columns:188px minmax(0,1fr);border:1px solid #d3e6d9;border-radius:19px;overflow:hidden;background:#fbfefd;box-shadow:0 16px 45px rgba(14,53,33,.08);font-family:system-ui,-apple-system,Arial,sans-serif}
 .monthly-report-rail{min-width:0;background:linear-gradient(165deg,#084c36 0%,#073e2e 50%,#09684b 100%);color:#fff;padding:25px 14px;display:flex;flex-direction:column;align-items:stretch;position:relative}
 .monthly-report-brand{text-align:center;padding:8px 4px 21px;border-bottom:1px solid #ffffff3b}
-.monthly-report-brand-icon{font-size:34px;line-height:1.2;color:#d5eecb;display:block}
+.monthly-report-logo-frame{display:block;width:96px;height:96px;margin:0 auto 13px;padding:5px;border-radius:50%;background:#fff;box-shadow:0 7px 23px #011d1570;border:2px solid #d2b77e}
+.monthly-report-logo-frame .monthly-report-logo{display:block;width:100%;height:100%;border-radius:50%!important;clip-path:none!important;object-fit:contain!important;background:#fff!important}
+.monthly-report-header-logo{width:75px;height:75px;flex-shrink:0;margin-left:auto;border:3px solid #d4b778;padding:4px;background:#fff!important;border-radius:50%!important;clip-path:none!important;object-fit:contain!important;box-shadow:0 5px 18px #173d2e26!important}
 .monthly-report-brand strong{display:block;font-size:15px;line-height:1.24;margin-top:10px;letter-spacing:-.025em}
 .monthly-report-brand small{display:block;letter-spacing:.12em;font-size:9px;margin-top:8px;color:#d0e4d9}
 .monthly-report-rail-title{font-size:11px;letter-spacing:.12em;font-weight:750;color:#b6dbcb;text-transform:uppercase;margin:30px 7px 12px}
@@ -71,7 +73,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 .monthly-rail-bottom{margin-top:auto;text-align:center;padding-top:60px;color:#d2eddb;font-size:48px;opacity:.36}
 .monthly-report-main{min-width:0;padding:23px 24px 24px;background:linear-gradient(135deg,#fbfefd,#f5faf7)}
 .monthly-report-banner{display:flex;align-items:center;gap:16px;padding:10px 6px 20px;position:relative;overflow:hidden;border-bottom:1px solid #cfe6d9;margin-bottom:18px}
-.monthly-report-banner:after{content:'☪';position:absolute;right:3%;top:-28px;font-size:145px;color:#bbdbc9;opacity:.33;pointer-events:none}
+.monthly-report-banner:after{content:none}
 .monthly-report-banner .calendar-icon{display:grid;place-items:center;font-size:29px;min-width:61px;height:61px;border-radius:16px;background:#d9f0df;border:1px solid #c8e9d1}
 .monthly-report-banner h3{margin:0 0 6px;color:#10291f;font-size:clamp(23px,2.6vw,32px);line-height:1.18;letter-spacing:-.03em}
 .monthly-report-banner .tagline{font-size:13px;font-weight:750;color:#176341}
@@ -116,8 +118,8 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 .monthly-report-footer{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:22px;font-size:11px;color:#709184}
 .monthly-report-footer span{font-size:21px;color:#1e744f}
 @media(max-width:1070px){.student-monthly-panel .monthly-report-shell{grid-template-columns:145px minmax(0,1fr)}.monthly-report-main{padding:15px}.monthly-report-rail{padding:19px 10px}.monthly-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:760px){.student-monthly-panel .monthly-report-shell{grid-template-columns:1fr}.monthly-report-rail{padding:13px 15px;display:flex;flex-direction:row;justify-content:space-between;align-items:center}.monthly-report-brand{padding:0;border:0;display:flex;align-items:center;gap:9px;text-align:left}.monthly-report-brand-icon{font-size:22px}.monthly-report-brand strong{font-size:12px;margin:0}.monthly-report-brand small{display:none}.monthly-report-rail-title,.monthly-report-navitem,.monthly-rail-bottom{display:none}.monthly-report-rail .monthly-report-navitem.on{display:block;font-size:11px;margin:0;padding:9px}.monthly-report-main{padding:13px}.monthly-report-banner{gap:10px;padding:8px 4px 14px}.monthly-report-banner .calendar-icon{min-width:47px;height:47px;font-size:22px}.monthly-report-banner h3{font-size:21px}.monthly-report-filterbox{padding:12px}.monthly-report-filterbox .fields{grid-template-columns:1fr 1fr}.monthly-kpi-grid{gap:8px}.monthly-kpi-card{padding:11px 9px;gap:7px}.monthly-kpi-icon{width:36px;height:36px;font-size:19px}.monthly-kpi-value{font-size:23px}.monthly-kpi-label{font-size:10px}.monthly-report-actions button{font-size:12px;flex-grow:1}.student-monthly-group{padding:12px 8px}.student-monthly-panel>summary{font-size:15px}}
-@media(max-width:420px){.monthly-report-filterbox .fields{grid-template-columns:1fr}.monthly-report-banner h3{font-size:18px}.monthly-report-actions button{width:100%}}
+@media(max-width:760px){.student-monthly-panel .monthly-report-shell{grid-template-columns:1fr}.monthly-report-rail{padding:13px 15px;display:flex;flex-direction:row;justify-content:space-between;align-items:center}.monthly-report-brand{padding:0;border:0;display:flex;align-items:center;gap:9px;text-align:left}.monthly-report-logo-frame{width:44px;height:44px;padding:2px;margin:0;border-width:1px}.monthly-report-brand strong{font-size:12px;margin:0}.monthly-report-brand small{display:none}.monthly-report-rail-title,.monthly-report-navitem,.monthly-rail-bottom{display:none}.monthly-report-rail .monthly-report-navitem.on{display:block;font-size:11px;margin:0;padding:9px}.monthly-report-main{padding:13px}.monthly-report-banner{gap:10px;padding:8px 4px 14px}.monthly-report-banner .calendar-icon{min-width:47px;height:47px;font-size:22px}.monthly-report-banner h3{font-size:21px}.monthly-report-filterbox{padding:12px}.monthly-report-filterbox .fields{grid-template-columns:1fr 1fr}.monthly-kpi-grid{gap:8px}.monthly-kpi-card{padding:11px 9px;gap:7px}.monthly-kpi-icon{width:36px;height:36px;font-size:19px}.monthly-kpi-value{font-size:23px}.monthly-kpi-label{font-size:10px}.monthly-report-actions button{font-size:12px;flex-grow:1}.student-monthly-group{padding:12px 8px}.student-monthly-panel>summary{font-size:15px}}
+@media(max-width:420px){.monthly-report-filterbox .fields{grid-template-columns:1fr}.monthly-report-banner h3{font-size:18px}.monthly-report-actions button{width:100%}.monthly-report-header-logo{width:52px;height:52px;padding:2px}.monthly-report-brand strong{font-size:11px}}
 </style><style id="subject-editor-style">.teacher-subject-row{display:flex;align-items:center;gap:9px;margin:9px 0}.teacher-subject-row input{flex:1;min-width:0}.teacher-subject-row button{flex-shrink:0}@media(max-width:460px){.teacher-subject-row button{padding:10px;font-size:12px}}</style></head><body><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button><div class="menu-shade hidden" id="menuShade"></div><aside class="side-menu" id="sideMenu" aria-label="Admin navigation">
 <div class="academy-menu-brand"><span class="academy-menu-kicker">AL ISLAHUL ARABIYA</span><h2>Academy Menu</h2><p>Management Control Center</p></div>
 <div class="academy-menu-groups">
@@ -208,7 +210,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
  <div class="monthly-report-shell">
   <aside class="monthly-report-rail" aria-label="Attendance report">
    <div class="monthly-report-brand">
-    <span class="monthly-report-brand-icon" aria-hidden="true">☪</span>
+    <span class="monthly-report-logo-frame"><img class="monthly-report-logo" src="1_20261112_080707_0000.png" alt="Madrasa Al Islahul Arabiya official logo" loading="lazy" decoding="async"></span>
     <div><strong>Madrasa<br>Al Islahul Arabiya</strong><small>ISLAMIC ACADEMY</small></div>
    </div>
    <p class="monthly-report-rail-title">Academy Reports</p>
@@ -225,6 +227,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
       <div class="tagline">Live Academy Report · Premium Preview</div>
       <div class="academy-mini">Madrasa Al Islahul Arabiya</div>
     </div>
+    <img class="monthly-report-header-logo" src="1_20261112_080707_0000.png" alt="Academy official logo" loading="lazy" decoding="async">
    </div>
    <div class="monthly-report-filterbox">
     <div class="fields">
