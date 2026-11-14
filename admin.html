@@ -1854,7 +1854,7 @@ async function adminEncryptedBackupDownload(){
  if(!$('adminBackupUnderstand').checked){status.textContent='Please confirm that you will store the password safely.';return}
  if(!globalThis.crypto?.subtle||!globalThis.crypto?.getRandomValues){status.textContent='Encryption is unavailable on this browser. Open the secure HTTPS website in Chrome.';return}
  button.disabled=true;
- const top=['courses','classSubjects','students','teachers','teacherAccess','teacherRosters','applications','teacherInvites','teacherSubmissions','teacherSalaryEvents','examResults'];
+ const top=['courses','classSubjects','students','teachers','teacherAccess','teacherRosters','applications','teacherInvites','teacherSubmissions','teacherSalaryEvents','examResults','examResultLookups'];
  const documents=[],teacherIds=new Set();
  try{
   for(const name of top){
