@@ -55,6 +55,8 @@ export function initStudentAccountAdmin({db}){
     studentId:selected.id,email,enabled,studentCode:String(student.studentCode||''),...dobVerifier,
     studentName:String(student.name||'Student'),photoData:isProfilePhoto(student.photoData)?student.photoData:'',course:String(student.course||''),
     batch:String(student.batch||''),state:String(student.state||'Active'),resultIds,
+    promotionHistory:Array.isArray(student.promotionHistory)?student.promotionHistory:[],
+    competitionCertificates:Array.isArray(student.competitionCertificates)?student.competitionCertificates:[],
     createdAt:previous?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()
    };
    await setDoc(doc(db,'studentAccess',selected.id),data);
@@ -69,7 +71,10 @@ export function initStudentAccountAdmin({db}){
   const studentCode=String(data.studentCode||'');
   const payload={
    studentName:String(data.name||'Student'),studentCode,photoData:isProfilePhoto(data.photoData)?data.photoData:'',course:String(data.course||''),
-   batch:String(data.batch||''),state:String(data.state||'Active'),updatedAt:new Date().toISOString()
+   batch:String(data.batch||''),state:String(data.state||'Active'),
+   promotionHistory:Array.isArray(data.promotionHistory)?data.promotionHistory:[],
+   competitionCertificates:Array.isArray(data.competitionCertificates)?data.competitionCertificates:[],
+   updatedAt:new Date().toISOString()
   };
   if(data.dob&&/^ALIA[0-9]{5}$/.test(studentCode))Object.assign(payload,await makeStudentDobVerifier(normalizeStudentCode(studentCode),validateStudentDOB(data.dob)));
   else payload.enabled=false; // Never leave a stale DOB verifier enabled.
