@@ -14,6 +14,13 @@ input:not([type=checkbox]):not([type=radio]):focus,select:focus,textarea:focus{b
 nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 @media(max-width:600px){h1{line-height:1.16}button,.btn{min-height:42px}}
 @media(prefers-reduced-motion:reduce){button,.btn,a,input,select,textarea{transition:none!important}}
+</style><style id="academy-photo-style">
+.academy-photo-control{display:flex;align-items:center;gap:16px;margin:12px 0}
+.academy-profile-avatar{width:72px;height:72px;object-fit:cover;border-radius:18px;border:3px solid #e8d9a8;background:#eaf3eb;box-shadow:0 6px 18px rgba(20,61,40,.12)}
+.record>.academy-profile-avatar{width:60px;height:60px;float:left;margin:0 13px 12px 0;object-position:center}
+.academy-photo-control .academy-profile-avatar{width:96px;height:96px}
+#teacherPhotoClear,#studentPhotoClear{width:max-content;max-width:100%}
+#teacherPhotoStatus,#studentPhotoStatus{margin:0 0 12px}
 </style><style id="official-student-id-style">
 .official-student-id-badge{display:inline-block;border-radius:9px;padding:7px 13px;margin:9px 0 12px;background:linear-gradient(125deg,#dfeddf,#f6faf2);color:#0d643b;border:1px solid #bed6c3;font:900 16px Arial,sans-serif;letter-spacing:.085em}
 .official-student-id-badge.pending{color:#80652f;background:#fff5e1;border-color:#ecd6a0;font-size:13px;letter-spacing:0}
@@ -257,6 +264,13 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
           <label>Contact Number<input id="teacherPhone" maxlength="25"></label>
           <label>Email<input id="teacherEmail" type="email" maxlength="160"></label>
           <label class="wide">Notes<textarea id="teacherNotes" maxlength="1000"></textarea></label>
+<label class="wide">Teacher Profile Photo (JPG / PNG / WebP, optional)
+ <input id="teacherPhotoFile" type="file" accept="image/jpeg,image/png,image/webp">
+ <small>Stored privately with teacher details after Save Changes. Square thumbnail, max 8 MB original.</small>
+</label>
+<div class="academy-photo-control" id="teacherPhotoPreview"></div>
+<button type="button" class="secondary" id="teacherPhotoClear">Remove Teacher Photo</button>
+<p id="teacherPhotoStatus" class="section-note" role="status"></p>
         </div>
       </details>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
@@ -346,7 +360,14 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 </div>
 <div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Official Student IDs are issued automatically on Save: <strong>ALIA00001, ALIA00002, ALIA00003…</strong> (ALIA + 5 digits). Existing students can be assigned IDs using the button below. These numbers are permanent, unique roll numbers — not login passwords. For online exam results, the separate private Exam Access ID and Date of Birth are used.</p>
 <div class="actions" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:15px 0"><button id="generateMissingStudentIds" class="secondary" type="button">✨ Generate ALIA IDs for Existing Students</button><span id="studentIdBatchStatus" role="status" class="section-note"></span></div><form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields">
-<label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Date of Birth (for secure exam result lookup)<input id="studentDob" type="date"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
+<label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Date of Birth (for secure exam result lookup)<input id="studentDob" type="date"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label>
+<label class="wide">Student Profile Photo (JPG / PNG / WebP, optional)
+ <input id="studentPhotoFile" type="file" accept="image/jpeg,image/png,image/webp">
+ <small>Stored privately with the enrolled student record. Admin can update/remove it later.</small>
+</label>
+<div class="academy-photo-control" id="studentPhotoPreview"></div>
+<button type="button" class="secondary" id="studentPhotoClear">Remove Student Photo</button>
+<p id="studentPhotoStatus" class="section-note" role="status"></p><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
 <h3>🔐 Student Account · Approve &amp; Manage Login</h3>
 <p class="section-note">Students first enter their official <strong>ALIA Student ID + Date of Birth</strong>, then confirm with this admin-approved, email-verified Firebase account (email/password or Google). Save the Student Details with a valid ALIA ID and DOB before approving login. The academy never creates or stores student passwords. Reopen Save &amp; Approve Account once for accounts approved before this update.</p>
 <strong id="studentAccountTitle"></strong>
@@ -419,6 +440,7 @@ import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,Ema
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
 import{initStudentAccountAdmin}from'./student-account-admin.js';
+import{compressProfilePhoto,photoAvatar,isProfilePhoto}from'./profile-photo.js';
 import{ensureOfficialStudentId,validOfficialStudentId}from'./student-numbering.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
 const $=id=>document.getElementById(id),email='alislaharabicacademy@gmail.com';
