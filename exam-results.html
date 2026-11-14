@@ -48,12 +48,12 @@ footer{background:#0b3829;color:#e9dec0;text-align:center;padding:24px;font-size
 <header><img src="1_20261112_080707_0000.png" alt="Official Madrasa logo"><small>OFFICIAL EXAMINATION PORTAL</small><h1>Madrasa Al Islahul Arabiya</h1><p>Examination Results &amp; Certificates</p>
 <nav><a href="index.html">⌂ Home</a><a href="student-login.html">🎓 Student Login</a><a href="all-courses.html">Explore Courses</a><a href="admission.html">Admission</a></nav></header>
 <main>
-<div class="hero"><h2>🏅 Published Examination Results</h2><p>View your examination results securely with your Madrasa Student ID and Date of Birth, or use a confidential Result Reference Code.</p></div>
+<div class="hero"><h2>🏅 Published Examination Results</h2><p>View your examination results with your private Exam Access ID and Date of Birth, or use your Result Reference Code. Your official AIL five-digit Student ID is shown on records but is not a password.</p></div>
 <section class="card" aria-labelledby="studentLookupTitle">
- <h3 id="studentLookupTitle">🎓 Check with Student ID &amp; Date of Birth</h3>
- <p class="note">Ask your Madrasa administrator for your confidential Student ID. Your Date of Birth must already be recorded in Student Details. Keep these details private.</p>
+ <h3 id="studentLookupTitle">🎓 Check with Private Exam Access ID &amp; Date of Birth</h3>
+ <p class="note">Ask your Madrasa administrator for your private Exam Access ID (a longer UUID), which is different from the AIL00001-style official Student ID. Keep this and your DOB private. For a real account login, use <a href="student-login.html"><strong>Student Login</strong></a>.</p>
  <form id="studentExamLookupForm" class="code-form">
-  <label>Student ID<input id="publicStudentId" type="text" required autocomplete="off" spellcheck="false" placeholder="Student ID issued by the Madrasa" maxlength="50"></label>
+  <label>Private Exam Access ID<input id="publicStudentId" type="text" required autocomplete="off" spellcheck="false" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (not AIL00001)" maxlength="50"></label>
   <label>Date of Birth<input id="publicStudentDOB" type="date" required></label>
   <button id="studentExamLookupButton" type="submit">🔎 Check Results</button>
  </form>
@@ -136,12 +136,12 @@ async function studentLookup(event){
  const studentId=$('publicStudentId').value.trim().toLowerCase(),dob=$('publicStudentDOB').value;
  const state=$('studentExamLookupStatus'),target=$('studentExamLookupMatches'),submit=$('studentExamLookupButton');
  target.replaceChildren();panel.hidden=true;record=null;
- state.className='status';state.textContent='Verifying Student ID and Date of Birth…';submit.disabled=true;
+ state.className='status';state.textContent='Verifying private Exam Access ID and Date of Birth…';submit.disabled=true;
  try{
   const key=await examStudentLookupKey(studentId,dob);
   const database=await getExamDatabase();
   const lookup=await getDoc(doc(database,'examResultLookups',key));
-  if(!lookup.exists()||lookup.data().enabled!==true)throw Error('No published result found for these details. Check the Student ID and DOB with the Madrasa.');
+  if(!lookup.exists()||lookup.data().enabled!==true)throw Error('No published result found for these details. Check your private Exam Access ID and DOB with the Madrasa.');
   const codes=[...new Set(Array.isArray(lookup.data().resultIds)?lookup.data().resultIds:[])].filter(id=>pattern.test(id)).slice(0,75);
   if(!codes.length)throw Error('There are no published examinations for this student yet.');
   const snapshots=await Promise.all(codes.map(id=>getDoc(doc(database,'examResults',id)).catch(()=>null)));
@@ -165,7 +165,7 @@ async function studentLookup(event){
    div.append(detail,button);target.append(div);
   });
  }catch(err){
-  state.textContent=err.code==='permission-denied'?'Results unavailable. Please verify the Student ID, DOB and publishing status.':err.message;
+  state.textContent=err.code==='permission-denied'?'Results unavailable. Please verify the private Exam Access ID, DOB and publishing status.':err.message;
   state.className='status error';
  }finally{submit.disabled=false}
 }
