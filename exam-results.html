@@ -39,6 +39,8 @@ th{color:#16432c;background:#e6f3e9;font-size:12px}tr:nth-child(even){background
 .summary div{font-size:12px;color:#657e69}.summary strong{display:block;color:#0f603a;font-size:19px;margin-top:7px}
 .buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
 .note{font-size:12px;color:#677e6b;line-height:1.7;padding-top:8px}
+.exam-match{margin:12px 0;padding:16px;border:1px solid #d4e6d8;border-radius:12px;background:#f7fcf8;display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap}
+.exam-match strong{font-size:15px;color:#124b32}.exam-match small{color:#617868;display:block;margin-top:7px}
 footer{background:#0b3829;color:#e9dec0;text-align:center;padding:24px;font-size:12px}
 [hidden]{display:none!important}
 @media(max-width:620px){.card{padding:16px}.info{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}}
@@ -46,8 +48,19 @@ footer{background:#0b3829;color:#e9dec0;text-align:center;padding:24px;font-size
 <header><img src="1_20261112_080707_0000.png" alt="Official Madrasa logo"><small>OFFICIAL EXAMINATION PORTAL</small><h1>Madrasa Al Islahul Arabiya</h1><p>Examination Results &amp; Certificates</p>
 <nav><a href="index.html">⌂ Home</a><a href="all-courses.html">Explore Courses</a><a href="admission.html">Admission</a></nav></header>
 <main>
-<div class="hero"><h2>🏅 Published Examination Results</h2><p>Enter the confidential Result Reference provided by the Madrasa to view the published result. Unpublished records cannot be viewed.</p></div>
-<section class="card" aria-labelledby="resultCheckTitle"><h3 id="resultCheckTitle">🔎 Check Your Result</h3>
+<div class="hero"><h2>🏅 Published Examination Results</h2><p>View your examination results securely with your Madrasa Student ID and Date of Birth, or use a confidential Result Reference Code.</p></div>
+<section class="card" aria-labelledby="studentLookupTitle">
+ <h3 id="studentLookupTitle">🎓 Check with Student ID &amp; Date of Birth</h3>
+ <p class="note">Ask your Madrasa administrator for your confidential Student ID. Your Date of Birth must already be recorded in Student Details. Keep these details private.</p>
+ <form id="studentExamLookupForm" class="code-form">
+  <label>Student ID<input id="publicStudentId" type="text" required autocomplete="off" spellcheck="false" placeholder="Student ID issued by the Madrasa" maxlength="50"></label>
+  <label>Date of Birth<input id="publicStudentDOB" type="date" required></label>
+  <button id="studentExamLookupButton" type="submit">🔎 Check Results</button>
+ </form>
+ <p id="studentExamLookupStatus" class="status" role="status" aria-live="polite"></p>
+ <div id="studentExamLookupMatches" aria-live="polite"></div>
+</section>
+<section class="card" aria-labelledby="resultCheckTitle"><h3 id="resultCheckTitle">🔗 Or Check with a Result Reference Code</h3>
 <form id="resultLookupForm" class="code-form"><label>Result Reference Code<input id="resultCode" required autocomplete="off" spellcheck="false" placeholder="RESULT-xxxxxxxxxxxxxxxxxxxxxxxx" maxlength="50"></label><button id="resultLookupButton" type="submit">View Result →</button></form>
 <p id="resultCheckStatus" class="status" role="status" aria-live="polite"></p>
 </section>
@@ -64,6 +77,7 @@ footer{background:#0b3829;color:#e9dec0;text-align:center;padding:24px;font-size
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import{getFirestore,getDoc,doc}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{createExamResultPdf,createExamCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
+import{examStudentLookupKey}from'./exam-lookup.js';
 const $=id=>document.getElementById(id);
 const status=$('resultCheckStatus'),panel=$('publishedResultPanel'),button=$('resultLookupButton');
 let db=null,record=null;
@@ -100,7 +114,7 @@ async function lookup(event){
  if(!pattern.test(id)){status.textContent='Please enter a valid result code provided by the Madrasa.';status.className='status error';return}
  button.disabled=true;status.className='status';status.textContent='Verifying your published result…';
  try{
-  if(!db){const conf=await fetch('firebase-config.json').then(r=>r.json());db=getFirestore(initializeApp(conf))}
+  await getExamDatabase()
   const snap=await getDoc(doc(db,'examResults',id));
   if(!snap.exists()||snap.data().published!==true)throw Error('The result was not found or has not been published. Please confirm the code with the Madrasa.');
   show(snap.data(),id);
@@ -111,6 +125,51 @@ async function lookup(event){
   status.className='status error';
  }finally{button.disabled=false}
 }
+async function getExamDatabase(){
+ if(db)return db;
+ const conf=await fetch('firebase-config.json').then(response=>response.json());
+ db=getFirestore(initializeApp(conf));
+ return db;
+}
+async function studentLookup(event){
+ event?.preventDefault();
+ const studentId=$('publicStudentId').value.trim().toLowerCase(),dob=$('publicStudentDOB').value;
+ const state=$('studentExamLookupStatus'),target=$('studentExamLookupMatches'),submit=$('studentExamLookupButton');
+ target.replaceChildren();panel.hidden=true;record=null;
+ state.className='status';state.textContent='Verifying Student ID and Date of Birth…';submit.disabled=true;
+ try{
+  const key=await examStudentLookupKey(studentId,dob);
+  const database=await getExamDatabase();
+  const lookup=await getDoc(doc(database,'examResultLookups',key));
+  if(!lookup.exists()||lookup.data().enabled!==true)throw Error('No published result found for these details. Check the Student ID and DOB with the Madrasa.');
+  const codes=[...new Set(Array.isArray(lookup.data().resultIds)?lookup.data().resultIds:[])].filter(id=>pattern.test(id)).slice(0,75);
+  if(!codes.length)throw Error('There are no published examinations for this student yet.');
+  const snapshots=await Promise.all(codes.map(id=>getDoc(doc(database,'examResults',id)).catch(()=>null)));
+  const matches=snapshots.filter(item=>item?.exists()&&item.data().published===true&&String(item.data().studentId||'').toLowerCase()===studentId);
+  if(!matches.length)throw Error('No published results are available. Contact the Madrasa if your result was published recently.');
+  matches.sort((a,b)=>String(b.data().examDate||'').localeCompare(String(a.data().examDate||'')));
+  state.textContent='✓ Found '+matches.length+' published examination result(s). Choose the exam you want to view.';
+  state.className='status ok';
+  matches.forEach(snap=>{
+   const div=document.createElement('div');div.className='exam-match';
+   const detail=document.createElement('div'),heading=document.createElement('strong'),note=document.createElement('small');
+   heading.textContent=snap.data().examTitle||'Madrasa Examination';
+   note.textContent=[snap.data().course,snap.data().examDate,Number(snap.data().percent||0).toFixed(2)+'%'].filter(Boolean).join('  ·  ');
+   detail.append(heading,note);
+   const button=document.createElement('button');button.type='button';button.textContent='View Result →';
+   button.onclick=()=>{
+    show(snap.data(),snap.id);
+    history.replaceState(null,'','?id='+encodeURIComponent(snap.id));
+    panel.scrollIntoView({behavior:'smooth',block:'start'});
+   };
+   div.append(detail,button);target.append(div);
+  });
+ }catch(err){
+  state.textContent=err.code==='permission-denied'?'Results unavailable. Please verify the Student ID, DOB and publishing status.':err.message;
+  state.className='status error';
+ }finally{submit.disabled=false}
+}
+$('studentExamLookupForm').addEventListener('submit',studentLookup);
 $('resultLookupForm').addEventListener('submit',lookup);
 async function download(which){
  if(!record)return;
