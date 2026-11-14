@@ -73,14 +73,10 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 <div class="grid">
 <section class="card" id="loginCard">
 <h2>👩‍🏫 Welcome, Teacher</h2>
-<p>Your Google email must match the one registered by the Academy administrator.</p>
-<form id="teacherAccessForm">
-<label for="teacherId">Your Teacher ID</label>
-<input id="teacherId" autocomplete="off" maxlength="200" placeholder="Enter ID or use the link shared by Admin" required>
-<p class="hint">The Admin can copy your personal Teacher Login link from Teacher Management. A Teacher ID is an identifier, not a password.</p>
-<button class="google" id="googleLogin" type="submit"><span class="g" aria-hidden="true">G</span> Continue with Google</button>
-</form>
-<p id="loginStatus" class="status" role="status" aria-live="polite">Enter your Teacher ID, then continue with Google.</p>
+<p>Sign in directly with the Google account approved by the Academy administrator.</p>
+<button class="google" id="googleLogin" type="button"><span class="g" aria-hidden="true">G</span> Continue with Google</button>
+<p class="hint">No Teacher ID, registration link or Academy password is needed. Only Admin-approved Gmail accounts can enter.</p>
+<p id="loginStatus" class="status" role="status" aria-live="polite">Select Continue with Google to sign in.</p>
 </section>
 <section class="card aside" id="loginInfo">
 <span class="pill">SECURE ACADEMY ACCESS</span>
@@ -92,7 +88,7 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 <div class="stats"><div class="stat"><strong id="classCount">0</strong><small>Assigned Classes</small></div><div class="stat"><strong id="subjectCount">0</strong><small>Assigned Subjects</small></div></div>
 <h3>📚 My Classes &amp; Subjects</h3>
 <div id="teacherAssignments"></div>
-<div class="actions"><a class="button" id="attendanceLink" href="teacher-attendance.html">📋 Open Attendance</a><button id="logout" type="button" class="secondary">Sign Out</button><button id="changeTeacherId" type="button" class="secondary">Change Teacher ID</button></div>
+<div class="actions"><a class="button" id="attendanceLink" href="teacher-attendance.html">📋 Open Attendance</a><button id="logout" type="button" class="secondary">Sign Out</button></div>
 <p class="hint">Results, marks and certificates will appear here when those teacher permissions are implemented. Your current access includes assigned classes and attendance.</p>
 </section>
 </div>
@@ -104,17 +100,14 @@ import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signOut,on
 import {getFirestore,doc,getDoc} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 
 const $ = id => document.getElementById(id);
-const form=$('teacherAccessForm'),login=$('loginCard'),dashboard=$('dashboard'),info=$('loginInfo');
-const queryId=new URLSearchParams(location.search).get('id');
-const key='academy_approved_teacher_id';
-const saved=(()=>{try{return localStorage.getItem(key)||''}catch{return ''}})();
-$('teacherId').value=queryId||saved;
+const login=$('loginCard'),dashboard=$('dashboard'),info=$('loginInfo');
 let auth=null,db=null,checkVersion=0;
+const normalizeEmail=email=>String(email||'').trim().toLowerCase();
+const teacherGoogleLookupId=email=>'google-email-'+encodeURIComponent(normalizeEmail(email));
 function status(message,error=false){const el=$('loginStatus');el.textContent=message;el.className='status'+(error?' error':'')}
-function validTeacherId(v){const id=String(v||'').trim();if(!id||id.length>200||id.includes('/'))throw Error('Enter the Teacher ID or use the personal link shared by Admin.');return id;}
 function showLogin(){login.hidden=false;info.hidden=false;dashboard.hidden=true;}
 function friendlyError(e){
- if(e.code==='permission-denied')return 'This Teacher ID is not approved for your Google account. Please ask the Academy Admin to share your Teacher Login link.';
+ if(e.code==='permission-denied')return 'This Google account is not approved for teacher access. Please contact the Academy Admin.';
  if(e.code==='auth/unauthorized-domain')return 'This website domain is not enabled in Firebase Authentication. Contact Admin.';
  if(e.code==='auth/popup-closed-by-user')return 'Google sign-in was cancelled.';
  return e.message||'Could not verify teacher access.';
@@ -122,18 +115,23 @@ function friendlyError(e){
 async function loadDashboard(user){
  const version=++checkVersion;
  showLogin();
- if(!user){status('Enter your Teacher ID and sign in with your approved Google account.');return}
+ if(!user){status('Continue with your Academy-approved Google account.');return}
  if(!user.emailVerified){status('Please use a Google account with a verified email.',true);return}
- let id;
- try{id=validTeacherId($('teacherId').value)}catch(e){status(e.message,true);return}
- status('Checking Teacher ID and Academy approval…');
+ status('Checking Google sign-in and Academy approval…');
  try{
   const token=await user.getIdTokenResult(true);
   if(token.signInProvider!=='google.com')throw Error('Sign in with Google to open your teacher dashboard.');
+  const email=normalizeEmail(user.email);
+  if(!email)throw Error('Google account email is missing.');
+  const alias=await getDoc(doc(db,'teacherAccess',teacherGoogleLookupId(email)));
+  if(!alias.exists())throw Error('This Gmail has not been enabled. Ask Admin to enable Google Login in Teacher Management.');
+  const mapping=alias.data();
+  if(normalizeEmail(mapping.email)!==email||typeof mapping.teacherId!=='string'||!mapping.teacherId||mapping.teacherId.includes('/'))throw Error('Invalid teacher Google mapping. Contact Admin.');
+  const id=mapping.teacherId;
   const grant=await getDoc(doc(db,'teacherAccess',id));
-  if(!grant.exists())throw Error('Teacher account not found. Contact Admin.');
+  if(!grant.exists())throw Error('Teacher access not found or revoked.');
   const profile=grant.data();
-  if(String(profile.email||'').trim().toLowerCase()!==String(user.email||'').trim().toLowerCase())throw Error('Use the Google account approved by Admin for this Teacher ID.');
+  if(normalizeEmail(profile.email)!==email)throw Error('This Gmail is not approved for your teacher record.');
   const roster=await getDoc(doc(db,'teacherRosters',id));
   if(version!==checkVersion)return;
   const assignments=Array.isArray(roster.exists()?roster.data().assignments:null)?roster.data().assignments:[];
@@ -155,24 +153,23 @@ async function loadDashboard(user){
    row.append(title,details);root.append(row);
   }
   const link=new URL('teacher-attendance.html',location.href);link.searchParams.set('id',id);$('attendanceLink').href=link.href;
-  try{localStorage.setItem(key,id)}catch{}
   login.hidden=true;info.hidden=true;dashboard.hidden=false;
  }catch(e){if(version===checkVersion)status(friendlyError(e),true)}
 }
-form.addEventListener('submit',async e=>{
- e.preventDefault();
- try{validTeacherId($('teacherId').value)}catch(err){status(err.message,true);return}
+$('googleLogin').onclick=async()=>{
  if(!auth)return status('Google login is still initializing. Please try again.',true);
  const button=$('googleLogin');button.disabled=true;status('Opening Google sign-in…');
- try{if(auth.currentUser)await signOut(auth);await signInWithPopup(auth,new GoogleAuthProvider())}
- catch(e){
+ try{
+  if(auth.currentUser)await signOut(auth);
+  await signInWithPopup(auth,new GoogleAuthProvider());
+ }catch(e){
   if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(e.code)){
    try{await signInWithRedirect(auth,new GoogleAuthProvider());return}catch(redirectError){status(friendlyError(redirectError),true)}
   }else status(friendlyError(e),true);
  }finally{button.disabled=false}
-});
+};
 $('logout').onclick=async()=>{++checkVersion;try{await signOut(auth)}catch(e){status(friendlyError(e),true)}showLogin()};
-$('changeTeacherId').onclick=()=>{++checkVersion;try{localStorage.removeItem(key)}catch{}$('teacherId').value='';showLogin();status('Enter the new Teacher ID and continue with your approved Google account.');$('teacherId').focus()};
+
 try{
  const conf=await fetch('firebase-config.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Firebase configuration unavailable.');return r.json()});
  const app=initializeApp(conf);auth=getAuth(app);db=getFirestore(app);
