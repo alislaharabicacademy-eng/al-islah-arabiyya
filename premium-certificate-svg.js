@@ -125,12 +125,12 @@ function banner(w,y,title,small=false){
  </g>`;
 }
 function studentName(w,y,name,fontSize=79){
- const n=String(name||'Student Name'),size=n.length>36?43:n.length>24?54:n.length>17?62:fontSize;
+ const n=String(name||'Student Name').slice(0,100),size=Math.max(20,Math.min(fontSize,1000/(Math.max(1,[...n].length)*.56)));
  return T(w/2,y,n,size,'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" font-style="italic" fill="#07503D"')+
  `<path d="M${w*.25} ${y+21}H${w*.75}" fill="none" stroke="#D5A44B" stroke-width="2"/>${diamond(w/2,y+21,7)}`;
 }
 function chip(x,y,w,label,value){
- const txt=String(value??'-'),size=txt.length>30?18:txt.length>18?23:27;
+ const txt=String(value??'-').slice(0,64),size=Math.max(11,Math.min(27,(w-20)/(Math.max(1,[...txt].length)*.55)));
  return `<rect x="${x}" y="${y}" width="${w}" height="102" rx="17" fill="#FFFCF6" stroke="#CFA04B" stroke-width="4"/>
  <path d="M${x+3} ${y+16}Q${x+3} ${y+3} ${x+18} ${y+3}H${x+w-18}Q${x+w-3} ${y+3} ${x+w-3} ${y+16}V${y+50}H${x+3}Z" fill="url(#green)"/>
  ${T(x+w/2,y+36,label,21,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#FFE2A0"')}
@@ -165,7 +165,7 @@ function certificate(kind,r){
  s+=T(w/2,452,'This certificate is proudly presented to',30,'text-anchor="middle" font-family="Georgia,serif" font-style="italic" fill="#1F3152"');
  s+=studentName(w,551,r.studentName);
  s+=T(w/2,624,desc,29,'text-anchor="middle" font-family="Georgia,serif" font-style="italic" fill="#222B50"');
- s+=T(w/2,677,event||'Academy Programme',String(event||'').length>42?26:35,'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" fill="#4F1764"');
+ s+=T(w/2,677,event||'Academy Programme',Math.max(18,Math.min(35,1110/(Math.max(1,[...String(event||'Academy Programme')].length)*.56))),'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" fill="#4F1764"');
  const cards=!competition?
  [['Student ID',r.studentCode],['Class',r.course],['Academic Year',r.academicYear],['Exam Date',dt],['Result',r.passed?'PASS':'PARTICIPATED']]:
  [['Student ID',r.studentCode],['Class',r.course],['Event',event||'Academy Event'],['Date',dt],
