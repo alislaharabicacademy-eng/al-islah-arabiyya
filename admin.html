@@ -764,73 +764,189 @@ async function monthlyExcelBlob(){
 async function monthlyPdfBlob(){
  await ensureMonthlyExportLibrary('pdf');
  const doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
- const meta=monthlyExportMeta(),groups=monthlyReportGroups();
- const width=1782,height=1260,canvas=document.createElement('canvas');
- canvas.width=width;canvas.height=height;
- const ctx=canvas.getContext('2d');
- if(!ctx)throw Error('Unable to create PDF print canvas on this device.');
+ const meta=monthlyExportMeta(),groups=monthlyReportGroups(),W=1782,H=1260,canvas=document.createElement('canvas');
+ canvas.width=W;canvas.height=H;
+ const ctx=canvas.getContext('2d');if(!ctx)throw Error('PDF canvas is not supported by this browser.');
+ const colors={rail:'#094932',dark:'#113f2d',green:'#176d47',ink:'#16392b',muted:'#637a6e',pale:'#e9f5ec',line:'#dbe8df',white:'#ffffff',gold:'#c7b078',orange:'#fff0cb',red:'#ffe2da'};
+ const left=243,inner=260,right=1750,contentWidth=right-inner;
  let page=0,y=0;
- const colors={dark:'#103d2d',green:'#17613d',gold:'#bfa26e',muted:'#5f756b',pale:'#eff6f0',line:'#d9e5dc',white:'#ffffff',ink:'#1a3b2c'};
- function fill(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(x,y,w,h)}
- function label(text,x,y,font='22px sans-serif',color=colors.ink){
-  ctx.font=font;ctx.fillStyle=color;ctx.fillText(String(text),x,y);
+ const monthDisplay=/^\d{4}-\d{2}$/.test(meta.month)?new Date(meta.month+'-01T12:00:00').toLocaleDateString('en-GB',{month:'long',year:'numeric'}):meta.month;
+ function rect(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(x,y,w,h)}
+ function round(x,y,w,h,r,color){
+  const rad=Math.min(r,w/2,h/2);ctx.fillStyle=color;ctx.beginPath();
+  ctx.moveTo(x+rad,y);ctx.lineTo(x+w-rad,y);ctx.quadraticCurveTo(x+w,y,x+w,y+rad);
+  ctx.lineTo(x+w,y+h-rad);ctx.quadraticCurveTo(x+w,y+h,x+w-rad,y+h);
+  ctx.lineTo(x+rad,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-rad);
+  ctx.lineTo(x,y+rad);ctx.quadraticCurveTo(x,y,x+rad,y);ctx.closePath();ctx.fill();
  }
- function fitLabel(text,maxWidth,font){
-  ctx.font=font;let x=String(text);
-  if(ctx.measureText(x).width<=maxWidth)return x;
-  while(x.length>1&&ctx.measureText(x+'…').width>maxWidth)x=x.slice(0,-1);
-  return x+'…';
+ function txt(text,x,y,font='22px Arial',color=colors.ink){
+  ctx.fillStyle=color;ctx.font=font;ctx.fillText(String(text),x,y);
  }
- function beginPage(group){
-  if(page)doc.addPage();
+ function fit(text,max,font){
+  ctx.font=font;let str=String(text||'');
+  if(ctx.measureText(str).width<=max)return str;
+  while(str.length>1&&ctx.measureText(str+'...').width>max)str=str.slice(0,-1);
+  return str+'...';
+ }
+ function moon(x,y,size,color){
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,size,0,2*Math.PI);ctx.fill();
+  ctx.fillStyle=colors.rail;ctx.beginPath();ctx.arc(x+size*.4,y-size*.23,size*.83,0,2*Math.PI);ctx.fill();
+ }
+ function mosqueSkyline(){
+  ctx.save();ctx.globalAlpha=.14;ctx.fillStyle='#4da97a';
+  rect(1375,105,27,94,'#4da97a');rect(1690,91,26,108,'#4da97a');
+  ctx.beginPath();ctx.arc(1388,100,14,Math.PI,0);ctx.fill();
+  ctx.beginPath();ctx.arc(1703,88,14,Math.PI,0);ctx.fill();
+  rect(1440,155,200,55,'#4da97a');
+  ctx.beginPath();ctx.arc(1540,155,92,Math.PI,0);ctx.fill();
+  rect(1514,62,8,25,'#4da97a');rect(1516,55,4,12,'#4da97a');
+  for(const x of [1454,1495,1536,1577,1618])round(x,177,22,33,9,colors.white);
+  ctx.restore();
+ }
+ function sidebar(){
+  const grad=ctx.createLinearGradient(0,0,220,1260);
+  grad.addColorStop(0,'#06523b');grad.addColorStop(.55,'#08432f');grad.addColorStop(1,'#15775a');
+  rect(0,0,217,H,grad);
+  // Crescent, open book, academy name, sidebar report navigation.
+  moon(110,75,24,'#e2efe7');
+  ctx.strokeStyle='#edf6ed';ctx.lineWidth=5;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(60,121);ctx.quadraticCurveTo(82,110,110,128);ctx.quadraticCurveTo(138,110,162,121);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(59,121);ctx.lineTo(54,147);ctx.quadraticCurveTo(80,135,110,155);ctx.quadraticCurveTo(137,135,166,147);ctx.lineTo(160,121);ctx.stroke();
+  txt('MADRASA',47,204,'bold 26px Arial',colors.white);
+  txt('AL ISLAHUL',34,237,'bold 25px Arial',colors.white);
+  txt('ARABIYA',52,268,'bold 25px Arial',colors.white);
+  txt('ISLAMIC ACADEMY',39,295,'14px Arial','#d1e6d9');
+  rect(23,326,170,2,'#79aa91');
+  txt('ADMIN REPORTS',25,367,'bold 18px Arial','#c0e0cf');
+  txt('◈  Dashboard',25,424,'21px Arial','#e0eee4');
+  txt('◈  Students',25,480,'21px Arial','#e0eee4');
+  txt('◈  Classes',25,536,'21px Arial','#e0eee4');
+  txt('◈  Attendance',25,592,'21px Arial','#e0eee4');
+  round(15,612,189,58,12,'#ddf1e2');
+  txt('• Monthly Report',29,648,'bold 20px Arial',colors.dark);
+  txt('REPORT DETAILS',25,725,'bold 17px Arial','#c2decf');
+  txt('• Present Days',27,766,'18px Arial','#e1f2e8');
+  txt('• Absent Days',27,806,'18px Arial','#e1f2e8');
+  txt('• Leave Days',27,846,'18px Arial','#e1f2e8');
+  ctx.save();ctx.globalAlpha=.2;ctx.fillStyle='#d6eee0';
+  rect(20,1151,178,108,'#d6eee0');
+  ctx.beginPath();ctx.arc(111,1147,67,Math.PI,0);ctx.fill();
+  rect(106,1051,9,35,'#d6eee0');
+  for(const x of [45,83,122,160])round(x,1182,17,48,8,colors.rail);
+  ctx.restore();
+ }
+ function base(group,kind){
   page++;
-  fill(0,0,width,height,colors.white);
-  fill(0,0,width,151,colors.dark);
-  fill(0,151,width,6,colors.gold);
-  label('MADRASA AL ISLAHUL ARABIYA',60,54,'bold 37px sans-serif',colors.white);
-  label('MONTHLY STUDENT ATTENDANCE REPORT',60,106,'bold 29px sans-serif',colors.white);
-  label('Month: '+meta.month+'     Class: '+group.course+'     Batch: '+(group.batch||'—'),60,200,'bold 26px sans-serif',colors.dark);
-  label('Held days are recorded class dates. Leave is counted only when marked by teachers.',60,237,'19px sans-serif',colors.muted);
-  fill(50,268,width-100,58,colors.pale);
-  const titles=[['No.',63],['Student Name',132],['Held',760],['Present',862],['Absent',995],['Leave',1125],['Unmarked',1242],['Attendance',1483]];
-  for(const [title,x] of titles)label(title,x,307,'bold 19px sans-serif',colors.dark);
-  fill(50,1197,width-100,2,colors.line);
-  label('Date lists below use day numbers of '+meta.month+'. Multiple subjects on the same day count once.',60,1234,'18px sans-serif',colors.muted);
-  label('Page '+page,1668,1234,'18px sans-serif',colors.muted);
-  y=337;
+  rect(0,0,W,H,colors.white);
+  sidebar();
+  rect(left,0,W-left,196,'#f7fcf8');
+  mosqueSkyline();
+  round(inner,47,78,78,19,'#d7efdc');
+  // Calendar icon in header.
+  ctx.strokeStyle=colors.dark;ctx.lineWidth=5;
+  ctx.strokeRect(282,71,36,31);
+  rect(280,77,40,6,colors.dark);rect(289,64,6,14,colors.dark);rect(307,64,6,14,colors.dark);
+  txt(kind==='dates'?'Attendance Date Details':'Monthly Student Attendance Report',360,96,'bold 44px Arial','#102b21');
+  txt('Madrasa Al Islahul Arabiya',361,139,'24px Arial','#386a4a');
+  txt('LIVE ACADEMY REPORT',1428,53,'bold 18px Arial','#39754b');
+  round(inner,211,contentWidth,106,16,colors.white);
+  ctx.strokeStyle='#d7e9dc';ctx.lineWidth=2;ctx.strokeRect(inner+2,213,contentWidth-4,102);
+  txt('MONTH',280,242,'bold 16px Arial',colors.muted);
+  txt(monthDisplay,280,285,'bold 26px Arial',colors.dark);
+  txt('CLASS',655,242,'bold 16px Arial',colors.muted);
+  txt(fit(group.course,415,'bold 26px Arial'),655,285,'bold 26px Arial',colors.dark);
+  txt('BATCH',1120,242,'bold 16px Arial',colors.muted);
+  txt(fit(group.batch||'All',180,'bold 25px Arial'),1120,285,'bold 25px Arial',colors.dark);
+  round(1470,236,255,58,12,colors.green);
+  txt('MONTHLY REPORT',1492,274,'bold 21px Arial',colors.white);
+  const rows=group.records,num=rows.length;
+  const totalPresent=rows.reduce((a,v)=>a+v.dates.present.length,0);
+  const totalLeave=rows.reduce((a,v)=>a+v.dates.leave.length,0);
+  const possible=rows.reduce((a,v)=>a+v.held,0);
+  const metrics=[
+   ['Recorded Class Days',rows[0]?.held||0,'▣'],
+   ['Total Students',num,'●'],
+   ['Average Attendance',possible?Math.round(totalPresent/possible*100)+'%':'—','▥'],
+   ['Leave Entries',totalLeave,'☑']
+  ];
+  const gap=14,cardWidth=(contentWidth-3*gap)/4;
+  for(let i=0;i<4;i++){
+   const x=inner+i*(cardWidth+gap),info=metrics[i];
+   round(x,337,cardWidth,123,15,colors.white);
+   round(x+15,355,58,74,13,colors.pale);
+   txt(info[2],x+29,401,'bold 28px Arial',colors.green);
+   txt(info[0],x+88,376,'bold 17px Arial',colors.ink);
+   txt(info[1],x+88,419,'bold 38px Arial',colors.dark);
+  }
+  txt(kind==='dates'?'PRESENT • ABSENT • LEAVE — FULL DATES':'STUDENT ATTENDANCE DETAILS',inner,496,'bold 25px Arial',colors.dark);
+  txt(fit(group.course+(group.batch?' · '+group.batch:''),460,'19px Arial'),1270,494,'19px Arial',colors.muted);
+  // Footnote.
+  round(inner,1148,contentWidth,82,12,'#ebf5ec');
+  txt('Present = attended  •  Absent = did not attend  •  Leave = marked leave',inner+20,1179,'17px Arial',colors.dark);
+  txt('Class days are counted only on recorded attendance dates. No duplicate days.',inner+20,1207,'16px Arial',colors.muted);
+  txt('Page '+page,1623,1204,'17px Arial',colors.muted);
+  y=563;
  }
- function addRow(record,num){
-  const rowH=104;
-  if(num%2===0)fill(50,y-2,width-100,rowH, '#f6faf7');
-  const font='21px sans-serif',bold='bold 22px sans-serif';
-  label(num,65,y+24,font);
-  label(fitLabel(record.student,590,bold),132,y+24,bold);
-  label(record.held,775,y+24,font);
-  label(record.dates.present.length,889,y+24,font);
-  label(record.dates.absent.length,1017,y+24,font);
-  label(record.dates.leave.length,1143,y+24,font);
-  label(record.dates.unmarked.length,1288,y+24,font);
-  label(record.rate||'—',1517,y+24,'bold 24px sans-serif',colors.green);
-  const short=key=>(record.dates[key].length?record.dates[key].map(v=>v.slice(-2)).join(', '):'—');
-  label(fitLabel('Present: '+short('present'),width-200,'18px sans-serif'),132,y+54,'18px sans-serif',colors.green);
-  label(fitLabel('Absent: '+short('absent')+'     Leave: '+short('leave')+'     Not marked: '+short('unmarked'),width-200,'18px sans-serif'),132,y+79,'18px sans-serif',colors.muted);
-  fill(50,y+rowH-2,width-100,1,colors.line);
-  y+=rowH;
+ function tableHead(){
+  round(inner,511,contentWidth,51,10,'#e1f1e6');
+  for(const [t,x] of [['No.',272],['Student Name',326],['Held',655],['Present',756],['Absent',867],['Leave',979],['Not Marked',1083],['Attendance %',1247],['Dates',1450]]){
+   txt(t,x,544,'bold 18px Arial',colors.dark);
+  }
  }
- function flushPage(){
-  doc.addImage(canvas.toDataURL('image/jpeg',0.91),'JPEG',0,0,297,210);
+ function compact(dates,max){const v=dates.map(s=>s.slice(-2)).join(', ');return fit(v||'—',max,'17px Arial')}
+ function addStudentRow(rec,num){
+  const h=65;
+  if(num%2===0)round(inner,y,contentWidth,h,0,'#f5faf6');
+  txt(num,274,y+39,'21px Arial',colors.dark);
+  txt(fit(rec.student,315,'bold 22px Arial'),326,y+39,'bold 22px Arial',colors.ink);
+  txt(rec.held,669,y+39,'21px Arial',colors.ink);
+  txt(rec.dates.present.length,784,y+39,'21px Arial',colors.ink);
+  txt(rec.dates.absent.length,894,y+39,'21px Arial',colors.ink);
+  txt(rec.dates.leave.length,1000,y+39,'21px Arial',colors.ink);
+  txt(rec.dates.unmarked.length,1119,y+39,'21px Arial',colors.ink);
+  const rate=rec.held?Math.round(100*rec.dates.present.length/rec.held):null;
+  round(1230,y+12,132,43,10,rate===null?'#e9eee9':rate>=85?'#d7efd8':rate>=75?colors.orange:colors.red);
+  txt(rec.rate||'—',1255,y+42,'bold 23px Arial',colors.dark);
+  txt('P: '+compact(rec.dates.present,260),1434,y+26,'17px Arial','#177344');
+  txt('A: '+compact(rec.dates.absent,115)+'   L: '+compact(rec.dates.leave,115),1434,y+50,'17px Arial',colors.muted);
+  rect(inner,y+h-1,contentWidth,1,colors.line);
+  y+=h;
+ }
+ function flush(){
+  doc.addImage(canvas.toDataURL('image/jpeg',0.88),'JPEG',0,0,297,210);
+ }
+ function startPage(group,kind){
+  if(page)doc.addPage();
+  base(group,kind);
+ }
+ function dateBlock(rec,num){
+  const h=131,x=inner;
+  round(x,y,contentWidth,h-8,10,num%2?'#f6faf7':'#ffffff');
+  txt(num+'. '+fit(rec.student,935,'bold 25px Arial'),x+18,y+31,'bold 25px Arial',colors.dark);
+  txt('Attendance: '+(rec.rate||'—'),x+1180,y+31,'bold 22px Arial',colors.green);
+  const display=(title,key,yy,color)=>{
+   txt(title,x+24,y+yy,'bold 18px Arial',color);
+   txt(fit(monthlyExportDateList(rec.dates[key])||'—',1220,'18px Arial'),x+198,y+yy,'18px Arial',colors.ink);
+  };
+  display('Present:', 'present',58,'#187648');
+  display('Absent:', 'absent',80,'#b8402d');
+  display('Leave:', 'leave',102,'#b07c1e');
+  txt('Not Marked: '+fit(monthlyExportDateList(rec.dates.unmarked)||'—',1125,'17px Arial'),x+930,y+102,'17px Arial',colors.muted);
+  y+=h;
  }
  for(const group of groups){
-  beginPage(group);
-  if(!group.records.length){
-   label('No student attendance records for this class.',60,395,'24px sans-serif',colors.muted);
-  }else{
-   for(const [i,record] of group.records.entries()){
-    if(y+104>1177){flushPage();beginPage(group)}
-    addRow(record,i+1);
-   }
+  // Main dashboard-style summary, exactly like the preview, with automatic page breaks.
+  for(let i=0;i<group.records.length;i+=8){
+   startPage(group,'summary');tableHead();
+   group.records.slice(i,i+8).forEach((rec,offset)=>addStudentRow(rec,i+offset+1));
+   flush();
   }
-  flushPage();
+  // Extra pages preserve each student's actual dates without truncation.
+  for(let i=0;i<group.records.length;i+=4){
+   startPage(group,'dates');
+   group.records.slice(i,i+4).forEach((rec,offset)=>dateBlock(rec,i+offset+1));
+   flush();
+  }
  }
  return doc.output('blob');
 }
