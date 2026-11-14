@@ -27,7 +27,20 @@ service cloud.firestore {
     }
 
     match /students/{studentId} {
+      // Full student and guardian information remains admin only.
       allow read, write: if isAdmin();
+    }
+
+    // Admin-approved student/guardian Firebase Authentication accounts.
+    // Students can only query their own verified, enabled account grants.
+    // No password, DOB or private student profile stored here.
+    match /studentAccess/{studentId} {
+      allow get, list: if isAdmin()
+        || (request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+          && resource.data.enabled == true);
+      allow create, update, delete: if isAdmin();
     }
 
     // Published exam result only through an unguessable 96-bit document code.
