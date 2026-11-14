@@ -40,6 +40,17 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Opaque key = SHA-256(student UUID + DOB + application-specific domain).
+    // No student names or birthdates are stored here. Anyone who knows both
+    // confidential values can locate published result references; lists denied.
+    match /examResultLookups/{lookupHash} {
+      allow get: if isAdmin()
+        || (lookupHash.matches('^[a-f0-9]{64}$')
+          && resource.data.enabled == true);
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
     match /teachers/{teacherId} {
       allow read, write: if isAdmin();
     }
