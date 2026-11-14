@@ -1543,7 +1543,8 @@ async function renderApplications(){
 let teacherRecords=[],selectedTeacher=null,approvedTeacherIds=new Set();
 function teacherGoogleEmail(value){
  const email=String(value||'').trim().toLowerCase();
- if(!/^[^\\s@/]+@[^\\s@/]+\\.[^\\s@/]+$/.test(email))throw Error('Enter a valid Google email for this teacher.');
+ const parts=email.split('@');
+ if(parts.length!==2||!parts[0]||!parts[1].includes('.')||email.includes('/')||email.includes(' '))throw Error('Enter a valid Google email for this teacher.');
  return email;
 }
 function teacherGoogleLookupId(email){return 'google-email-'+encodeURIComponent(teacherGoogleEmail(email));}
