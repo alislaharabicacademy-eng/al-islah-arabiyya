@@ -626,6 +626,55 @@ function courseKey(value){const v=String(value||'').trim().toLowerCase().replace
 $('studentFilter').onchange=()=>renderRecords('students');
 $('applicationFilter').onchange=renderApplications;
 let feeStudent=null,feeLedger={},feeRate=0,feeCourse='';const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];const feeYear=$('feeYear');for(let y=new Date().getFullYear()-2;y<=new Date().getFullYear()+2;y++)feeYear.add(new Option(String(y),String(y)));feeYear.value=String(new Date().getFullYear());feeYear.onchange=()=>{if(feeStudent)openFees(feeStudent)};
+const profilePhotoState={
+ teacher:{existing:'',pending:null,remove:false,serial:0},
+ student:{existing:'',pending:null,remove:false,serial:0}
+};
+function photoToSave(kind){
+ const state=profilePhotoState[kind];
+ return state.remove?'':(state.pending??state.existing??'');
+}
+function photoPreview(kind){
+ const state=profilePhotoState[kind],root=$(kind+'PhotoPreview');
+ const saved=photoToSave(kind);root.replaceChildren();
+ root.append(photoAvatar(saved,kind==='teacher'?'Teacher profile photograph':'Student profile photograph'));
+ const msg=document.createElement('span');msg.className='section-note';
+ msg.textContent=isProfilePhoto(saved)?'✓ Profile photo selected (private to authorized users)':'No photo saved · Madrasa logo placeholder';
+ root.append(msg);
+}
+function photoLoad(kind,saved=''){
+ const state=profilePhotoState[kind];state.serial++;state.existing=isProfilePhoto(saved)?saved:'';
+ state.pending=null;state.remove=false;
+ $(kind+'PhotoFile').value='';
+ $(kind+'PhotoStatus').textContent='';
+ photoPreview(kind);
+}
+for(const kind of ['teacher','student']){
+ $(kind+'PhotoFile').addEventListener('change',async event=>{
+  const file=event.target.files?.[0];
+  if(!file)return;
+  const state=profilePhotoState[kind],ticket=++state.serial;
+  $(kind+'PhotoStatus').textContent='Resizing photo securely on your device…';
+  try{
+   const photo=await compressProfilePhoto(file);
+   if(ticket!==state.serial)return;
+   state.pending=photo;state.remove=false;
+   photoPreview(kind);
+   $(kind+'PhotoStatus').textContent='✓ Photo ready. Press Save to store it privately.';
+  }catch(error){
+   if(ticket!==state.serial)return;
+   $(kind+'PhotoStatus').textContent='Photo failed: '+error.message;
+   $(kind+'PhotoFile').value='';
+  }
+ });
+ $(kind+'PhotoClear').addEventListener('click',()=>{
+  const state=profilePhotoState[kind];state.serial++;state.pending=null;state.remove=true;
+  $(kind+'PhotoFile').value='';
+  $(kind+'PhotoStatus').textContent='Photo will be removed when you Save.';
+  photoPreview(kind);
+ });
+ photoLoad(kind);
+}
 const schemas={teachers:['Name','Subject','Phone','Email','Notes'],students:['Name','Course','Batch','Guardian','Dob','Phone','State','Reference','ExamId']};
 const isMaktabCourse=course=>['maktab','childrens-quran-maktab'].includes(courseKey(course));
 const batchOptions=Array.from({length:30},(_,i)=>'Batch '+(i+1));
@@ -648,7 +697,7 @@ async function syncOfficialCodeToExamResults(studentId,officialCode){
   await batch.commit();
  }
 }
-function resetRecord(kind){$(kind+'Form').reset();$(kind+'Id').value='';if(kind==='student'){updateStudentBatchVisibility();$('studentOfficialId').value=''}}
+function resetRecord(kind){$(kind+'Form').reset();$(kind+'Id').value='';if(kind==='student'){updateStudentBatchVisibility();$('studentOfficialId').value='';photoLoad('student')}}
 for(const kind of ['teacher','student']){
  $(kind+'Clear').onclick=()=>resetRecord(kind);
  $(kind+'Form').onsubmit=async e=>{
@@ -660,6 +709,7 @@ for(const kind of ['teacher','student']){
   try{
    if(kind==='student'){
     const previous=await getDoc(doc(db,'students',id));
+    data.photoData=photoToSave('student');
     // Transactionally issue an official ALIA00001-style ID once only.
     // Keep the Firestore document ID and confidential exam access UUID unchanged.
     data.studentCode=await ensureOfficialStudentId(db,doc(db,'students',id),data);
@@ -720,7 +770,7 @@ $('generateMissingStudentIds').onclick=async()=>{
 };
 async function renderRecords(kind){const singular=kind.slice(0,-1),list=$(singular+'List');list.textContent='Loading…';try{const snap=await getDocs(query(collection(db,kind),limit(150)));list.replaceChildren();const rows=kind==='students'&&$('studentFilter').value!=='all'?snap.docs.filter(d=>courseKey(d.data().course)===$('studentFilter').value):snap.docs;
 if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students';const counts={};for(const d of snap.docs){const s=d.data(),key=(s.course||'Unassigned')+(isMaktabCourse(s.course)?' · '+(s.batch||'Unassigned Batch'):'');counts[key]=(counts[key]||0)+1}$('studentBatchSummary').textContent='Batch-wise student totals: '+(Object.entries(counts).map(([key,n])=>key+': '+n).join(' | ')||'No students yet')}
-if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'ALIA ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';if(kind==='students'){updateStudentBatchVisibility();$('studentOfficialId').value=data.studentCode||'';}$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{
+if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'ALIA ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');if(kind==='students')el.prepend(photoAvatar(data.photoData,'Photo of '+String(data.name||'student')));const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';if(kind==='students'){updateStudentBatchVisibility();$('studentOfficialId').value=data.studentCode||'';photoLoad('student',data.photoData);}$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{
  if(!confirm('Delete this '+singular+' record?'))return;
  try{
   if(kind==='students'){
@@ -1700,6 +1750,7 @@ function resetTeacher(){
  host.hidden=true;
  $('teacherEditorMount').append(host);
  $('teacherForm').reset();
+ photoLoad('teacher');
  setTeacherSubjects('');
  $('teacherId').value='';
  $('teacherStatus').textContent='';
@@ -1714,6 +1765,7 @@ function openTeacherEditor(teacher,card){
  $('teacherId').value=teacher.id;
  for(const f of teacherFields)if(f!=='Subject')$('teacher'+f).value=teacher[f.toLowerCase()]||'';
  setTeacherSubjects(teacher.subjectsList||teacher.subject,teacher.assignments||[]);
+ photoLoad('teacher',teacher.photoData);
  editingTeacherOriginal=teacher;
  originalTeacherFieldValues=Object.fromEntries(teacherFields.filter(f=>f!=='Subject').map(f=>[f.toLowerCase(),$('teacher'+f).value.trim()]));
  originalTeacherAssignmentRows=JSON.stringify(readTeacherAssignmentRows());
@@ -1730,7 +1782,7 @@ async function loadTeacherDirectory(){
  if(!active)return;resetTeacher();const root=$('teacherList');root.textContent='Loading teachers…';
  try{const snap=await getDocs(collection(db,'teachers'));teacherRecords=snap.docs.map(d=>({id:d.id,...d.data()})).filter(t=>t.recordStatus!=='archived');root.replaceChildren();
  if(!teacherRecords.length)root.textContent='No approved teachers yet. Approve teacher registrations first.';
- for(const t of teacherRecords){const row=document.createElement('div');row.className='record';const h=document.createElement('strong');h.textContent=t.name||'Teacher';row.append(h);const p=document.createElement('p');p.textContent=[t.subject,t.phone,t.email,'Salary: ₹'+Number(t.salary||0).toLocaleString('en-IN')].filter(Boolean).join(' · ');row.append(p);
+ for(const t of teacherRecords){const row=document.createElement('div');row.className='record';const h=document.createElement('strong');h.textContent=t.name||'Teacher';row.append(photoAvatar(t.photoData,'Photo of '+String(t.name||'teacher')),h);const p=document.createElement('p');p.textContent=[t.subject,t.phone,t.email,'Salary: ₹'+Number(t.salary||0).toLocaleString('en-IN')].filter(Boolean).join(' · ');row.append(p);
  const edit=document.createElement('button');edit.type='button';edit.textContent='✏ Edit';edit.disabled=!approvedTeacherIds.has(t.id);if(edit.disabled)edit.title='Only approved registered teachers can be edited here';edit.onclick=()=>openTeacherEditor(t,row);
  const profilePdf=document.createElement('button');profilePdf.type='button';profilePdf.className='secondary';profilePdf.textContent='📕 Full Details PDF';
   profilePdf.onclick=async()=>{
@@ -1763,6 +1815,7 @@ $('teacherForm').onsubmit=async e=>{
   if(value!==originalTeacherFieldValues[key])changes[key]=value;
  }
  const rows=readTeacherAssignmentRows(),assignmentsChanged=JSON.stringify(rows)!==originalTeacherAssignmentRows;
+ if(photoToSave('teacher')!==String(editingTeacherOriginal.photoData||''))changes.photoData=photoToSave('teacher');
  if(assignmentsChanged){
   if(rows.some(a=>(a.subject||a.course||a.batch||a.timing)&&(!a.course||!a.subject||!(subjectCatalog[a.course]||[]).includes(a.subject)||(isMaktabCourse(a.course)&&!a.batch)))){
    $('teacherStatus').textContent='For each assignment, choose a class, saved subject, and Maktab batch when applicable.';return;
