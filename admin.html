@@ -580,7 +580,7 @@ import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,Ema
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
 import{uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse}from'./admission-course-utils.js';
-import{validFeeLedger}from'./fee-ledger-utils.js';
+import{validFeeLedger,indiaFeeClock}from'./fee-ledger-utils.js';
 import{initStudentAccountAdmin}from'./student-account-admin.js';
 import{maybePromoteStudent}from'./student-promotion.js';
 import{initCompetitionCertificateAdmin}from'./competition-certificates.js';
@@ -1709,21 +1709,93 @@ $('downloadMonthlyStudentIndividualPDFs').onclick=()=>monthlyRunExport('download
 $('downloadMonthlyStudentBoth').onclick=()=>monthlyRunExport('downloadMonthlyStudentBoth','zip');
 
 async function openFees(student){if(!active)return;feeStudent=student;const s=student.data();$('feeStudentName').value=s.name||student.id;feeCourse=courseKey(s.course);$('feeStatus').textContent='Loading fees…';try{const course=await getDoc(doc(db,'courses',feeCourse));feeRate=Number(course.exists()?course.data().monthlyFee:0)||0;const record=await getDoc(doc(db,'students',student.id));feeLedger=record.data()?.feeLedger||{};renderFeeMonths();$('studentFeesPanel').scrollIntoView({behavior:'smooth'});}catch(e){$('feeStatus').textContent='Unable to load fee records: '+e.message}}
-function renderFeeMonths(){const year=feeYear.value,records=feeLedger[year]||{},now=new Date(),currentYear=now.getFullYear(),currentMonth=now.getMonth();let paid=0,pending=0,collected=0;const root=$('feeMonths');root.replaceChildren();const table=document.createElement('div');table.className='fields';for(let i=0;i<12;i++){const entry=records[String(i+1)]||{},isPaid=entry.status==='Paid',due=(Number(year)<currentYear)||(Number(year)===currentYear&&i<=currentMonth);if(isPaid){paid++;collected+=Number(entry.amount)||0}else if(due)pending++;const box=document.createElement('div');box.className='record';box.innerHTML='<strong>'+monthNames[i]+' '+year+'</strong><p>Monthly fee: ₹'+feeRate.toLocaleString('en-IN')+'</p><p>Status: <strong>'+ (isPaid?'✅ Paid':'⏳ '+(due?'Pending':'Not due'))+'</strong></p>'+(isPaid?'<p>Received: ₹'+Number(entry.amount||0).toLocaleString('en-IN')+' · '+safe(entry.paidAt?.slice(0,10)||'')+'</p>':'')+'<button type="button">'+(isPaid?'↩ Undo Paid':'✓ Mark Paid')+'</button>'+(isPaid?'<button type="button" class="secondary">📄 PDF Receipt</button>':'');const btns=box.querySelectorAll('button');btns[0].onclick=()=>setFeeMonth(i+1,!isPaid);if(isPaid)btns[1].onclick=()=>{alert('PDF Receipt button pressed. Generating your PDF now.');Promise.resolve().then(()=>receiptPdf(i+1,entry)).catch(err=>alert('PDF error: '+err.message))};table.append(box)}root.append(table);$('feeSummary').innerHTML='<span class="stat">Paid: '+paid+'/12 months</span><span class="stat">Pending: '+pending+' months</span><span class="stat">Collected: ₹'+collected.toLocaleString('en-IN')+'</span><span class="stat">Pending amount: ₹'+(pending*feeRate).toLocaleString('en-IN')+'</span>';$('feeStatus').textContent=feeRate>0?'Fee rate loaded from Course Details.':'⚠ Monthly fee is not set for this course. Set it in Course Details first.'}
-async function setFeeMonth(month,paid){if(!active||!feeStudent)return;if(!feeRate){alert('Set the monthly tuition fee in Course Details first.');return}if(!confirm((paid?'Confirm payment received for ':'Remove paid status for ')+monthNames[month-1]+' '+feeYear.value+'?'))return;const year=feeYear.value;const ledger=structuredClone(feeLedger);ledger[year]??={};if(paid)ledger[year][String(month)]={status:'Paid',amount:feeRate,paidAt:new Date().toISOString(),receiptId:'MIA-'+year+'-'+feeStudent.id.slice(0,8).toUpperCase()+'-'+String(month).padStart(2,'0')};else delete ledger[year][String(month)];$('feeStatus').textContent='Saving payment…';try{
- const studentRef=doc(db,'students',feeStudent.id),accessRef=doc(db,'studentAccess',feeStudent.id);
- const access=await getDoc(accessRef);
- const batch=writeBatch(db);
- batch.set(studentRef,{feeLedger:ledger},{merge:true});
- if(access.exists())batch.set(accessRef,{
-  feeLedger:validFeeLedger(ledger),feeMonthlyRate:feeRate,
-  feeEnrollmentDate:String(feeStudent.data().approvedAt||feeStudent.data().enrollmentDate||feeStudent.data().admittedAt||'').slice(0,24),
-  feeLastUpdatedAt:new Date().toISOString()
- },{merge:true});
- await batch.commit();
- feeLedger=ledger;renderFeeMonths();
- $('feeStatus').textContent='✓ Payment saved'+(access.exists()?' and synced to the approved Student Dashboard.':'. Approve Student Account Login to show it privately.')+' Use PDF Receipt to download and share.';
-}catch(e){$('feeStatus').textContent='Payment save failed: '+e.message}}
+
+function indiaPaymentDate(){
+ const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+ const part=name=>parts.find(x=>x.type===name)?.value||'';
+ return part('year')+'-'+part('month')+'-'+part('day');
+}
+function renderFeeMonths(){
+ const year=feeYear.value,records=feeLedger[year]||{};
+ const clock=indiaFeeClock(),today=indiaPaymentDate();
+ let paid=0,pending=0,collected=0;
+ const root=$('feeMonths');root.replaceChildren();
+ const table=document.createElement('div');table.className='fields';
+ for(let i=0;i<12;i++){
+  const entry=records[String(i+1)]||{},isPaid=entry.status==='Paid';
+  const due=(Number(year)<clock.year)||(Number(year)===clock.year&&i<clock.month);
+  if(isPaid){paid++;collected+=Number(entry.amount)||0}
+  else if(due)pending++;
+  const box=document.createElement('div');box.className='record';
+  const label=document.createElement('strong');label.textContent=monthNames[i]+' '+year;box.append(label);
+  const basic=document.createElement('p');basic.textContent='Monthly fee: ₹'+feeRate.toLocaleString('en-IN')+
+   '  |  '+(isPaid?'✅ Paid':due?'⏳ Pending':'▫️ Not due');box.append(basic);
+  if(isPaid){
+   const received=document.createElement('p');received.textContent='Received ₹'+Number(entry.amount||0).toLocaleString('en-IN')+
+    ' • Actual payment date: '+(entry.paidAt?.slice(0,10)||'Not recorded');box.append(received);
+  }
+  let dateInput=null,amountInput=null;
+  if(!isPaid){
+   const dateLabel=document.createElement('label');dateLabel.textContent='Actual Payment Date';
+   dateInput=document.createElement('input');dateInput.type='date';dateInput.value=today;dateInput.max=today;
+   dateLabel.append(dateInput);box.append(dateLabel);
+   const amountLabel=document.createElement('label');amountLabel.textContent='Amount Received (₹)';
+   amountInput=document.createElement('input');amountInput.type='number';amountInput.min='0';amountInput.step='0.01';
+   amountInput.value=String(feeRate||0);amountLabel.append(amountInput);box.append(amountLabel);
+  }
+  const mark=document.createElement('button');mark.type='button';
+  mark.textContent=isPaid?'↩ Undo Paid':'✓ Mark Paid';box.append(mark);
+  mark.onclick=()=>setFeeMonth(i+1,!isPaid,{date:dateInput?.value,amount:amountInput?.value});
+  if(isPaid){
+   const receipt=document.createElement('button');receipt.type='button';receipt.className='secondary';
+   receipt.textContent='📄 PDF Receipt';receipt.onclick=()=>Promise.resolve().then(()=>receiptPdf(i+1,entry)).catch(err=>alert('PDF error: '+err.message));
+   box.append(receipt);
+  }
+  table.append(box);
+ }
+ root.append(table);
+ $('feeSummary').innerHTML='<span class="stat">Paid: '+paid+'/12 months</span><span class="stat">Pending: '+pending+
+ ' months</span><span class="stat">Collected: ₹'+collected.toLocaleString('en-IN')+
+ '</span><span class="stat">Pending amount: ₹'+(pending*feeRate).toLocaleString('en-IN')+'</span>';
+ $('feeStatus').textContent=feeRate>0?
+  'Payment dates are entered by Admin. Paid records sync privately with Student Login.':
+  '⚠ Monthly fee is not set for this course. Set it in Course Details first.';
+}
+async function setFeeMonth(month,paid,details={}){
+ if(!active||!feeStudent)return;
+ if(!feeRate){alert('Set the monthly tuition fee in Course Details first.');return}
+ const year=feeYear.value;
+ let amount=feeRate,paidAt='';
+ if(paid){
+  amount=Number(details.amount);
+  const date=String(details.date||'').trim();
+  if(!Number.isFinite(amount)||amount<0||amount>10000000){alert('Enter a valid amount received.');return}
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>indiaPaymentDate()||!Number.isFinite(Date.parse(date+'T12:00:00+05:30'))){
+   alert('Enter the actual payment date, not a future date.');return
+  }
+  if(amount<feeRate&&!confirm('This amount is less than the monthly fee. Mark the month FULLY PAID only if the Academy approved a concession?'))return;
+  paidAt=date+'T12:00:00+05:30';
+ }
+ if(!confirm((paid?'Confirm received ₹'+amount+' on '+details.date+' for ':'Remove Paid status for ')+monthNames[month-1]+' '+year+'?'))return;
+ const ledger=structuredClone(feeLedger);ledger[year]??={};
+ if(paid)ledger[year][String(month)]={status:'Paid',amount,paidAt,receiptId:'MIA-'+year+'-'+feeStudent.id.slice(0,8).toUpperCase()+'-'+String(month).padStart(2,'0')};
+ else delete ledger[year][String(month)];
+ $('feeStatus').textContent='Saving payment…';
+ try{
+  const studentRef=doc(db,'students',feeStudent.id),accessRef=doc(db,'studentAccess',feeStudent.id);
+  const access=await getDoc(accessRef),batch=writeBatch(db);
+  batch.set(studentRef,{feeLedger:ledger},{merge:true});
+  if(access.exists())batch.set(accessRef,{
+   feeLedger:validFeeLedger(ledger),feeMonthlyRate:feeRate,
+   feeEnrollmentDate:String(feeStudent.data().approvedAt||feeStudent.data().enrollmentDate||feeStudent.data().admittedAt||'').slice(0,24),
+   feeLastUpdatedAt:new Date().toISOString()
+  },{merge:true});
+  await batch.commit();
+  feeLedger=ledger;renderFeeMonths();
+  $('feeStatus').textContent='✓ Actual payment date and amount saved'+(access.exists()?' and synced to the approved Student Dashboard.':'. Approve Student Account Login to show it privately.')+' Use PDF Receipt to download and share.';
+ }catch(e){$('feeStatus').textContent='Payment save failed: '+e.message}
+}
+
 // Backfill historic payments into already-approved guardian/student accounts.
 // StudentAccess permissions already restrict reading to the matching verified email.
 $('syncStudentFeeAccounts').onclick=async()=>{
