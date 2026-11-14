@@ -1,4 +1,5 @@
 
+import {loadSiteSettings} from './site-settings.js';
 const NS='http://www.w3.org/2000/svg';
 const LOGO='1_20261112_080707_0000.png';
 export const CERTIFICATE_TYPES=[['exam','Academic Examination Certificate'],['winner','Competition Prize / Winner'],['participation','Competition Participation'],['event','Event Appreciation / Service'],['results','Exam Result Statement']];
@@ -112,10 +113,14 @@ function certificate(kind,r){
  if(kind==='winner')s+=trophy(w*.23,797,award);
  else if(kind==='event')s+=lantern(w*.23,826,1.5);
  else s+=`<circle cx="${w*.23}" cy="795" r="66" fill="url(#gold)" stroke="#6C2456" stroke-width="9"/>${diamond(w*.23,795,27)}`;
- s+=stamp(w/2,835);
+  s+=stamp(w/2,835);
+ const signer=r.principal&&typeof r.principal==='object'?r.principal:{};
+ const signed=typeof signer.signatureData==='string'&&/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signer.signatureData);
+ if(signed&&!r.previewMode)s+=`<image x="${w*.652}" y="792" width="${w*.205}" height="77" preserveAspectRatio="xMidYMid meet" href="${E(signer.signatureData)}" />`;
  s+=`<path d="M${w*.65} 870h${w*.21}" stroke="#1C2D50" stroke-width="3"/>
- ${T(w*.755,901,'AUTHORIZED SIGNATORY',23,'font-family="Georgia,serif" font-style="italic" text-anchor="middle" fill="#1B2A50"')}
- ${T(w/2,940,'CERTIFICATE ID: '+String(r.id||'ALIA-DEMO').slice(0,55),16,'font-family="Arial,sans-serif" text-anchor="middle" fill="#263D56"')}`;
+ ${T(w*.755,901,signer.name||'AUTHORIZED SIGNATORY',String(signer.name||'').length>30?17:22,'font-family="Georgia,serif" text-anchor="middle" fill="#1B2A50"')}
+ ${T(w*.755,925,signer.name?(signer.designation||'Principal'):'Principal Signature',17,'font-family="Georgia,serif" font-style="italic" text-anchor="middle" fill="#425572"')}
+ ${T(w/2,960,'CERTIFICATE ID: '+String(r.id||'ALIA-DEMO').slice(0,55),16,'font-family="Arial,sans-serif" text-anchor="middle" fill="#263D56"')}`;
  return `<svg xmlns="${NS}" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${defs()}${s}</svg>`;
 }
 function resultPage(r,subjects,page,totalPages){
@@ -200,7 +205,9 @@ async function logoData(){
  return await new Promise((resolve,reject)=>{const f=new FileReader();f.onload=()=>resolve(String(f.result));f.onerror=reject;f.readAsDataURL(blob)});
 }
 export async function createPremiumVectorPdf(type,record){
- const J=await library(),logo=await logoData(),pages=premiumCertificatePages(type,record),landscape=type!=='results';
+ const branding=record?.previewMode?null:await loadSiteSettings({fresh:true}).catch(err=>{console.warn('Published principal settings unavailable:',err);return null});
+ const documentRecord={...record,principal:record?.previewMode?{}:(branding?.principal||{})};
+ const J=await library(),logo=await logoData(),pages=premiumCertificatePages(type,documentRecord),landscape=type!=='results';
  const pdf=new J({orientation:landscape?'landscape':'portrait',unit:'mm',format:'a4',precision:12,compress:true});
  for(let i=0;i<pages.length;i++){
   if(i)pdf.addPage('a4',landscape?'landscape':'portrait');
