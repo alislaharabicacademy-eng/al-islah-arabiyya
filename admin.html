@@ -1699,6 +1699,86 @@ $('viewAllTeacherSalaryMonth').onclick=renderAllTeacherSalaryMonth;
 $('viewTeacherSalaryYear').onclick=renderAllTeacherSalaryYear;
 
 
+// Manual encrypted copy of private Firestore data. No confidential data or
+// plaintext password is uploaded to GitHub or to third-party services.
+function adminBackupConvert(value){
+ if(value===null||typeof value!=='object')return value;
+ if(value&&typeof value.seconds==='number'&&typeof value.nanoseconds==='number'&&typeof value.toDate==='function'){
+  return {__firestoreType:'timestamp',seconds:value.seconds,nanoseconds:value.nanoseconds};
+ }
+ if(value instanceof Date)return {__firestoreType:'date',iso:value.toISOString()};
+ if(Array.isArray(value))return value.map(adminBackupConvert);
+ if(typeof value.toBase64==='function')return {__firestoreType:'bytes',base64:value.toBase64()};
+ if(typeof value.latitude==='number'&&typeof value.longitude==='number')return {__firestoreType:'geo',latitude:value.latitude,longitude:value.longitude};
+ const mapped={};
+ for(const [key,entry] of Object.entries(value))mapped[key]=adminBackupConvert(entry);
+ return mapped;
+}
+function adminBackupBase64(bytes){
+ let result='',part=0,block=16384;
+ while(part<bytes.length){
+  const slice=bytes.subarray(part,part+block);
+  result+=String.fromCharCode(...slice);
+  part+=block;
+ }
+ return btoa(result);
+}
+async function adminEncryptedBackupDownload(){
+ if(!active)return;
+ const status=$('adminBackupStatus'),button=$('downloadAdminEncryptedBackup');
+ const password=$('adminBackupPassword').value,confirm=$('adminBackupPasswordConfirm').value;
+ if(password.length<14){status.textContent='Please enter a strong password with at least 14 characters.';return}
+ if(password!==confirm){status.textContent='Passwords do not match.';return}
+ if(!$('adminBackupUnderstand').checked){status.textContent='Please confirm that you will store the password safely.';return}
+ if(!globalThis.crypto?.subtle||!globalThis.crypto?.getRandomValues){status.textContent='Encryption is unavailable on this browser. Open the secure HTTPS website in Chrome.';return}
+ button.disabled=true;
+ const top=['courses','classSubjects','students','teachers','teacherAccess','teacherRosters','applications','teacherInvites','teacherSubmissions','teacherSalaryEvents'];
+ const documents=[],teacherIds=new Set();
+ try{
+  for(const name of top){
+   status.textContent='Reading secure records: '+name+'…';
+   const snapshot=await getDocs(collection(db,name));
+   for(const item of snapshot.docs){
+    documents.push({path:item.ref.path,data:adminBackupConvert(item.data())});
+    if(['teachers','teacherAccess','teacherRosters'].includes(name))teacherIds.add(item.id);
+   }
+  }
+  const ids=[...teacherIds];
+  for(let i=0;i<ids.length;i++){
+   status.textContent='Reading teacher attendance: '+(i+1)+' / '+ids.length+'…';
+   const snapshot=await getDocs(collection(db,'teacherAttendance',ids[i],'days'));
+   for(const item of snapshot.docs)documents.push({path:item.ref.path,data:adminBackupConvert(item.data())});
+  }
+  if(!documents.length)throw Error('No Firestore records found. No backup was created.');
+  const backup={format:'al-islah-firestore-manual-export',version:1,projectId:'al-islah-arabic-academy',
+   createdAt:new Date().toISOString(),collectionList:top,teacherAttendanceDayCollections:ids.length,
+   documentCount:documents.length,documents};
+  status.textContent='Encrypting '+documents.length+' records on this device…';
+  const plaintext=new TextEncoder().encode(JSON.stringify(backup));
+  if(plaintext.length>30*1024*1024)throw Error('Backup exceeds the 30 MB browser export limit. Use a managed Firestore backup.');
+  const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  const baseKey=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:310000,hash:'SHA-256'},baseKey,{name:'AES-GCM',length:256},false,['encrypt']);
+  const bytes=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,plaintext));
+  plaintext.fill(0);
+  const envelope={format:'al-islah-encrypted-backup',version:1,createdAt:backup.createdAt,
+   cipher:'AES-256-GCM',kdf:'PBKDF2-SHA-256',iterations:310000,
+   salt:adminBackupBase64(salt),iv:adminBackupBase64(iv),ciphertext:adminBackupBase64(bytes)};
+  const blob=new Blob([JSON.stringify(envelope)],{type:'application/json;charset=utf-8'});
+  const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+  monthlyDownloadBlob(blob,'Al_Islah_Encrypted_Firestore_Backup_'+stamp+'.json');
+  status.textContent='✓ '+documents.length+' records encrypted and downloaded. Keep the password and file separately and securely. This was a manual export, not a managed automatic backup.';
+ }catch(err){
+  console.error('Secure admin backup failed:',err.message);
+  status.textContent='Backup not completed: '+err.message+'. No incomplete backup was downloaded.';
+ }finally{
+  $('adminBackupPassword').value='';
+  $('adminBackupPasswordConfirm').value='';
+  button.disabled=false;
+ }
+}
+$('downloadAdminEncryptedBackup').onclick=adminEncryptedBackupDownload;
+
 let teacherSalaryPdfImages=null;
 async function teacherSalaryPdfLogo(){
  if(teacherSalaryPdfImages)return teacherSalaryPdfImages;
