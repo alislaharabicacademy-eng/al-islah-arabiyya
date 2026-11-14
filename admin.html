@@ -190,14 +190,44 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 @media(max-width:1070px){.student-monthly-panel .monthly-report-shell{grid-template-columns:145px minmax(0,1fr)}.monthly-report-main{padding:15px}.monthly-report-rail{padding:19px 10px}.monthly-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.student-monthly-panel .monthly-report-shell{grid-template-columns:1fr}.monthly-report-rail{padding:13px 15px;display:flex;flex-direction:row;justify-content:space-between;align-items:center}.monthly-report-brand{padding:0;border:0;display:flex;align-items:center;gap:9px;text-align:left}.monthly-report-logo-frame{width:44px;height:44px;padding:2px;margin:0;border-width:1px}.monthly-report-brand strong{font-size:12px;margin:0}.monthly-report-brand small{display:none}.monthly-report-rail-title,.monthly-report-navitem,.monthly-rail-bottom{display:none}.monthly-report-rail .monthly-report-navitem.on{display:block;font-size:11px;margin:0;padding:9px}.monthly-report-main{padding:13px}.monthly-report-banner{gap:10px;padding:8px 4px 14px}.monthly-report-banner .calendar-icon{min-width:47px;height:47px;font-size:22px}.monthly-report-banner h3{font-size:21px}.monthly-report-filterbox{padding:12px}.monthly-report-filterbox .fields{grid-template-columns:1fr 1fr}.monthly-kpi-grid{gap:8px}.monthly-kpi-card{padding:11px 9px;gap:7px}.monthly-kpi-icon{width:36px;height:36px;font-size:19px}.monthly-kpi-value{font-size:23px}.monthly-kpi-label{font-size:10px}.monthly-report-actions button{font-size:12px;flex-grow:1}.student-monthly-group{padding:12px 8px}.student-monthly-panel>summary{font-size:15px}}
 @media(max-width:420px){.monthly-report-filterbox .fields{grid-template-columns:1fr}.monthly-report-banner h3{font-size:18px}.monthly-report-actions button{width:100%}.monthly-report-header-logo{width:52px;height:52px;padding:2px}.monthly-report-brand strong{font-size:11px}}
-</style><style id="subject-editor-style">.teacher-subject-row{display:flex;align-items:center;gap:9px;margin:9px 0}.teacher-subject-row input{flex:1;min-width:0}.teacher-subject-row button{flex-shrink:0}@media(max-width:460px){.teacher-subject-row button{padding:10px;font-size:12px}}</style></head><body><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button><div class="menu-shade hidden" id="menuShade"></div><aside class="side-menu" id="sideMenu" aria-label="Admin navigation">
+</style><style id="subject-editor-style">.teacher-subject-row{display:flex;align-items:center;gap:9px;margin:9px 0}.teacher-subject-row input{flex:1;min-width:0}.teacher-subject-row button{flex-shrink:0}@media(max-width:460px){.teacher-subject-row button{padding:10px;font-size:12px}}</style><style id="site-customizer-admin-style">
+.site-settings-panel{background:linear-gradient(145deg,#f6faf5,#fffdf7);border:1px solid #c7d9c9;border-radius:20px;padding:clamp(15px,3vw,27px)}
+.site-settings-intro{background:#103c2b;color:#f9ecd3;padding:22px;border-radius:15px;margin-bottom:22px;border:1px solid #c7a76d}
+.site-settings-intro h2{color:#f9dfab;margin:0 0 9px}
+.site-settings-intro p{color:#d6e8db;line-height:1.7}
+.site-settings-group{background:#fff;border-radius:17px;padding:clamp(15px,3vw,26px);border:1px solid #dfebdf;margin:18px 0}
+.site-settings-group h3{font:700 24px Georgia,serif;border-bottom:1px solid #e5e9df;padding-bottom:12px}
+.site-settings-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 18px}
+.site-settings-fields label{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:13px;color:#294f39;font-weight:750}
+.site-settings-fields input,.site-settings-fields select,.site-settings-fields textarea{width:100%;min-width:0;border:1px solid #c9d9c9;border-radius:10px;background:#fafdF8;min-height:44px;padding:12px;font-size:14px;font-family:inherit;color:#21432f}
+.site-settings-fields textarea{min-height:100px;resize:vertical}
+.site-settings-fields .wide{grid-column:1/-1}
+.site-settings-profile-images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:16px 0}
+.site-settings-image-box{border:1px solid #d5e4d8;background:#f8fbf8;padding:15px;border-radius:13px;min-width:0}
+.site-settings-image-box label{display:block;font-weight:800;color:#174631;font-size:14px}
+.site-settings-image-box input{width:100%;margin:10px 0}
+.site-settings-preview{min-height:125px;display:grid;place-items:center;background:white;border:1px dashed #c4d5c7;border-radius:12px;padding:11px;color:#60776a;font-size:12px;overflow:hidden}
+.site-settings-preview img{display:block;max-height:170px;max-width:100%;object-fit:contain}
+.site-settings-image-box .secondary{margin:9px 0 0;width:100%}
+.site-settings-confirm{display:flex;gap:10px;align-items:flex-start;background:#fff6dd;padding:15px;border:1px solid #e6cd91;border-radius:12px;line-height:1.6;color:#654b1f;font-size:13px}
+.site-settings-confirm input{width:19px;height:19px;flex-shrink:0;margin-top:2px}
+.site-settings-switch{display:flex;gap:12px;align-items:flex-start;margin:12px 0;color:#254b32;font-weight:750}
+.site-settings-switch input{width:20px;height:20px;flex-shrink:0}
+.site-settings-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;align-items:center}
+.site-settings-actions button{margin:0}
+#siteSettingsStatus{padding:15px;background:#ecf7ed;border-radius:11px;min-height:45px;line-height:1.6;margin-top:17px;overflow-wrap:anywhere}
+#siteSettingsStatus.error{background:#ffedeb;color:#95352e}
+.site-settings-quicklinks{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0}
+.site-settings-quicklinks a{padding:9px 13px;border:1px solid #b9d1bf;border-radius:9px;background:#f5fbf5;color:#175038;font-weight:800;text-decoration:none}
+@media(max-width:650px){.site-settings-fields,.site-settings-profile-images{grid-template-columns:1fr}.site-settings-group{padding:15px}.site-settings-actions button{flex:1 1 140px}}
+</style></head><body><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button><div class="menu-shade hidden" id="menuShade"></div><aside class="side-menu" id="sideMenu" aria-label="Admin navigation">
 <div class="academy-menu-brand"><span class="academy-menu-kicker">AL ISLAHUL ARABIYA</span><h2>Academy Menu</h2><p>Management Control Center</p></div>
 <div class="academy-menu-groups">
 <section class="academy-menu-group" data-menu-group="dashboard"><button class="academy-menu-group-toggle" type="button" aria-expanded="true" aria-controls="menuDashboard"><span>🏠 Dashboard</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuDashboard"><button type="button" data-tab="overview">Dashboard Overview</button></div></section>
 <section class="academy-menu-group" data-menu-group="academics"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuAcademics"><span>📚 Academics</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuAcademics" hidden><button type="button" data-tab="academic">Academic Year</button><button type="button" data-tab="courses">Course Details</button><button type="button" data-tab="newcourse">Add New Course</button><button type="button" data-tab="exams">🎓 Exam Results & Certificates</button><a href="certificate-studio.html" target="_blank" rel="noopener">✦ Premium Certificate Design Studio (Vector PDF)</a><a href="exam-results.html" target="_blank" rel="noopener">↗ View Published Results</a></div></section>
 <section class="academy-menu-group" data-menu-group="admissions"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuAdmissions"><span>📝 Admissions</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuAdmissions" hidden><button type="button" data-tab="applications">New Applications</button><button type="button" data-tab="admissionSettings">Admission Form Settings</button><a href="admission.html">↗ Open Admission Form</a></div></section>
 <section class="academy-menu-group" data-menu-group="people"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuPeople"><span>👩‍🏫 Teachers &amp; Students</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuPeople" hidden><button type="button" data-tab="teachers">Teacher Details</button><button type="button" data-tab="students">Student Details</button></div></section>
-<section class="academy-menu-group" data-menu-group="management"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuManagement"><span>⚙️ Management</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuManagement" hidden><button type="button" data-tab="fees">Fee Structure</button><a href="index.html">↗ Website Home</a></div></section>
+<section class="academy-menu-group" data-menu-group="management"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuManagement"><span>⚙️ Management</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuManagement" hidden><button type="button" data-tab="fees">Fee Structure</button><button type="button" data-tab="settings">🎨 Website Settings &amp; Principal</button><a href="index.html">↗ Website Home</a></div></section>
 </div></aside><header><div class="top"><div><img src="1_20261112_080707_0000.png" alt="Academy logo" style="width:74px;height:74px;object-fit:contain;float:right;margin-left:12px"><div class="brand">Madrasa Al Islahul Arabiya</div><h1 class="brand-title">Academy Control Center</h1><p class="subtitle">Secure course management dashboard</p></div><nav><a href="index.html">⌂ Home</a><a id="previewTop" href="courses.html?course=muallama" target="_blank" rel="noopener">↗ Course Preview</a></nav></div></header>
 <main><div class="hero"><div><h2>Course Management</h2><p>Update course information and control what students can see.</p></div><span class="badge">● ADMIN DASHBOARD</span></div>
 <div id="setup" class="card notice">Loading secure admin login…</div>
@@ -208,7 +238,57 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <textarea id="admissionCourseList" rows="7" style="width:100%" aria-label="One admission course per line"></textarea>
 <div class="actions"><button type="button" class="secondary" id="cleanAdmissionCourses">🧹 Remove Duplicate Entries</button></div>
 <div id="admissionCourseRows" aria-live="polite" style="margin:14px 0"></div></div>
-<button type="button" id="saveAdmissionSettings">💾 Save & Publish Admission Form</button><p class="status" id="admissionSettingsStatus"></p></div><div id="tab-overview" class="tabpage"><h2>Dashboard Overview</h2><p class="muted">Welcome to the academy management center. Open the ☰ menu to manage records.</p><div class="admin-overview"><div class="overview-card">📚<strong>Courses</strong>Manage programmes</div><div class="overview-card">👩‍🏫<strong>Teachers</strong>Staff directory</div><div class="overview-card">🎓<strong>Students</strong>Enrolments</div><div class="overview-card">📩<strong>Admissions</strong>Review applications</div></div></div><div class="tabs"><button class="active" data-tab="courses">📚 Courses</button><button data-tab="teachers">👩‍🏫 Teachers</button><button data-tab="students">🎓 Students</button><button data-tab="exams">🏅 Exam Results</button><button data-tab="applications">📩 New Applications</button></div><div id="tab-courses" class="tabpage hidden">
+<button type="button" id="saveAdmissionSettings">💾 Save & Publish Admission Form</button><p class="status" id="admissionSettingsStatus"></p></div><div id="tab-settings" class="tabpage hidden">
+<div class="site-settings-panel">
+<div class="site-settings-intro"><h2>🎨 Website Settings &amp; Principal</h2>
+<p>Customise the live website without changing its code. Save &amp; Publish updates the homepage, Academy contact information and principal details. Uploaded principal signature is reused on newly generated official PDF certificates and principal-signature spaces.</p>
+<a href="index.html" target="_blank" rel="noopener" style="color:#ffdb8c;font-weight:750">↗ Preview live homepage</a></div>
+<p class="section-note">Course names, academic year, fees and admissions are managed by their existing dedicated editors. This page controls the website appearance, information and authorised principal identity.</p>
+<div class="site-settings-quicklinks"><a href="index.html#courses" target="_blank" rel="noopener">📚 View Courses</a><a href="admission.html" target="_blank" rel="noopener">📝 View Admission Form</a><a href="exam-results.html" target="_blank" rel="noopener">🏅 View Results</a></div>
+<form id="siteSettingsForm">
+<section class="site-settings-group"><h3>🏛️ Academy Branding &amp; Theme</h3>
+<div class="site-settings-fields">
+<label>Academy Name *<input id="siteInstituteName" maxlength="70" required></label>
+<label>Academy Subtitle<input id="siteInstituteSubtitle" maxlength="80"></label>
+<label class="wide">Website Colour Theme<select id="siteTheme"><option value="emerald">Emerald Green &amp; Gold (Classic)</option><option value="sapphire">Royal Sapphire &amp; Gold</option><option value="plum">Royal Plum &amp; Gold</option></select></label>
+</div></section>
+<section class="site-settings-group"><h3>✨ Homepage Text &amp; Sections</h3>
+<div class="site-settings-fields">
+<label>Homepage Headline — Line 1 *<input id="siteHeroLine1" maxlength="80" required></label>
+<label>Homepage Headline — Gold Line 2 *<input id="siteHeroLine2" maxlength="80" required></label>
+<label class="wide">Homepage Welcome Text *<textarea id="siteHeroDescription" maxlength="600" required></textarea></label>
+<label>Learning Section Heading<input id="siteProgrammesHeading" maxlength="110"></label>
+<label>About Us Heading<input id="siteAboutHeading" maxlength="110"></label>
+<label class="wide">Learning Section Description<textarea id="siteProgrammesDescription" maxlength="500"></textarea></label>
+<label class="wide">About Us Description<textarea id="siteAboutParagraph" maxlength="750"></textarea></label>
+<label>Contact Section Heading<input id="siteContactHeading" maxlength="110"></label>
+<label class="wide">Optional Contact Message<textarea id="siteContactDescription" maxlength="350"></textarea></label>
+</div></section>
+<section class="site-settings-group"><h3>📞 Public Contact Details</h3>
+<div class="site-settings-fields">
+<label>Academy Email *<input id="siteEmail" type="email" maxlength="160" required></label>
+<label>Call / Mobile Number *<input id="sitePhone" type="tel" maxlength="30" required></label>
+<label>WhatsApp Number with Country Code *<input id="siteWhatsApp" inputmode="numeric" maxlength="20" required placeholder="917845360505"></label>
+<label>Instagram Profile URL<input id="siteInstagram" type="url" maxlength="220" placeholder="https://www.instagram.com/username/"></label>
+</div></section>
+<section class="site-settings-group"><h3>👩‍💼 Principal — Official Profile</h3>
+<p class="section-note">These details identify the authorised principal. The profile photo is displayed on the homepage only when you enable the switch below. The principal's signature is a different image, used for official documents.</p>
+<div class="site-settings-fields">
+<label>Full Name of Principal<input id="sitePrincipalName" maxlength="100" autocomplete="off"></label>
+<label>Official Designation<input id="sitePrincipalDesignation" maxlength="90" placeholder="Principal"></label>
+<label class="wide">Qualifications / Credentials<input id="sitePrincipalQualifications" maxlength="250"></label>
+<label class="wide">Profile / Principal's Message<textarea id="sitePrincipalMessage" maxlength="650"></textarea></label>
+</div>
+<label class="site-settings-switch"><input type="checkbox" id="siteShowPrincipal"><span>Show principal photo, name, designation and message on the public homepage</span></label>
+<div class="site-settings-profile-images">
+<div class="site-settings-image-box"><label for="sitePrincipalPhotoFile">📷 Principal Photo</label><small>PNG, JPG or WebP up to 3 MB. Automatically optimised.</small><input id="sitePrincipalPhotoFile" type="file" accept="image/png,image/jpeg,image/webp"><div class="site-settings-preview" id="sitePrincipalPhotoPreview">Not uploaded</div><button id="sitePrincipalPhotoRemove" type="button" class="secondary">Remove Photo</button></div>
+<div class="site-settings-image-box"><label for="sitePrincipalSignatureFile">✍️ Principal's Original Signature</label><small>Transparent-background PNG recommended. No AI/fake signature.</small><input id="sitePrincipalSignatureFile" type="file" accept="image/png,image/jpeg,image/webp"><div class="site-settings-preview" id="sitePrincipalSignaturePreview">Not uploaded</div><button id="sitePrincipalSignatureRemove" type="button" class="secondary">Remove Signature</button></div>
+</div>
+<label class="site-settings-confirm"><input id="siteSignatureAuthorised" type="checkbox"><span>I confirm that I am authorised to publish this principal's genuine signature on newly generated Academy PDFs. Anyone receiving a signed PDF can see the signature; do not upload a signature without permission.</span></label>
+</section>
+<div class="site-settings-actions"><button type="submit" id="siteSettingsSave">💾 Save &amp; Publish Website Settings</button><button type="button" id="siteSettingsReload" class="secondary">↻ Reload Saved Settings</button><button type="button" id="siteSettingsRestoreText" class="secondary">Reset Text to Defaults</button></div>
+<p id="siteSettingsStatus" role="status" aria-live="polite">Sign in as admin to load saved website settings.</p>
+</form></div></div><div id="tab-overview" class="tabpage"><h2>Dashboard Overview</h2><p class="muted">Welcome to the academy management center. Open the ☰ menu to manage records.</p><div class="admin-overview"><div class="overview-card">📚<strong>Courses</strong>Manage programmes</div><div class="overview-card">👩‍🏫<strong>Teachers</strong>Staff directory</div><div class="overview-card">🎓<strong>Students</strong>Enrolments</div><div class="overview-card">📩<strong>Admissions</strong>Review applications</div></div></div><div class="tabs"><button class="active" data-tab="courses">📚 Courses</button><button data-tab="teachers">👩‍🏫 Teachers</button><button data-tab="students">🎓 Students</button><button data-tab="exams">🏅 Exam Results</button><button data-tab="applications">📩 New Applications</button></div><div id="tab-courses" class="tabpage hidden">
   <div class="section">
     <h2>📚 Course Management</h2>
     <p class="section-note">Choose a course and click Edit Details. The editing form opens on the next screen.</p>
@@ -461,6 +541,8 @@ import{uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse}from'./ad
 import{initStudentAccountAdmin}from'./student-account-admin.js';
 import{maybePromoteStudent}from'./student-promotion.js';
 import{initCompetitionCertificateAdmin}from'./competition-certificates.js';
+import{initSiteSettingsAdmin}from'./site-settings-admin.js';
+import{stampPrincipalOnPdf}from'./site-settings.js';
 import{compressProfilePhoto,photoAvatar,isProfilePhoto}from'./profile-photo.js';
 import{ensureOfficialStudentId,validOfficialStudentId}from'./student-numbering.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
@@ -473,6 +555,7 @@ const app=initializeApp(config),auth=getAuth(app),db=getFirestore(app);
  const examAdmin=initExamAdmin({db,auth,onPromotion:syncAllTeacherRosters});
  const studentAccounts=initStudentAccountAdmin({db});
  const competitionAdmin=initCompetitionCertificateAdmin({db});
+ const siteSettingsAdmin=initSiteSettingsAdmin({db,auth});
 $('setup').classList.add('hidden');$('login').classList.remove('hidden');
 $('signIn').onclick=async()=>{try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){$('setup').classList.remove('hidden');$('setup').textContent='Login failed: '+e.message}};
 $('passwordLoginForm').onsubmit=async e=>{e.preventDefault();const address=$('adminEmail').value.trim().toLowerCase();if(address!==email){$('passwordLoginStatus').textContent='Only the authorized admin email can sign in.';return}const button=$('passwordSignIn');button.disabled=true;$('passwordLoginStatus').textContent='Signing in securely…';try{await signInWithEmailAndPassword(auth,address,$('adminPassword').value);$('adminPassword').value='';$('passwordLoginStatus').textContent='✓ Password accepted. Checking admin access…';if(!auth.currentUser.emailVerified)$('passwordLoginStatus').textContent='Password accepted. Please verify your email using the button above before entering the dashboard.'}catch(err){$('passwordLoginStatus').textContent='Login failed ('+err.code+'). Please check your email and password.'}finally{button.disabled=false}};
@@ -555,7 +638,7 @@ async function load(){
 }
 
 const safe=(s)=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-const tabs=['overview','academic','admissionSettings','courses','courseeditor','newcourse','fees','teachers','students','exams','applications'];
+const tabs=['overview','academic','admissionSettings','courses','courseeditor','newcourse','fees','teachers','students','exams','applications','settings'];
 const menu=$('sideMenu'),shade=$('menuShade'),toggle=$('menuToggle');
 function setMenu(open){menu.classList.toggle('open',open);shade.classList.toggle('hidden',!open);toggle.setAttribute('aria-expanded',String(open));toggle.textContent=open?'✕':'☰'}
 toggle.onclick=()=>setMenu(!menu.classList.contains('open'));shade.onclick=()=>setMenu(false);
@@ -703,7 +786,7 @@ async function setCourseAdmissionVisibility(name,visible){
  $('admissionCourseList').value=next.join('\n');renderAdmissionCourseRows();renderCourseList();
  $('admissionSettingsStatus').textContent=visible?'✓ Course added to published admissions.':'✓ Course hidden from published admissions. Existing student and course records were not deleted.';
 }
-function switchTab(tab){if(tab==='exams'&&active){examAdmin.load().catch(e=>{$('examEditorStatus').textContent='Could not load exam system: '+e.message});competitionAdmin.load().catch(e=>{$('competitionStatus').textContent='Could not load competitions: '+e.message})}if(tab!=='teachers'){if($('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();if($('teacherCatalogPanel'))closeTeacherCatalog();}tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
+function switchTab(tab){if(tab==='settings'&&active)siteSettingsAdmin.load();if(tab==='exams'&&active){examAdmin.load().catch(e=>{$('examEditorStatus').textContent='Could not load exam system: '+e.message});competitionAdmin.load().catch(e=>{$('competitionStatus').textContent='Could not load competitions: '+e.message})}if(tab!=='teachers'){if($('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();if($('teacherCatalogPanel'))closeTeacherCatalog();}tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
 $('openNewCourse').onclick=()=>{
  $('newCourseName').value='';$('newCourseId').value='';$('newCourseStatus').textContent='';
  switchTab('newcourse');
@@ -1634,7 +1717,8 @@ async function receiptPdf(month,entry){
    pdf.setFont('times','normal');const lines=pdf.splitTextToSize(String(fields[i][1]),104);pdf.text(lines.slice(0,2),87,y);
    y+=i===1||i===2?17:15;
   }
-  pdf.setDrawColor(...green);pdf.line(138,234,191,234);
+  try{await stampPrincipalOnPdf(pdf,{centerX:164.5,lineY:234,maxWidth:50,maxHeight:18})}catch(e){console.warn('Principal signature not available for fee receipt',e)}
+   pdf.setDrawColor(...green);pdf.line(138,234,191,234);
   pdf.setFontSize(11);pdf.setFont('helvetica','bold');pdf.text("Principal's Signature",164.5,241,{align:'center'});
   pdf.setFontSize(8);pdf.setFont('helvetica','normal');pdf.text('Madrasa Al Islahul Arabiya',164.5,247,{align:'center'});
   pdf.setDrawColor(...gold);pdf.line(16,266,194,266);pdf.setFontSize(9);pdf.setTextColor(100,112,104);
@@ -2539,7 +2623,8 @@ pdf.setTextColor(...green);pdf.setFont('times','bold');pdf.setFontSize(19);pdf.t
 pdf.setDrawColor(...gold);pdf.setLineWidth(.35);pdf.line(62,73,148,73);
 const fields=[['Receipt No.',receiptNo],['Teacher Name',t.name||'-'],['Subject / Course',t.subject||'-'],['Salary Month',month],['Payment Date',paid?(date||'Not recorded'):'Not paid'],['Salary Amount','INR '+Number(inputs.salary.value||t.salary||0).toLocaleString('en-IN')],['Amount Paid','INR '+(paid?amount:0).toLocaleString('en-IN')],['Payment Method',paid?inputs.paymentMethod.value||'Not recorded':'—'],['Transaction ID',paid?inputs.transactionRef.value||'Not recorded':'—'],['Payment Status',paid?'PAID':'PENDING'],['Attendance',String(attendance.length)+' day(s)'],['Absent / Leave',(inputs.absent.value||'0')+' / '+(inputs.leave.value||'0')]];
 let y=80;for(let i=0;i<fields.length;i++){const [label,value]=fields[i];if(i===5){pdf.setFillColor(236,244,236);pdf.rect(16,y-6,178,12,'F')}pdf.setFont('times',i===5?'bold':'normal');pdf.setFontSize(i===5?11:10);pdf.setTextColor(...(i===5?green:muted));pdf.text(label,19,y+1);pdf.setFont('times',i===5||i===6?'bold':'normal');pdf.setTextColor(...green);pdf.text(pdf.splitTextToSize(String(value),95)[0],94,y+1);pdf.setDrawColor(218,224,218);pdf.setLineWidth(.25);pdf.line(16,y+6,194,y+6);y+=11;}
-pdf.setDrawColor(...green);pdf.setLineWidth(.45);pdf.line(133,226,194,226);pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.setTextColor(...green);pdf.text("Principal's Signature",163.5,233,{align:'center'});pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text('Madrasa Al Islahul Arabiya',163.5,239,{align:'center'});
+try{await stampPrincipalOnPdf(pdf,{centerX:163.5,lineY:226,maxWidth:55,maxHeight:17})}catch(e){console.warn('Principal signature not available for salary receipt',e)}
+ pdf.setDrawColor(...green);pdf.setLineWidth(.45);pdf.line(133,226,194,226);pdf.setFont('helvetica','bold');pdf.setFontSize(10);pdf.setTextColor(...green);pdf.text("Principal's Signature",163.5,233,{align:'center'});pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.text('Madrasa Al Islahul Arabiya',163.5,239,{align:'center'});
 pdf.setDrawColor(220,226,220);pdf.line(16,252,194,252);pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(...muted);pdf.text(paid?'This receipt is generated from the academy salary register.':'This statement does not confirm salary payment.',105,259,{align:'center'});
 const blob=pdf.output('blob'),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Teacher_Salary_'+t.name.replace(/[^a-z0-9]/gi,'_')+'_'+month+'.pdf';document.body.append(a);a.click();a.remove();const fallback=document.createElement('a');fallback.href=url;fallback.download=a.download;fallback.textContent='⬇ Tap here if PDF did not download';root.append(fallback);setTimeout(()=>URL.revokeObjectURL(url),300000);$('teacherPayrollStatus').textContent='PDF ready. Download link shown below.'}catch(e){$('teacherPayrollStatus').textContent='PDF error: '+e.message;alert('PDF error: '+e.message)}finally{receipt.disabled=false}};
  const history=document.createElement('button');
