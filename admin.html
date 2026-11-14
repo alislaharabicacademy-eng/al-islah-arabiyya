@@ -166,7 +166,10 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
  </div>
  <div class="actions" style="margin:18px 0">
   <button type="button" id="loadMonthlyStudentAttendance">📋 View Monthly Report</button>
-  <button type="button" class="secondary" id="downloadMonthlyStudentAttendance" disabled>⬇ Download CSV</button>
+  <button type="button" class="secondary" id="downloadMonthlyStudentExcel" disabled>📗 Download Excel (.xlsx)</button>
+  <button type="button" class="secondary" id="downloadMonthlyStudentPDF" disabled>📕 Download PDF (.pdf)</button>
+  <button type="button" id="downloadMonthlyStudentBoth" disabled>⬇ Download Both (.zip)</button>
+  <button type="button" class="secondary" id="downloadMonthlyStudentAttendance" disabled>⬇ CSV</button>
  </div>
  <p id="monthlyStudentAttendanceStatus" class="status" role="status" aria-live="polite"></p>
  <div id="monthlyStudentAttendanceReport"></div>
@@ -375,6 +378,11 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
 
 $('studentAttendanceDate').value=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});$('loadStudentAttendance').onclick=async()=>{const day=$('studentAttendanceDate').value,root=$('studentAttendanceReport');root.textContent='Loading attendance…';try{const teachers=await getDocs(collection(db,'teachers'));root.replaceChildren();for(const t of teachers.docs){const snap=await getDoc(doc(db,'teacherAttendance',t.id,'days',day));if(!snap.exists())continue;for(const [subject,record] of Object.entries(snap.data().subjects||{})){const box=document.createElement('div');box.className='record';appendInfo(box,'Teacher',t.data().name);appendInfo(box,'Subject',subject.split('__').pop());appendInfo(box,'Class',record.course||'—');if(record.course==='maktab')appendInfo(box,'Batch',record.batch||'—');for(const s of Object.values(record.students||{}))appendInfo(box,s.name||'Student',s.status||'Not marked');const reset=document.createElement('button');reset.type='button';reset.textContent='↺ Reset this subject attendance';reset.onclick=async()=>{if(!confirm('Reset '+subject+' for '+(t.data().name||'teacher')+' on '+day+'?\nThe old attendance will be archived in this date record. The teacher can submit again.'))return;reset.disabled=true;try{await updateDoc(doc(db,'teacherAttendance',t.id,'days',day),{['subjects.'+subject]:deleteField(),resetHistory:arrayUnion({subject,record,resetAt:new Date().toISOString(),resetBy:auth.currentUser.email})});alert('Attendance reset. Teacher can refresh and submit again.');$('loadStudentAttendance').click()}catch(e){alert('Reset failed: '+e.message);reset.disabled=false}};box.append(reset);root.append(box)}}if(!root.children.length)root.textContent='No subject-wise student attendance found for this date.'}catch(e){root.textContent='Could not load attendance: '+e.message}};
 
+function setMonthlyExportButtonsDisabled(disabled){
+ for(const id of ['downloadMonthlyStudentAttendance','downloadMonthlyStudentExcel','downloadMonthlyStudentPDF','downloadMonthlyStudentBoth']){
+  $(id).disabled=disabled;
+ }
+}
 /* Monthly attendance uses actual teacher-marked class dates, never calendar days.
    Each class/batch/date is counted once even when multiple subjects meet that day. */
 let monthlyAttendanceExport=[];
@@ -386,7 +394,7 @@ $('monthlyAttendanceMonth').value=monthInIndia();
 function resetMonthlyStudentReport(){
  $('monthlyStudentAttendanceReport').replaceChildren();
  $('monthlyStudentAttendanceStatus').textContent='';
- $('downloadMonthlyStudentAttendance').disabled=true;
+ setMonthlyExportButtonsDisabled(true);
  monthlyAttendanceExport=[];
 }
 function updateMonthlyAttendanceBatch(){
@@ -426,8 +434,8 @@ async function loadMonthlyStudentReport(){
  const month=$('monthlyAttendanceMonth').value,courseFilter=$('monthlyAttendanceCourse').value,batchFilter=$('monthlyAttendanceBatch').value;
  const status=$('monthlyStudentAttendanceStatus'),root=$('monthlyStudentAttendanceReport');
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){status.textContent='Choose a valid month.';return}
- const btn=$('loadMonthlyStudentAttendance'),csv=$('downloadMonthlyStudentAttendance');
- btn.disabled=true;csv.disabled=true;monthlyAttendanceExport=[];root.replaceChildren();
+ const btn=$('loadMonthlyStudentAttendance');
+ btn.disabled=true;setMonthlyExportButtonsDisabled(true);monthlyAttendanceExport=[];root.replaceChildren();
  status.textContent='Loading student and teacher attendance records for '+month+'…';
  try{
   const [studentSnap,teacherSnap]=await Promise.all([getDocs(collection(db,'students')),getDocs(collection(db,'teachers'))]);
@@ -524,10 +532,10 @@ async function loadMonthlyStudentReport(){
   }
   const label=new Date(month+'-01T12:00:00').toLocaleDateString('en-IN',{month:'long',year:'numeric'});
   status.textContent='✓ '+label+': '+groupList.length+' class/batch group(s), '+studentTotal+' student(s), '+heldDateTotal+' recorded class date(s) across groups.';
-  csv.disabled=!monthlyAttendanceExport.length;
+  setMonthlyExportButtonsDisabled(!monthlyAttendanceExport.length);
  }catch(err){
   root.replaceChildren();status.textContent='Could not generate the monthly report: '+err.message;
-  monthlyAttendanceExport=[];csv.disabled=true;
+  monthlyAttendanceExport=[];setMonthlyExportButtonsDisabled(true);
  }finally{btn.disabled=false}
 }
 $('loadMonthlyStudentAttendance').onclick=loadMonthlyStudentReport;
@@ -548,6 +556,234 @@ $('downloadMonthlyStudentAttendance').onclick=()=>{
  link.href=url;link.download='Student_Monthly_Attendance_'+$('monthlyAttendanceMonth').value+'.csv';document.body.append(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),60000);
 };
+
+
+/* Monthly student report exports share exactly the same calculated rows
+   already shown in the admin dashboard; no additional Firebase reads. */
+function monthlyExportName(){
+ const month=$('monthlyAttendanceMonth').value||'Unknown_Month';
+ const course=String($('monthlyAttendanceCourse').value||'all').replace(/[^a-z0-9-]/gi,'_');
+ const batch=String($('monthlyAttendanceBatch').value||'all').replace(/[^a-z0-9-]/gi,'_');
+ return 'Al_Islah_Student_Attendance_'+month+'_'+course+(batch!=='all'?'_'+batch:'');
+}
+function monthlyExportMeta(){
+ const course=$('monthlyAttendanceCourse'),batch=$('monthlyAttendanceBatch');
+ return {
+  month:$('monthlyAttendanceMonth').value,
+  course:course.selectedOptions?.[0]?.textContent||course.value||'All Classes',
+  batch:batch.selectedOptions?.[0]?.textContent||batch.value||'All Batches'
+ };
+}
+const monthlyExportLibraryPromises={};
+function monthlyAddScript(src){
+ return new Promise((resolve,reject)=>{
+  const script=document.createElement('script');
+  script.src=src;script.async=true;
+  let complete=false;
+  const timer=setTimeout(()=>finish(new Error('Library loading timed out')),15000);
+  function finish(error){
+   if(complete)return;
+   complete=true;clearTimeout(timer);
+   if(error){script.remove();reject(error)}else resolve();
+  }
+  script.onload=()=>finish();script.onerror=()=>finish(new Error('Library source unavailable'));
+  document.head.appendChild(script);
+ });
+}
+async function ensureMonthlyExportLibrary(kind){
+ const options={
+  xlsx:{ready:()=>Boolean(window.XLSX?.utils?.aoa_to_sheet),sources:[
+   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+   'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+  ]},
+  zip:{ready:()=>Boolean(window.JSZip),sources:[
+   'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+   'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+   'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js'
+  ]}
+ };
+ if(kind==='pdf'){await ensurePdfLibrary();return}
+ const option=options[kind];if(!option)throw Error('Unsupported export library');
+ if(option.ready())return;
+ if(!monthlyExportLibraryPromises[kind]){
+  monthlyExportLibraryPromises[kind]=(async()=>{
+   for(const source of option.sources){
+    try{await monthlyAddScript(source);if(option.ready())return}
+    catch(err){console.warn('Export library source failed:',source,err.message)}
+   }
+   throw new Error('The '+kind.toUpperCase()+' download library is unavailable. Please check your internet connection.');
+  })().catch(error=>{monthlyExportLibraryPromises[kind]=null;throw error});
+ }
+ await monthlyExportLibraryPromises[kind];
+}
+function monthlyExportDateList(dates){
+ return dates.map(attendanceDayLabel).join(', ');
+}
+function monthlyReportGroups(){
+ const map=new Map();
+ for(const record of monthlyAttendanceExport){
+  const key=record.course+'\u0001'+record.batch;
+  if(!map.has(key))map.set(key,{course:record.course,batch:record.batch,records:[]});
+  map.get(key).records.push(record);
+ }
+ return [...map.values()];
+}
+async function monthlyExcelBlob(){
+ await ensureMonthlyExportLibrary('xlsx');
+ const XLSX=window.XLSX,meta=monthlyExportMeta(),rows=monthlyAttendanceExport;
+ const header=['No.','Class','Batch','Student Name','Held Days','Present Days','Absent Days','Leave Days','Not Marked','Attendance %'];
+ const summary=[
+  ['MADRASA AL ISLAHUL ARABIYA'],
+  ['MONTHLY STUDENT ATTENDANCE REPORT'],
+  ['Month',meta.month,'Class',meta.course,'Batch',meta.batch],
+  ['Students',rows.length,'Exported',new Date().toLocaleString('en-IN')],
+  [],
+  header
+ ];
+ rows.forEach((record,i)=>summary.push([
+  i+1,record.course,record.batch||'—',record.student,
+  record.held,record.dates.present.length,record.dates.absent.length,
+  record.dates.leave.length,record.dates.unmarked.length,
+  record.held?record.dates.present.length/record.held:0
+ ]));
+ const workbook=XLSX.utils.book_new(),main=XLSX.utils.aoa_to_sheet(summary);
+ main['!cols']=[{wch:7},{wch:24},{wch:20},{wch:27},{wch:13},{wch:15},{wch:14},{wch:13},{wch:17},{wch:16}];
+ main['!autofilter']={ref:'A6:J'+Math.max(7,summary.length)};
+ main['!merges']=[{s:{r:0,c:0},e:{r:0,c:9}},{s:{r:1,c:0},e:{r:1,c:9}}];
+ for(let i=0;i<rows.length;i++){
+  const excelRow=i+7,ref='J'+excelRow;
+  if(main[ref])main[ref].z='0%';
+ }
+ XLSX.utils.book_append_sheet(workbook,main,'Monthly Summary');
+ const detailHeader=['No.','Class','Batch','Student Name','Present Dates','Absent Dates','Leave Dates','Not Marked Dates'];
+ const dates=[['MADRASA AL ISLAHUL ARABIYA - STUDENT ATTENDANCE DATE DETAILS'],['Month',meta.month],[],detailHeader];
+ rows.forEach((record,i)=>dates.push([
+  i+1,record.course,record.batch||'—',record.student,
+  monthlyExportDateList(record.dates.present),
+  monthlyExportDateList(record.dates.absent),
+  monthlyExportDateList(record.dates.leave),
+  monthlyExportDateList(record.dates.unmarked)
+ ]));
+ const dateSheet=XLSX.utils.aoa_to_sheet(dates);
+ dateSheet['!cols']=[{wch:7},{wch:24},{wch:19},{wch:28},{wch:55},{wch:47},{wch:47},{wch:47}];
+ dateSheet['!autofilter']={ref:'A4:H'+Math.max(5,dates.length)};
+ dateSheet['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}}];
+ XLSX.utils.book_append_sheet(workbook,dateSheet,'Attendance Dates');
+ const bytes=XLSX.write(workbook,{bookType:'xlsx',type:'array',compression:true});
+ return new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+async function monthlyPdfBlob(){
+ await ensureMonthlyExportLibrary('pdf');
+ const doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4',compress:true});
+ const meta=monthlyExportMeta(),groups=monthlyReportGroups();
+ const width=1782,height=1260,canvas=document.createElement('canvas');
+ canvas.width=width;canvas.height=height;
+ const ctx=canvas.getContext('2d');
+ if(!ctx)throw Error('Unable to create PDF print canvas on this device.');
+ let page=0,y=0;
+ const colors={dark:'#103d2d',green:'#17613d',gold:'#bfa26e',muted:'#5f756b',pale:'#eff6f0',line:'#d9e5dc',white:'#ffffff',ink:'#1a3b2c'};
+ function fill(x,y,w,h,color){ctx.fillStyle=color;ctx.fillRect(x,y,w,h)}
+ function label(text,x,y,font='22px sans-serif',color=colors.ink){
+  ctx.font=font;ctx.fillStyle=color;ctx.fillText(String(text),x,y);
+ }
+ function fitLabel(text,maxWidth,font){
+  ctx.font=font;let x=String(text);
+  if(ctx.measureText(x).width<=maxWidth)return x;
+  while(x.length>1&&ctx.measureText(x+'…').width>maxWidth)x=x.slice(0,-1);
+  return x+'…';
+ }
+ function beginPage(group){
+  if(page)doc.addPage();
+  page++;
+  fill(0,0,width,height,colors.white);
+  fill(0,0,width,151,colors.dark);
+  fill(0,151,width,6,colors.gold);
+  label('MADRASA AL ISLAHUL ARABIYA',60,54,'bold 37px sans-serif',colors.white);
+  label('MONTHLY STUDENT ATTENDANCE REPORT',60,106,'bold 29px sans-serif',colors.white);
+  label('Month: '+meta.month+'     Class: '+group.course+'     Batch: '+(group.batch||'—'),60,200,'bold 26px sans-serif',colors.dark);
+  label('Held days are recorded class dates. Leave is counted only when marked by teachers.',60,237,'19px sans-serif',colors.muted);
+  fill(50,268,width-100,58,colors.pale);
+  const titles=[['No.',63],['Student Name',132],['Held',760],['Present',862],['Absent',995],['Leave',1125],['Unmarked',1242],['Attendance',1483]];
+  for(const [title,x] of titles)label(title,x,307,'bold 19px sans-serif',colors.dark);
+  fill(50,1197,width-100,2,colors.line);
+  label('Date lists below use day numbers of '+meta.month+'. Multiple subjects on the same day count once.',60,1234,'18px sans-serif',colors.muted);
+  label('Page '+page,1668,1234,'18px sans-serif',colors.muted);
+  y=337;
+ }
+ function addRow(record,num){
+  const rowH=104;
+  if(num%2===0)fill(50,y-2,width-100,rowH, '#f6faf7');
+  const font='21px sans-serif',bold='bold 22px sans-serif';
+  label(num,65,y+24,font);
+  label(fitLabel(record.student,590,bold),132,y+24,bold);
+  label(record.held,775,y+24,font);
+  label(record.dates.present.length,889,y+24,font);
+  label(record.dates.absent.length,1017,y+24,font);
+  label(record.dates.leave.length,1143,y+24,font);
+  label(record.dates.unmarked.length,1288,y+24,font);
+  label(record.rate||'—',1517,y+24,'bold 24px sans-serif',colors.green);
+  const short=key=>(record.dates[key].length?record.dates[key].map(v=>v.slice(-2)).join(', '):'—');
+  label(fitLabel('Present: '+short('present'),width-200,'18px sans-serif'),132,y+54,'18px sans-serif',colors.green);
+  label(fitLabel('Absent: '+short('absent')+'     Leave: '+short('leave')+'     Not marked: '+short('unmarked'),width-200,'18px sans-serif'),132,y+79,'18px sans-serif',colors.muted);
+  fill(50,y+rowH-2,width-100,1,colors.line);
+  y+=rowH;
+ }
+ function flushPage(){
+  doc.addImage(canvas.toDataURL('image/jpeg',0.91),'JPEG',0,0,297,210);
+ }
+ for(const group of groups){
+  beginPage(group);
+  if(!group.records.length){
+   label('No student attendance records for this class.',60,395,'24px sans-serif',colors.muted);
+  }else{
+   for(const [i,record] of group.records.entries()){
+    if(y+104>1177){flushPage();beginPage(group)}
+    addRow(record,i+1);
+   }
+  }
+  flushPage();
+ }
+ return doc.output('blob');
+}
+function monthlyDownloadBlob(blob,name){
+ if(!(blob instanceof Blob)||blob.size===0)throw Error('The generated file is empty.');
+ const url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download=name;
+ document.body.append(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),90000);
+}
+async function monthlyRunExport(buttonId,kind){
+ if(!monthlyAttendanceExport.length)return;
+ const status=$('monthlyStudentAttendanceStatus'),button=$(buttonId);
+ button.disabled=true;
+ const filename=monthlyExportName();
+ status.textContent='Preparing '+(kind==='zip'?'Excel and PDF files':kind.toUpperCase()+' file')+'…';
+ try{
+  if(kind==='xlsx'){
+   monthlyDownloadBlob(await monthlyExcelBlob(),filename+'.xlsx');
+  }else if(kind==='pdf'){
+   monthlyDownloadBlob(await monthlyPdfBlob(),filename+'.pdf');
+  }else if(kind==='zip'){
+   const excel=await monthlyExcelBlob(),pdf=await monthlyPdfBlob();
+   await ensureMonthlyExportLibrary('zip');
+   const archive=new window.JSZip();
+   archive.file(filename+'.xlsx',excel);
+   archive.file(filename+'.pdf',pdf);
+   const blob=await archive.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+   monthlyDownloadBlob(blob,filename+'_Excel_and_PDF.zip');
+  }
+  status.textContent='✓ Download prepared: '+(kind==='zip'?'Excel + PDF together in one ZIP file':kind.toUpperCase())+'. Check your Downloads folder.';
+ }catch(err){
+  console.error('Monthly attendance '+kind+' download failed:',err);
+  status.textContent='Download failed: '+err.message;
+ }finally{
+  button.disabled=!monthlyAttendanceExport.length;
+ }
+}
+$('downloadMonthlyStudentExcel').onclick=()=>monthlyRunExport('downloadMonthlyStudentExcel','xlsx');
+$('downloadMonthlyStudentPDF').onclick=()=>monthlyRunExport('downloadMonthlyStudentPDF','pdf');
+$('downloadMonthlyStudentBoth').onclick=()=>monthlyRunExport('downloadMonthlyStudentBoth','zip');
 
 async function openFees(student){if(!active)return;feeStudent=student;const s=student.data();$('feeStudentName').value=s.name||student.id;feeCourse=courseKey(s.course);$('feeStatus').textContent='Loading fees…';try{const course=await getDoc(doc(db,'courses',feeCourse));feeRate=Number(course.exists()?course.data().monthlyFee:0)||0;const record=await getDoc(doc(db,'students',student.id));feeLedger=record.data()?.feeLedger||{};renderFeeMonths();$('studentFeesPanel').scrollIntoView({behavior:'smooth'});}catch(e){$('feeStatus').textContent='Unable to load fee records: '+e.message}}
 function renderFeeMonths(){const year=feeYear.value,records=feeLedger[year]||{},now=new Date(),currentYear=now.getFullYear(),currentMonth=now.getMonth();let paid=0,pending=0,collected=0;const root=$('feeMonths');root.replaceChildren();const table=document.createElement('div');table.className='fields';for(let i=0;i<12;i++){const entry=records[String(i+1)]||{},isPaid=entry.status==='Paid',due=(Number(year)<currentYear)||(Number(year)===currentYear&&i<=currentMonth);if(isPaid){paid++;collected+=Number(entry.amount)||0}else if(due)pending++;const box=document.createElement('div');box.className='record';box.innerHTML='<strong>'+monthNames[i]+' '+year+'</strong><p>Monthly fee: ₹'+feeRate.toLocaleString('en-IN')+'</p><p>Status: <strong>'+ (isPaid?'✅ Paid':'⏳ '+(due?'Pending':'Not due'))+'</strong></p>'+(isPaid?'<p>Received: ₹'+Number(entry.amount||0).toLocaleString('en-IN')+' · '+safe(entry.paidAt?.slice(0,10)||'')+'</p>':'')+'<button type="button">'+(isPaid?'↩ Undo Paid':'✓ Mark Paid')+'</button>'+(isPaid?'<button type="button" class="secondary">📄 PDF Receipt</button>':'');const btns=box.querySelectorAll('button');btns[0].onclick=()=>setFeeMonth(i+1,!isPaid);if(isPaid)btns[1].onclick=()=>{alert('PDF Receipt button pressed. Generating your PDF now.');Promise.resolve().then(()=>receiptPdf(i+1,entry)).catch(err=>alert('PDF error: '+err.message))};table.append(box)}root.append(table);$('feeSummary').innerHTML='<span class="stat">Paid: '+paid+'/12 months</span><span class="stat">Pending: '+pending+' months</span><span class="stat">Collected: ₹'+collected.toLocaleString('en-IN')+'</span><span class="stat">Pending amount: ₹'+(pending*feeRate).toLocaleString('en-IN')+'</span>';$('feeStatus').textContent=feeRate>0?'Fee rate loaded from Course Details.':'⚠ Monthly fee is not set for this course. Set it in Course Details first.'}
