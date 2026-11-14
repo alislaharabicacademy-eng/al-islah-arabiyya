@@ -74,7 +74,7 @@ export async function createExamResultPdf(record){
   if(page)pdf.addPage();page++;header(pdf,brand,210,297,'OFFICIAL EXAMINATION RESULT','Confidential result statement • Published result only');
   setColor(pdf,[24,73,48]);
   text(pdf,'Student: '+String(record.studentName||''),19,69,12,{bold:true,maxWidth:165});
-  text(pdf,'Class: '+String(record.course||'-')+'    Batch: '+String(record.batch||'-'),19,77,9);
+  text(pdf,'Student ID: '+String(record.studentCode||'Not recorded')+'    Class: '+String(record.course||'-')+'    Batch: '+String(record.batch||'-'),19,77,9);
   text(pdf,'Examination: '+String(record.examTitle||''),19,85,10,{bold:true});
   text(pdf,'Academic Year: '+String(record.academicYear||'-')+'    Exam Date: '+String(record.examDate||'-'),19,93,9);
   pdf.setFillColor(221,239,225);pdf.roundedRect(17,101,176,10,2,2,'F');
@@ -116,7 +116,7 @@ export async function createExamCertificatePdf(record){
  pdf.setTextColor(77,99,82);text(pdf,phrase,148.5,135,11,{align:'center'});
  text(pdf,String(record.examTitle||'Academy Examination'),148.5,144,14,{bold:true,align:'center'});
  setColor(pdf,green);
- text(pdf,'Class: '+String(record.course||'-')+'  |  Academic Year: '+String(record.academicYear||'-'),148.5,154,10,{align:'center'});
+ text(pdf,'Student ID: '+String(record.studentCode||'Not recorded')+'  |  Class: '+String(record.course||'-')+'  |  Academic Year: '+String(record.academicYear||'-'),148.5,154,10,{align:'center'});
  text(pdf,'Score: '+record.total+' / '+record.maxTotal+'  |  '+Number(record.percent||0).toFixed(2)+'%  |  Grade: '+String(record.grade||'-'),148.5,164,10,{align:'center'});
  pdf.setDrawColor(...gold);pdf.setLineWidth(.35);pdf.line(39,183,90,183);pdf.line(207,183,258,183);
  pdf.setTextColor(50,73,55);text(pdf,'Date: '+String(record.examDate||'-'),65,189,8,{align:'center'});
