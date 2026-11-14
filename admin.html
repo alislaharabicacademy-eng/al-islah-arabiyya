@@ -14,6 +14,13 @@ input:not([type=checkbox]):not([type=radio]):focus,select:focus,textarea:focus{b
 nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 @media(max-width:600px){h1{line-height:1.16}button,.btn{min-height:42px}}
 @media(prefers-reduced-motion:reduce){button,.btn,a,input,select,textarea{transition:none!important}}
+</style><style id="student-account-administration-style">
+.student-account-panel[hidden]{display:none!important}
+.student-account-panel{padding:23px!important;border-radius:17px;border:1px solid #b7d8c1!important;background:linear-gradient(130deg,#eff8f0,#fcfffc)!important;margin:20px 0!important;box-shadow:0 9px 29px #0e513312}
+.student-account-panel h3{color:#0f5436;margin-top:0}
+.student-account-panel #studentAccountTitle{color:#0d5335;font-size:17px}
+.student-account-panel .actions{display:flex;flex-wrap:wrap;gap:10px}
+.student-account-panel .actions button,.student-account-panel .actions a{min-height:44px;font-size:12px}
 </style><style id="exam-admin-style">
 #tab-exams{color:#183e2b}
 .exam-admin-editor{border:1px solid #c9dece;border-radius:17px;background:linear-gradient(145deg,#f6fcf7,#edf6ef)}
@@ -331,7 +338,22 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
   <div id="examResultList"></div>
  </section>
 </div>
-<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Private enrolled-student records. Each student has a permanent, confidential Student ID. Enter Date of Birth to allow exam result lookup via Student ID + DOB. Give Student IDs only to the correct student or guardian.</p><form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields"><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Date of Birth (for secure exam result lookup)<input id="studentDob" type="date"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
+<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Private enrolled-student records. Each student has a permanent, confidential Student ID. Enter Date of Birth to allow exam result lookup via Student ID + DOB. Give Student IDs only to the correct student or guardian.</p><form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields"><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Date of Birth (for secure exam result lookup)<input id="studentDob" type="date"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
+<h3>🔐 Student Account · Approve &amp; Manage Login</h3>
+<p class="section-note">Only the student or approved guardian with this verified email can sign in to the real Firebase account. The academy does not create or store their password. Account access can be disabled anytime.</p>
+<strong id="studentAccountTitle"></strong>
+<div class="fields" style="margin:15px 0">
+<label>Student / Parent Login Email *<input id="studentAccountEmail" type="email" placeholder="guardian@example.com" autocomplete="off" maxlength="200"></label>
+<label>Login Method<input value="Verified email + password or Google sign-in" readonly></label>
+</div>
+<label style="display:flex;align-items:center;gap:10px"><input id="studentAccountEnabled" type="checkbox" checked style="width:auto"> Grant student portal access to this email</label>
+<div class="actions" style="margin-top:18px">
+<button id="studentAccountSave" type="button">🔐 Save &amp; Approve Account</button>
+<button id="studentAccountDisable" class="secondary" type="button">⛔ Disable Account Access</button>
+<button id="studentAccountClose" class="secondary" type="button">✕ Close</button>
+<a class="btn secondary" href="student-login.html" target="_blank" rel="noopener">↗ Student Login Page</a>
+</div><p id="studentAccountStatus" class="status" role="status"></p>
+</section><div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
 <details id="monthlyStudentAttendancePanel" class="section student-monthly-panel">
  <summary>📊 Monthly Student Attendance Report</summary>
  <div class="monthly-report-shell">
@@ -388,6 +410,7 @@ import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,EmailAuthProvider,linkWithCredential,sendEmailVerification,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
+import{initStudentAccountAdmin}from'./student-account-admin.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
 const $=id=>document.getElementById(id),email='alislaharabicacademy@gmail.com';
 const defaults={"muallama":{"name":"Muallama","duration":"1 Year","description":"Foundational Islamic learning programme.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"muballigha":{"name":"Muballigha","duration":"2 Years","description":"Two-year programme for continued Islamic study.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"alima":{"name":"Alima","duration":"3 Years","description":"Extended programme for deeper Islamic learning.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"boys-hifz":{"name":"Boys Hifz Class","duration":"To be announced","description":"Qur'an memorisation (Hifz) programme for boys. Full course details will be published soon.","eligibility":"Eligibility criteria will be announced by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"childrens-quran-maktab":{"name":"Children's Qur'an Maktab","duration":"","description":"","eligibility":"","kitabs":[],"syllabus":"","fees":"","timings":""},"tajweed-for-girls":{"name":"Tajweed For Girls","duration":"","description":"","eligibility":"","kitabs":[],"syllabus":"","fees":"","timings":""}};
@@ -396,6 +419,7 @@ if(!config.apiKey||!config.projectId||!config.appId){$('setup').textContent='Set
 try{
 const app=initializeApp(config),auth=getAuth(app),db=getFirestore(app);
  const examAdmin=initExamAdmin({db,auth});
+ const studentAccounts=initStudentAccountAdmin({db});
 $('setup').classList.add('hidden');$('login').classList.remove('hidden');
 $('signIn').onclick=async()=>{try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){$('setup').classList.remove('hidden');$('setup').textContent='Login failed: '+e.message}};
 $('passwordLoginForm').onsubmit=async e=>{e.preventDefault();const address=$('adminEmail').value.trim().toLowerCase();if(address!==email){$('passwordLoginStatus').textContent='Only the authorized admin email can sign in.';return}const button=$('passwordSignIn');button.disabled=true;$('passwordLoginStatus').textContent='Signing in securely…';try{await signInWithEmailAndPassword(auth,address,$('adminPassword').value);$('adminPassword').value='';$('passwordLoginStatus').textContent='✓ Password accepted. Checking admin access…';if(!auth.currentUser.emailVerified)$('passwordLoginStatus').textContent='Password accepted. Please verify your email using the button above before entering the dashboard.'}catch(err){$('passwordLoginStatus').textContent='Login failed ('+err.code+'). Please check your email and password.'}finally{button.disabled=false}};
@@ -618,7 +642,7 @@ for(const kind of ['teacher','student']){
      await setDoc(doc(db,'students',id),data);
     }
    }else await setDoc(doc(db,plural,id),data);
-   if(kind==='student')await syncAllTeacherRosters();
+   if(kind==='student'){await studentAccounts.syncStudent(id,data);await syncAllTeacherRosters();}
    resetRecord(kind);$(kind+'Status').textContent='✓ Saved. Date of birth and Student ID are used only for private result lookup.';await renderRecords(plural);
   }catch(err){$(kind+'Status').textContent='Save failed: '+err.message}
  };
@@ -628,11 +652,15 @@ if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students
 if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';if(kind==='students'){updateStudentBatchVisibility();}$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{
  if(!confirm('Delete this '+singular+' record?'))return;
  try{
-  if(kind==='students'&&data.dob&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(data.examid||d.id)){
-   const key=await examStudentLookupKey(data.examid||d.id,data.dob),batch=writeBatch(db);
-   batch.delete(doc(db,kind,d.id));
-   batch.set(doc(db,'examResultLookups',key),{enabled:false,updatedAt:new Date().toISOString()},{merge:true});
-   await batch.commit();
+  if(kind==='students'){
+   const batch=writeBatch(db);
+   batch.delete(doc(db,'students',d.id));
+   batch.delete(doc(db,'studentAccess',d.id));
+   if(data.dob&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(data.examid||d.id)){
+    const key=await examStudentLookupKey(data.examid||d.id,data.dob);
+    batch.set(doc(db,'examResultLookups',key),{enabled:false,updatedAt:new Date().toISOString()},{merge:true});
+   }
+   await batch.commit();studentAccounts.close();
   }else await deleteDoc(doc(db,kind,d.id));
   if(kind==='students')await syncAllTeacherRosters();
   await renderRecords(kind);
@@ -640,6 +668,10 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
  };
  if(kind==='students'){
   el.querySelector('[data-fees]').onclick=()=>openFees(d);
+  const manage=document.createElement('button');manage.type='button';manage.className='secondary';
+  manage.textContent='🔐 Student Account Login';
+  manage.onclick=()=>studentAccounts.open({id:d.id,...data});
+  el.append(manage);
   const info=document.createElement('p');info.className='section-note';
   info.textContent='Confidential Student ID (for exam checking): '+(data.examid||'Not issued. Edit and save this student to generate an Exam Student ID.');
   el.insertBefore(info,el.querySelector('button'));
@@ -1859,7 +1891,7 @@ async function adminEncryptedBackupDownload(){
  if(!$('adminBackupUnderstand').checked){status.textContent='Please confirm that you will store the password safely.';return}
  if(!globalThis.crypto?.subtle||!globalThis.crypto?.getRandomValues){status.textContent='Encryption is unavailable on this browser. Open the secure HTTPS website in Chrome.';return}
  button.disabled=true;
- const top=['courses','classSubjects','students','teachers','teacherAccess','teacherRosters','applications','teacherInvites','teacherSubmissions','teacherSalaryEvents','examResults','examResultLookups'];
+ const top=['courses','classSubjects','students','teachers','teacherAccess','teacherRosters','applications','teacherInvites','teacherSubmissions','teacherSalaryEvents','examResults','examResultLookups','studentAccess'];
  const documents=[],teacherIds=new Set();
  try{
   for(const name of top){
