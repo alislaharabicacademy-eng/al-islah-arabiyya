@@ -1661,6 +1661,67 @@ async function renderAllTeacherSalaryYear(){
 $('viewAllTeacherSalaryMonth').onclick=renderAllTeacherSalaryMonth;
 $('viewTeacherSalaryYear').onclick=renderAllTeacherSalaryYear;
 
+
+let teacherSalaryPdfImages=null;
+async function teacherSalaryPdfLogo(){
+ if(teacherSalaryPdfImages)return teacherSalaryPdfImages;
+ const img=$('receiptLogoPreload');
+ if(!img)throw Error('Official Madrasa logo is unavailable.');
+ if(!img.complete)await new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>reject(Error('Logo loading timed out')),9000);
+  img.addEventListener('load',()=>{clearTimeout(timer);resolve()},{once:true});
+  img.addEventListener('error',()=>{clearTimeout(timer);reject(Error('Logo load failed'));},{once:true});
+ });
+ if(!img.naturalWidth)throw Error('Official Madrasa logo could not be loaded.');
+ const png=(alpha)=>{
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=500;
+  const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas not supported');
+  ctx.clearRect(0,0,500,500);ctx.save();ctx.beginPath();ctx.arc(250,250,250,0,Math.PI*2);ctx.clip();
+  ctx.globalAlpha=alpha;
+  const scale=Math.min(500/img.naturalWidth,500/img.naturalHeight);
+  const w=img.naturalWidth*scale,h=img.naturalHeight*scale;
+  ctx.drawImage(img,(500-w)/2,(500-h)/2,w,h);ctx.restore();
+  return canvas.toDataURL('image/png');
+ };
+ teacherSalaryPdfImages={logo:png(1),watermark:png(.055)};
+ return teacherSalaryPdfImages;
+}
+function teacherSalaryPdfFit(pdf,value,w,size=8){
+ let str=String(value??'—');
+ pdf.setFont('helvetica','normal');pdf.setFontSize(size);
+ if(pdf.getTextWidth(str)<=w)return str;
+ while(str.length>1&&pdf.getTextWidth(str+'...')>w)str=str.slice(0,-1);
+ return str+'...';
+}
+function teacherSalaryPdfTheme(pdf,images,title,period,pageNum){
+ const g=[14,72,48],gold=[190,163,92];
+ pdf.setFillColor(255,255,255);pdf.rect(0,0,297,210,'F');
+ pdf.setFillColor(...g);pdf.rect(0,0,297,15,'F');
+ pdf.setFillColor(...gold);pdf.rect(0,15,297,1.1,'F');
+ pdf.setDrawColor(...gold);pdf.roundedRect(9,20,279,181,3,3,'S');
+ pdf.addImage(images.watermark,'PNG',103,57,91,91,'salaryWatermark');
+ pdf.addImage(images.logo,'PNG',15,23,23,23,'salaryHeaderLogo');
+ pdf.setFont('helvetica','bold');pdf.setFontSize(16);pdf.setTextColor(...g);
+ pdf.text('MADRASA AL ISLAHUL ARABIYA',43,30);
+ pdf.setFontSize(12);pdf.text(title,43,39);
+ pdf.setFont('helvetica','normal');pdf.setFontSize(9);pdf.text(period+'  |  CONFIDENTIAL ADMIN REPORT',43,46);
+ pdf.setDrawColor(...gold);pdf.line(14,51,283,51);
+ pdf.setFontSize(7);pdf.setTextColor(85,106,94);
+ pdf.text('Payment confirmed only when the saved salary entry is marked PAID.',15,199);
+ pdf.text('Page '+pageNum,282,199,{align:'right'});
+}
+function teacherSalaryPdfStats(pdf,values){
+ const w=269/values.length;
+ values.forEach(([label,value],i)=>{
+  const x=14+i*w;
+  pdf.setFillColor(231,243,232);pdf.roundedRect(x,56,w-3,19,2,2,'F');
+  pdf.setFont('helvetica','normal');pdf.setFontSize(7.5);pdf.setTextColor(87,105,93);
+  pdf.text(label,x+3,62);
+  pdf.setFont('helvetica','bold');pdf.setFontSize(12);pdf.setTextColor(17,73,44);
+  pdf.text(teacherSalaryPdfFit(pdf,value,w-7,12),x+3,70);
+ });
+}
+
 $('teacherMonth').onchange=()=>{if(selectedTeacher)renderTeacherPayroll()};
 async function renderTeacherPayroll(){
  if(!selectedTeacher)return;const t=selectedTeacher,month=$('teacherMonth').value,root=$('teacherPayroll');root.textContent='Loading attendance and salary…';
