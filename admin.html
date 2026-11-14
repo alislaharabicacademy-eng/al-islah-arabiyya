@@ -241,7 +241,8 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
     <div class="monthly-report-actions">
      <button type="button" id="loadMonthlyStudentAttendance">⌕ View Monthly Report</button>
      <button type="button" class="secondary" id="downloadMonthlyStudentExcel" disabled>📗 Excel (.xlsx)</button>
-     <button type="button" class="secondary" id="downloadMonthlyStudentPDF" disabled>📕 Class Summary PDF</button>
+     <button type="button" id="downloadMonthlyStudentCombinedPDF" disabled>📕 All Students – One PDF</button>
+     <button type="button" class="secondary" id="downloadMonthlyStudentPDF" disabled>📄 Class Summary PDF</button>
      <button type="button" class="secondary" id="downloadMonthlyStudentIndividualPDFs" disabled>📕 Separate Student PDFs (.zip)</button>
      <button type="button" id="downloadMonthlyStudentBoth" disabled>⬇ Excel + Student PDFs (.zip)</button>
      <button type="button" class="secondary" id="downloadMonthlyStudentAttendance" disabled>CSV</button>
@@ -464,7 +465,7 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
 $('studentAttendanceDate').value=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});$('loadStudentAttendance').onclick=async()=>{const day=$('studentAttendanceDate').value,root=$('studentAttendanceReport');root.textContent='Loading attendance…';try{const teachers=await getDocs(collection(db,'teachers'));root.replaceChildren();for(const t of teachers.docs){const snap=await getDoc(doc(db,'teacherAttendance',t.id,'days',day));if(!snap.exists())continue;for(const [subject,record] of Object.entries(snap.data().subjects||{})){const box=document.createElement('div');box.className='record';appendInfo(box,'Teacher',t.data().name);appendInfo(box,'Subject',subject.split('__').pop());appendInfo(box,'Class',record.course||'—');if(record.course==='maktab')appendInfo(box,'Batch',record.batch||'—');for(const s of Object.values(record.students||{}))appendInfo(box,s.name||'Student',s.status||'Not marked');const reset=document.createElement('button');reset.type='button';reset.textContent='↺ Reset this subject attendance';reset.onclick=async()=>{if(!confirm('Reset '+subject+' for '+(t.data().name||'teacher')+' on '+day+'?\nThe old attendance will be archived in this date record. The teacher can submit again.'))return;reset.disabled=true;try{await updateDoc(doc(db,'teacherAttendance',t.id,'days',day),{['subjects.'+subject]:deleteField(),resetHistory:arrayUnion({subject,record,resetAt:new Date().toISOString(),resetBy:auth.currentUser.email})});alert('Attendance reset. Teacher can refresh and submit again.');$('loadStudentAttendance').click()}catch(e){alert('Reset failed: '+e.message);reset.disabled=false}};box.append(reset);root.append(box)}}if(!root.children.length)root.textContent='No subject-wise student attendance found for this date.'}catch(e){root.textContent='Could not load attendance: '+e.message}};
 
 function setMonthlyExportButtonsDisabled(disabled){
- for(const id of ['downloadMonthlyStudentAttendance','downloadMonthlyStudentExcel','downloadMonthlyStudentPDF','downloadMonthlyStudentIndividualPDFs','downloadMonthlyStudentBoth']){
+ for(const id of ['downloadMonthlyStudentAttendance','downloadMonthlyStudentExcel','downloadMonthlyStudentCombinedPDF','downloadMonthlyStudentPDF','downloadMonthlyStudentIndividualPDFs','downloadMonthlyStudentBoth']){
   $(id).disabled=disabled;
  }
 }
@@ -776,7 +777,7 @@ async function monthlyExcelBlob(){
  const bytes=XLSX.write(workbook,{bookType:'xlsx',type:'array',compression:true});
  return new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
-async function monthlyPdfBlob(individualStudent=null){
+async function monthlyPdfBlob(individualStudent=null,combineIndividualPages=false){
  await ensureMonthlyExportLibrary('pdf');
  // Draw text and all UI decorations as native PDF paths: pages remain razor-sharp
  // when zoomed or printed. Only the academy's existing PNG logo is embedded as an image.
@@ -953,15 +954,24 @@ async function monthlyPdfBlob(individualStudent=null){
   }
   return h;
  };
+ let combinedStudentNumber=0;
+ const combinedStudentTotal=combineIndividualPages?groups.reduce((total,group)=>total+group.records.length,0):0;
  for(const group of groups){
-  // Every student PDF includes ONLY the requested student, on one branded vector PDF page.
-  if(individualStudent){
-   page(group,'individual');heading();
-   tableRow(individualStudent,1,104);
-   dateBlock(individualStudent,1,120);
+  // A single multi-page PDF: Student 1, Student 2, Student 3... one student per page.
+  // Also used for the individual student file (which contains exactly one student).
+  if(individualStudent||combineIndividualPages){
+   for(const student of group.records){
+    combinedStudentNumber++;
+    page(group,'individual');heading();
+    if(combineIndividualPages){
+     print('STUDENT '+combinedStudentNumber+' OF '+combinedStudentTotal,231,89,8,C.green,true);
+    }
+    tableRow(student,1,104);
+    dateBlock(student,1,120);
+   }
    continue;
   }
-  // Class summary export remains available as a separate choice.
+  // Class summary PDF remains available as an independent export.
   const students=group.records;
   for(let i=0;i<students.length;i+=9){
    page(group,'summary');heading();
@@ -1045,12 +1055,14 @@ async function monthlyRunExport(buttonId,kind){
  if(!monthlyAttendanceExport.length)return;
  const status=$('monthlyStudentAttendanceStatus'),button=$(buttonId),filename=monthlyExportName();
  button.disabled=true;
- status.textContent='Preparing '+(kind==='students'?'separate student PDFs':kind==='zip'?'Excel + individual student PDFs':kind==='pdf'?'class summary PDF':kind.toUpperCase())+'…';
+ status.textContent='Preparing '+(kind==='combined'?'one PDF with every student on a separate page':kind==='students'?'separate student PDFs':kind==='zip'?'Excel + individual student PDFs':kind==='pdf'?'class summary PDF':kind.toUpperCase())+'…';
  try{
   if(kind==='xlsx'){
    monthlyDownloadBlob(await monthlyExcelBlob(),filename+'.xlsx');
   }else if(kind==='pdf'){
    monthlyDownloadBlob(await monthlyPdfBlob(),filename+'_Class_Summary.pdf');
+  }else if(kind==='combined'){
+   monthlyDownloadBlob(await monthlyPdfBlob(null,true),filename+'_All_Students_One_File.pdf');
   }else if(kind==='students'){
    monthlyDownloadBlob(await monthlyStudentPdfsZip(false),filename+'_Individual_Student_PDFs.zip');
   }else if(kind==='zip'){
@@ -1058,6 +1070,8 @@ async function monthlyRunExport(buttonId,kind){
   }
   status.textContent=kind==='students'||kind==='zip'
    ?'✓ Downloaded '+monthlyAttendanceExport.length+' separate student PDFs'+(kind==='zip'?' and one Excel workbook':'')+' in a ZIP file. Extract ZIP to open each student PDF.'
+   :kind==='combined'
+   ?'✓ All '+monthlyAttendanceExport.length+' students included in one PDF: Student 1, Student 2, Student 3… each on a separate page.'
    :'✓ '+(kind==='pdf'?'Class Summary PDF':kind.toUpperCase())+' downloaded. Check your Downloads folder.';
  }catch(err){
   console.error('Monthly attendance '+kind+' download failed:',err);
@@ -1065,6 +1079,7 @@ async function monthlyRunExport(buttonId,kind){
  }finally{button.disabled=!monthlyAttendanceExport.length}
 }
 $('downloadMonthlyStudentExcel').onclick=()=>monthlyRunExport('downloadMonthlyStudentExcel','xlsx');
+$('downloadMonthlyStudentCombinedPDF').onclick=()=>monthlyRunExport('downloadMonthlyStudentCombinedPDF','combined');
 $('downloadMonthlyStudentPDF').onclick=()=>monthlyRunExport('downloadMonthlyStudentPDF','pdf');
 $('downloadMonthlyStudentIndividualPDFs').onclick=()=>monthlyRunExport('downloadMonthlyStudentIndividualPDFs','students');
 $('downloadMonthlyStudentBoth').onclick=()=>monthlyRunExport('downloadMonthlyStudentBoth','zip');
