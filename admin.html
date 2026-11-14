@@ -574,12 +574,13 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
    <div class="monthly-report-footer"><span>☪</span> Faith · Learning · Excellence</div>
   </div>
  </div>
-</details><section class="section" id="studentFeesPanel"><h3>💳 Student Monthly Fee Ledger · 12 Months</h3><p class="section-note">Select a student using “Fees / Receipt” in the list. Monthly fee is taken from Course Details. Mark paid only after receiving payment.</p><div class="fields"><label>Selected Student<input id="feeStudentName" readonly placeholder="Select a student below"></label><label>Fee Year<select id="feeYear"></select></label></div><div id="feeSummary" class="stats" style="margin:15px 0"></div><div id="feeMonths"></div><p id="feeStatus" class="status" role="status"></p></section></div><div id="tab-applications" class="tabpage hidden"><h3>New Student Applications</h3><div class="filterbar"><label for="applicationFilter">📩 Filter Applications by Course</label><select id="applicationFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option></select><span id="applicationFilterCount" class="badge">Loading…</span></div><p class="section-note">Applications submitted from the admission form will appear here after Firestore submission is configured.</p><button id="refreshApplications">↻ Refresh Applications</button><p id="applicationStatus" role="status"></p><div class="stats"><span class="stat" id="applicationCount">Applications: —</span></div><div id="applicationList"></div></div></div></main><footer>© Madrasa Al Islahul Arabiya · Secure Course Management</footer><script type="module">
+</details><section class="section" id="studentFeesPanel"><h3>💳 Student Monthly Fee Ledger · 12 Months</h3><p class="section-note">Select a student using “Fees / Receipt” in the list. Monthly fee is taken from Course Details. Mark paid only after receiving payment.</p><div class="fields"><label>Selected Student<input id="feeStudentName" readonly placeholder="Select a student below"></label><label>Fee Year<select id="feeYear"></select></label></div><div id="feeSummary" class="stats" style="margin:15px 0"></div><div id="feeMonths"></div><p id="feeStatus" class="status" role="status"></p><div class="actions"><button type="button" class="secondary" id="syncStudentFeeAccounts">🔄 Sync Fee History to Student Logins</button></div><p id="feeSyncStatus" class="section-note" aria-live="polite">Existing fee records can be published privately to approved student/guardian accounts using this button. Never share fee details publicly.</p></section></div><div id="tab-applications" class="tabpage hidden"><h3>New Student Applications</h3><div class="filterbar"><label for="applicationFilter">📩 Filter Applications by Course</label><select id="applicationFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option></select><span id="applicationFilterCount" class="badge">Loading…</span></div><p class="section-note">Applications submitted from the admission form will appear here after Firestore submission is configured.</p><button id="refreshApplications">↻ Refresh Applications</button><p id="applicationStatus" role="status"></p><div class="stats"><span class="stat" id="applicationCount">Applications: —</span></div><div id="applicationList"></div></div></div></main><footer>© Madrasa Al Islahul Arabiya · Secure Course Management</footer><script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,EmailAuthProvider,linkWithCredential,sendEmailVerification,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
 import{uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse}from'./admission-course-utils.js';
+import{validFeeLedger}from'./fee-ledger-utils.js';
 import{initStudentAccountAdmin}from'./student-account-admin.js';
 import{maybePromoteStudent}from'./student-promotion.js';
 import{initCompetitionCertificateAdmin}from'./competition-certificates.js';
@@ -1709,7 +1710,53 @@ $('downloadMonthlyStudentBoth').onclick=()=>monthlyRunExport('downloadMonthlyStu
 
 async function openFees(student){if(!active)return;feeStudent=student;const s=student.data();$('feeStudentName').value=s.name||student.id;feeCourse=courseKey(s.course);$('feeStatus').textContent='Loading fees…';try{const course=await getDoc(doc(db,'courses',feeCourse));feeRate=Number(course.exists()?course.data().monthlyFee:0)||0;const record=await getDoc(doc(db,'students',student.id));feeLedger=record.data()?.feeLedger||{};renderFeeMonths();$('studentFeesPanel').scrollIntoView({behavior:'smooth'});}catch(e){$('feeStatus').textContent='Unable to load fee records: '+e.message}}
 function renderFeeMonths(){const year=feeYear.value,records=feeLedger[year]||{},now=new Date(),currentYear=now.getFullYear(),currentMonth=now.getMonth();let paid=0,pending=0,collected=0;const root=$('feeMonths');root.replaceChildren();const table=document.createElement('div');table.className='fields';for(let i=0;i<12;i++){const entry=records[String(i+1)]||{},isPaid=entry.status==='Paid',due=(Number(year)<currentYear)||(Number(year)===currentYear&&i<=currentMonth);if(isPaid){paid++;collected+=Number(entry.amount)||0}else if(due)pending++;const box=document.createElement('div');box.className='record';box.innerHTML='<strong>'+monthNames[i]+' '+year+'</strong><p>Monthly fee: ₹'+feeRate.toLocaleString('en-IN')+'</p><p>Status: <strong>'+ (isPaid?'✅ Paid':'⏳ '+(due?'Pending':'Not due'))+'</strong></p>'+(isPaid?'<p>Received: ₹'+Number(entry.amount||0).toLocaleString('en-IN')+' · '+safe(entry.paidAt?.slice(0,10)||'')+'</p>':'')+'<button type="button">'+(isPaid?'↩ Undo Paid':'✓ Mark Paid')+'</button>'+(isPaid?'<button type="button" class="secondary">📄 PDF Receipt</button>':'');const btns=box.querySelectorAll('button');btns[0].onclick=()=>setFeeMonth(i+1,!isPaid);if(isPaid)btns[1].onclick=()=>{alert('PDF Receipt button pressed. Generating your PDF now.');Promise.resolve().then(()=>receiptPdf(i+1,entry)).catch(err=>alert('PDF error: '+err.message))};table.append(box)}root.append(table);$('feeSummary').innerHTML='<span class="stat">Paid: '+paid+'/12 months</span><span class="stat">Pending: '+pending+' months</span><span class="stat">Collected: ₹'+collected.toLocaleString('en-IN')+'</span><span class="stat">Pending amount: ₹'+(pending*feeRate).toLocaleString('en-IN')+'</span>';$('feeStatus').textContent=feeRate>0?'Fee rate loaded from Course Details.':'⚠ Monthly fee is not set for this course. Set it in Course Details first.'}
-async function setFeeMonth(month,paid){if(!active||!feeStudent)return;if(!feeRate){alert('Set the monthly tuition fee in Course Details first.');return}if(!confirm((paid?'Confirm payment received for ':'Remove paid status for ')+monthNames[month-1]+' '+feeYear.value+'?'))return;const year=feeYear.value;const ledger=structuredClone(feeLedger);ledger[year]??={};if(paid)ledger[year][String(month)]={status:'Paid',amount:feeRate,paidAt:new Date().toISOString(),receiptId:'MIA-'+year+'-'+feeStudent.id.slice(0,8).toUpperCase()+'-'+String(month).padStart(2,'0')};else delete ledger[year][String(month)];$('feeStatus').textContent='Saving payment…';try{await setDoc(doc(db,'students',feeStudent.id),{feeLedger:ledger},{merge:true});feeLedger=ledger;renderFeeMonths();$('feeStatus').textContent='✓ Payment record saved. Use PDF Receipt to download and share.'}catch(e){$('feeStatus').textContent='Payment save failed: '+e.message}}
+async function setFeeMonth(month,paid){if(!active||!feeStudent)return;if(!feeRate){alert('Set the monthly tuition fee in Course Details first.');return}if(!confirm((paid?'Confirm payment received for ':'Remove paid status for ')+monthNames[month-1]+' '+feeYear.value+'?'))return;const year=feeYear.value;const ledger=structuredClone(feeLedger);ledger[year]??={};if(paid)ledger[year][String(month)]={status:'Paid',amount:feeRate,paidAt:new Date().toISOString(),receiptId:'MIA-'+year+'-'+feeStudent.id.slice(0,8).toUpperCase()+'-'+String(month).padStart(2,'0')};else delete ledger[year][String(month)];$('feeStatus').textContent='Saving payment…';try{
+ const studentRef=doc(db,'students',feeStudent.id),accessRef=doc(db,'studentAccess',feeStudent.id);
+ const access=await getDoc(accessRef);
+ const batch=writeBatch(db);
+ batch.set(studentRef,{feeLedger:ledger},{merge:true});
+ if(access.exists())batch.set(accessRef,{
+  feeLedger:validFeeLedger(ledger),feeMonthlyRate:feeRate,
+  feeEnrollmentDate:String(feeStudent.data().approvedAt||feeStudent.data().enrollmentDate||feeStudent.data().admittedAt||'').slice(0,24),
+  feeLastUpdatedAt:new Date().toISOString()
+ },{merge:true});
+ await batch.commit();
+ feeLedger=ledger;renderFeeMonths();
+ $('feeStatus').textContent='✓ Payment saved'+(access.exists()?' and synced to the approved Student Dashboard.':'. Approve Student Account Login to show it privately.')+' Use PDF Receipt to download and share.';
+}catch(e){$('feeStatus').textContent='Payment save failed: '+e.message}}
+// Backfill historic payments into already-approved guardian/student accounts.
+// StudentAccess permissions already restrict reading to the matching verified email.
+$('syncStudentFeeAccounts').onclick=async()=>{
+ if(!active)return;
+ const btn=$('syncStudentFeeAccounts'),status=$('feeSyncStatus');
+ btn.disabled=true;status.textContent='Reading Academy fee registers securely…';
+ try{
+  const [students,access,courses]=await Promise.all([
+   getDocs(collection(db,'students')),getDocs(collection(db,'studentAccess')),getDocs(collection(db,'courses'))
+  ]);
+  const grants=new Set(access.docs.map(d=>d.id));
+  const rates=new Map(courses.docs.map(d=>[d.id,Math.max(0,Number(d.data().monthlyFee)||0)]));
+  const updates=students.docs.filter(d=>grants.has(d.id));
+  let count=0;
+  for(let offset=0;offset<updates.length;offset+=300){
+   const batch=writeBatch(db);
+   for(const d of updates.slice(offset,offset+300)){
+    const student=d.data(),course=courseKey(student.course);
+    batch.set(doc(db,'studentAccess',d.id),{
+     feeLedger:validFeeLedger(student.feeLedger),
+     feeMonthlyRate:rates.get(course)||0,
+     feeEnrollmentDate:String(student.approvedAt||student.enrollmentDate||student.admittedAt||'').slice(0,24),
+     feeLastUpdatedAt:new Date().toISOString()
+    },{merge:true});
+    count++;
+   }
+   await batch.commit();
+  }
+  status.textContent='✓ Historic fee details securely synced for '+count+' approved student/guardian account(s). Students can refresh their dashboard.';
+ }catch(err){status.textContent='Fee sync failed: '+err.message}
+ finally{btn.disabled=false}
+};
+
 async function ensurePdfLibrary(){
  if(window.jspdf?.jsPDF)return;
  const sources=['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js','https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js'];
