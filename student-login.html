@@ -133,6 +133,7 @@ import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,collection,doc,getDoc,getDocs,query,where,limit}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{photoAvatar}from'./profile-photo.js';
+import{createCompetitionCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
 import{normalizeStudentCode,validateStudentDOB,matchStudentDobVerifier}from'./student-dob-verifier.js';
 const $=id=>document.getElementById(id);
 const identityCard=$('studentIdentityCard'),identityStatus=$('studentIdentityStatus');
@@ -244,6 +245,28 @@ async function loadPrivateDashboard(user,token){
     row.append(name,info,score,action);card.append(row);count++;
    }
    if(!count){const p=document.createElement('p');p.textContent='No published examination results yet.';card.append(p)}
+   const history=Array.isArray(access.promotionHistory)?access.promotionHistory:[];
+   if(history.length){
+    const promoHeading=document.createElement('h4');promoHeading.textContent='🎓 My Academic Promotions';promoHeading.style.marginTop='22px';card.append(promoHeading);
+    for(const h of history){const row=document.createElement('p');row.textContent=String(h.fromCourse||'')+' → '+String(h.toCourse||'')+' · '+String(h.completedAcademicYear||'');card.append(row)}
+   }
+   const certificates=Array.isArray(access.competitionCertificates)?access.competitionCertificates:[];
+   const certHeading=document.createElement('h4');certHeading.textContent='🏆 My Competition & Participation Certificates';certHeading.style.marginTop='22px';card.append(certHeading);
+   if(!certificates.length){const empty=document.createElement('p');empty.textContent='No competition certificates issued yet.';card.append(empty)}
+   else for(const cert of certificates){
+    if(!/^COMP-[A-F0-9]{20}$/.test(String(cert.id||'')))continue;
+    const section=document.createElement('section');section.className='exam-card';
+    const name=document.createElement('h5');name.textContent=String(cert.eventName||'Competition');section.append(name);
+    const detail=document.createElement('p');detail.textContent=String(cert.award||'Participation')+' · '+String(cert.eventDate||'')+' · '+String(cert.id);section.append(detail);
+    const button=document.createElement('button');button.type='button';button.className='btn';button.textContent='📕 Download Competition Certificate PDF';
+    button.onclick=async()=>{
+     button.disabled=true;
+     try{const blob=await createCompetitionCertificatePdf(cert);downloadExamBlob(blob,'Competition_'+safePdfName(cert.studentName)+'_'+cert.id+'.pdf')}
+     catch(err){dashMessage('Certificate PDF could not be generated: '+err.message,true)}
+     finally{button.disabled=false}
+    };
+    section.append(button);card.append(section);
+   }
    target.append(card);visible++;
   }
   // Never retain DOB for longer than the current entry/verification step.

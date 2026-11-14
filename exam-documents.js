@@ -126,6 +126,40 @@ export async function createExamCertificatePdf(record){
  pdf.setFontSize(6.8);pdf.text('Verify at: exam-results.html   |   Reference: '+String(record.id||''),148.5,198,{align:'center'});
  return pdf.output('blob');
 }
+/* Privately issued competition certificates; no public student index. */
+export async function createCompetitionCertificatePdf(certificate){
+ if(!certificate?.id||!certificate?.studentName||!certificate?.eventName||!certificate?.eventDate)throw Error('A complete issued competition certificate is required.');
+ const JS=await readyPdf(),brand=await logoPair();
+ const pdf=new JS({unit:'mm',format:'a4',orientation:'landscape',compress:true});
+ header(pdf,brand,297,210,'COMPETITION & PARTICIPATION CERTIFICATE','Faith • Knowledge • Excellence');
+ const green=[15,72,46],gold=[180,143,66];
+ setColor(pdf,green);
+ const type=String(certificate.award||'Participation');
+ const heading=type==='Participation'?'CERTIFICATE OF PARTICIPATION':'CERTIFICATE OF ACHIEVEMENT';
+ text(pdf,heading,148.5,78,21,{bold:true,align:'center',maxWidth:230});
+ pdf.setDrawColor(...gold);pdf.setLineWidth(.5);pdf.line(76,85,221,85);
+ pdf.setTextColor(88,103,91);text(pdf,'This certificate is respectfully presented to',148.5,98,12,{align:'center'});
+ setColor(pdf,green);text(pdf,String(certificate.studentName),148.5,117,23,{bold:true,align:'center',maxWidth:220});
+ pdf.setDrawColor(...gold);pdf.line(59,123,238,123);
+ pdf.setTextColor(75,99,81);
+ const achievement=type==='Participation'?'for active participation in'
+  :type==='Winner'?'for winning the competition'
+  :type==='Appreciation'?'in appreciation of participation in'
+  :type==='Best Performance'?'for outstanding performance in'
+  :'for securing '+type+' in';
+ text(pdf,achievement,148.5,135,12,{align:'center'});
+ setColor(pdf,green);text(pdf,String(certificate.eventName),148.5,145,16,{bold:true,align:'center',maxWidth:210});
+ text(pdf,'Student ID: '+String(certificate.studentCode||'Not issued')+'   |   Class: '+String(certificate.course||'-'),148.5,156,9,{align:'center'});
+ text(pdf,'Event Date: '+String(certificate.eventDate),148.5,166,9,{align:'center'});
+ pdf.setDrawColor(...gold);pdf.setLineWidth(.35);pdf.line(39,183,90,183);pdf.line(207,183,258,183);
+ pdf.setTextColor(50,73,55);text(pdf,'Date of Issue: '+String(certificate.issuedAt||'').slice(0,10),65,189,8,{align:'center'});
+ text(pdf,'Authorized Signatory',232.5,189,9,{align:'center'});
+ pdf.setFont('helvetica','normal');pdf.setFontSize(8);pdf.setTextColor(94,111,100);
+ pdf.text('Certificate ID: '+String(certificate.id),148.5,194,{align:'center'});
+ pdf.setFontSize(7);
+ pdf.text('Issued by Madrasa Al Islahul Arabiya • Official account record',148.5,199,{align:'center'});
+ return pdf.output('blob');
+}
 export function downloadExamBlob(blob,filename){
  if(!(blob instanceof Blob)||!blob.size)throw Error('The PDF is empty.');
  const url=URL.createObjectURL(blob),a=document.createElement('a');
