@@ -19,6 +19,19 @@ service cloud.firestore {
     // Published website appearance and principal signatory profile.
     // Public read is intentional because official certificate PDFs can be downloaded
     // through unguessable published result links. Only verified Academy admin writes.
+    // Curated rank/name/photo ONLY, after explicit verified-admin selection.
+    // Public visitors can fetch at most one homepage feature document.
+    // When hidden, the app clears public entries and public photo data.
+    match /homepageWinners/{docId} {
+      allow get: if docId == 'current' || isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin() && docId == 'current';
+    }
+    // Ranked result IDs, uploads and guardian permission acknowledgements stay private.
+    match /homepageWinnersAdmin/{docId} {
+      allow read, write: if isAdmin() && docId == 'current';
+    }
+
     match /siteSettings/{settingId} {
       allow get: if settingId == 'public' || isAdmin();
       allow list: if isAdmin();
