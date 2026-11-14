@@ -19,6 +19,53 @@ function lantern(x,y,s=1){
  <path d="M0-27V50 M-18 7H18 M-12 41H12 M-19 11L0-14L19 11 M-17 30L0 49L17 30" fill="none" stroke-width="2.3"/>
  <circle cy="-31" r="5"/><path d="M-8 48L0 64L8 48Z"/></g>`;
 }
+
+function cornerPanel(x,y,mirror=1,scale=1){
+ return `<g transform="translate(${x} ${y}) scale(${mirror*scale} ${scale})" stroke="#F5C861" fill="none" stroke-width="3.6">
+ <path d="M0 8H195Q170 39 141 45Q94 50 84 94Q78 145 8 185V8Z" fill="#33114B" stroke="#E7C268" stroke-width="5"/>
+ <path d="M22 13Q50 40 87 24Q137 8 172 24M14 21Q33 79 17 128Q65 103 72 64Q79 32 114 43Q143 50 143 83Q139 113 109 114Q91 115 92 92Q95 77 108 79"/>
+ <path d="M33 160Q68 116 62 86Q57 63 38 59M85 23Q110 50 103 75M42 109Q72 108 99 126"/>
+ <path d="M38 59Q24 27 45 25Q72 33 60 60Z M62 87Q67 55 91 55Q108 70 89 89Z M93 124Q122 118 127 141Q109 157 93 124Z" fill="#D8A243" stroke="#F8DF9C" stroke-width="2"/>
+ <circle cx="144" cy="39" r="5" fill="#F9D682"/><circle cx="18" cy="153" r="4" fill="#F9D682"/></g>`;
+}
+function sideLattice(x,y,height){
+ let stars='';
+ for(let row=0;row<Math.floor(height/61);row++)for(let col=0;col<2;col++){
+  const xx=x+24+col*46,yy=y+row*61+(col?26:0);
+  stars+=`<path d="M${xx} ${yy-12}l12 12l-12 12l-12-12Z" fill="none" stroke="#DBB769" stroke-width="1.7"/>`;
+ }
+ return `<rect x="${x}" y="${y}" width="105" height="${height}" fill="#064536" stroke="#C99A42" stroke-width="4"/>${stars}`;
+}
+function leafWreath(cx,cy,s=1){
+ let out=`<g transform="translate(${cx} ${cy}) scale(${s})" fill="none" stroke="#E6B455" stroke-width="4">`;
+ for(const side of [-1,1]){
+  out+=`<g transform="scale(${side} 1)"><path d="M45 76Q10 33 16-40" stroke-width="5"/>`;
+  for(let i=0;i<6;i++){
+   const y=62-i*19,x=43-i*4;
+   out+=`<ellipse cx="${x-19}" cy="${y-9}" rx="9" ry="19" transform="rotate(-27 ${x-19} ${y-9})" fill="#E0AB45" stroke-width="2"/>`;
+  }
+  out+='</g>';
+ }
+ return out+'</g>';
+}
+function eventCrescent(cx,cy){
+ return `<g transform="translate(${cx} ${cy})">
+ <circle cx="0" cy="0" r="82" fill="#F6D88B" stroke="#B57F28" stroke-width="7"/>
+ <path d="M42-69A73 73 0 1 0 42 69A64 64 0 1 1 42-69Z" fill="#1D5D44" stroke="#C29346" stroke-width="4"/>
+ <path d="M34-24l7 17 18 2-14 12 5 18-16-9-15 9 5-18-15-12 19-2Z" fill="#D6A74F"/>
+ ${lantern(45,16,.63)}</g>`;
+}
+function participationRosette(cx,cy,label='PARTICIPANT'){
+ let petals='';
+ for(let i=0;i<18;i++)petals+=`<path d="M0-105Q-21-76 0-52Q21-76 0-105Z" fill="${i%2?'#B99036':'#ECD387'}" stroke="#7D274F" stroke-width="2" transform="rotate(${i*20})"/>`;
+ return `<g transform="translate(${cx} ${cy})">${petals}
+ <circle r="61" fill="url(#purple)" stroke="#D8AB50" stroke-width="8"/>
+ <circle r="43" fill="#F7D37A" stroke="#F6E6BA" stroke-width="3"/>
+ ${diamond(0,-14,19)}
+ <path d="M-55 39l-21 93 31-15 19 25 17-76M55 39l21 93-31-15-19 25-17-76" fill="url(#purple)" stroke="#CE9D42" stroke-width="5"/>
+ ${T(0,75,label,16,'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" fill="#FFE7B1"')}</g>`;
+}
+
 function skyline(w,h){
  const y=h-61;let o='<g fill="#DFCBA9" opacity=".54">';
  for(let i=0;i<20;i++){const x=60+i*(w-100)/20,dx=24+(i%4)*9,hi=20+(i%4)*10;
@@ -46,10 +93,12 @@ function frame(w,h){
  <rect x="25" y="25" width="${w-50}" height="${h-50}" rx="10" fill="none" stroke="#DFB65F" stroke-width="3"/>
  <path d="${p}" fill="url(#cream)" stroke="url(#gold)" stroke-width="14"/>
  <path d="${p}" fill="url(#mosaic)" stroke="#FFF2CC" stroke-width="3"/>
+ ${sideLattice(36,235,h-326)}${sideLattice(w-141,235,h-326)}
  ${skyline(w,h)}
- ${flowers(35,34,.65,1)}${flowers(w-35,34,.65,-1)}
- ${flowers(27,h-55,.46,1)}${flowers(w-27,h-55,.46,-1)}
- ${lantern(w*.116,310,a?1:.75)}${lantern(w*.884,310,a?1:.75)}
+ ${cornerPanel(23,22,1,a?.82:.61)}${cornerPanel(w-23,22,-1,a?.82:.61)}
+ ${flowers(24,h-134,.69,1)}${flowers(w-24,h-134,.69,-1)}
+ ${lantern(w*.108,292,a?1:.78)}${lantern(w*.892,292,a?1:.78)}
+ ${diamond(w/2,h-37,10)}
  <rect x="26" y="${h-27}" width="${w-52}" height="9" rx="3" fill="url(#green)" stroke="#C8A058" stroke-width="3"/>`;
 }
 function brand(w,cy=90,s=1){
@@ -60,11 +109,20 @@ function brand(w,cy=90,s=1){
  ${T(x,cy+115*s,'ARABIC ACADEMY',31*s,'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" letter-spacing="8" fill="#0A523C"')}
  ${diamond(x,cy+134*s,7*s)}`;
 }
+
 function banner(w,y,title,small=false){
- const x=w*.17,width=w*.66;
- return `<path d="M${x+33} ${y}H${x+width-33}Q${x+width} ${y} ${x+width} ${y+37}L${x+width+18} ${y+62}L${x+width} ${y+88}Q${x+width} ${y+123} ${x+width-33} ${y+123}H${x+33}Q${x} ${y+123} ${x} ${y+88}L${x-18} ${y+62}L${x} ${y+37}Q${x} ${y} ${x+33} ${y}Z" fill="url(#purple)" stroke="url(#gold)" stroke-width="8"/>
- ${T(w/2,y+73,title,small?37:49,'font-family="Georgia,serif" font-weight="bold" text-anchor="middle" letter-spacing="2" fill="#F9E3A0"')}
- ${diamond(x+56,y+62,11)}${diamond(x+width-56,y+62,11)}`;
+ const x=w*.19,width=w*.62,words=String(title||'');
+ const line1=words==='OFFICIAL EXAM RESULT STATEMENT'?'OFFICIAL EXAM':words.startsWith('CERTIFICATE OF')?'CERTIFICATE OF':words.split(' ').slice(0,2).join(' ');
+ const line2=words.replace(line1,'').trim();
+ const titleSize=small?38:45;
+ return `<g>
+ <path d="M${x+44} ${y}H${x+width-44}Q${x+width-8} ${y} ${x+width} ${y+28}L${x+width+24} ${y+61}L${x+width} ${y+94}Q${x+width-8} ${y+121} ${x+width-44} ${y+121}H${x+44}Q${x+8} ${y+121} ${x} ${y+94}L${x-24} ${y+61}L${x} ${y+28}Q${x+8} ${y} ${x+44} ${y}Z" fill="url(#purple)" stroke="url(#gold)" stroke-width="7"/>
+ <path d="M${x+45} ${y+7}H${x+width-45}M${x+45} ${y+114}H${x+width-45}" stroke="#D9AE5F" stroke-width="1.6"/>
+ ${leafWreath(x+83,y+65,.46)}${leafWreath(x+width-83,y+65,.46)}
+ ${T(w/2,y+49,line1,41,'font-family="Georgia,serif" font-weight="bold" text-anchor="middle" fill="#FFE8AD" letter-spacing="1.6"')}
+ ${T(w/2,y+96,line2,line2.length>23?titleSize-8:titleSize,'font-family="Georgia,serif" font-weight="bold" text-anchor="middle" fill="#FFE8AD" letter-spacing="1.7"')}
+ ${diamond(w/2,y+116,5)}
+ </g>`;
 }
 function studentName(w,y,name,fontSize=79){
  const n=String(name||'Student Name'),size=n.length>36?43:n.length>24?54:n.length>17?62:fontSize;
