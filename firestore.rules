@@ -12,6 +12,7 @@ service cloud.firestore {
     function signedInTeacher(teacherId) {
       return request.auth != null
         && request.auth.token.email_verified == true
+        && request.auth.token.firebase.sign_in_provider == 'google.com'
         && exists(/databases/$(database)/documents/teacherAccess/$(teacherId))
         && get(/databases/$(database)/documents/teacherAccess/$(teacherId)).data.email == request.auth.token.email;
     }
@@ -87,11 +88,14 @@ service cloud.firestore {
     }
 
     match /teacherAccess/{teacherId} {
-      allow get: if isAdmin()
+      // A teacher may discover only the access grants for their own Google
+      // email. The client query MUST constrain email == auth.token.email.
+      allow get, list: if isAdmin()
         || (request.auth != null
           && request.auth.token.email_verified == true
+          && request.auth.token.firebase.sign_in_provider == 'google.com'
           && resource.data.email == request.auth.token.email);
-      allow list, create, update, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /teacherRosters/{teacherId} {

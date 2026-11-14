@@ -83,32 +83,10 @@ footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font
 </section>
 <section class="card" id="studentAuthCard" hidden>
 <h3>✅ Verify Your Approved Account</h3>
-<p class="auth-help">Student ID and Date of Birth received. For your privacy, sign in with the student/guardian email approved by your Madrasa. This protects student data even if someone knows your birth date.</p>
+<p class="auth-help">Student ID and Date of Birth received. Continue with the student/guardian Google account approved by the Madrasa. There is no separate Academy password to create or change.</p>
 <button id="studentIdentityBack" type="button" class="secondary">← Change Student ID / DOB</button>
-<div class="auth-switch" role="tablist" aria-label="Account access options">
-<button type="button" id="authTabSignIn" aria-selected="true" role="tab">🔐 Sign In</button>
-<button type="button" id="authTabCreate" aria-selected="false" role="tab">✨ Create Account</button>
-</div>
-<div id="authSignInPanel">
-<h3>Welcome Back</h3>
-<form id="studentEmailLogin">
-<label>Email Address<input id="studentLoginEmail" type="email" autocomplete="username" maxlength="200" placeholder="Your registered email address" required></label>
-<label>Password<input id="studentLoginPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="Enter your account password"></label>
-<button id="studentEmailSignIn" type="submit">🔐 Sign In to Student Account</button>
-</form>
-<div class="actions"><button id="studentGoogleSignIn" class="google" type="button">🌐 Continue with Google</button>
-<button id="studentResetPassword" class="secondary" type="button">Forgot Password?</button></div>
-</div>
-<div id="authCreatePanel" hidden><h3>Register Your Student Account</h3>
-<p class="auth-help">The Madrasa must approve your email in Student Details before the account can access any student records. Registration alone does not grant access.</p>
-<form id="studentCreateAccountForm">
-<label>Your Approved Email Address<input id="studentRegisterEmail" type="email" autocomplete="email" required maxlength="200"></label>
-<label>Create Password (12+ characters)<input id="studentRegisterPassword" type="password" autocomplete="new-password" minlength="12" required></label>
-<label>Confirm Password<input id="studentRegisterConfirm" type="password" autocomplete="new-password" minlength="12" required></label>
-<button id="studentRegisterButton" type="submit">✨ Create &amp; Verify Account</button>
-</form>
-<div class="actions"><button id="studentGoogleCreate" class="google" type="button">🌐 Use My Google Account Instead</button></div>
-</div>
+<div class="actions"><button id="studentGoogleSignIn" class="google" type="button">🌐 Continue with Google</button></div>
+<p class="auth-help">Only an administrator-approved, verified Google email can open this student dashboard. If your email is not approved, please contact the Madrasa administrator.</p>
 <p class="status" id="studentAuthStatus" role="status" aria-live="polite"></p>
 </section>
 <section class="card" id="emailVerifyNotice" hidden>
@@ -126,11 +104,11 @@ footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font
 <div id="studentAccountCards"></div>
 <button id="studentRefreshDashboard" class="secondary" type="button">↻ Refresh My Results</button>
 </section>
-<p class="note"><strong>Account Security:</strong> Your official ALIA Student ID and Date of Birth are the first login step. A verified, Madrasa-approved email or Google account is also required for private dashboard access. The five-digit Student ID and DOB alone are not secure passwords. To view a public published result without an account, use the <a href="exam-results.html"><strong>Exam Checker</strong></a> with its separate private Exam Access ID or result reference code.</p>
+<p class="note"><strong>Account Security:</strong> Your official ALIA Student ID and Date of Birth are the first login step. A verified, Madrasa-approved Google account is also required for private dashboard access. The Student ID and DOB alone are not secure passwords. The Madrasa website does not create, store, or change student passwords; Google account passwords are managed by Google. To view a public published result without an account, use the <a href="exam-results.html"><strong>Exam Checker</strong></a> with its separate private Exam Access ID or result reference code.</p>
 </main><footer>© Madrasa Al Islahul Arabiya · Faith · Learning · Excellence</footer>
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
-import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,sendEmailVerification,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,collection,doc,getDoc,getDocs,query,where,limit}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{photoAvatar}from'./profile-photo.js';
 import{normalizeStudentCode,validateStudentDOB,matchStudentDobVerifier}from'./student-dob-verifier.js';
@@ -175,13 +153,6 @@ function authMessage(value,error=false){authStatus.className='status'+(error?' e
 function verifyMessage(value,error=false){verifyStatus.className='status'+(error?' error':'');verifyStatus.textContent=value}
 function dashMessage(value,error=false){dashboardStatus.className='status'+(error?' error':'');dashboardStatus.textContent=value}
 function safeEmail(email){return String(email||'').trim().toLowerCase()}
-function showAuthTab(mode){
- const login=mode==='signin';$('authSignInPanel').hidden=!login;$('authCreatePanel').hidden=login;
- $('authTabSignIn').setAttribute('aria-selected',String(login));$('authTabCreate').setAttribute('aria-selected',String(!login));
- authMessage('');
-}
-$('authTabSignIn').onclick=()=>showAuthTab('signin');
-$('authTabCreate').onclick=()=>showAuthTab('create');
 function openAuthenticatedState(user){
  identityCard.hidden=!!identityGate;
  authCard.hidden=true;verification.hidden=!user||user.emailVerified;
@@ -190,9 +161,6 @@ function openAuthenticatedState(user){
 }
 function authError(err){
  switch(err.code){
- case 'auth/invalid-credential':case 'auth/wrong-password':return 'Incorrect email or password. Please try again or reset your password.';
- case 'auth/email-already-in-use':return 'An account already exists for this email. Sign in or reset your password.';
- case 'auth/operation-not-allowed':return 'Email-password registration is not enabled in Firebase. Please contact the Madrasa administrator.';
  case 'auth/unauthorized-domain':return 'This domain must be allowed in Firebase Authentication authorized domains.';
  case 'auth/popup-closed-by-user':return 'Google Sign-In was cancelled.';
  case 'auth/too-many-requests':return 'Too many attempts. Try again later.';
@@ -276,37 +244,6 @@ async function googleSignIn(){
  }
 }
 $('studentGoogleSignIn').onclick=googleSignIn;
-$('studentGoogleCreate').onclick=googleSignIn;
-$('studentEmailLogin').onsubmit=async event=>{
- event.preventDefault();
- const btn=$('studentEmailSignIn');btn.disabled=true;authMessage('Signing into your account…');
- try{
-  await signInWithEmailAndPassword(auth,safeEmail($('studentLoginEmail').value),$('studentLoginPassword').value);
-  $('studentLoginPassword').value='';
- }catch(err){authMessage(authError(err),true)}
- finally{btn.disabled=false}
-};
-$('studentCreateAccountForm').onsubmit=async event=>{
- event.preventDefault();
- const password=$('studentRegisterPassword').value,confirm=$('studentRegisterConfirm').value;
- if(password!==confirm)return authMessage('Passwords do not match.',true);
- if(password.length<12)return authMessage('Use a password of at least 12 characters.',true);
- const btn=$('studentRegisterButton');btn.disabled=true;authMessage('Creating secure Firebase account…');
- try{
-  const result=await createUserWithEmailAndPassword(auth,safeEmail($('studentRegisterEmail').value),password);
-  $('studentRegisterPassword').value='';$('studentRegisterConfirm').value='';
-  await sendEmailVerification(result.user);
-  authMessage('✓ Account created! Verification email sent. Verify it before opening your student dashboard.');
- }catch(err){authMessage(authError(err),true)}
- finally{btn.disabled=false}
-};
-$('studentResetPassword').onclick=async()=>{
- const email=safeEmail($('studentLoginEmail').value);
- if(!email)return authMessage('Enter your email address above, then click Forgot Password.',true);
- authMessage('Sending Firebase password reset email…');
- try{await sendPasswordResetEmail(auth,email);authMessage('If this account exists, Firebase will send a password reset email.')}
- catch(err){authMessage(authError(err),true)}
-};
 $('studentSendVerification').onclick=async()=>{
  if(!auth.currentUser)return;
  const btn=$('studentSendVerification');btn.disabled=true;
@@ -318,7 +255,7 @@ $('studentVerificationRetry').onclick=refreshAuthState;
 async function logout(){
  ++loadingToken;activeUser=null;identityGate=null;
  try{await signOut(auth)}catch(err){dashMessage(authError(err),true)}
- $('studentLoginPassword').value='';$('studentAccountCards').replaceChildren();
+ $('studentAccountCards').replaceChildren();
  showIdentityStep();
 }
 $('studentDashboardSignOut').onclick=logout;$('studentVerifySignOut').onclick=logout;
