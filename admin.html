@@ -723,10 +723,32 @@ $('createCourse').onclick=async()=>{
  try{
   const previous=await getDoc(doc(db,'courses',id));
   if(previous.exists())throw Error('Course already exists in Firebase. Refresh Course Details.');
-  await setDoc(doc(db,'courses',id),{name,published:true,kitabs:[],duration:'',description:'',eligibility:'',syllabus:'',fees:'',timings:''});
-  registerCourseOption(id,{name});courseRegistry.set(id,{name,published:true});
+  // A brand-new published course is added to the *single* admission list
+  // only once at creation. Later edits never resurrect a hidden course.
+  const admissionRef=doc(db,'courses','admission-form-config');
+  const publishedSettings=await getDoc(admissionRef);
+  const legacySettings=publishedSettings.exists()?null:await getDoc(doc(db,'courses','muallama'));
+  const prior=publishedSettings.exists()?publishedSettings.data():(legacySettings?.exists()?legacySettings.data():{});
+  const current=Array.isArray(prior.admissionFormCourses)?prior.admissionFormCourses:defaultAdmissionCourses;
+  const updated=uniqueAdmissionCourses([...current,name]);
+  const batch=writeBatch(db);
+  batch.set(doc(db,'courses',id),{
+   name,published:true,kitabs:[],duration:'',description:'',eligibility:'',
+   syllabus:'',fees:'',timings:''
+  });
+  batch.set(admissionRef,{
+   published:true,admissionFormCourses:updated,
+   admissionFormFields:Array.isArray(prior.admissionFormFields)&&prior.admissionFormFields.length
+    ?prior.admissionFormFields:admissionDefaults,
+   updatedAt:serverTimestamp()
+  },{merge:true});
+  await batch.commit();
+  registerCourseOption(id,{name});
+  courseRegistry.set(id,{name,published:true});
+  $('admissionCourseList').value=updated.join('\n');
+  renderAdmissionCourseRows();
   await openCourseEditor(id);
-  $('status').textContent='✓ '+name+' saved in Course Management. To show it on the public Admission Form, use Course Management → Show on Admission Form (or Admissions → Admission Form Settings). Complete and save course details.';
+  $('status').textContent='✓ '+name+' published across Academy Course Management and Admission Form. Student and Teacher class selectors now include this course. Assign students and teachers separately, and save class subjects for Teacher assignments.';
  }catch(err){$('newCourseStatus').textContent='Could not save course: '+err.message}
  finally{$('createCourse').disabled=false}
 };
