@@ -1240,6 +1240,86 @@ const teacherProfileGroups=[
  ['👩‍🏫 Teaching Experience',[['Total Experience','experience'],['Previous Institution','previousInstitution'],['Subjects Taught','subjects'],['Languages Known','languages'],['Additional Details','notes']]]
 ];
 const teacherProfileLabels=Object.fromEntries(teacherProfileGroups.flatMap(group=>group[1].map(([label,key])=>[key,label])));
+function teacherProfilePdfText(value){
+ if(value===null||value===undefined||value==='')return 'Not provided';
+ if(Array.isArray(value))return value.map(v=>typeof v==='object'?Object.values(v).join(' / '):String(v)).join('; ')||'Not provided';
+ return String(value).replace(/[\u0000-\u001F]/g,' ').replace(/\s+/g,' ').trim()||'Not provided';
+}
+function teacherProfilePdfFileName(name){
+ return 'Teacher_Full_Profile_'+String(name||'Teacher').replace(/[^a-zA-Z0-9_-]+/g,'_').slice(0,65)+'.pdf';
+}
+async function createTeacherProfilePdf(profile,directory={}){
+ await ensurePdfLibrary();
+ const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+ const data={...profile,...directory};
+ data.fullName=directory.name||profile.fullName||profile.name||'Teacher';
+ data.subjects=directory.subject||profile.subjects||'';
+ data.teacherId=directory.id||profile.registrationId||'';
+ const fields=teacherProfileGroups.map(([title,items])=>({title,items}));
+ fields.push({title:'ADMIN DIRECTORY',items:[['Teacher ID','teacherId'],['Monthly Salary (INR)','salary'],['Assigned Subjects','subjects'],['Review Status','reviewStatus'],['Submission Date','submittedAt']]});
+ if(Array.isArray(directory.assignments)&&directory.assignments.length){
+  fields.push({title:'CLASS, BATCH, SUBJECT & TIMING',items:directory.assignments.map((a,i)=>{
+   const key='__assignment'+i;
+   data[key]=[a.course,a.batch,a.subject,a.timing].filter(Boolean).join(' / ');
+   return ['Assignment '+(i+1),key];
+  })});
+ }
+ let page=0,y=0;
+ async function newPage(){
+  if(page)pdf.addPage();
+  page++;
+  await decorateAcademyPdf(pdf);
+  // The existing academy decoration draws a low-opacity transparent logo
+  // in the centre of every page, behind the selectable vector text.
+  pdf.setFont('helvetica','bold');pdf.setFontSize(15);pdf.setTextColor(21,69,45);
+  pdf.text('CONFIDENTIAL TEACHER FULL PROFILE',105,67,{align:'center'});
+  pdf.setFontSize(10);pdf.text(teacherProfilePdfText(data.fullName).slice(0,82),105,74,{align:'center'});
+  pdf.setFontSize(8);pdf.setTextColor(90,112,99);pdf.text('Page '+page,192,276,{align:'right'});
+  y=82;
+ }
+ await newPage();
+ for(const section of fields){
+  if(y>253)await newPage();
+  pdf.setFillColor(226,239,227);pdf.roundedRect(18,y-5,174,9,1.5,1.5,'F');
+  pdf.setFont('helvetica','bold');pdf.setTextColor(17,75,48);pdf.setFontSize(9);
+  pdf.text(section.title,21,y+1);y+=10;
+  for(let i=0;i<section.items.length;i+=2){
+   const cols=section.items.slice(i,i+2).map(([label,key])=>{
+    const value=teacherProfilePdfText(data[key]);
+    pdf.setFont('helvetica','normal');pdf.setFontSize(8.4);
+    return {label,lines:pdf.splitTextToSize(value,76)};
+   });
+   const h=Math.max(15,...cols.map(c=>9+c.lines.length*4));
+   if(y+h>266){
+    await newPage();
+    pdf.setFillColor(226,239,227);pdf.roundedRect(18,y-5,174,9,1.5,1.5,'F');
+    pdf.setFont('helvetica','bold');pdf.setTextColor(17,75,48);pdf.setFontSize(9);
+    pdf.text(section.title+' (CONTINUED)',21,y+1);y+=10;
+   }
+   for(let j=0;j<cols.length;j++){
+    const x=20+j*89,c=cols[j];
+    pdf.setFont('helvetica','bold');pdf.setFontSize(7);pdf.setTextColor(105,122,109);
+    pdf.text(c.label,x,y);
+    pdf.setFont('helvetica','normal');pdf.setFontSize(8.6);pdf.setTextColor(25,60,41);
+    pdf.text(c.lines,x,y+4.5);
+    pdf.setDrawColor(216,229,217);pdf.setLineWidth(.18);pdf.line(x,y+h-2,x+81,y+h-2);
+   }
+   y+=h;
+  }
+  y+=2;
+ }
+ return pdf.output('blob');
+}
+async function downloadTeacherProfilePdf(profile,button,directory={}){
+ if(!active)return;
+ const label=button.textContent;button.disabled=true;button.textContent='Creating PDF…';
+ try{
+  const blob=await createTeacherProfilePdf(profile,directory);
+  monthlyDownloadBlob(blob,teacherProfilePdfFileName(directory.name||profile.fullName||profile.name));
+ }catch(err){alert('Teacher PDF failed: '+err.message)}
+ finally{button.disabled=false;button.textContent=label}
+}
+
 function teacherProfileSection(title,fields,data,editable=false){
  const section=document.createElement('section');section.className='teacher-profile-section';
  const heading=document.createElement('h4');heading.textContent=title;section.append(heading);
