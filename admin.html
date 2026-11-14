@@ -1520,6 +1520,147 @@ $('teacherForm').onsubmit=async e=>{
  }catch(err){$('teacherStatus').textContent='Save failed: '+err.message}
  finally{button.disabled=false}
 };
+
+// Salary register: verified monthly payment records from the private teachers collection.
+const teacherSalaryReportState={mode:'',month:'',year:'',rows:[]};
+const teacherSalaryMonthPicker=$('allTeacherSalaryMonth'),teacherSalaryYearPicker=$('allTeacherSalaryYear');
+teacherSalaryMonthPicker.value=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit'}).format(new Date()).slice(0,7);
+const teacherSalaryCurrentYear=Number(teacherSalaryMonthPicker.value.slice(0,4));
+for(let year=teacherSalaryCurrentYear+1;year>=teacherSalaryCurrentYear-10;year--)teacherSalaryYearPicker.add(new Option(String(year),String(year)));
+teacherSalaryYearPicker.value=String(teacherSalaryCurrentYear);
+function teacherSalaryMoney(value){
+ const n=Number(value)||0;return 'INR '+n.toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2});
+}
+function teacherSalaryMonthStatus(teacher,month){
+ const payroll=teacher.payroll&&typeof teacher.payroll==='object'?teacher.payroll:{},entry=payroll[month];
+ const hasEntry=!!entry&&typeof entry==='object',salary=hasEntry?Number(entry.salary||0):Number(teacher.salary||0);
+ const paid=hasEntry&&entry.paid===true;
+ const date=hasEntry?String(entry.paidDate||''):'';
+ return {hasEntry,paid,salary,amount:paid?salary:0,date,
+  present:hasEntry?Number(entry.present||0):null,
+  absent:hasEntry?Number(entry.absent||0):null,
+  leave:hasEntry?Number(entry.leave||0):null,
+  remarks:hasEntry?String(entry.remarks||''):'',
+  status:paid?'PAID':hasEntry?'PENDING':'NOT RECORDED'};
+}
+async function fetchTeacherSalaryRegister(year){
+ const snapshot=await getDocs(collection(db,'teachers'));
+ return snapshot.docs.map(d=>({id:d.id,...d.data()})).filter(t=>{
+  if(t.recordStatus!=='archived')return true;
+  return Object.keys(t.payroll||{}).some(month=>month.startsWith(String(year)+'-'));
+ }).sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),undefined,{numeric:true}));
+}
+function teacherSalaryCell(row,value,className=''){
+ const el=document.createElement('td');el.textContent=String(value??'—');
+ if(className)el.className=className;row.append(el);return el;
+}
+function teacherSalaryStatusCell(row,status,tip){
+ const cell=document.createElement('td'),badge=document.createElement('span');
+ badge.className=status==='PAID'?'teacher-salary-paid':status==='PENDING'?'teacher-salary-pending':'teacher-salary-empty';
+ badge.textContent=status==='NOT RECORDED'?'—':status==='PAID'?'✓ Paid':'Pending';
+ if(tip)badge.title=tip;
+ cell.append(badge);row.append(cell);return cell;
+}
+function teacherSalarySummary(stats){
+ const root=$('teacherSalaryRegisterSummary');root.replaceChildren();
+ const box=document.createElement('div');box.className='teacher-salary-totals';
+ for(const [label,value] of stats){
+  const card=document.createElement('div');card.className='teacher-salary-stat';
+  const title=document.createElement('small');title.textContent=label;
+  const number=document.createElement('strong');number.textContent=String(value);
+  card.append(title,number);box.append(card);
+ }
+ root.append(box);
+}
+function teacherSalaryTable(headers){
+ const scroll=document.createElement('div');scroll.className='teacher-salary-scroll';
+ const table=document.createElement('table');table.className='teacher-salary-table';
+ const thead=document.createElement('thead'),head=document.createElement('tr');
+ for(const label of headers){const th=document.createElement('th');th.textContent=label;head.append(th)}
+ thead.append(head);table.append(thead);const body=document.createElement('tbody');
+ table.append(body);scroll.append(table);return {scroll,body};
+}
+function clearTeacherSalaryReports(){
+ $('teacherSalaryRegisterReport').replaceChildren();
+ $('teacherSalaryRegisterSummary').replaceChildren();
+ $('teacherSalaryRegisterStatus').textContent='';
+ $('downloadAllTeacherSalaryMonth').disabled=true;
+ $('downloadTeacherSalaryYear').disabled=true;
+ teacherSalaryReportState.mode='';teacherSalaryReportState.rows=[];
+}
+teacherSalaryMonthPicker.onchange=clearTeacherSalaryReports;
+teacherSalaryYearPicker.onchange=clearTeacherSalaryReports;
+async function renderAllTeacherSalaryMonth(){
+ if(!active)return;
+ const month=teacherSalaryMonthPicker.value,status=$('teacherSalaryRegisterStatus'),root=$('teacherSalaryRegisterReport');
+ if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)){status.textContent='Select a valid salary month.';return}
+ const button=$('viewAllTeacherSalaryMonth');button.disabled=true;clearTeacherSalaryReports();
+ status.textContent='Loading all teacher salary records for '+month+'…';
+ try{
+  const teachers=await fetchTeacherSalaryRegister(month.slice(0,4));
+  const rows=teachers.map(t=>({...t,monthly:teacherSalaryMonthStatus(t,month)}));
+  const paid=rows.filter(t=>t.monthly.paid);
+  const expected=rows.reduce((sum,t)=>sum+t.monthly.salary,0),received=paid.reduce((sum,t)=>sum+t.monthly.amount,0);
+  teacherSalarySummary([['Teachers',rows.length],['Salary Paid',paid.length],['Not Paid / Unrecorded',rows.length-paid.length],['Total Paid',teacherSalaryMoney(received)]]);
+  const {scroll,body}=teacherSalaryTable(['No.','Teacher Name','Subjects / Classes','Monthly Salary','Present','Absent','Leave','Payment Date','Status','Remarks']);
+  rows.forEach((t,i)=>{
+   const row=document.createElement('tr'),m=t.monthly;
+   teacherSalaryCell(row,i+1);teacherSalaryCell(row,t.name||'Teacher');
+   teacherSalaryCell(row,t.subject||'Not assigned');
+   teacherSalaryCell(row,teacherSalaryMoney(m.salary));
+   teacherSalaryCell(row,m.present===null?'—':m.present);
+   teacherSalaryCell(row,m.absent===null?'—':m.absent);
+   teacherSalaryCell(row,m.leave===null?'—':m.leave);
+   teacherSalaryCell(row,m.paid?m.date||'Date missing':'—');
+   teacherSalaryStatusCell(row,m.status,m.paid?'Paid '+(m.date||'date not set'):'Not marked as paid');
+   teacherSalaryCell(row,m.remarks||'—');
+   body.append(row);
+  });
+  root.replaceChildren(scroll);
+  const note=document.createElement('p');note.className='teacher-salary-report-note';
+  note.textContent='PAID is shown only when the saved salary record has Salary Paid checked. Unrecorded months are not treated as paid. Total expected salary: '+teacherSalaryMoney(expected)+'.';
+  root.append(note);
+  teacherSalaryReportState.mode='month';teacherSalaryReportState.month=month;teacherSalaryReportState.rows=rows;
+  status.textContent='✓ '+month+': '+paid.length+' of '+rows.length+' teacher(s) marked paid. Total received: '+teacherSalaryMoney(received)+'.';
+  $('downloadAllTeacherSalaryMonth').disabled=!rows.length;
+ }catch(err){root.replaceChildren();status.textContent='Could not load salary register: '+err.message}
+ finally{button.disabled=false}
+}
+async function renderAllTeacherSalaryYear(){
+ if(!active)return;
+ const year=teacherSalaryYearPicker.value,status=$('teacherSalaryRegisterStatus'),root=$('teacherSalaryRegisterReport');
+ const button=$('viewTeacherSalaryYear');button.disabled=true;clearTeacherSalaryReports();
+ status.textContent='Loading January–December salary history for '+year+'…';
+ try{
+  const rows=await fetchTeacherSalaryRegister(year);
+  const paidMonths=rows.reduce((sum,t)=>sum+Array.from({length:12},(_,i)=>teacherSalaryMonthStatus(t,year+'-'+String(i+1).padStart(2,'0'))).filter(m=>m.paid).length,0);
+  const totalPaid=rows.reduce((sum,t)=>sum+Array.from({length:12},(_,i)=>teacherSalaryMonthStatus(t,year+'-'+String(i+1).padStart(2,'0')).amount).reduce((a,b)=>a+b,0),0);
+  teacherSalarySummary([['Year',year],['Teachers',rows.length],['Paid Teacher-Months',paidMonths],['Total Paid This Year',teacherSalaryMoney(totalPaid)]]);
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const {scroll,body}=teacherSalaryTable(['No.','Teacher Name',...months,'Paid Months','Total Paid']);
+  rows.forEach((t,i)=>{
+   const tr=document.createElement('tr');teacherSalaryCell(tr,i+1);teacherSalaryCell(tr,t.name||'Teacher');
+   let paid=0,total=0;
+   for(let j=0;j<12;j++){
+    const val=teacherSalaryMonthStatus(t,year+'-'+String(j+1).padStart(2,'0'));
+    teacherSalaryStatusCell(tr,val.status,val.paid?'Paid '+val.date+' · '+teacherSalaryMoney(val.amount):val.status);
+    if(val.paid){paid++;total+=val.amount}
+   }
+   teacherSalaryCell(tr,paid+' / 12');teacherSalaryCell(tr,teacherSalaryMoney(total));body.append(tr);
+  });
+  root.replaceChildren(scroll);
+  const note=document.createElement('p');note.className='teacher-salary-report-note';
+  note.textContent='✓ Paid = salary payment saved; Pending = attendance/salary entered but not marked paid; — = no saved record. Select any month above to check exact dates, amounts, attendance and remarks.';
+  root.append(note);
+  teacherSalaryReportState.mode='year';teacherSalaryReportState.year=year;teacherSalaryReportState.rows=rows;
+  status.textContent='✓ '+year+': '+paidMonths+' paid teacher-month(s), total '+teacherSalaryMoney(totalPaid)+'.';
+  $('downloadTeacherSalaryYear').disabled=!rows.length;
+ }catch(err){root.replaceChildren();status.textContent='Could not load yearly salary register: '+err.message}
+ finally{button.disabled=false}
+}
+$('viewAllTeacherSalaryMonth').onclick=renderAllTeacherSalaryMonth;
+$('viewTeacherSalaryYear').onclick=renderAllTeacherSalaryYear;
+
 $('teacherMonth').onchange=()=>{if(selectedTeacher)renderTeacherPayroll()};
 async function renderTeacherPayroll(){
  if(!selectedTeacher)return;const t=selectedTeacher,month=$('teacherMonth').value,root=$('teacherPayroll');root.textContent='Loading attendance and salary…';
