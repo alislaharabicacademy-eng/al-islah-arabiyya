@@ -597,6 +597,7 @@ for(const kind of ['teacher','student']){
     const previous=await getDoc(doc(db,'students',id));
     const oldDOB=previous.exists()?String(previous.data().dob||''):'';
     const oldExamId=previous.exists()?String(previous.data().examid||id):'';
+    const oldIdIsUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(oldExamId);
     const newExamId=String(data.examid||'');
     const newDOB=String(data.dob||'');
     if((oldDOB!==newDOB||oldExamId!==newExamId)&&previous.exists()){
@@ -604,7 +605,7 @@ for(const kind of ['teacher','student']){
      const ids=examSnap.docs.filter(d=>d.data().studentId===id&&d.data().published===true).map(d=>d.id);
      const batch=writeBatch(db);
      batch.set(doc(db,'students',id),data);
-     if(oldDOB){
+     if(oldDOB&&oldIdIsUuid){
       const oldHash=await examStudentLookupKey(oldExamId,oldDOB);
       batch.set(doc(db,'examResultLookups',oldHash),{enabled:false,updatedAt:new Date().toISOString()},{merge:true});
      }
@@ -627,7 +628,7 @@ if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students
 if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';if(kind==='students'){updateStudentBatchVisibility();}$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{
  if(!confirm('Delete this '+singular+' record?'))return;
  try{
-  if(kind==='students'&&data.dob){
+  if(kind==='students'&&data.dob&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(data.examid||d.id)){
    const key=await examStudentLookupKey(data.examid||d.id,data.dob),batch=writeBatch(db);
    batch.delete(doc(db,kind,d.id));
    batch.set(doc(db,'examResultLookups',key),{enabled:false,updatedAt:new Date().toISOString()},{merge:true});
