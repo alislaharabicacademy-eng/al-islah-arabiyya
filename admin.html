@@ -332,6 +332,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
     <label>Academic Year *<input id="examResultYear" maxlength="30" placeholder="2026–2027" required></label>
     <label>Pass Percentage Per Subject *<input type="number" id="examResultPass" min="0" max="100" value="40" step="1" required></label>
    </div>
+   <label class="section-note" style="display:flex;align-items:center;gap:10px;margin:14px 0"><input type="checkbox" id="examFinalForPromotion" style="width:auto"> Final / Annual Examination (eligible for automatic promotion after Admin marks the year Completed)</label>
    <p class="section-note" id="examStudentSummary">Choose a student to show their class and batch.</p>
    <h3>📚 Subject Marks</h3>
    <div id="examSubjectRows"></div>
@@ -357,6 +358,18 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
   <p class="status" id="examResultListStatus"></p>
   <div id="examResultList"></div>
  </section>
+ <section class="section" id="competitionCertificatesPanel">
+  <h3>🏆 Competition &amp; Participation Certificates</h3>
+  <p class="section-note">Issue participation, 1st/2nd/3rd prize, winner and appreciation certificates. Certificates are saved privately and can be downloaded from the approved Student Dashboard. Issuing a certificate does not change exam marks or promotion eligibility.</p>
+  <div class="fields">
+   <label>Student *<select id="competitionStudent"><option value="">Select Registered Student</option></select></label>
+   <label>Competition / Event *<input id="competitionEvent" maxlength="120" placeholder="e.g. Qur'an Recitation Competition"></label>
+   <label>Event Date *<input id="competitionDate" type="date"></label>
+   <label>Certificate / Prize Type *<select id="competitionAward"><option>Participation</option><option>Winner</option><option>First Prize</option><option>Second Prize</option><option>Third Prize</option><option>Appreciation</option><option>Best Performance</option></select></label>
+  </div>
+  <div class="actions"><button type="button" id="competitionIssue">🏅 Issue &amp; Download Certificate</button><button type="button" class="secondary" id="competitionRefresh">↻ Refresh Students</button></div>
+  <p class="status" id="competitionStatus" role="status"></p><div id="competitionCertificatesList"></div>
+ </section>
 </div>
 <div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Official Student IDs are issued automatically on Save: <strong>ALIA00001, ALIA00002, ALIA00003…</strong> (ALIA + 5 digits). Existing students can be assigned IDs using the button below. These numbers are permanent, unique roll numbers — not login passwords. For online exam results, the separate private Exam Access ID and Date of Birth are used.</p>
 <div class="actions" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:15px 0"><button id="generateMissingStudentIds" class="secondary" type="button">✨ Generate ALIA IDs for Existing Students</button><span id="studentIdBatchStatus" role="status" class="section-note"></span></div><form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields">
@@ -367,7 +380,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 </label>
 <div class="academy-photo-control" id="studentPhotoPreview"></div>
 <button type="button" class="secondary" id="studentPhotoClear">Remove Student Photo</button>
-<p id="studentPhotoStatus" class="section-note" role="status"></p><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
+<p id="studentPhotoStatus" class="section-note" role="status"></p><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select><small>Select Completed after confirming the whole year is finished. A published, passed Final/Annual exam is also required for auto-promotion.</small></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><div class="record"><strong>🎓 Automatic Year Promotion</strong><p>Muallama (Year 1) → Muballigha (Year 2) → Alima (Year 3). When the current course is marked Completed by Admin and its Final/Annual exam is published with a PASS, the student moves to the next year automatically. Official ALIA Student ID, guardian login, historical results and certificates are preserved. No automatic next stage beyond Alima.</p><button type="button" class="secondary" id="recheckStudentPromotions">↻ Recheck Completed Students for Promotion</button><p class="status" id="studentPromotionStatus"></p></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
 <h3>🔐 Student Account · Approve &amp; Manage Login</h3>
 <p class="section-note">Students first enter their official <strong>ALIA Student ID + Date of Birth</strong>, then confirm with this admin-approved, email-verified Firebase account (email/password or Google). Save the Student Details with a valid ALIA ID and DOB before approving login. The academy never creates or stores student passwords. Reopen Save &amp; Approve Account once for accounts approved before this update.</p>
 <strong id="studentAccountTitle"></strong>
@@ -440,6 +453,8 @@ import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,Ema
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
 import{initStudentAccountAdmin}from'./student-account-admin.js';
+import{maybePromoteStudent}from'./student-promotion.js';
+import{initCompetitionCertificateAdmin}from'./competition-certificates.js';
 import{compressProfilePhoto,photoAvatar,isProfilePhoto}from'./profile-photo.js';
 import{ensureOfficialStudentId,validOfficialStudentId}from'./student-numbering.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
@@ -449,8 +464,9 @@ const config=await fetch('firebase-config.json').then(r=>r.json()).catch(()=>({}
 if(!config.apiKey||!config.projectId||!config.appId){$('setup').textContent='Setup required: configure Firebase Authentication, Firestore, and firebase-config.json. No course changes can be published until setup is complete.'}else{
 try{
 const app=initializeApp(config),auth=getAuth(app),db=getFirestore(app);
- const examAdmin=initExamAdmin({db,auth});
+ const examAdmin=initExamAdmin({db,auth,onPromotion:syncAllTeacherRosters});
  const studentAccounts=initStudentAccountAdmin({db});
+ const competitionAdmin=initCompetitionCertificateAdmin({db});
 $('setup').classList.add('hidden');$('login').classList.remove('hidden');
 $('signIn').onclick=async()=>{try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){$('setup').classList.remove('hidden');$('setup').textContent='Login failed: '+e.message}};
 $('passwordLoginForm').onsubmit=async e=>{e.preventDefault();const address=$('adminEmail').value.trim().toLowerCase();if(address!==email){$('passwordLoginStatus').textContent='Only the authorized admin email can sign in.';return}const button=$('passwordSignIn');button.disabled=true;$('passwordLoginStatus').textContent='Signing in securely…';try{await signInWithEmailAndPassword(auth,address,$('adminPassword').value);$('adminPassword').value='';$('passwordLoginStatus').textContent='✓ Password accepted. Checking admin access…';if(!auth.currentUser.emailVerified)$('passwordLoginStatus').textContent='Password accepted. Please verify your email using the button above before entering the dashboard.'}catch(err){$('passwordLoginStatus').textContent='Login failed ('+err.code+'). Please check your email and password.'}finally{button.disabled=false}};
@@ -591,7 +607,7 @@ $('saveAdmissionSettings').onclick=async()=>{
  $('admissionSettingsStatus').textContent='✓ Saved! Admission Form will load these settings after refresh.';
  }catch(e){$('admissionSettingsStatus').textContent='Save failed: '+e.message}finally{btn.disabled=false}
 };
-function switchTab(tab){if(tab==='exams'&&active)examAdmin.load().catch(e=>{$('examEditorStatus').textContent='Could not load exam system: '+e.message});if(tab!=='teachers'){if($('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();if($('teacherCatalogPanel'))closeTeacherCatalog();}tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
+function switchTab(tab){if(tab==='exams'&&active){examAdmin.load().catch(e=>{$('examEditorStatus').textContent='Could not load exam system: '+e.message});competitionAdmin.load().catch(e=>{$('competitionStatus').textContent='Could not load competitions: '+e.message})}if(tab!=='teachers'){if($('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();if($('teacherCatalogPanel'))closeTeacherCatalog();}tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
 $('openNewCourse').onclick=()=>{
  $('newCourseName').value='';$('newCourseId').value='';$('newCourseStatus').textContent='';
  switchTab('newcourse');
@@ -722,7 +738,7 @@ for(const kind of ['teacher','student']){
      const examSnap=await getDocs(collection(db,'examResults'));
      const ids=examSnap.docs.filter(d=>d.data().studentId===id&&d.data().published===true).map(d=>d.id);
      const batch=writeBatch(db);
-     batch.set(doc(db,'students',id),data);
+     batch.set(doc(db,'students',id),data,{merge:true});
      if(oldDOB&&oldIdIsUuid){
       const oldHash=await examStudentLookupKey(oldExamId,oldDOB);
       batch.set(doc(db,'examResultLookups',oldHash),{enabled:false,updatedAt:new Date().toISOString()},{merge:true});
@@ -733,20 +749,45 @@ for(const kind of ['teacher','student']){
      }
      await batch.commit();
     }else{
-     await setDoc(doc(db,'students',id),data);
+     await setDoc(doc(db,'students',id),data,{merge:true});
     }
    }else await setDoc(doc(db,plural,id),data);
    if(kind==='student'){
-    await studentAccounts.syncStudent(id,data);
+    let syncedData=data;
+    let promotionNote='';
+    if(data.state==='Completed'){
+     try{
+      const p=await maybePromoteStudent(db,id);
+      if(p.promoted){syncedData=(await getDoc(doc(db,'students',id))).data();promotionNote=' · 🎓 Promoted automatically to '+p.label+'!'}
+      else promotionNote=' · Promotion pending: '+p.reason;
+     }catch(error){promotionNote=' · Promotion could not finish: '+error.message}
+    }
+    await studentAccounts.syncStudent(id,syncedData);
     // Newly corrected prefix appears on previous result PDFs and certificates too.
     await syncOfficialCodeToExamResults(id,data.studentCode);
     await syncAllTeacherRosters();
    }
    const issuedCode=kind==='student'?data.studentCode:'';
-   resetRecord(kind);$(kind+'Status').textContent=kind==='student'?'✓ Student saved successfully. Official Student ID: '+issuedCode+' (permanent).':'✓ Saved successfully.';await renderRecords(plural);
+   resetRecord(kind);$(kind+'Status').textContent=kind==='student'?'✓ Student saved successfully. Official Student ID: '+issuedCode+' (permanent).'+(typeof promotionNote==='string'?promotionNote:''):'✓ Saved successfully.';await renderRecords(plural);
   }catch(err){$(kind+'Status').textContent='Save failed: '+err.message}
  };
 }
+$('recheckStudentPromotions').onclick=async()=>{
+ const button=$('recheckStudentPromotions'),status=$('studentPromotionStatus');
+ button.disabled=true;status.textContent='Checking completed students and Final/Annual exam results…';
+ try{
+  const all=await getDocs(collection(db,'students'));let promoted=0,pending=0,errors=0;
+  for(const s of all.docs){
+   if(s.data().state!=='Completed'||!['muallama','muballigha'].includes(s.data().course))continue;
+   try{const result=await maybePromoteStudent(db,s.id);if(result.promoted)promoted++;else pending++}
+   catch(e){errors++;console.warn('Promotion failed for student',s.id,e)}
+  }
+  if(promoted)await syncAllTeacherRosters();
+  status.textContent='✓ Promoted '+promoted+' student(s). '+pending+' awaiting eligible Final/Annual pass. '+errors+' errors.';
+  await renderRecords('students');
+ }catch(e){status.textContent='Promotion check failed: '+e.message}
+ finally{button.disabled=false}
+};
 $('generateMissingStudentIds').onclick=async()=>{
  if(!active)return;
  const button=$('generateMissingStudentIds'),note=$('studentIdBatchStatus');
@@ -793,6 +834,8 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
   manage.textContent='🔐 Student Account Login';
   manage.onclick=()=>studentAccounts.open({id:d.id,...data});
   el.append(manage);
+  const history=Array.isArray(data.promotionHistory)?data.promotionHistory:[];
+  if(history.length){const latest=history[history.length-1];const badge=document.createElement('p');badge.className='section-note';badge.textContent='🎓 Last Promotion: '+latest.fromCourse+' → '+latest.toCourse+' · '+(latest.completedAcademicYear||'Academic year not recorded');el.append(badge)}
   const copyOfficial=document.createElement('button');copyOfficial.type='button';copyOfficial.className='secondary';
   copyOfficial.textContent='📋 Copy Official ALIA Student ID';copyOfficial.disabled=!validOfficialStudentId(data.studentCode);
   copyOfficial.onclick=async()=>{
