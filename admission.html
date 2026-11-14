@@ -57,8 +57,19 @@ try{
  const cfg=await fetch('firebase-config.json',{cache:'no-store'}).then(r=>r.json());
  const app=getApps().find(a=>a.options.projectId===cfg.projectId)||initializeApp(cfg,'admission-form-settings');
  let data=null;
- for(const courseId of ['muallama','muballigha','alima','boys-hifz']){
-  try{const snap=await getDoc(doc(getFirestore(app),'courses',courseId));if(snap.exists()&&Array.isArray(snap.data().admissionFormCourses)){data=snap.data();break}}catch(e){console.warn('Course settings not public for',courseId,e.code||e.message)}
+ // Dedicated published admission config is independent of individual
+ // course publication status. It is the single source of truth for choices.
+ try{
+  const publishedSettings=await getDoc(doc(getFirestore(app),'courses','admission-form-config'));
+  if(publishedSettings.exists()&&Array.isArray(publishedSettings.data().admissionFormCourses))
+   data=publishedSettings.data();
+ }catch(e){console.warn('Public Academy admission configuration not readable:',e.code||e.message)}
+ // Legacy migration fallback, used only until Admin first republishes settings.
+ if(!data)for(const courseId of ['muallama','muballigha','alima','boys-hifz']){
+  try{
+   const snap=await getDoc(doc(getFirestore(app),'courses',courseId));
+   if(snap.exists()&&Array.isArray(snap.data().admissionFormCourses)){data=snap.data();break}
+  }catch(e){console.warn('Legacy course admission settings unavailable:',courseId,e.code||e.message)}
  }
  // A saved Admin list is authoritative. Do not merge hard-coded selections
  // or all Firestore course documents into it: this caused duplicate Tajweed
