@@ -36,7 +36,10 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
     match /studentIdRegistry/{officialId} {
-      allow read, write: if isAdmin();
+      // Once an ID is issued, no web client can edit, delete or reuse it.
+      allow read, create: if isAdmin()
+        && officialId.matches('^AIL[0-9]{5}$');
+      allow update, delete: if false;
     }
 
     // Admin-approved student/guardian Firebase Authentication accounts.
