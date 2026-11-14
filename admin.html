@@ -203,7 +203,12 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <div id="setup" class="card notice">Loading secure admin login…</div>
 <div id="login" class="card hidden"><h2>🔐 Administrator Login</h2><p class="muted">Use the authorized academy account. Google sign-in or Email &amp; Password both work.</p><button id="signIn">Sign in with Google →</button><div class="section"><h3>Or sign in with Email &amp; Password</h3><form id="passwordLoginForm"><label>Admin Email<input id="adminEmail" type="email" autocomplete="username" required placeholder="Admin email"></label><label>Password<input id="adminPassword" type="password" autocomplete="current-password" required placeholder="Enter password"></label><button type="submit" id="passwordSignIn">🔐 Sign in with Password</button></form><p id="passwordLoginStatus" class="status" role="status"></p></div></div>
 <div id="editor" class="card hidden"><section class="section" id="passwordSetupPanel"><h3>🔑 Set up Admin Password Login</h3><p class="section-note">While signed in with Google, securely link a password to this same Firebase admin account. Do not share your password with anyone.</p><form id="linkPasswordForm"><label>New password<input id="linkPassword" type="password" autocomplete="new-password" minlength="12" required placeholder="At least 12 characters"></label><label>Confirm new password<input id="confirmLinkPassword" type="password" autocomplete="new-password" minlength="12" required></label><button id="linkPasswordButton" type="submit">Enable Password Login</button></form><p id="linkPasswordStatus" class="status" role="status"></p></section><div class="toolbar"><div><strong>Signed-in Administrator</strong><p id="signedIn"></p></div><button class="secondary" id="signOut">Sign out</button></div>
-<div id="tab-academic" class="tabpage hidden"><h2>📅 Academic Year — One-Place Update</h2><p class="muted">Change the year here once. It updates the public homepage and admission page automatically. The year is stored in academy course records, without changing existing course details.</p><div class="section"><label>Admission / Academic Year <select id="academicYearSelect"><option value="2026–2027">2026–2027</option><option value="2027–2028">2027–2028</option><option value="2028–2029">2028–2029</option><option value="2029–2030">2029–2030</option><option value="2030–2031">2030–2031</option><option value="2031–2032">2031–2032</option></select></label><p class="section-note">Current selected year: <strong id="academicYearCurrent">2026–2027</strong></p><button type="button" id="saveAcademicYear">Save Academic Year Across Website</button><p id="academicYearStatus" class="status" role="status"></p></div></div><div id="tab-admissionSettings" class="tabpage hidden"><h2>📝 Admission Form Settings</h2><p class="muted">Customize field labels, visibility and required status. Add new questions and choose which courses appear on the admission form.</p><div class="section"><h3>Form Fields</h3><div id="admissionFieldEditor"></div><button type="button" id="addAdmissionField">＋ Add New Field</button><p class="section-note">Student name and contact number remain mandatory for application processing. Aadhaar details are optional.</p></div><div class="section"><h3>Available Courses</h3><p class="section-note">Enter one course name per line. New courses created in Course Admin can be included here.</p><textarea id="admissionCourseList" rows="7" style="width:100%"></textarea></div><button type="button" id="saveAdmissionSettings">💾 Save & Publish Admission Form</button><p class="status" id="admissionSettingsStatus"></p></div><div id="tab-overview" class="tabpage"><h2>Dashboard Overview</h2><p class="muted">Welcome to the academy management center. Open the ☰ menu to manage records.</p><div class="admin-overview"><div class="overview-card">📚<strong>Courses</strong>Manage programmes</div><div class="overview-card">👩‍🏫<strong>Teachers</strong>Staff directory</div><div class="overview-card">🎓<strong>Students</strong>Enrolments</div><div class="overview-card">📩<strong>Admissions</strong>Review applications</div></div></div><div class="tabs"><button class="active" data-tab="courses">📚 Courses</button><button data-tab="teachers">👩‍🏫 Teachers</button><button data-tab="students">🎓 Students</button><button data-tab="exams">🏅 Exam Results</button><button data-tab="applications">📩 New Applications</button></div><div id="tab-courses" class="tabpage hidden">
+<div id="tab-academic" class="tabpage hidden"><h2>📅 Academic Year — One-Place Update</h2><p class="muted">Change the year here once. It updates the public homepage and admission page automatically. The year is stored in academy course records, without changing existing course details.</p><div class="section"><label>Admission / Academic Year <select id="academicYearSelect"><option value="2026–2027">2026–2027</option><option value="2027–2028">2027–2028</option><option value="2028–2029">2028–2029</option><option value="2029–2030">2029–2030</option><option value="2030–2031">2030–2031</option><option value="2031–2032">2031–2032</option></select></label><p class="section-note">Current selected year: <strong id="academicYearCurrent">2026–2027</strong></p><button type="button" id="saveAcademicYear">Save Academic Year Across Website</button><p id="academicYearStatus" class="status" role="status"></p></div></div><div id="tab-admissionSettings" class="tabpage hidden"><h2>📝 Admission Form Settings</h2><p class="muted">Customize field labels, visibility and required status. Add new questions and choose which courses appear on the admission form.</p><div class="section"><h3>Form Fields</h3><div id="admissionFieldEditor"></div><button type="button" id="addAdmissionField">＋ Add New Field</button><p class="section-note">Student name and contact number remain mandatory for application processing. Aadhaar details are optional.</p></div><div class="section"><h3>Available Admission Courses — The Official List</h3>
+<p class="section-note">This is the single list shown on the public Admission Form. Remove unwanted courses here, or use Course Management → Hide from Admission. Hiding a course does not delete students, exam results or the course record. Click Save to publish changes.</p>
+<textarea id="admissionCourseList" rows="7" style="width:100%" aria-label="One admission course per line"></textarea>
+<div class="actions"><button type="button" class="secondary" id="cleanAdmissionCourses">🧹 Remove Duplicate Entries</button></div>
+<div id="admissionCourseRows" aria-live="polite" style="margin:14px 0"></div></div>
+<button type="button" id="saveAdmissionSettings">💾 Save & Publish Admission Form</button><p class="status" id="admissionSettingsStatus"></p></div><div id="tab-overview" class="tabpage"><h2>Dashboard Overview</h2><p class="muted">Welcome to the academy management center. Open the ☰ menu to manage records.</p><div class="admin-overview"><div class="overview-card">📚<strong>Courses</strong>Manage programmes</div><div class="overview-card">👩‍🏫<strong>Teachers</strong>Staff directory</div><div class="overview-card">🎓<strong>Students</strong>Enrolments</div><div class="overview-card">📩<strong>Admissions</strong>Review applications</div></div></div><div class="tabs"><button class="active" data-tab="courses">📚 Courses</button><button data-tab="teachers">👩‍🏫 Teachers</button><button data-tab="students">🎓 Students</button><button data-tab="exams">🏅 Exam Results</button><button data-tab="applications">📩 New Applications</button></div><div id="tab-courses" class="tabpage hidden">
   <div class="section">
     <h2>📚 Course Management</h2>
     <p class="section-note">Choose a course and click Edit Details. The editing form opens on the next screen.</p>
@@ -452,6 +457,7 @@ import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,EmailAuthProvider,linkWithCredential,sendEmailVerification,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
+import{uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse}from'./admission-course-utils.js';
 import{initStudentAccountAdmin}from'./student-account-admin.js';
 import{maybePromoteStudent}from'./student-promotion.js';
 import{initCompetitionCertificateAdmin}from'./competition-certificates.js';
@@ -509,7 +515,16 @@ function renderCourseList(){
   info.append(heading,state);
   const actions=document.createElement('div');actions.style.cssText='display:flex;gap:9px;flex-wrap:wrap';
   const edit=document.createElement('button');edit.type='button';edit.textContent='✏ Edit Details';edit.onclick=()=>openCourseEditor(id);
-  actions.append(edit);item.append(info,actions);list.append(item);
+  const listed=admissionNamesFromEditor().some(n=>admissionCourseKey(n)===admissionCourseKey(name));
+  const toggle=document.createElement('button');toggle.type='button';toggle.className='secondary';
+  toggle.textContent=listed?'✕ Hide from Admission':'＋ Show on Admission Form';
+  toggle.onclick=async()=>{
+   if(listed&&!confirm('Remove '+name+' from the public Admission Form? Student records and course details are kept.'))return;
+   toggle.disabled=true;
+   try{await setCourseAdmissionVisibility(name,!listed);$('courseListStatus').textContent='✓ Updated the live Admission Form list.'}
+   catch(err){$('courseListStatus').textContent='Admission listing failed: '+err.message;toggle.disabled=false}
+  };
+  actions.append(edit,toggle);item.append(info,actions);list.append(item);
  });
  $('courseListStatus').textContent=entries.length+' courses available. Click Edit Details to make changes.';
 }
@@ -576,7 +591,7 @@ const admissionDefaults=[
 {id:'notes',label:'Message / Preferred Timings',type:'textarea',required:false,visible:true}
 ];
 let admissionFields=admissionDefaults.map(x=>({...x}));
-const defaultAdmissionCourses=['Muallama','Muballigha','Alima','Boys Hifz Class',"Children's Qur'an / Tajweed (enquiry)",'Other enquiry'];
+const defaultAdmissionCourses=['Muallama','Muballigha','Alima','Boys Hifz Class',"Children's Qur'an Maktab",'Tajweed for Girls','Other enquiry'];
 function renderAdmissionEditor(){
  const box=$('admissionFieldEditor');box.replaceChildren();
  admissionFields.forEach((field,i)=>{
@@ -590,23 +605,90 @@ function renderAdmissionEditor(){
  });
 }
 $('addAdmissionField').onclick=()=>{admissionFields.push({id:'custom_'+Date.now(),label:'New Question',type:'text',visible:true,required:false});renderAdmissionEditor()};
+function admissionNamesFromEditor(){
+ return uniqueAdmissionCourses($('admissionCourseList').value.split('\n'));
+}
+function renderAdmissionCourseRows(){
+ const root=$('admissionCourseRows');root.replaceChildren();
+ const raw=$('admissionCourseList').value.split('\n').filter(x=>x.trim());
+ const list=admissionNamesFromEditor();
+ for(const name of list){
+  if(admissionCourseKey(name)==='otherenquiry')continue;
+  const row=document.createElement('div');row.className='record';
+  row.style.cssText='display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:9px;padding:8px 13px;margin:5px 0';
+  const text=document.createElement('strong');text.textContent=name;
+  const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='✕ Remove from Admission';
+  remove.onclick=()=>{
+   if(!confirm('Hide '+name+' from the public Admission Form? This does NOT delete enrolled students or the course itself. Press Save & Publish to apply.'))return;
+   $('admissionCourseList').value=removeAdmissionCourse($('admissionCourseList').value.split('\n'),name).join('\n');
+   renderAdmissionCourseRows();$('admissionSettingsStatus').textContent='Course hidden in this editor. Click Save & Publish to update the website.';
+  };
+  row.append(text,remove);root.append(row);
+ }
+ const count=raw.length-list.length;
+ const info=document.createElement('p');info.className='section-note';
+ info.textContent=(list.length-1)+' admission course(s).'+(count>0?' '+count+' repeated or legacy entry/entries can be cleaned.':'');
+ root.prepend(info);
+}
+$('admissionCourseList').addEventListener('input',renderAdmissionCourseRows);
+$('cleanAdmissionCourses').onclick=()=>{
+ const prior=$('admissionCourseList').value;
+ const clean=admissionNamesFromEditor();
+ $('admissionCourseList').value=clean.join('\n');
+ renderAdmissionCourseRows();
+ $('admissionSettingsStatus').textContent=prior===$('admissionCourseList').value?'✓ No duplicate course names found.':'✓ Duplicate/legacy names removed in this editor. Click Save & Publish to apply.';
+};
 async function loadAdmissionSettings(){
- try{const s=await getDoc(doc(db,'courses','muallama'));const data=s.exists()?s.data():{};admissionFields=Array.isArray(data.admissionFormFields)&&data.admissionFormFields.length?data.admissionFormFields.map(f=>({...f})):admissionDefaults.map(f=>({...f}));const existing=Array.isArray(data.admissionFormCourses)?data.admissionFormCourses:defaultAdmissionCourses;
- const listed=[...existing,...[...courseRegistry.entries()].filter(([id,d])=>d.published===true||['muallama','muballigha','alima','boys-hifz','childrens-quran-maktab','tajweed-for-girls'].includes(id)).map(([id,d])=>d.name||id)];
- $('admissionCourseList').value=[...new Set(listed.map(x=>String(x).replace(/\s*[—–-]\s*\d+\s*years?\s*$/i,'').trim()).filter(Boolean))].join('\n');renderAdmissionEditor()}catch(e){$('admissionSettingsStatus').textContent='Load failed: '+e.message}
+ try{
+  const snap=await getDoc(doc(db,'courses','muallama'));
+  const data=snap.exists()?snap.data():{};
+  admissionFields=Array.isArray(data.admissionFormFields)&&data.admissionFormFields.length
+   ?data.admissionFormFields.map(f=>({...f})):admissionDefaults.map(f=>({...f}));
+  // Never merge back every published/default course; it reintroduced courses
+  // already removed by Admin and caused the two Tajweed For Girls options.
+  const raw=Array.isArray(data.admissionFormCourses)?data.admissionFormCourses:defaultAdmissionCourses;
+  $('admissionCourseList').value=uniqueAdmissionCourses(raw).join('\n');
+  renderAdmissionCourseRows();renderAdmissionEditor();
+  if(Array.isArray(data.admissionFormCourses)&&raw.length!==uniqueAdmissionCourses(raw).length)
+   $('admissionSettingsStatus').textContent='Duplicates were hidden in the editor. Click Save & Publish to clean the actual saved list.';
+ }catch(e){$('admissionSettingsStatus').textContent='Load failed: '+e.message}
+}
+async function publishAdmissionSettings(){
+ const fields=admissionFields.map(f=>({...f,label:String(f.label||'').trim().slice(0,100)}));
+ if(fields.some(f=>!f.label))throw Error('Every admission field needs a label');
+ const courses=admissionNamesFromEditor();
+ if(courses.length<2)throw Error('Add at least one Academy course besides Other enquiry.');
+ const batch=writeBatch(db);
+ for(const id of ['muallama','muballigha','alima','boys-hifz']){
+  batch.set(doc(db,'courses',id),{admissionFormFields:fields,admissionFormCourses:courses},{merge:true});
+ }
+ await batch.commit();
+ $('admissionCourseList').value=courses.join('\n');
+ renderAdmissionCourseRows();
+ renderCourseList();
+ return courses;
 }
 $('saveAdmissionSettings').onclick=async()=>{
  if(!active)return;
- const btn=$('saveAdmissionSettings');btn.disabled=true;$('admissionSettingsStatus').textContent='Publishing form…';
+ const btn=$('saveAdmissionSettings');btn.disabled=true;$('admissionSettingsStatus').textContent='Publishing approved admission course list…';
  try{
- const fields=admissionFields.map(f=>({...f,label:String(f.label||'').trim().slice(0,100)}));
- if(fields.some(f=>!f.label))throw Error('Every field needs a label');
- const courses=$('admissionCourseList').value.split('\n').map(x=>x.trim()).filter(Boolean);
- if(!courses.length)throw Error('Add at least one course');
- await Promise.all(['muallama','muballigha','alima','boys-hifz'].map(id=>setDoc(doc(db,'courses',id),{admissionFormFields:fields,admissionFormCourses:courses},{merge:true})));
- $('admissionSettingsStatus').textContent='✓ Saved! Admission Form will load these settings after refresh.';
- }catch(e){$('admissionSettingsStatus').textContent='Save failed: '+e.message}finally{btn.disabled=false}
+  const courses=await publishAdmissionSettings();
+  $('admissionSettingsStatus').textContent='✓ Published '+(courses.length-1)+' unique courses. Refresh the public Admission Form to see exactly this list (plus Other enquiry).';
+ }catch(e){$('admissionSettingsStatus').textContent='Save failed: '+e.message}
+ finally{btn.disabled=false}
 };
+async function setCourseAdmissionVisibility(name,visible){
+ const snap=await getDoc(doc(db,'courses','muallama'));
+ const names=uniqueAdmissionCourses(snap.exists()&&Array.isArray(snap.data().admissionFormCourses)?snap.data().admissionFormCourses:defaultAdmissionCourses,{otherEnquiry:false});
+ const key=admissionCourseKey(name);
+ const next=visible?uniqueAdmissionCourses([...names,name]):uniqueAdmissionCourses(names.filter(n=>admissionCourseKey(n)!==key));
+ if(next.length<2)throw Error('Cannot remove the final Academy course.');
+ const batch=writeBatch(db);
+ for(const id of ['muallama','muballigha','alima','boys-hifz'])batch.set(doc(db,'courses',id),{admissionFormCourses:next},{merge:true});
+ await batch.commit();
+ $('admissionCourseList').value=next.join('\n');renderAdmissionCourseRows();renderCourseList();
+ $('admissionSettingsStatus').textContent=visible?'✓ Course added to published admissions.':'✓ Course hidden from published admissions. Existing student and course records were not deleted.';
+}
 function switchTab(tab){if(tab==='exams'&&active){examAdmin.load().catch(e=>{$('examEditorStatus').textContent='Could not load exam system: '+e.message});competitionAdmin.load().catch(e=>{$('competitionStatus').textContent='Could not load competitions: '+e.message})}if(tab!=='teachers'){if($('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();if($('teacherCatalogPanel'))closeTeacherCatalog();}tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
 $('openNewCourse').onclick=()=>{
  $('newCourseName').value='';$('newCourseId').value='';$('newCourseStatus').textContent='';
@@ -629,10 +711,8 @@ $('createCourse').onclick=async()=>{
   if(previous.exists())throw Error('Course already exists in Firebase. Refresh Course Details.');
   await setDoc(doc(db,'courses',id),{name,published:true,kitabs:[],duration:'',description:'',eligibility:'',syllabus:'',fees:'',timings:''});
   registerCourseOption(id,{name});courseRegistry.set(id,{name,published:true});
-  const registered=$('admissionCourseList').value.split('\n').map(x=>x.trim()).filter(Boolean);
-  if(!registered.includes(name))$('admissionCourseList').value=[...registered,name].join('\n');
   await openCourseEditor(id);
-  $('status').textContent='✓ '+name+' saved as a published course. It will be listed in Explore All Courses and the Admission Form on refresh. The homepage remains Muallama and Muballigha only. Complete the course details and Save Changes.';
+  $('status').textContent='✓ '+name+' saved in Course Management. To show it on the public Admission Form, use Course Management → Show on Admission Form (or Admissions → Admission Form Settings). Complete and save course details.';
  }catch(err){$('newCourseStatus').textContent='Could not save course: '+err.message}
  finally{$('createCourse').disabled=false}
 };
@@ -2462,7 +2542,9 @@ const blob=pdf.output('blob'),url=URL.createObjectURL(blob),a=document.createEle
 
 $('course').onchange=load;
 $('save').onclick=async()=>{if(!active)return;const id=$('course').value,data={};for(const k of ['name','duration','description','eligibility','syllabus','fees','timings','admissionFee','monthlyFee','examFee','booksFee','paymentDue','paymentInstructions'])data[k]=$(k).value.trim();data.kitabs=$('kitabs').value.split('\n').map(s=>s.trim()).filter(Boolean);data.published=$('published').checked;$('save').disabled=true;$('status').textContent='Saving…';try{await setDoc(doc(db,'courses',id),data,{merge:true});
-try{const registry=await getDoc(doc(db,'courses','muallama'));const existing=registry.exists()&&Array.isArray(registry.data().admissionFormCourses)?registry.data().admissionFormCourses:defaultAdmissionCourses;const name=String(data.name||'').trim();if(data.published&&name&&!existing.some(x=>x===name||x.startsWith(name+' —'))){await setDoc(doc(db,'courses','muallama'),{admissionFormCourses:[...existing,name]},{merge:true});$('admissionCourseList').value=[...existing,name].join('\n')}}catch(registryError){console.warn('Admission course list sync:',registryError)}
+// Course publication and Admission Form listing are separate controls.
+ // Do not automatically re-insert a course the Admin previously hid.
+
 registerCourseOption(id,data);courseRegistry.set(id,{...(courseRegistry.get(id)||{}),...data});renderCourseList();$('status').textContent='✓ Saved successfully. Course selectors are updated throughout the admin panel.'}catch(e){$('status').textContent='Save failed: '+e.message}finally{$('save').disabled=false}};
 }catch(e){$('setup').classList.remove('hidden');$('setup').textContent='Firebase setup error: '+e.message}}
 </script></body></html>
