@@ -1252,11 +1252,14 @@ async function createTeacherProfilePdf(profile,directory={}){
  await ensurePdfLibrary();
  const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
  const data={...profile,...directory};
+ // Preserve original registration answers even if the admin directory has newer notes.
  data.fullName=directory.name||profile.fullName||profile.name||'Teacher';
  data.subjects=directory.subject||profile.subjects||'';
+ data.notes=profile.notes||directory.notes||'';
+ data.directoryNotes=directory.notes||'';
  data.teacherId=directory.id||profile.registrationId||'';
  const fields=teacherProfileGroups.map(([title,items])=>({title,items}));
- fields.push({title:'ADMIN DIRECTORY',items:[['Teacher ID','teacherId'],['Monthly Salary (INR)','salary'],['Assigned Subjects','subjects'],['Review Status','reviewStatus'],['Submission Date','submittedAt']]});
+ fields.push({title:'ADMIN DIRECTORY',items:[['Teacher ID','teacherId'],['Monthly Salary (INR)','salary'],['Assigned Subjects','subjects'],['Review Status','reviewStatus'],['Submission Date','submittedAt'],['Directory Notes','directoryNotes']]});
  if(Array.isArray(directory.assignments)&&directory.assignments.length){
   fields.push({title:'CLASS, BATCH, SUBJECT & TIMING',items:directory.assignments.map((a,i)=>{
    const key='__assignment'+i;
