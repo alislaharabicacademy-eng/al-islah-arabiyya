@@ -33,3 +33,44 @@ test('Admin has a direct remove option and does not silently re-add saved course
  assert.doesNotMatch(admin,/const listed=\[\.\.\.existing/);
  assert.doesNotMatch(admin,/if\(data\.published&&name&&!existing\.some/);
 });
+
+
+test('Creating a new published course synchronizes its admission listing atomically',()=>{
+ const admin=readFileSync(new URL('../admin.html',import.meta.url),'utf8');
+ const start=admin.indexOf("$('createCourse').onclick=async()=>{");
+ const end=admin.indexOf("document.querySelectorAll('[data-tab]')",start);
+ assert.ok(start>0&&end>start);
+ const create=admin.slice(start,end);
+ assert.match(create,/writeBatch\(db\)/);
+ assert.match(create,/batch\.set\(doc\(db,'courses',id\)/);
+ assert.match(create,/batch\.set\(admissionRef/);
+ assert.match(create,/uniqueAdmissionCourses\(\[\.\.\.current,name\]\)/);
+ assert.match(create,/await batch\.commit\(\)/);
+ assert.match(create,/registerCourseOption\(id,\{name\}\)/);
+ assert.match(create,/renderAdmissionCourseRows\(\)/);
+});
+test('Student, teacher assignment and admin course selectors share saved IDs',()=>{
+ const admin=readFileSync(new URL('../admin.html',import.meta.url),'utf8');
+ assert.match(admin,/\['course','studentCourse','studentFilter','applicationFilter','catalogClass','monthlyAttendanceCourse'\]/);
+ assert.match(admin,/#teacherSubjectRows select\.subject-class/);
+ assert.match(admin,/for\(const option of \$\('studentCourse'\)\.options\)/);
+ assert.match(admin,/syncTeacherRoster/);
+});
+test('Student dashboard displays the approved assigned course, not every available course',()=>{
+ const student=readFileSync(new URL('../student-login.html',import.meta.url),'utf8');
+ assert.match(student,/access\.course/);
+});
+
+
+test('Public All Courses never fabricates unpublished course cards',()=>{
+ const catalog=readFileSync(new URL('../all-courses.html',import.meta.url),'utf8');
+ assert.match(catalog,/where\('published','==',true\)/);
+ assert.match(catalog,/const map=new Map\(\)/);
+ assert.doesNotMatch(catalog,/new Map\(defaults\.map/);
+ assert.doesNotMatch(catalog,/defaults\.forEach\(add\)/);
+});
+test('The student dashboard resolves a live published course name safely',()=>{
+ const student=readFileSync(new URL('../student-login.html',import.meta.url),'utf8');
+ assert.match(student,/getDoc\(doc\(db,'courses',access\.course\)\)/);
+ assert.match(student,/className=String\(catalog\.data\(\)\.name\)\.trim\(\)/);
+});
