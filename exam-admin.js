@@ -3,9 +3,12 @@ import{collection,getDocs,getDoc,doc,setDoc,writeBatch,arrayUnion,arrayRemove}fr
 import{examStudentLookupKey}from'./exam-lookup.js';
 import{createExamResultPdf,createExamCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
 import{maybePromoteStudent}from'./student-promotion.js';
+import{initHomepageWinners}from'./homepage-winners-admin.js';
+import{compressProfilePhoto}from'./profile-photo.js';
 export function initExamAdmin({db,auth,onPromotion}){
  const $=id=>document.getElementById(id);
  const studentDropdown=$('examResultStudent'),form=$('examResultForm'),subjectRows=$('examSubjectRows');
+ const winners=initHomepageWinners({db});
  let students=[],results=[],courseNames=new Map(),loadPromise=null;
  const allowedId=/^RESULT-[a-f0-9]{24}$/;
  const status=value=>{$('examEditorStatus').textContent=value};
@@ -72,6 +75,7 @@ export function initExamAdmin({db,auth,onPromotion}){
  }
  function reset(){
   form.reset();$('examResultId').value='';$('examResultPass').value='40';$('examFinalForPromotion').checked=false;
+  $('examHomeWinnerOptions').classList.add('hidden');$('examHomeWinnerPhoto').value='';$('examHomeWinnerUploadStatus').textContent='The student profile photo is used unless you select a different photo here.';
   const today=new Date();
   $('examResultDate').value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
   $('examResultYear').value=$('academicYearSelect')?.value||'2026–2027';
@@ -127,7 +131,11 @@ export function initExamAdmin({db,auth,onPromotion}){
    const existing=oldId?await getDoc(doc(db,'examResults',oldId)):null;
    const old=existing?.exists()?{id:oldId,...existing.data()}:null;
    if(!published&&old?.published&&!confirm('Saving a draft will UNPUBLISH this result until it is published again. Continue?'))return;
-   if(published&&!confirm('Publish '+record.studentName+' examination marks? Anyone with the unique result link can view their name and scores.'))return;
+   const feature=published&&$('examHomeWinnerFeature').checked;
+   const rank=Number($('examHomeWinnerRank').value);
+   const consent=$('examHomeWinnerConsent').checked;
+   if(feature&&!consent)throw Error('Confirm guardian permission to publish the student name and photo.');
+   if(published&&!confirm('Publish '+record.studentName+' examination marks? Anyone with the unique result link can view their name and scores.'+(feature?' This ALSO publishes a homepage photo at rank '+rank+'.':'')))return;
    const id=oldId||makeId();
    if(!allowedId.test(id))throw Error('Invalid result reference. Create a new result.');
    const now=new Date().toISOString();
@@ -153,6 +161,8 @@ export function initExamAdmin({db,auth,onPromotion}){
    const studentAccount=await getDoc(doc(db,'studentAccess',record.studentId));
    if(studentAccount.exists())batch.set(doc(db,'studentAccess',record.studentId),
      {resultIds:published?arrayUnion(id):arrayRemove(id),updatedAt:now},{merge:true});
+   const photoOverride=feature&&$('examHomeWinnerPhoto').files?.[0]?await compressProfilePhoto($('examHomeWinnerPhoto').files[0]):'';
+   await winners.beforeResultSave(batch,{id,record,student:afterStudent,feature,rank,consent,photoOverride});
    await batch.commit();
    let promotionNote='';
    if(published){
@@ -165,10 +175,10 @@ export function initExamAdmin({db,auth,onPromotion}){
     }catch(error){promotionNote=' Promotion check failed: '+error.message+'. Result remains published.'}
    }
    $('examResultId').value=id;
-   await load();
+   await load();await winners.load();
    const lookupNote=published&&!afterKey?' Student ID + DOB lookup needs both DOB and a confidential Student ID. Open Student Details, edit and save the student.':'';
 
-   status((published?'✓ Result PUBLISHED.':'✓ Private draft saved.')+' Reference: '+id+(published?'  |  Copy the result link below to share privately.':'')+lookupNote+promotionNote);
+   status((published?'✓ Result PUBLISHED.':'✓ Private draft saved.')+' Reference: '+id+(published?'  |  Copy the result link below to share privately.':'')+(feature?' 🏆 Also featured as homepage position '+rank+'.':'')+lookupNote+promotionNote);
    $('examResultList').scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){status('Could not save exam result: '+e.message)}finally{button.disabled=false}
  }
@@ -180,6 +190,7 @@ export function initExamAdmin({db,auth,onPromotion}){
   $('examResultYear').value=record.academicYear||'';
   $('examResultPass').value=record.passPercent??40;
   $('examFinalForPromotion').checked=record.finalForPromotion===true;
+  $('examHomeWinnerFeature').checked=false;$('examHomeWinnerConsent').checked=false;$('examHomeWinnerPhoto').value='';$('examHomeWinnerOptions').classList.add('hidden');
   subjectRows.replaceChildren();
   for(const subject of record.subjects||[])subjectRow(subject);
   if(!subjectRows.children.length)subjectRow();
@@ -202,8 +213,9 @@ export function initExamAdmin({db,auth,onPromotion}){
    const access=await getDoc(doc(db,'studentAccess',current.data().studentId));
    if(access.exists())batch.set(doc(db,'studentAccess',current.data().studentId),
      {resultIds:arrayRemove(record.id),updatedAt:now},{merge:true});
+   await winners.beforeResultSave(batch,{id:record.id,record:{...current.data(),published:false},student});
    await batch.commit();
-   status('✓ Result unpublished and removed from Student ID + DOB result lookup.');await load();
+   status('✓ Result unpublished and removed from private lookup and homepage winners.');await load();await winners.load();
   }catch(e){status('Could not unpublish: '+e.message)}
  }
  function button(label,fn,secondary=true){
@@ -243,6 +255,10 @@ export function initExamAdmin({db,auth,onPromotion}){
  }
  form.addEventListener('submit',event=>{event.preventDefault();save(false)});
  studentDropdown.addEventListener('change',fillStudentSummary);
+ $('examHomeWinnerFeature').addEventListener('change',()=>{$('examHomeWinnerOptions').classList.toggle('hidden',!$('examHomeWinnerFeature').checked)});
+ $('examHomeWinnerPhoto').addEventListener('change',()=>{
+  $('examHomeWinnerUploadStatus').textContent=$('examHomeWinnerPhoto').files?.[0]?'Selected: '+$('examHomeWinnerPhoto').files[0].name+'. It will be resized on publish.':'The existing student photo will be used.';
+ });
  $('examAddSubject').onclick=()=>{if(subjectRows.children.length>=30){status('Maximum 30 subjects.');return}subjectRow()};
  $('examResultPass').addEventListener('input',calc);
  $('examSaveDraft').onclick=()=>save(false);
@@ -251,5 +267,5 @@ export function initExamAdmin({db,auth,onPromotion}){
  $('examRefresh').onclick=()=>load().catch(e=>status(e.message));
  $('examResultFilter').addEventListener('change',renderList);
  $('examResultSearch').addEventListener('input',renderList);
- return {load};
+ return {load,winners};
 }
