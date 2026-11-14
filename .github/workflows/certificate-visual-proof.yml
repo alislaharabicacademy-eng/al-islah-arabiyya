@@ -1,0 +1,43 @@
+name: Premium Certificate A4 Visual Proof
+on:
+  pull_request:
+    paths:
+      - 'premium-certificate-svg.js'
+      - 'exam-documents.js'
+      - 'tests/render-certificate-previews.mjs'
+      - '.github/workflows/certificate-visual-proof.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  print-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Render all five templates from their exact SVG source
+        run: node tests/render-certificate-previews.mjs
+      - name: Print A4 vector PDFs and screenshots with Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME" ]; then echo "Chrome/Chromium missing: cannot certify visual proof"; exit 1; fi
+          for template in exam winner participation event results; do
+            SRC="file://$PWD/certificate-visual-proof/$template.html"
+            "$CHROME" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --hide-scrollbars --allow-file-access-from-files --window-size=1500,1180 --screenshot="$PWD/certificate-visual-proof/$template.png" "$SRC" >/dev/null 2>&1
+            "$CHROME" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --allow-file-access-from-files --no-pdf-header-footer --print-to-pdf="$PWD/certificate-visual-proof/$template.pdf" "$SRC" >/dev/null 2>&1
+            test -s "certificate-visual-proof/$template.pdf"
+            test -s "certificate-visual-proof/$template.png"
+          done
+          echo "Five A4 print PDF and screenshot files generated."
+      - name: Upload certificate quality proof for manual review
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-five-premium-certificate-a4-proof
+          path: |
+            certificate-visual-proof/*.png
+            certificate-visual-proof/*.pdf
+          retention-days: 14

@@ -133,9 +133,60 @@ import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,collection,doc,getDoc,getDocs,query,where,limit}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{photoAvatar}from'./profile-photo.js';
+import{summarizeFees,indiaFeeClock,allRecordedPayments,validFeeLedger}from'./fee-ledger-utils.js';
 import{createCompetitionCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
 import{normalizeStudentCode,validateStudentDOB,matchStudentDobVerifier}from'./student-dob-verifier.js';
 const $=id=>document.getElementById(id);
+/* Student's own fee history is read solely from their verified private
+ * studentAccess record. There is no public /students collection query. */
+function renderPrivateFeeLedger(access,card){
+ const section=document.createElement('section');section.className='exam-card';
+ section.style.cssText='margin-top:17px;border:1px solid #d8c18f;background:linear-gradient(120deg,#fffefa,#f8f4e8);';
+ const heading=document.createElement('h4');heading.textContent='💳 My Course Fees & Payment History';
+ const info=document.createElement('p');info.textContent='Private Academy payment records • Only the Admin can mark a month Paid or undo a payment.';
+ const yearLine=document.createElement('label');yearLine.textContent='Select Fee Year';
+ const selector=document.createElement('select');selector.setAttribute('aria-label','View payment history for year');selector.style.cssText='display:block;width:min(100%,250px);margin:8px 0 14px;min-height:44px;';
+ yearLine.append(selector);
+ const summary=document.createElement('div'),table=document.createElement('div'),history=document.createElement('div'),note=document.createElement('p');
+ note.style.cssText='font-size:12px;color:#5d685f;line-height:1.7;';
+ section.append(heading,info,yearLine,summary,table,history,note);card.append(section);
+ const ledger=validFeeLedger(access.feeLedger);
+ const clock=indiaFeeClock(),years=new Set([clock.year,clock.year-1,...Object.keys(ledger).map(Number).filter(Number.isInteger)]);
+ for(const year of [...years].sort((a,b)=>b-a))selector.add(new Option(String(year),String(year)));
+ selector.value=String(clock.year);
+ const rupee=value=>'₹'+Number(value||0).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2});
+ const line=(content,parent=table)=>{
+  const p=document.createElement('p');p.textContent=content;p.style.cssText='padding:8px 10px;margin:5px 0;border-bottom:1px solid #ddd9c8;border-radius:5px;font-size:13px;';
+  parent.append(p);
+ };
+ function draw(){
+  const report=summarizeFees({ledger,year:selector.value,rate:access.feeMonthlyRate,
+   enrolledAt:access.feeEnrollmentDate,state:access.state,asOf:clock});
+  summary.replaceChildren();table.replaceChildren();history.replaceChildren();
+  const facts=document.createElement('p');facts.style.cssText='font-weight:700;line-height:1.85;color:#153e30;';
+  facts.textContent='✅ Paid: '+report.paid+' month(s)   •   ⏳ Pending: '+report.pending+' month(s)   •   💰 Received: '+rupee(report.collected)+
+   (report.pendingAmount===null?'   •   Monthly fee not configured':'   •   Pending amount: '+rupee(report.pendingAmount));
+  summary.append(facts);
+  if(report.monthlyRate>0)line('Monthly fee (current published rate): '+rupee(report.monthlyRate));
+  else line('Monthly fee is not configured in your Academy account. Ask Admin for the correct fee.');
+  const sub=document.createElement('h5');sub.textContent='Month-wise Payment Status — '+report.year;
+  sub.style.cssText='margin:17px 0 8px;font-size:15px;';table.append(sub);
+  for(const item of report.months){
+   const symbol=item.status==='Paid'?'✅':item.status==='Pending'?'⏳':'▫️';
+   const date=item.status==='Paid'?(item.paidAt?' • Payment date: '+item.paidAt.slice(0,10):' • Date not recorded'):'';
+   const amount=item.status==='Paid'?' • Received: '+rupee(item.amount):'';
+   line(symbol+' '+item.name+' '+report.year+' — '+item.status+amount+date);
+  }
+  const recorded=allRecordedPayments(ledger);
+  const historyTitle=document.createElement('h5');historyTitle.textContent='📜 Complete Recorded Payment History ('+recorded.length+')';
+  historyTitle.style.cssText='margin:19px 0 6px;font-size:15px';history.append(historyTitle);
+  if(!recorded.length)line('No fee payments have been marked Paid by the Academy yet.',history);
+  for(const item of recorded)line('✅ '+item.monthName+' '+item.year+' • '+rupee(item.amount)+' • Date: '+(item.paidAt?item.paidAt.slice(0,10):'Not recorded')+(item.receiptId?' • Receipt: '+item.receiptId:''),history);
+  note.textContent=report.note+' Only recorded Paid entries count as payments. If you have paid a month but it still says Pending, contact the Academy Admin with your receipt. Payment dates represent the dates saved by Admin.';
+ }
+ selector.onchange=draw;draw();
+}
+
 const identityCard=$('studentIdentityCard'),identityStatus=$('studentIdentityStatus');
 const authCard=$('studentAuthCard'),verification=$('emailVerifyNotice'),dashboard=$('studentPrivateDashboard');
 const authStatus=$('studentAuthStatus'),verifyStatus=$('studentVerifyStatus'),dashboardStatus=$('studentDashboardStatus');
@@ -241,6 +292,7 @@ async function loadPrivateDashboard(user,token){
    const details=document.createElement('p');details.textContent='Official Student ID: '+(access.studentCode||'Not assigned yet')+'  ·  Class: '+className+(access.batch?' · Batch: '+access.batch:'')+' · Status: '+(access.state||'Active');
    const label=document.createElement('span');label.className='tag';label.textContent='✓ Verified Student Account';
    card.append(photoAvatar(access.photoData,'Student profile photograph'),title,details,label);
+   renderPrivateFeeLedger(access,card);
    const heading=document.createElement('h4');heading.textContent='🏅 Published Examination Results';heading.style.marginTop='23px';heading.style.fontSize='18px';card.append(heading);
    const refs=[...new Set(Array.isArray(access.resultIds)?access.resultIds:[])].filter(id=>/^RESULT-[a-f0-9]{24}$/.test(id)).slice(0,75);
    let count=0;
