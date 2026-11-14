@@ -1,4 +1,4 @@
-name: Admission Course Regression Checks
+name: Academy Course and Student Fee Regression Checks
 on:
   pull_request:
     paths:
@@ -6,6 +6,10 @@ on:
       - 'admin.html'
       - 'admission-course-utils.js'
       - 'tests/admission-courses.test.mjs'
+      - 'tests/student-fees.test.mjs'
+      - 'fee-ledger-utils.js'
+      - 'student-account-admin.js'
+      - 'student-login.html'
   push:
     branches: [main]
     paths:
@@ -13,6 +17,10 @@ on:
       - 'admin.html'
       - 'admission-course-utils.js'
       - 'tests/admission-courses.test.mjs'
+      - 'tests/student-fees.test.mjs'
+      - 'fee-ledger-utils.js'
+      - 'student-account-admin.js'
+      - 'student-login.html'
 permissions:
   contents: read
 jobs:
@@ -24,4 +32,4 @@ jobs:
         with:
           node-version: '22'
       - name: Run Course Form Regression Checks
-        run: node --test tests/admission-courses.test.mjs
+        run: node --test tests/admission-courses.test.mjs tests/student-fees.test.mjs
