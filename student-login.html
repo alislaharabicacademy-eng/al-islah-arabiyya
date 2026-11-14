@@ -225,9 +225,20 @@ async function loadPrivateDashboard(user,token){
    // and admin approval. Neither DOB nor the code is sent to a public endpoint.
    if(!await matchStudentDobVerifier(entered.studentCode,entered.dob,access))continue;
    if(token!==loadingToken)return;
+   // A private student dashboard shows the student's assigned class (not
+   // every published course), using the live Academy name instead of a slug.
+   let className=String(access.course||'').replace(/-/g,' ').replace(/\b[a-z]/g,ch=>ch.toUpperCase())||'—';
+   if(access.course){
+    try{
+     const catalog=await getDoc(doc(db,'courses',access.course));
+     if(catalog.exists()&&catalog.data().published===true&&catalog.data().name)
+      className=String(catalog.data().name).trim();
+    }catch(err){console.warn('Course label fallback:',err.code||err.message)}
+   }
+   if(token!==loadingToken)return;
    const card=document.createElement('article');card.className='student-card';
    const title=document.createElement('h4');title.textContent=access.studentName||'Student';
-   const details=document.createElement('p');details.textContent='Official Student ID: '+(access.studentCode||'Not assigned yet')+'  ·  Class: '+(access.course||'—')+(access.batch?' · Batch: '+access.batch:'')+' · Status: '+(access.state||'Active');
+   const details=document.createElement('p');details.textContent='Official Student ID: '+(access.studentCode||'Not assigned yet')+'  ·  Class: '+className+(access.batch?' · Batch: '+access.batch:'')+' · Status: '+(access.state||'Active');
    const label=document.createElement('span');label.className='tag';label.textContent='✓ Verified Student Account';
    card.append(photoAvatar(access.photoData,'Student profile photograph'),title,details,label);
    const heading=document.createElement('h4');heading.textContent='🏅 Published Examination Results';heading.style.marginTop='23px';heading.style.fontSize='18px';card.append(heading);
