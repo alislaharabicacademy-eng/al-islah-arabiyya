@@ -207,7 +207,8 @@ export async function createExamResultPdf(record){
 }
 export async function createExamCertificatePdf(record){
  if(!record?.published)throw Error('Publish the examination result before issuing a certificate.');
- return createPremiumVectorPdf(record.passed===true?'exam':'exam-participation',record);
+ const kind=record.passed===true?(Number(record.percent||0)>=80?'exam':'exam-achievement'):'exam-participation';
+ return createPremiumVectorPdf(kind,record);
 }
 export async function createCompetitionCertificatePdf(certificate){
  if(!certificate?.id||!certificate?.studentName||!certificate?.eventName||!certificate?.eventDate)throw Error('A complete, issued competition certificate is required.');
