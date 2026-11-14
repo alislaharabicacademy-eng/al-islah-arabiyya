@@ -344,8 +344,8 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
   <div id="examResultList"></div>
  </section>
 </div>
-<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Official Student IDs are issued automatically on Save: <strong>AIL00001, AIL00002, AIL00003…</strong> (AIL + 5 digits). Existing students can be assigned IDs using the button below. These numbers are permanent, unique roll numbers — not login passwords. For online exam results, the separate private Exam Access ID and Date of Birth are used.</p>
-<div class="actions" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:15px 0"><button id="generateMissingStudentIds" class="secondary" type="button">✨ Generate AIL IDs for Existing Students</button><span id="studentIdBatchStatus" role="status" class="section-note"></span></div><form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields">
+<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Official Student IDs are issued automatically on Save: <strong>ALIA00001, ALIA00002, ALIA00003…</strong> (ALIA + 5 digits). Existing students can be assigned IDs using the button below. These numbers are permanent, unique roll numbers — not login passwords. For online exam results, the separate private Exam Access ID and Date of Birth are used.</p>
+<div class="actions" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:15px 0"><button id="generateMissingStudentIds" class="secondary" type="button">✨ Generate ALIA IDs for Existing Students</button><span id="studentIdBatchStatus" role="status" class="section-note"></span></div><form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields">
 <label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Date of Birth (for secure exam result lookup)<input id="studentDob" type="date"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
 <h3>🔐 Student Account · Approve &amp; Manage Login</h3>
 <p class="section-note">Only the student or approved guardian with this verified email can sign in to the real Firebase account. The academy does not create or store their password. Account access can be disabled anytime.</p>
@@ -628,7 +628,7 @@ for(const kind of ['teacher','student']){
   try{
    if(kind==='student'){
     const previous=await getDoc(doc(db,'students',id));
-    // Transactionally issue an official AIL00001-style ID once only.
+    // Transactionally issue an official ALIA00001-style ID once only.
     // Keep the Firestore document ID and confidential exam access UUID unchanged.
     data.studentCode=await ensureOfficialStudentId(db,doc(db,'students',id),data);
     const oldDOB=previous.exists()?String(previous.data().dob||''):'';
@@ -667,22 +667,22 @@ $('generateMissingStudentIds').onclick=async()=>{
  try{
   const all=await getDocs(collection(db,'students'));
   const pending=all.docs.filter(d=>!validOfficialStudentId(d.data().studentCode));
-  if(!pending.length){note.textContent='✓ All '+all.size+' registered students already have official AIL IDs.';await renderRecords('students');return}
-  if(!confirm('Generate permanent AIL 5-digit Student IDs for '+pending.length+' existing student(s)? Existing valid AIL numbers will not change.')){note.textContent='Cancelled. No student IDs changed.';return}
+  if(!pending.length){note.textContent='✓ All '+all.size+' registered students already have official ALIA IDs.';await renderRecords('students');return}
+  if(!confirm('Generate or correct ALIA 5-digit Student IDs for '+pending.length+' existing student(s)? Existing ALIA numbers will not change. Older AIL-prefixed IDs will retain their five-digit serial and be corrected to ALIA.')){note.textContent='Cancelled. No student IDs changed.';return}
   let done=0;
   for(const student of pending){
    const newCode=await ensureOfficialStudentId(db,doc(db,'students',student.id));
    await studentAccounts.syncStudent(student.id,{...student.data(),studentCode:newCode});
    done++;note.textContent='Generating official student IDs… '+done+' / '+pending.length+' · Latest: '+newCode;
   }
-  note.textContent='✓ Issued '+done+' permanent AIL IDs for existing students. All records are saved in Firebase.';
+  note.textContent='✓ Issued '+done+' permanent ALIA IDs for existing students. All records are saved in Firebase.';
   await renderRecords('students');
  }catch(error){note.textContent='Stopped: '+error.message+'. Previously issued IDs are preserved. Retry to continue missing IDs.'}
  finally{button.disabled=false}
 };
 async function renderRecords(kind){const singular=kind.slice(0,-1),list=$(singular+'List');list.textContent='Loading…';try{const snap=await getDocs(query(collection(db,kind),limit(150)));list.replaceChildren();const rows=kind==='students'&&$('studentFilter').value!=='all'?snap.docs.filter(d=>courseKey(d.data().course)===$('studentFilter').value):snap.docs;
 if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students';const counts={};for(const d of snap.docs){const s=d.data(),key=(s.course||'Unassigned')+(isMaktabCourse(s.course)?' · '+(s.batch||'Unassigned Batch'):'');counts[key]=(counts[key]||0)+1}$('studentBatchSummary').textContent='Batch-wise student totals: '+(Object.entries(counts).map(([key,n])=>key+': '+n).join(' | ')||'No students yet')}
-if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'AIL ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';if(kind==='students'){updateStudentBatchVisibility();$('studentOfficialId').value=data.studentCode||'';}$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{
+if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'ALIA ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';if(kind==='students'){updateStudentBatchVisibility();$('studentOfficialId').value=data.studentCode||'';}$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{
  if(!confirm('Delete this '+singular+' record?'))return;
  try{
   if(kind==='students'){
@@ -706,7 +706,7 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
   manage.onclick=()=>studentAccounts.open({id:d.id,...data});
   el.append(manage);
   const copyOfficial=document.createElement('button');copyOfficial.type='button';copyOfficial.className='secondary';
-  copyOfficial.textContent='📋 Copy Official AIL Student ID';copyOfficial.disabled=!validOfficialStudentId(data.studentCode);
+  copyOfficial.textContent='📋 Copy Official ALIA Student ID';copyOfficial.disabled=!validOfficialStudentId(data.studentCode);
   copyOfficial.onclick=async()=>{
    if(!validOfficialStudentId(data.studentCode))return;
    try{await navigator.clipboard.writeText(data.studentCode);$('studentStatus').textContent='✓ Official Student ID copied: '+data.studentCode}
