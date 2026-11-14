@@ -74,3 +74,20 @@ Every new student saved in **Admin → Student Details** is assigned an automati
 For previously registered students without a code, open **Student Details** and click **✨ Generate ALIA IDs for Existing Students** once. Existing codes are preserved; missing codes are assigned sequentially and safely. You can copy the official ALIA ID from each student's card. The same official ID appears in verified Student Account dashboards and on **newly published** exam results, result PDFs and certificates. Existing published result documents without an ID continue to display "Not recorded" until reviewed and republished.
 
 **Do not use predictable ALIA roll numbers as authentication credentials.** Student Account Login requires a verified Firebase email/password or Google login and an explicit admin approval. The old public examination result checker accepts a separate, confidential **Exam Access ID (UUID)** plus Date of Birth. This is **not** ALIA00001; it is not safe to use sequential IDs plus DOB as access controls.
+
+## Student Login now starts with ALIA Student ID + Date of Birth
+
+The `student-login.html` page now begins with two clearly labeled inputs: **Official Student ID** (`ALIA00001` format) and **Date of Birth**. The student presses **Continue to Secure Login**. The site then asks them to sign in with their academy-approved, verified Firebase email/password account (or Google). Only when **all three checks** match — official ALIA code, DOB verifier, and administrator-approved verified email — does the app show the student's dashboard and their published exam results.
+
+### Why there is an extra identity check
+
+ALIA official roll numbers are sequential and dates of birth can often be learned or guessed. **They are not secure standalone passwords.** The extra verified email/Google account step is necessary before accessing an individual student's private dashboard. The Firebase `students` collection remains admin-only. The `studentAccess` grant, readable only by the approved verified email address, stores a salted PBKDF2 DOB proof (210,000 SHA-256 iterations) rather than the DOB itself. That verifier is prepared when admin approves the email and rotated whenever the student DOB changes. It is intended as an additional knowledge check **after** Firebase authentication, not as a replacement for it.
+
+### Activation for existing students
+
+1. Admin: open **Student Details**. Ensure the student has an official `ALIA00001`-style ID. If needed, run **Generate ALIA IDs for Existing Students**.
+2. Edit and save each student's **Date of Birth**.
+3. Click **Student Account Login** on that student's card. Enter an approved student or guardian email and click **Save & Approve Account**. For accounts approved *before* this new feature, reopen and save approval again to generate the new DOB verifier.
+4. Student: open **Homepage → Menu → Student Login**. Enter **ALIA Student ID + Date of Birth**, click Continue, sign in with the approved verified email/password or Google, and open the published results dashboard.
+
+Never send student passwords to administrators. A student whose official ID/DOB/email does not match the academy's saved and approved data is denied dashboard access.
