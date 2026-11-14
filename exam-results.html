@@ -145,7 +145,7 @@ async function studentLookup(event){
   const codes=[...new Set(Array.isArray(lookup.data().resultIds)?lookup.data().resultIds:[])].filter(id=>pattern.test(id)).slice(0,75);
   if(!codes.length)throw Error('There are no published examinations for this student yet.');
   const snapshots=await Promise.all(codes.map(id=>getDoc(doc(database,'examResults',id)).catch(()=>null)));
-  const matches=snapshots.filter(item=>item?.exists()&&item.data().published===true&&String(item.data().studentId||'').toLowerCase()===studentId);
+  const matches=snapshots.filter(item=>item?.exists()&&item.data().published===true);
   if(!matches.length)throw Error('No published results are available. Contact the Madrasa if your result was published recently.');
   matches.sort((a,b)=>String(b.data().examDate||'').localeCompare(String(a.data().examDate||'')));
   state.textContent='✓ Found '+matches.length+' published examination result(s). Choose the exam you want to view.';
