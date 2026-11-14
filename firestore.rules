@@ -30,6 +30,14 @@ service cloud.firestore {
       // Full student and guardian information remains admin only.
       allow read, write: if isAdmin();
     }
+    // One atomic counter and permanent reservation per AIL00001–AIL99999.
+    // Student IDs are never used as passwords or authentication secrets.
+    match /academyCounters/{counterId} {
+      allow read, write: if isAdmin();
+    }
+    match /studentIdRegistry/{officialId} {
+      allow read, write: if isAdmin();
+    }
 
     // Admin-approved student/guardian Firebase Authentication accounts.
     // Students can only query their own verified, enabled account grants.
