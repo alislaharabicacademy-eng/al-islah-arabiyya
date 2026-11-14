@@ -2,7 +2,8 @@
 import{collection,getDocs,getDoc,doc,setDoc,writeBatch,arrayUnion,arrayRemove}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
 import{createExamResultPdf,createExamCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
-export function initExamAdmin({db,auth}){
+import{maybePromoteStudent}from'./student-promotion.js';
+export function initExamAdmin({db,auth,onPromotion}){
  const $=id=>document.getElementById(id);
  const studentDropdown=$('examResultStudent'),form=$('examResultForm'),subjectRows=$('examSubjectRows');
  let students=[],results=[],courseNames=new Map(),loadPromise=null;
@@ -70,7 +71,7 @@ export function initExamAdmin({db,auth}){
   $('examStudentSummary').textContent=st?'Student: '+st.name+'  |  Official ID: '+(st.studentCode||'Not assigned')+'  |  Class: '+(courseNames.get(st.course)||st.course||'—')+'  |  Batch: '+(st.batch||'—')+'  |  Student ID: '+(st.examid||'Not issued — save student in Student Details')+'  |  DOB: '+(st.dob?'Recorded':'Missing — Student ID + DOB lookup needs DOB in Student Details'):'Choose a student to show their class and batch.';
  }
  function reset(){
-  form.reset();$('examResultId').value='';$('examResultPass').value='40';
+  form.reset();$('examResultId').value='';$('examResultPass').value='40';$('examFinalForPromotion').checked=false;
   const today=new Date();
   $('examResultDate').value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
   $('examResultYear').value=$('academicYearSelect')?.value||'2026–2027';
@@ -111,7 +112,7 @@ export function initExamAdmin({db,auth}){
   return {
    studentId:student.id,studentCode:student.studentCode||'',studentName:student.name||'Student',course:courseNames.get(student.course)||student.course||'—',
    courseId:student.course||'',batch:student.batch||'',examTitle,examDate,academicYear,
-   subjects,passPercent,...scores,published
+   subjects,passPercent,...scores,finalForPromotion:$('examFinalForPromotion').checked,published
   };
  }
  function makeId(){
@@ -153,11 +154,21 @@ export function initExamAdmin({db,auth}){
    if(studentAccount.exists())batch.set(doc(db,'studentAccess',record.studentId),
      {resultIds:published?arrayUnion(id):arrayRemove(id),updatedAt:now},{merge:true});
    await batch.commit();
+   let promotionNote='';
+   if(published){
+    try{
+     const progress=await maybePromoteStudent(db,record.studentId);
+     if(progress.promoted){
+      promotionNote=' 🎓 AUTOMATIC PROMOTION: '+progress.fromCourse+' → '+progress.toCourse+'. Student ID preserved.';
+      if(typeof onPromotion==='function')await onPromotion();
+     }else if(record.finalForPromotion===true)promotionNote=' Promotion pending: '+progress.reason;
+    }catch(error){promotionNote=' Promotion check failed: '+error.message+'. Result remains published.'}
+   }
    $('examResultId').value=id;
    await load();
    const lookupNote=published&&!afterKey?' Student ID + DOB lookup needs both DOB and a confidential Student ID. Open Student Details, edit and save the student.':'';
 
-   status((published?'✓ Result PUBLISHED.':'✓ Private draft saved.')+' Reference: '+id+(published?'  |  Copy the result link below to share privately.':'')+lookupNote);
+   status((published?'✓ Result PUBLISHED.':'✓ Private draft saved.')+' Reference: '+id+(published?'  |  Copy the result link below to share privately.':'')+lookupNote+promotionNote);
    $('examResultList').scrollIntoView({behavior:'smooth',block:'nearest'});
   }catch(e){status('Could not save exam result: '+e.message)}finally{button.disabled=false}
  }
@@ -168,6 +179,7 @@ export function initExamAdmin({db,auth}){
   $('examResultDate').value=record.examDate||'';
   $('examResultYear').value=record.academicYear||'';
   $('examResultPass').value=record.passPercent??40;
+  $('examFinalForPromotion').checked=record.finalForPromotion===true;
   subjectRows.replaceChildren();
   for(const subject of record.subjects||[])subjectRow(subject);
   if(!subjectRows.children.length)subjectRow();
