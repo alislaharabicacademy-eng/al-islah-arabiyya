@@ -142,7 +142,12 @@ export async function createCompetitionCertificatePdf(certificate){
  setColor(pdf,green);text(pdf,String(certificate.studentName),148.5,117,23,{bold:true,align:'center',maxWidth:220});
  pdf.setDrawColor(...gold);pdf.line(59,123,238,123);
  pdf.setTextColor(75,99,81);
- text(pdf,type==='Participation'?'for active participation in':'for '+type+' in',148.5,135,12,{align:'center'});
+ const achievement=type==='Participation'?'for active participation in'
+  :type==='Winner'?'for winning the competition'
+  :type==='Appreciation'?'in appreciation of participation in'
+  :type==='Best Performance'?'for outstanding performance in'
+  :'for securing '+type+' in';
+ text(pdf,achievement,148.5,135,12,{align:'center'});
  setColor(pdf,green);text(pdf,String(certificate.eventName),148.5,145,16,{bold:true,align:'center',maxWidth:210});
  text(pdf,'Student ID: '+String(certificate.studentCode||'Not issued')+'   |   Class: '+String(certificate.course||'-'),148.5,156,9,{align:'center'});
  text(pdf,'Event Date: '+String(certificate.eventDate),148.5,166,9,{align:'center'});
