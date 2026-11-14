@@ -1853,7 +1853,11 @@ async function renderTeacherPayroll(){
    const value={};
    for(const [key,,type] of fields)value[key]=type==='checkbox'?inputs[key].checked:type==='number'?Number(inputs[key].value||0):inputs[key].value;
    // Use the actual saved payment flag; never infer paid status from a receipt download.
-   if(value.paid&&!value.paidDate)value.paidDate=[teacherSalaryTodayPart('year'),teacherSalaryTodayPart('month'),teacherSalaryTodayPart('day')].join('-');
+   if(value.paid&&!value.paidDate){
+    const paymentParts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+    const paymentPart=type=>paymentParts.find(part=>part.type===type)?.value||'';
+    value.paidDate=[paymentPart('year'),paymentPart('month'),paymentPart('day')].join('-');
+   }
    if(!value.paid)value.paidDate='';
    const updated={...records,[month]:value};
    $('teacherPayrollStatus').textContent='Saving…';save.disabled=true;
@@ -1861,6 +1865,9 @@ async function renderTeacherPayroll(){
     await setDoc(doc(db,'teachers',t.id),{payroll:updated},{merge:true});
     $('teacherPayrollStatus').textContent='✓ '+t.name+' salary saved for '+month+(value.paid?' · PAID '+value.paidDate:' · NOT PAID')+'. Refresh the all-teachers register to review.';
     await renderTeacherPayroll();
+    // If an all-teacher salary report was already open, refresh it after payment.
+    if(teacherSalaryReportState.mode==='month'&&teacherSalaryReportState.month===month)await renderAllTeacherSalaryMonth();
+    else if(teacherSalaryReportState.mode==='year'&&teacherSalaryReportState.year===month.slice(0,4))await renderAllTeacherSalaryYear();
    }catch(e){$('teacherPayrollStatus').textContent='Save failed: '+e.message}
    finally{save.disabled=false}
   };
