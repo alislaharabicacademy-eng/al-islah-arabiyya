@@ -1,0 +1,130 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Check a published examination result and download its official report and certificate from Madrasa Al Islahul Arabiya.">
+<title>Examination Results & Certificates | Madrasa Al Islahul Arabiya</title>
+<style>
+:root{--green:#0e4732;--gold:#c1a06c;--ink:#1c4030}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f4f8f3;color:var(--ink);font-family:Arial,'Noto Sans',sans-serif}
+header{background:linear-gradient(130deg,#073829,#0e543a);border-bottom:4px solid #d7b875;text-align:center;padding:27px 15px 31px;color:white}
+header img{width:88px;height:88px;object-fit:contain;clip-path:circle(49% at 50% 50%)}
+header small{display:block;letter-spacing:.2em;color:#e6d39d;font-size:10px;font-weight:800;margin:10px 0}
+header h1{font:700 clamp(24px,5vw,38px) Georgia,serif;color:#f9eccc;margin:10px 0}
+header p{color:#c9e0d4;font-size:15px}
+header nav{display:flex;justify-content:center;gap:17px;flex-wrap:wrap;margin-top:16px}
+header a{color:#f3e9c7;text-decoration:none;font-size:13px}
+main{max-width:930px;margin:auto;padding:30px 16px 64px}
+.hero{text-align:center;margin-bottom:23px}.hero h2{font:700 clamp(25px,5vw,38px) Georgia,serif;color:#10462d;margin-bottom:11px}.hero p{color:#597565;line-height:1.6}
+.card{background:#fff;border:1px solid #d9e4d9;border-radius:18px;padding:25px;box-shadow:0 12px 35px #124c2f12;margin:18px 0}
+.code-form{display:flex;align-items:end;gap:12px;flex-wrap:wrap}
+.code-form label{flex:1 1 230px;font-size:13px;font-weight:800;color:#224a35}
+.code-form input{display:block;width:100%;min-height:47px;margin-top:9px;padding:12px 15px;border:1px solid #b6cfc0;border-radius:10px;font:inherit;letter-spacing:.02em}
+button,.action{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:46px;cursor:pointer;border-radius:10px;border:1px solid #145b3a;background:#12613e;color:white;padding:12px 18px;font:700 13px Arial,sans-serif;text-decoration:none}
+button.secondary{background:#edf7ef;color:#115039;border-color:#b9d4c4}
+button:disabled{opacity:.55;cursor:progress}
+.status{font-size:13px;line-height:1.7;color:#4d6c5a;min-height:19px;margin:12px 0}
+.status.error{color:#a5382b}.status.ok{color:#126e3b}
+.result-head{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid #dfe9e0;padding-bottom:13px;margin-bottom:15px}
+.result-head h3{font:700 27px Georgia,serif;color:#12462f;margin:0}.result-head small{color:#587766}
+.pill{display:inline-flex;padding:8px 14px;background:#dff4e6;color:#0e6d3a;border-radius:999px;font-size:12px;font-weight:850}
+.pill.fail{background:#fff0d5;color:#965a20}
+.info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:20px 0}
+.info div{background:#f5faf6;border:1px solid #e1ebe2;padding:13px;border-radius:11px;overflow-wrap:anywhere}
+.info strong{display:block;color:#779080;font-size:11px;margin-bottom:7px;text-transform:uppercase;letter-spacing:.05em}
+.info span{font-size:15px;font-weight:800;color:#17492f}
+.tablewrap{overflow:auto;border:1px solid #dbe8de;border-radius:12px;margin:15px 0}
+table{width:100%;min-width:480px;border-collapse:collapse}
+th,td{padding:14px 15px;border-bottom:1px solid #e0eae1;text-align:left;font-size:13px}
+th{color:#16432c;background:#e6f3e9;font-size:12px}tr:nth-child(even){background:#f9fcf9}
+.summary{background:linear-gradient(125deg,#e8f6e9,#f8fcf8);border:1px solid #cee3d1;border-radius:12px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:16px;margin-top:16px}
+.summary div{font-size:12px;color:#657e69}.summary strong{display:block;color:#0f603a;font-size:19px;margin-top:7px}
+.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.note{font-size:12px;color:#677e6b;line-height:1.7;padding-top:8px}
+footer{background:#0b3829;color:#e9dec0;text-align:center;padding:24px;font-size:12px}
+[hidden]{display:none!important}
+@media(max-width:620px){.card{padding:16px}.info{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}}
+</style></head><body>
+<header><img src="1_20261112_080707_0000.png" alt="Official Madrasa logo"><small>OFFICIAL EXAMINATION PORTAL</small><h1>Madrasa Al Islahul Arabiya</h1><p>Examination Results &amp; Certificates</p>
+<nav><a href="index.html">⌂ Home</a><a href="all-courses.html">Explore Courses</a><a href="admission.html">Admission</a></nav></header>
+<main>
+<div class="hero"><h2>🏅 Published Examination Results</h2><p>Enter the confidential Result Reference provided by the Madrasa to view the published result. Unpublished records cannot be viewed.</p></div>
+<section class="card" aria-labelledby="resultCheckTitle"><h3 id="resultCheckTitle">🔎 Check Your Result</h3>
+<form id="resultLookupForm" class="code-form"><label>Result Reference Code<input id="resultCode" required autocomplete="off" spellcheck="false" placeholder="RESULT-xxxxxxxxxxxxxxxxxxxxxxxx" maxlength="50"></label><button id="resultLookupButton" type="submit">View Result →</button></form>
+<p id="resultCheckStatus" class="status" role="status" aria-live="polite"></p>
+</section>
+<section id="publishedResultPanel" class="card" hidden aria-label="Published examination result">
+<div class="result-head"><div><small>OFFICIAL EXAMINATION RESULT</small><h3 id="viewStudentName"></h3><p id="viewExamName" class="note"></p></div><span id="viewResultStatus" class="pill"></span></div>
+<div id="examResultInfo" class="info"></div>
+<h3>📚 Subject-wise Marks</h3><div class="tablewrap"><table><thead><tr><th>Subject</th><th>Obtained</th><th>Maximum</th></tr></thead><tbody id="publicExamSubjects"></tbody></table></div>
+<div class="summary"><div>Total Marks<strong id="publicTotal"></strong></div><div>Percentage<strong id="publicPercent"></strong></div><div>Grade<strong id="publicGrade"></strong></div><div>Result<strong id="publicPass"></strong></div></div>
+<div class="buttons"><button id="publicDownloadResult" type="button">📕 Result PDF</button><button id="publicDownloadCertificate" class="secondary" type="button">🏅 Certificate PDF</button></div>
+<p class="note" id="publicReference"></p><p class="note">This online verification confirms that the result currently appears as published in the Madrasa database. A certificate records examination achievement or participation; it is not proof of completion of an entire course.</p>
+</section>
+</main><footer>© Madrasa Al Islahul Arabiya · Official Examination Portal</footer>
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+import{getFirestore,getDoc,doc}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import{createExamResultPdf,createExamCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
+const $=id=>document.getElementById(id);
+const status=$('resultCheckStatus'),panel=$('publishedResultPanel'),button=$('resultLookupButton');
+let db=null,record=null;
+const pattern=/^RESULT-[a-f0-9]{24}$/;
+function info(label,value){
+ const root=document.createElement('div');const heading=document.createElement('strong'),body=document.createElement('span');
+ heading.textContent=label;body.textContent=String(value||'—');root.append(heading,body);return root;
+}
+function show(data,id){
+ record={...data,id};
+ $('viewStudentName').textContent=record.studentName||'Student';
+ $('viewExamName').textContent=record.examTitle||'Examination';
+ $('viewResultStatus').textContent=record.passed?'✓ PASS':'NEEDS IMPROVEMENT';
+ $('viewResultStatus').className='pill'+(record.passed?'':' fail');
+ const details=$('examResultInfo');details.replaceChildren();
+ for(const [label,value] of [['Course',record.course],['Batch',record.batch||'—'],['Academic Year',record.academicYear],['Exam Date',record.examDate]])details.append(info(label,value));
+ const body=$('publicExamSubjects');body.replaceChildren();
+ for(const row of record.subjects||[]){
+  const tr=document.createElement('tr');
+  for(const val of [row.name,row.score,row.max]){const td=document.createElement('td');td.textContent=String(val);tr.append(td)}
+  body.append(tr);
+ }
+ $('publicTotal').textContent=record.total+' / '+record.maxTotal;
+ $('publicPercent').textContent=Number(record.percent||0).toFixed(2)+'%';
+ $('publicGrade').textContent=record.grade||'—';
+ $('publicPass').textContent=record.passed?'PASS':'NOT PASSED';
+ $('publicReference').textContent='Reference: '+id;
+ panel.hidden=false;
+}
+async function lookup(event){
+ event?.preventDefault();
+ const id=$('resultCode').value.trim();
+ panel.hidden=true;record=null;
+ if(!pattern.test(id)){status.textContent='Please enter a valid result code provided by the Madrasa.';status.className='status error';return}
+ button.disabled=true;status.className='status';status.textContent='Verifying your published result…';
+ try{
+  if(!db){const conf=await fetch('firebase-config.json').then(r=>r.json());db=getFirestore(initializeApp(conf))}
+  const snap=await getDoc(doc(db,'examResults',id));
+  if(!snap.exists()||snap.data().published!==true)throw Error('The result was not found or has not been published. Please confirm the code with the Madrasa.');
+  show(snap.data(),id);
+  status.textContent='✓ Official published result loaded successfully.';status.className='status ok';
+  history.replaceState(null,'','?id='+encodeURIComponent(id));
+ }catch(err){
+  status.textContent=err.code==='permission-denied'?'Result is unavailable. Verify the code or publication status.':err.message;
+  status.className='status error';
+ }finally{button.disabled=false}
+}
+$('resultLookupForm').addEventListener('submit',lookup);
+async function download(which){
+ if(!record)return;
+ const b=$(which==='result'?'publicDownloadResult':'publicDownloadCertificate'),old=b.textContent;
+ b.disabled=true;b.textContent='Preparing PDF…';
+ try{
+  const pdf=which==='result'?await createExamResultPdf(record):await createExamCertificatePdf(record);
+  const prefix=which==='result'?'Exam_Result_':'Exam_Certificate_';
+  downloadExamBlob(pdf,prefix+safePdfName(record.studentName)+'.pdf');
+ }catch(e){status.textContent='PDF download failed: '+e.message;status.className='status error'}
+ finally{b.disabled=false;b.textContent=old}
+}
+$('publicDownloadResult').onclick=()=>download('result');
+$('publicDownloadCertificate').onclick=()=>download('certificate');
+const fromUrl=new URLSearchParams(location.search).get('id');
+if(fromUrl){$('resultCode').value=fromUrl;lookup()}
+</script></body></html>
