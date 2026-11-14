@@ -331,7 +331,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
   <div id="examResultList"></div>
  </section>
 </div>
-<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Private enrolled-student records.</p><form id="studentForm"><input type="hidden" id="studentId"><div class="fields"><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
+<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Private enrolled-student records.</p><form id="studentForm"><input type="hidden" id="studentId"><div class="fields"><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Date of Birth (for secure exam result lookup)<input id="studentDob" type="date"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
 <details id="monthlyStudentAttendancePanel" class="section student-monthly-panel">
  <summary>📊 Monthly Student Attendance Report</summary>
  <div class="monthly-report-shell">
@@ -388,6 +388,7 @@ import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,EmailAuthProvider,linkWithCredential,sendEmailVerification,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
+import{examStudentLookupKey}from'./exam-lookup.js';
 const $=id=>document.getElementById(id),email='alislaharabicacademy@gmail.com';
 const defaults={"muallama":{"name":"Muallama","duration":"1 Year","description":"Foundational Islamic learning programme.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"muballigha":{"name":"Muballigha","duration":"2 Years","description":"Two-year programme for continued Islamic study.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"alima":{"name":"Alima","duration":"3 Years","description":"Extended programme for deeper Islamic learning.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"boys-hifz":{"name":"Boys Hifz Class","duration":"To be announced","description":"Qur'an memorisation (Hifz) programme for boys. Full course details will be published soon.","eligibility":"Eligibility criteria will be announced by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"childrens-quran-maktab":{"name":"Children's Qur'an Maktab","duration":"","description":"","eligibility":"","kitabs":[],"syllabus":"","fees":"","timings":""},"tajweed-for-girls":{"name":"Tajweed For Girls","duration":"","description":"","eligibility":"","kitabs":[],"syllabus":"","fees":"","timings":""}};
 const config=await fetch('firebase-config.json').then(r=>r.json()).catch(()=>({}));
@@ -570,7 +571,7 @@ function courseKey(value){const v=String(value||'').trim().toLowerCase().replace
 $('studentFilter').onchange=()=>renderRecords('students');
 $('applicationFilter').onchange=renderApplications;
 let feeStudent=null,feeLedger={},feeRate=0,feeCourse='';const monthNames=['January','February','March','April','May','June','July','August','September','October','November','December'];const feeYear=$('feeYear');for(let y=new Date().getFullYear()-2;y<=new Date().getFullYear()+2;y++)feeYear.add(new Option(String(y),String(y)));feeYear.value=String(new Date().getFullYear());feeYear.onchange=()=>{if(feeStudent)openFees(feeStudent)};
-const schemas={teachers:['Name','Subject','Phone','Email','Notes'],students:['Name','Course','Batch','Guardian','Phone','State','Reference']};
+const schemas={teachers:['Name','Subject','Phone','Email','Notes'],students:['Name','Course','Batch','Guardian','Dob','Phone','State','Reference']};
 const isMaktabCourse=course=>['maktab','childrens-quran-maktab'].includes(courseKey(course));
 const batchOptions=Array.from({length:30},(_,i)=>'Batch '+(i+1));
 for(const label of batchOptions)$('studentBatch').add(new Option(label,label));
@@ -583,7 +584,42 @@ function updateStudentBatchVisibility(){
 $('studentCourse').addEventListener('change',updateStudentBatchVisibility);
 updateStudentBatchVisibility();
 function resetRecord(kind){$(kind+'Form').reset();$(kind+'Id').value='';if(kind==='student')updateStudentBatchVisibility()}
-for(const kind of ['teacher','student']){$(kind+'Clear').onclick=()=>resetRecord(kind);$(kind+'Form').onsubmit=async e=>{e.preventDefault();if(!active)return;const plural=kind+'s',id=$(kind+'Id').value||crypto.randomUUID(),data={};for(const field of schemas[plural])data[field.toLowerCase()]=$(kind+field).value.trim();if(kind==='student')data.batch=isMaktabCourse(data.course)?data.batch:'';$(kind+'Status').textContent='Saving…';try{await setDoc(doc(db,plural,id),data);if(kind==='student')await syncAllTeacherRosters();resetRecord(kind);$(kind+'Status').textContent='✓ Saved';await renderRecords(plural)}catch(err){$(kind+'Status').textContent='Save failed: '+err.message}}}
+for(const kind of ['teacher','student']){
+ $(kind+'Clear').onclick=()=>resetRecord(kind);
+ $(kind+'Form').onsubmit=async e=>{
+  e.preventDefault();if(!active)return;
+  const plural=kind+'s',id=$(kind+'Id').value||crypto.randomUUID(),data={};
+  for(const field of schemas[plural])data[field.toLowerCase()]=$(kind+field).value.trim();
+  if(kind==='student')data.batch=isMaktabCourse(data.course)?data.batch:'';
+  $(kind+'Status').textContent='Saving…';
+  try{
+   if(kind==='student'){
+    const previous=await getDoc(doc(db,'students',id));
+    const oldDOB=previous.exists()?String(previous.data().dob||''):'';
+    const newDOB=String(data.dob||'');
+    if(oldDOB!==newDOB&&previous.exists()){
+     const examSnap=await getDocs(collection(db,'examResults'));
+     const ids=examSnap.docs.filter(d=>d.data().studentId===id&&d.data().published===true).map(d=>d.id);
+     const batch=writeBatch(db);
+     batch.set(doc(db,'students',id),data);
+     if(oldDOB){
+      const oldHash=await examStudentLookupKey(id,oldDOB);
+      batch.set(doc(db,'examResultLookups',oldHash),{enabled:false,updatedAt:new Date().toISOString()},{merge:true});
+     }
+     if(newDOB){
+      const key=await examStudentLookupKey(id,newDOB);
+      batch.set(doc(db,'examResultLookups',key),{enabled:true,resultIds:ids,updatedAt:new Date().toISOString()},{merge:true});
+     }
+     await batch.commit();
+    }else{
+     await setDoc(doc(db,'students',id),data);
+    }
+   }else await setDoc(doc(db,plural,id),data);
+   if(kind==='student')await syncAllTeacherRosters();
+   resetRecord(kind);$(kind+'Status').textContent='✓ Saved. Date of birth and Student ID are used only for private result lookup.';await renderRecords(plural);
+  }catch(err){$(kind+'Status').textContent='Save failed: '+err.message}
+ };
+}
 async function renderRecords(kind){const singular=kind.slice(0,-1),list=$(singular+'List');list.textContent='Loading…';try{const snap=await getDocs(query(collection(db,kind),limit(150)));list.replaceChildren();const rows=kind==='students'&&$('studentFilter').value!=='all'?snap.docs.filter(d=>courseKey(d.data().course)===$('studentFilter').value):snap.docs;
 if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students';const counts={};for(const d of snap.docs){const s=d.data(),key=(s.course||'Unassigned')+(isMaktabCourse(s.course)?' · '+(s.batch||'Unassigned Batch'):'');counts[key]=(counts[key]||0)+1}$('studentBatchSummary').textContent='Batch-wise student totals: '+(Object.entries(counts).map(([key,n])=>key+': '+n).join(' | ')||'No students yet')}
 if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+schemas[kind].filter(f=>f!=='Name'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';if(kind==='students'){updateStudentBatchVisibility();}$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{if(!confirm('Delete this '+singular+' record?'))return;try{await deleteDoc(doc(db,kind,d.id));if(kind==='students')await syncAllTeacherRosters();await renderRecords(kind)}catch(e){alert('Delete failed: '+e.message)}};if(kind==='students')el.querySelector('[data-fees]').onclick=()=>openFees(d);list.append(el)})}catch(err){list.textContent='Unable to load records: '+err.message}}
