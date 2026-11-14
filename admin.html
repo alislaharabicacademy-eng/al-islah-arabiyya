@@ -41,6 +41,16 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 .side-menu .academy-menu-submenu button,.side-menu .academy-menu-submenu a{background:#ffffff08;border:1px solid #ffffff1a;border-radius:9px;padding:12px 14px;font-size:14px;font-weight:600;margin:5px 0;color:#e7f2e8;min-height:44px}
 .side-menu .academy-menu-submenu button.active{background:#d5b67822;border-color:#e1c68c;color:#fff}
 @media(max-width:600px){.side-menu{width:min(85vw,340px)!important}.side-menu .academy-menu-group-toggle{font-size:15px}}
+</style>
+<style id="admin-encrypted-backup-style">
+.admin-data-backup-panel{background:linear-gradient(140deg,#f3faf4,#ebf5ee);border:1px solid #bcd4c3;border-radius:16px;margin-top:27px;padding:18px}
+.admin-data-backup-panel h3{margin:0 0 10px;color:#164d34}
+.admin-data-backup-panel .record{background:white;border:1px solid #dae7dd;border-radius:14px;padding:18px;margin-top:13px}
+.admin-data-backup-panel .fields{display:grid;grid-template-columns:repeat(2,minmax(160px,1fr));gap:12px;margin:15px 0}
+.admin-data-backup-panel input[type=password]{background:#f9fdfa;min-height:44px;border:1px solid #bfd5c5;border-radius:8px;width:100%}
+.admin-data-backup-panel .actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+.admin-data-backup-panel .actions .btn{display:inline-flex;align-items:center;font-size:13px}
+@media(max-width:650px){.admin-data-backup-panel .fields{grid-template-columns:1fr}.admin-data-backup-panel .record{padding:12px}}
 </style><style id="teacher-salary-register-style">
 .teacher-salary-register{background:linear-gradient(150deg,#f8fcf9,#eef6f0);border:1px solid #ceded2;border-radius:17px;margin-top:26px;padding:18px}
 .teacher-salary-register .fields{margin:13px 0;display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:12px}
@@ -243,6 +253,25 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
  <p class="status" id="teacherSalaryRegisterStatus" role="status"></p>
  <div id="teacherSalaryRegisterSummary"></div>
  <div id="teacherSalaryRegisterReport"></div>
+</section>
+<section class="section admin-data-backup-panel" id="adminDataBackup">
+ <h3>🔐 Secure Data Backup · Admin Only</h3>
+ <p class="section-note">Download an <strong>encrypted</strong> backup of Firestore Students, Teachers, Attendance, Applications, Salary and Salary Change History. This is an on-demand export; Google-managed automatic backups must be enabled separately.</p>
+ <div class="record">
+  <strong>🔑 Backup Encryption Password</strong>
+  <p class="section-note">Use a unique password of at least 14 characters. The backup is encrypted on your own device. Store this password in a password manager — a lost password cannot be recovered.</p>
+  <div class="fields">
+   <label>Password <input id="adminBackupPassword" type="password" minlength="14" autocomplete="new-password" placeholder="At least 14 characters"></label>
+   <label>Confirm Password <input id="adminBackupPasswordConfirm" type="password" minlength="14" autocomplete="new-password" placeholder="Repeat backup password"></label>
+  </div>
+  <label><input type="checkbox" id="adminBackupUnderstand"> I will keep the password safely. This download does not include Firebase Storage files (photos or certificates).</label>
+  <div class="actions">
+   <button type="button" id="downloadAdminEncryptedBackup">🔐 Download Encrypted Firestore Backup</button>
+   <a class="btn secondary" href="https://github.com/alislaharabicacademy-eng/al-islah-arabiyya/actions/workflows/enable-managed-firestore-backups.yml" target="_blank" rel="noopener">⚙ Configure Automatic Daily Backups ↗</a>
+  </div>
+  <p id="adminBackupStatus" class="status" role="status" aria-live="polite"></p>
+  <p class="section-note">⚠ Automatic backup activation is <strong>not</strong> complete just because the workflow exists. A project owner must first approve billing and give the backup-schedule IAM permission, run the workflow once, then verify the first backup. Managed backups retain 28 days in the prepared setup, not forever.</p>
+ </div>
 </section>
 </div></div><div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Private enrolled-student records.</p><form id="studentForm"><input type="hidden" id="studentId"><div class="fields"><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
 <details id="monthlyStudentAttendancePanel" class="section student-monthly-panel">
