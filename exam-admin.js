@@ -2,6 +2,7 @@
 import{collection,getDocs,getDoc,doc,setDoc,writeBatch,arrayUnion,arrayRemove}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
 import{createExamResultPdf,createExamCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
+import{groupedPublishedResults,publishedResultFilterOptions,createAcademyPublishedRegisterPdf}from'./exam-batch-report.js';
 import{maybePromoteStudent}from'./student-promotion.js';
 import{initHomepageWinners}from'./homepage-winners-admin.js';
 import{compressProfilePhoto}from'./profile-photo.js';
@@ -101,7 +102,7 @@ export function initExamAdmin({db,auth,onPromotion}){
    }
    if(students.some(s=>s.id===prior))studentDropdown.value=prior;
    if(!subjectRows.children.length)reset();
-   fillStudentSummary();renderList();
+   fillStudentSummary();renderList();updatePublishedReportOptions();
   })().finally(()=>{loadPromise=null});
   return loadPromise;
  }
@@ -224,6 +225,61 @@ export function initExamAdmin({db,auth,onPromotion}){
   b.onclick=async()=>{b.disabled=true;try{await fn()}catch(e){status('Action failed: '+e.message)}finally{b.disabled=false}};
   return b;
  }
+ function updatePublishedReportOptions(){
+  const opts=publishedResultFilterOptions(results);
+  const replace=(id,options,allText)=>{
+   const select=$(id),previous=select.value;
+   select.replaceChildren(option(allText,'all'));
+   for(const [name,value] of options)select.append(option(name,value));
+   if([...select.options].some(o=>o.value===previous))select.value=previous;
+  };
+  replace('batchResultCourse',opts.courses.map(([id,name])=>[name,id]),'All Classes');
+  replace('batchResultYear',opts.academicYears.map(x=>[x,x]),'All Academic Years');
+  replace('batchResultExam',opts.exams.map(x=>[x,x]),'All Published Exams');
+  const total=results.filter(r=>r.published===true).length;
+  $('batchResultStatus').textContent='Available: '+total+' published exam result(s). Drafts never appear in the register. Select a class and download an A4 PDF.';
+ }
+ function selectedPublishedGroups(){
+  return groupedPublishedResults(results,{
+   course:$('batchResultCourse').value,
+   academicYear:$('batchResultYear').value,
+   exam:$('batchResultExam').value
+  });
+ }
+ async function bulkDownload(mode){
+  const status=$('batchResultStatus');
+  const button=$(mode==='full'?'downloadPublishedResultRegister':'downloadPublishedTop3');
+  button.disabled=true;
+  try{
+   // Read a fresh publication snapshot. If a result was unpublished in a
+   // second browser tab it must not leak into the class-wise PDF.
+   const current=await getDocs(collection(db,'examResults'));
+   const liveResults=current.docs.map(d=>({id:d.id,...d.data()}));
+   const groups=groupedPublishedResults(liveResults,{
+    course:$('batchResultCourse').value,academicYear:$('batchResultYear').value,
+    exam:$('batchResultExam').value
+   });
+   if(!groups.length)throw Error('No published exam results match the selected class, year and examination.');
+   const confirmed=$('batchReportShareConsent').checked;
+   if(mode==='top3'&&!confirmed)throw Error('Tick the guardian/student sharing-permission checkbox before exporting the WhatsApp rank list.');
+   if(mode==='full'&&!confirm('This PDF lists ALL published students\' names, ALIA IDs and marks. It is for authorized Academy use only. Download the complete register?'))return;
+   if(mode==='top3'&&!confirm('Generate a group-shareable PDF with the top three students\' names and percentages per class / exam? Make sure guardian permission is recorded.'))return;
+   status.textContent='Preparing '+groups.length+' class/exam group(s) for A4 PDF…';
+   const pdf=await createAcademyPublishedRegisterPdf(groups,{mode,permissionConfirmed:confirmed});
+   const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+   downloadExamBlob(pdf,'ALIA_'+(mode==='top3'?'Top_3_Class_Ranks':'Complete_Published_Exam_Results')+'_'+date+'.pdf');
+   status.textContent='✓ A4 PDF downloaded: '+groups.length+' class/exam group(s). '+(mode==='top3'?'Review names and consent before sharing.':'Keep the complete marks register private.');
+  }catch(e){status.textContent='Could not download published results: '+e.message}
+  finally{button.disabled=false}
+ }
+ $('downloadPublishedResultRegister').onclick=()=>bulkDownload('full');
+ $('downloadPublishedTop3').onclick=()=>bulkDownload('top3');
+ for(const id of ['batchResultCourse','batchResultYear','batchResultExam'])
+  $(id).addEventListener('change',()=>{
+   const groups=selectedPublishedGroups();
+   $('batchResultStatus').textContent=groups.length+' published class/examination group(s) selected; '+groups.reduce((sum,g)=>sum+g.studentCount,0)+' student results.';
+  });
+
  function renderList(){
   const target=$('examResultList');target.replaceChildren();
   const filter=$('examResultFilter').value,q=$('examResultSearch').value.trim().toLowerCase();
