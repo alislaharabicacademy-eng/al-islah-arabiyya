@@ -1,126 +1,86 @@
-
-import{doc,getDoc,setDoc,collection,getDocs,query,where}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
-import{normalizeStudentCode,validateStudentDOB,makeStudentDobVerifier}from'./student-dob-verifier.js';
+import{doc,getDoc,setDoc}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import{normalizeStudentCode,validateStudentDOB}from'./student-dob-verifier.js';
 import{isProfilePhoto}from'./profile-photo.js';
 import{validFeeLedger}from'./fee-ledger-utils.js';
-export function initStudentAccountAdmin({db}){
- const $=id=>document.getElementById(id);
- const panel=$('studentAccountPanel'),status=$('studentAccountStatus');
- let selected=null,previous=null,changingEmail=false;
- function showApprovalState(){
-  const badge=$('studentAccountApprovalBadge'),approved=previous?.enabled===true;
-  badge.textContent=approved?'✅ APPROVED — Student Login enabled for '+String(previous.email||''):
-   previous?'⛔ ACCESS DISABLED — Student cannot enter the Dashboard':'⏳ PENDING — No Student Login approved yet';
-  badge.style.background=approved?'#e0f6e7':previous?'#fff0ed':'#fff5df';
-  badge.style.color=approved?'#115333':previous?'#952e28':'#76561b';
-  $('studentAccountSave').hidden=approved&&!changingEmail;
-  $('studentAccountSave').textContent=changingEmail?'🔐 Save New Approved Email':previous?'🔓 Re-approve Student Login':'🔐 Approve Student Login';
-  $('studentAccountChangeEmail').hidden=!approved||changingEmail;
-  $('studentAccountDisable').hidden=!approved;
-  $('studentAccountEmail').readOnly=approved&&!changingEmail;
-  $('studentAccountEnabled').checked=true;
-  $('studentAccountEnabled').closest('label').hidden=true; // Explicit Approve / Disable actions; no ambiguous toggle.
- }
- $('studentAccountChangeEmail').onclick=()=>{
-  if(!previous?.enabled)return;
-  if(!confirm('Change this approved student login email? The old verified email will lose access after you save.'))return;
-  changingEmail=true;showApprovalState();$('studentAccountEmail').focus();
- };
 
- async function feeSnapshot(student){
-  let monthlyFee=0;
-  try{
-   const courseId=String(student.course||'').trim();
-   if(courseId){const course=await getDoc(doc(db,'courses',courseId));if(course.exists())monthlyFee=Math.max(0,Number(course.data().monthlyFee)||0)}
-  }catch(err){console.warn('Monthly fee not available:',err.code||err.message)}
-  return {feeLedger:validFeeLedger(student.feeLedger),feeMonthlyRate:monthlyFee,
-   feeEnrollmentDate:String(student.approvedAt||student.enrollmentDate||student.admittedAt||'').slice(0,24)};
+// Admin manages a simple Student ID + DOB login. Student/guardian emails,
+// Google sign-in and approval are not required. A disabled grant blocks access.
+export function initStudentAccountAdmin({db}){
+ const $=id=>document.getElementById(id),panel=$('studentAccountPanel'),status=$('studentAccountStatus');
+ let selected=null,previous=null;
+ function validStudent(student){
+  try{normalizeStudentCode(student.studentCode);validateStudentDOB(student.dob);return true}catch{return false}
  }
- function msg(value){status.textContent=value}
- function emailValue(){
-  const value=$('studentAccountEmail').value.trim().toLowerCase();
-  if(!/^[^\s@\/]+@[^\s@\/]+\.[^\s@\/]+$/.test(value)||value.length>200)throw Error('Enter a valid student or guardian email.');
-  return value;
+ function show(){
+  const ready=!!selected&&validStudent(selected),enabled=ready&&previous?.enabled!==false;
+  const badge=$('studentAccountApprovalBadge');
+  badge.textContent=!ready?'⚠ Student ID and DOB are required before Login can be used.':
+   enabled?'✅ ENABLED — Student ID + DOB Login (No Gmail required)':
+    '⛔ DISABLED — Student cannot open the Dashboard';
+  badge.style.background=enabled?'#e0f6e7':'#fff0ed';badge.style.color=enabled?'#115333':'#952e28';
+  $('studentAccountSave').hidden=!ready||enabled;
+  $('studentAccountDisable').hidden=!enabled;
  }
  async function open(student){
-  if(!student?.id)throw Error('Save the student first.');
-  selected={...student};previous=null;changingEmail=false;panel.hidden=false;
-  showApprovalState();
+  if(!student?.id)throw Error('Save the student record first.');
+  selected={...student};previous=null;panel.hidden=false;
   $('studentAccountTitle').textContent=(student.name||'Student')+' · '+(student.studentCode||'ALIA ID pending')+' · '+(student.course||'No class');
-  $('studentAccountEmail').value='';$('studentAccountEnabled').checked=true;
-  msg('Loading student access…');
+  status.textContent='Checking student account status…';show();
   panel.scrollIntoView({behavior:'smooth',block:'start'});
   try{
-   const snap=await getDoc(doc(db,'studentAccess',student.id));
+   const ref=await getDoc(doc(db,'studentAccess',student.id));
    if(selected?.id!==student.id)return;
-   previous=snap.exists()?snap.data():null;
-   $('studentAccountEmail').value=previous?.email||'';
-   $('studentAccountEnabled').checked=previous?previous.enabled===true:true;
-   showApprovalState();
-   msg(!student.studentCode||!student.dob?'First save this student with an ALIA ID and Date of Birth before enabling account login.':previous?(previous.enabled?'✓ Account enabled for '+previous.email+' · Student ID + DOB are required for login.':'Account disabled. Re-enable when ready.'):'No account linked yet. Approve a guardian email and students can enter ALIA Student ID + DOB first.');
-  }catch(err){msg('Unable to read account: '+err.message)}
+   previous=ref.exists()?ref.data():null;
+   show();
+   status.textContent=validStudent(selected)?
+    'Students can log in directly using their official ALIA Student ID and DOB. No email approval is needed.':
+    'First save an official ALIA ID and Date of Birth for this student.';
+  }catch(err){status.textContent='Unable to check account status: '+err.message}
  }
- async function save(disable=false){
-  if(!selected)return msg('Select a student first.');
-  const button=$('studentAccountSave'),off=$('studentAccountDisable');
-  button.disabled=true;off.disabled=true;
+ async function save(disable){
+  if(!selected)return;
+  const enable=!disable;
+  const button=enable?$('studentAccountSave'):$('studentAccountDisable');
+  button.disabled=true;
   try{
-   const email=disable?String(previous?.email||'').trim().toLowerCase():emailValue();
-   const enabled=!disable;
-   if(disable&&!previous?.enabled)throw Error('The account is already disabled or not yet approved.');
-   if(previous?.email&&previous.email!==email&&!confirm('Change the linked email address? The old account will lose access.'))return;
-   if(enabled&&!confirm('Enable account access to this student for '+email+'? Confirm this is the approved student or guardian email.'))return;
-   if(!enabled&&!confirm('Disable student dashboard access for this student?'))return;
    const existing=await getDoc(doc(db,'students',selected.id));
-   if(!existing.exists())throw Error('Student record not found. Refresh students.');
-   const student=existing.data();
-   let dobVerifier=previous?.dobProof&&previous.dobProofVersion===1?{
-    dobSalt:previous.dobSalt,dobProof:previous.dobProof,dobProofVersion:previous.dobProofVersion
-   }:{};
-   if(enabled){
-    const studentCode=normalizeStudentCode(student.studentCode);
-    const dob=validateStudentDOB(student.dob);
-    // Rotate the verifier when access is newly approved. The approved grant
-    // remains readable only to the verified owner of the admin-approved email.
-    dobVerifier=await makeStudentDobVerifier(studentCode,dob);
-   }
-   const resultIds=enabled?(await getDocs(query(collection(db,'examResults'),where('studentId','==',selected.id)))).docs.filter(d=>d.data().published===true).map(d=>d.id):[];
-   const fees=await feeSnapshot(student);
-   const data={
-    studentId:selected.id,email,enabled,studentCode:String(student.studentCode||''),...dobVerifier,...fees,
-    studentName:String(student.name||'Student'),photoData:isProfilePhoto(student.photoData)?student.photoData:'',course:String(student.course||''),
-    batch:String(student.batch||''),state:String(student.state||'Active'),resultIds,
-    promotionHistory:Array.isArray(student.promotionHistory)?student.promotionHistory:[],
-    competitionCertificates:Array.isArray(student.competitionCertificates)?student.competitionCertificates:[],
-    createdAt:previous?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()
-   };
-   await setDoc(doc(db,'studentAccess',selected.id),data);
-   previous=data;changingEmail=false;showApprovalState();
-   msg(enabled?'✓ APPROVED! Student Login is now available to this verified email; the Approve button is hidden.':'⛔ DISABLED! This student/guardian account can no longer open the Student Dashboard. Records and fees remain saved.');
-   alert(enabled?'✅ STUDENT LOGIN APPROVED\n'+String(student.name||'Student')+' · '+email+'\nStudent ID + DOB and verified email are required.':'⛔ STUDENT LOGIN DISABLED\n'+String(student.name||'Student')+'\nAccount access is blocked; Student ID and academic/fee records are preserved.');
-  }catch(err){msg('Account save failed: '+err.message)}
-  finally{button.disabled=false;off.disabled=false}
+   if(!existing.exists())throw Error('Student not found.');
+   if(!validStudent(existing.data()))throw Error('Save a valid ALIA ID and Date of Birth first.');
+   if(!confirm(enable?'Enable Student ID + DOB Login for this student?':'Disable Student Login for this student?'))return;
+   await setDoc(doc(db,'studentAccess',selected.id),{
+    studentId:selected.id,studentCode:existing.data().studentCode,
+    enabled:enable,updatedAt:new Date().toISOString()
+   },{merge:true});
+   previous={...(previous||{}),enabled:enable};selected={...selected,...existing.data()};
+   show();
+   status.textContent=enable?'✓ Student ID + DOB Login enabled. No Gmail is required.':
+    '⛔ Login disabled. Student record, fees, results and certificates are preserved.';
+  }catch(err){status.textContent='Could not change access: '+err.message}
+  finally{button.disabled=false}
  }
  async function syncStudent(studentId,data){
   const ref=doc(db,'studentAccess',studentId),snap=await getDoc(ref);
   if(!snap.exists())return;
-  const studentCode=String(data.studentCode||'');
-  // The edit form omits feeLedger. Read the saved full student record so
-  // routine Student edits NEVER erase historical payments from guardian access.
-  const latest=await getDoc(doc(db,'students',studentId));
-  const fees=await feeSnapshot(latest.exists()?latest.data():data);
-  const payload={...fees,
-   studentName:String(data.name||'Student'),studentCode,photoData:isProfilePhoto(data.photoData)?data.photoData:'',course:String(data.course||''),
-   batch:String(data.batch||''),state:String(data.state||'Active'),
+  const latest=await getDoc(doc(db,'students',studentId)),student=latest.exists()?latest.data():data;
+  let monthlyFee=0;
+  try{
+   const courseId=String(student.course||'').trim();
+   if(courseId){const course=await getDoc(doc(db,'courses',courseId));if(course.exists())monthlyFee=Math.max(0,Number(course.data().monthlyFee)||0)}
+  }catch(err){console.warn('Student fee rate unavailable:',err.code||err.message)}
+  const payload={
+   studentName:String(data.name||'Student'),studentCode:String(data.studentCode||''),
+   photoData:isProfilePhoto(data.photoData)?data.photoData:'',
+   course:String(data.course||''),batch:String(data.batch||''),state:String(data.state||'Active'),
    promotionHistory:Array.isArray(data.promotionHistory)?data.promotionHistory:[],
    competitionCertificates:Array.isArray(data.competitionCertificates)?data.competitionCertificates:[],
+   feeLedger:validFeeLedger(student.feeLedger),feeMonthlyRate:monthlyFee,
+   feeEnrollmentDate:String(student.approvedAt||student.enrollmentDate||student.admittedAt||'').slice(0,24),
    updatedAt:new Date().toISOString()
   };
-  if(data.dob&&/^ALIA[0-9]{5}$/.test(studentCode))Object.assign(payload,await makeStudentDobVerifier(normalizeStudentCode(studentCode),validateStudentDOB(data.dob)));
-  else payload.enabled=false; // Never leave a stale DOB verifier enabled.
+  if(!validStudent({...student,studentCode:data.studentCode}))payload.enabled=false;
   await setDoc(ref,payload,{merge:true});
  }
- function close(){selected=null;previous=null;changingEmail=false;panel.hidden=true;$('studentAccountEmail').value='';msg('')}
+ function close(){selected=null;previous=null;panel.hidden=true;status.textContent=''}
  $('studentAccountSave').addEventListener('click',()=>save(false));
  $('studentAccountDisable').addEventListener('click',()=>save(true));
  $('studentAccountClose').addEventListener('click',close);
