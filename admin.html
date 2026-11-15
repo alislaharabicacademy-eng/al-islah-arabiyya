@@ -252,6 +252,14 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 .home-feature-fields input,.home-feature-fields select{width:100%;max-width:100%;padding:10px;border:1px solid #ccd9ca;border-radius:9px}
 #examHomeWinnerUploadStatus{font-size:12px;color:#5b6a5d}
 @media(max-width:900px){.homepage-rank-grid,.home-feature-fields{grid-template-columns:1fr}}
+</style><style id="course-eligibility-admin-preview">
+.admin-eligibility-preview{list-style:none;counter-reset:eligible;margin:7px 0 16px;padding:0;display:grid;gap:9px}
+.admin-eligibility-preview>li{counter-increment:eligible;position:relative;padding:11px 12px 11px 52px;min-width:0;
+ border-left:4px solid #bf9c55;background:#f1f8f3;border-radius:10px;overflow-wrap:anywhere;line-height:1.55}
+.admin-eligibility-preview>li:before{content:counter(eligible);position:absolute;top:12px;left:13px;width:25px;height:25px;
+ background:#17513a;color:#fff;border-radius:50%;display:grid;place-items:center;font-weight:750}
+.admin-eligibility-preview strong{display:block;color:#135237;margin-bottom:3px}
+.admin-eligibility-preview span{display:block;color:#315340}
 </style></head><body><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button><div class="menu-shade hidden" id="menuShade"></div><aside class="side-menu" id="sideMenu" aria-label="Admin navigation">
 <div class="academy-menu-brand"><span class="academy-menu-kicker">AL ISLAHUL ARABIYA</span><h2>Academy Menu</h2><p>Management Control Center</p></div>
 <div class="academy-menu-groups">
@@ -343,7 +351,14 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
       <a id="coursePreview" class="btn secondary" href="courses.html?course=muallama" target="_blank" rel="noopener">↗ View Public Course Page</a>
     </div>
   </div>
-<div class="section"><h3>02 · Course Information</h3><div class="fields"><label>Course Name<input id="name" maxlength="100" placeholder="Enter course name"></label><label>Duration<input id="duration" maxlength="60" placeholder="e.g. 1 Year"></label><label class="wide">Description<textarea id="description" placeholder="Describe the course"></textarea></label><label class="wide">Eligibility Criteria<textarea id="eligibility" placeholder="Who can apply?"></textarea></label></div></div>
+<div class="section"><h3>02 · Course Information</h3><div class="fields"><label>Course Name<input id="name" maxlength="100" placeholder="Enter course name"></label><label>Duration<input id="duration" maxlength="60" placeholder="e.g. 1 Year"></label><label class="wide">Description<textarea id="description" placeholder="Describe the course"></textarea></label><label class="wide">Eligibility Criteria — One Point Per Line
+<textarea id="eligibility" rows="5" placeholder="Educational Qualification: 10th Standard Pass or Above&#10;Language Proficiency: Ability to Read and Write Tamil"></textarea>
+<small class="section-note" style="display:block;margin:6px 0">✅ Enter each eligibility requirement on a <strong>separate line</strong>. Each one appears as a clear numbered point on every public Course Details page. Existing saved text remains unchanged.</small>
+</label>
+<div class="wide" style="grid-column:1/-1">
+<strong style="display:block;margin:8px 0;color:#155138">👁 Live Eligibility Preview — What Students Will See</strong>
+<ul id="eligibilityPreview" class="admin-eligibility-preview" aria-live="polite"></ul>
+</div></div></div>
 <div class="section"><h3>03 · Curriculum &amp; Kitabs</h3><p class="section-note">Add one kitab per line so the course page can display them clearly.</p><div class="fields"><label>Kitab Names (one per line)<textarea id="kitabs"></textarea></label><label>Syllabus<textarea id="syllabus"></textarea></label></div></div>
 <div class="section" id="feesSection"><h3>04 · Fees &amp; Schedule</h3><div class="fields"><label>Fees<input id="fees" maxlength="150" placeholder="Course fees"></label><label>Class Timings<input id="timings" maxlength="150" placeholder="Days and times"></label><label>Admission / Registration Fee (₹)<input id="admissionFee" type="number" min="0" step="1" placeholder="e.g. 500"></label><label>Monthly Tuition Fee (₹)<input id="monthlyFee" type="number" min="0" step="1" placeholder="e.g. 500"></label><label>Exam Fee (₹)<input id="examFee" type="number" min="0" step="1" placeholder="Optional"></label><label>Books / Kitab Fee (₹)<input id="booksFee" type="number" min="0" step="1" placeholder="Optional"></label><label>Payment Due Date<input id="paymentDue" maxlength="80" placeholder="e.g. Before 10th each month"></label><label>Payment Instructions<input id="paymentInstructions" maxlength="200" placeholder="How students should pay"></label></div></div>
 <div class="section"><h3>05 · Publication</h3><label class="publish"><input id="published" type="checkbox"><span><strong>Publish this course on the public website</strong><small>Turn on when the details are ready for students to view.</small></span></label></div>
@@ -626,7 +641,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
    <div class="monthly-report-footer"><span>☪</span> Faith · Learning · Excellence</div>
   </div>
  </div>
-</details><section class="section" id="studentFeesPanel"><h3>💳 Student Monthly Fee Ledger · 12 Months</h3><p class="section-note">Select a student using “Fees / Receipt” in the list. Monthly fee is taken from Course Details. Mark paid only after receiving payment.</p><div class="fields"><label>Selected Student<input id="feeStudentName" readonly placeholder="Select a student below"></label><label>Fee Year<select id="feeYear"></select></label></div><div id="feeSummary" class="stats" style="margin:15px 0"></div><div id="feeMonths"></div><p id="feeStatus" class="status" role="status"></p><div class="actions"><button type="button" class="secondary" id="syncStudentFeeAccounts">🔄 Sync Fee History to Student Logins</button></div><p id="feeSyncStatus" class="section-note" aria-live="polite">Existing fee records can be published privately to approved student/guardian accounts using this button. Never share fee details publicly.</p></section></div><div id="tab-applications" class="tabpage hidden"><h3>New Student Applications</h3><div class="filterbar"><label for="applicationFilter">📩 Filter Applications by Course</label><select id="applicationFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option></select><span id="applicationFilterCount" class="badge">Loading…</span></div><p class="section-note">Applications submitted from the admission form will appear here after Firestore submission is configured.</p><button id="refreshApplications">↻ Refresh Applications</button><p id="applicationStatus" role="status"></p><div class="stats"><span class="stat" id="applicationCount">Applications: —</span></div><div id="applicationList"></div></div></div></main><footer>© Madrasa Al Islahul Arabiya · Secure Course Management</footer><script type="module">
+</details><section class="section" id="studentFeesPanel"><h3>💳 Student Monthly Fee Ledger · 12 Months</h3><p class="section-note">Select a student using “Fees / Receipt” in the list. Monthly fee is taken from Course Details. Mark paid only after receiving payment.</p><div class="fields"><label>Selected Student<input id="feeStudentName" readonly placeholder="Select a student below"></label><label>Fee Year<select id="feeYear"></select></label></div><div id="feeSummary" class="stats" style="margin:15px 0"></div><div id="feeMonths"></div><p id="feeStatus" class="status" role="status"></p><div class="actions"><button type="button" class="secondary" id="syncStudentFeeAccounts">🔄 Sync Fee History to Student Logins</button></div><p id="feeSyncStatus" class="section-note" aria-live="polite">Existing fee records can be published privately to approved student/guardian accounts using this button. Never share fee details publicly.</p></section></div><div id="tab-applications" class="tabpage hidden"><h3>New Student Applications</h3><div class="filterbar"><label for="applicationFilter">📩 Filter Applications by Course</label><select id="applicationFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option></select><span id="applicationFilterCount" class="badge">Loading…</span></div><p class="section-note">Applications submitted from the admission form will appear here after Firestore submission is configured.</p><button id="refreshApplications">↻ Refresh Applications</button><p id="applicationStatus" role="status"></p><div class="stats"><span class="stat" id="applicationCount">Applications: —</span></div><div id="applicationList"></div></div></div></main><footer>© Madrasa Al Islahul Arabiya · Secure Course Management</footer><script src="./course-eligibility.js"></script><script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,EmailAuthProvider,linkWithCredential,sendEmailVerification,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
@@ -722,6 +737,11 @@ async function hydrateCourseOptions(){
  }catch(err){$('courseListStatus').textContent='Could not load saved courses: '+err.message}
  renderCourseList();
 }
+function renderEligibilityPreview(){
+ const element=$('eligibilityPreview');
+ if(element&&window.AcademyEligibility)window.AcademyEligibility.render(element,$('eligibility').value);
+}
+$('eligibility').addEventListener('input',renderEligibilityPreview);
 async function load(){
  const id=$('course').value;
  for(const link of ['previewTop','coursePreview','previewBottom'])$(link).href='courses.html?course='+encodeURIComponent(id);
@@ -730,6 +750,7 @@ async function load(){
  try{const s=await getDoc(doc(db,'courses',id));if(s.exists()){data={...data,...s.data()};courseRegistry.set(id,data);saved=true}}
  catch(e){error=e.message}
  for(const k of ['name','duration','description','eligibility','syllabus','fees','timings','admissionFee','monthlyFee','examFee','booksFee','paymentDue','paymentInstructions'])$(k).value=data[k]??'';
+ renderEligibilityPreview();
  $('kitabs').value=(data.kitabs||[]).join('\n');$('published').checked=!!data.published;
  $('status').textContent=error?'Could not load saved course: '+error:(saved?'Course details loaded.':'Course has no saved details yet. Complete the form and click Save Changes.');
 }
