@@ -51,7 +51,7 @@
    'Students who complete both years of the Muballiga course and then successfully complete the 3rd year of Aalima will be awarded the Aalima Sanad.',
    "New admissions are accepted for Muballiga 1st Year only. Students who successfully complete both the 1st and 2nd years of the Muballiga course may finish their studies and receive the Muballiga Sanad. Students who wish to continue may apply for Aalima 3rd Year separately, after paying the additional Aalima admission fee and receiving Academy approval.",
    'Two-year programme for continued Islamic study.',
-   'Two-year programme for continued Islamic Studies.'
+   'Two-year program for continued Islamic Studies.'
   ];
   let existing=String(savedDescription??'');
   if(courseId==='muballigha'){
@@ -60,7 +60,7 @@
    // placeholder to keep the homepage card compact.
    existing=existing.replace(/^Islamic learning programme\.\s*/i,'');
    existing=existing.split(required).join(' ').replace(/\s+/g,' ').trim();
-   return ['Two-year programme for continued Islamic Studies.',existing,required].filter(Boolean).join(' ');
+   return ['Two-year program for continued Islamic Studies.',existing,required].filter(Boolean).join(' ');
   }
   if(!required)return existing.trim();
   for(const passage of oldGenerated.slice(0,2))existing=existing.split(passage).join(' ');
