@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Private Academy Administrator Access</title>
+<style>
+:root{font-family:system-ui,Arial,sans-serif;color:#14362a;background:#f3f6f1}
+*{box-sizing:border-box}main{max-width:540px;margin:9vh auto;padding:0 16px}
+.card{background:#fff;padding:25px;border-radius:18px;border:1px solid #d3e3d6;box-shadow:0 12px 36px #123f2614}
+h1{font-size:24px;margin:0 0 10px}p{line-height:1.55}
+label{display:block;font-weight:700;margin-top:17px}
+input{width:100%;margin-top:8px;padding:12px;border:1px solid #9cb4a2;border-radius:10px;font:inherit}
+button{background:#126241;color:#fff;border:none;border-radius:9px;padding:12px 19px;cursor:pointer;font:inherit;font-weight:700;margin-top:14px;margin-right:8px}
+button.secondary{background:#53675c}button:disabled{opacity:.5;cursor:wait}
+.muted{color:#50665b;font-size:14px}#notice{margin-top:17px;min-height:24px;font-weight:650}
+[hidden]{display:none!important}
+</style>
+</head>
+<body><main><section class="card">
+<h1>Private Administrator Access</h1>
+<p class="muted">This separate setup screen is restricted to the original Academy administrator. It does not publish a list of administrator accounts.</p>
+<div id="authPanel"><p>Sign in with the official Academy Google account to manage private access.</p><button id="googleSignIn" type="button">Sign in as Academy Owner</button></div>
+<form id="grantForm" hidden>
+<label for="grantEmail">Additional administrator's verified Gmail address</label>
+<input id="grantEmail" type="email" maxlength="254" autocomplete="off" autocapitalize="off" spellcheck="false" required placeholder="Enter account email">
+<p class="muted">Granting access allows full Academy data management. It does not change the displayed Academy contact address. The real authenticated account remains recorded for security and auditing.</p>
+<button id="enable" type="submit" name="grant" value="enable">Enable full admin access</button>
+<button id="disable" class="secondary" type="button">Revoke access</button>
+</form>
+<div id="notice" role="status" aria-live="polite"></div>
+</section></main>
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+import{getFirestore,doc,setDoc,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+const owner='alislaharabicacademy@gmail.com';
+const $=id=>document.getElementById(id);
+const notice=msg=>{$('notice').textContent=msg};
+let auth,db,ownerUser=null;
+try{
+ const config=await fetch('./firebase-config.json').then(r=>r.json());
+ const app=initializeApp(config);
+ auth=getAuth(app);db=getFirestore(app);
+ $('googleSignIn').onclick=async()=>{
+   try{
+     if(auth.currentUser&&auth.currentUser.email?.toLowerCase()!==owner)await signOut(auth);
+     await signInWithPopup(auth,new GoogleAuthProvider());
+   }catch(error){notice('Unable to complete Google sign-in. Please retry with the Academy owner account.')}
+ };
+ onAuthStateChanged(auth,user=>{
+   ownerUser=(user?.emailVerified&&user.email?.toLowerCase()===owner)?user:null;
+   $('authPanel').hidden=!!ownerUser;
+   $('grantForm').hidden=!ownerUser;
+   notice(ownerUser?'Authorized Academy owner.':'Only the original, verified Academy owner can change administrator grants.');
+ });
+ const updateGrant=async enabled=>{
+   if(!ownerUser)return notice('Academy owner sign-in required.');
+   const email=$('grantEmail').value.trim().toLowerCase();
+   if(!/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(email)||email===owner){
+     return notice('Enter a valid additional account email.');
+   }
+   for(const button of document.querySelectorAll('#grantForm button'))button.disabled=true;
+   try{
+     await setDoc(doc(db,'adminAccess',email),{
+       enabled,updatedAt:serverTimestamp(),grantedBy:ownerUser.uid
+     });
+     $('grantEmail').value='';
+     notice(enabled?'✓ Full administrator access enabled for the selected account. The account name was not retained on this screen.':'✓ Administrator access revoked for the selected account.');
+   }catch(error){notice('Unable to save grant. Verify the owner sign-in and Firestore permissions.');}
+   finally{for(const button of document.querySelectorAll('#grantForm button'))button.disabled=false}
+ };
+ $('grantForm').onsubmit=event=>{event.preventDefault();updateGrant(true)};
+ $('disable').onclick=()=>updateGrant(false);
+}catch(error){notice('Firebase could not initialize. Check the Academy configuration.')}
+</script>
+</body></html>
