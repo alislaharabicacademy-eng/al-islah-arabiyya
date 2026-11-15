@@ -1,0 +1,39 @@
+name: Class Rescheduling Approval Checks
+on:
+  pull_request:
+    paths:
+      - 'class-reschedule-*.js'
+      - 'teacher-attendance.html'
+      - 'admin.html'
+      - 'firestore.rules'
+      - 'tests/class-reschedule.test.mjs'
+      - '.github/workflows/class-reschedule-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax
+        run: |
+          node --check --input-type=module < class-reschedule-utils.js
+          node --check --input-type=module < class-reschedule-teacher.js
+          node --check --input-type=module < class-reschedule-admin.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          for filename in ('admin.html','teacher-attendance.html'):
+              html=Path(filename).read_text()
+              matches=re.findall(r'<script type="module">([\s\S]*?)</script>',html)
+              assert matches, f'Module script missing: {filename}'
+              Path('/tmp/'+filename+'.mjs').write_text('\n'.join(matches))
+          PY
+          node --check /tmp/admin.html.mjs
+          node --check /tmp/teacher-attendance.html.mjs
+      - name: Validate class postponement invariants
+        run: node --test tests/class-reschedule.test.mjs
