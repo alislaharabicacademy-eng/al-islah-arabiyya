@@ -48,9 +48,11 @@ test('Portrait result statement paginates large marksheets to avoid rows overlap
  const sample=studio.sampleCertificate('results');
  const subjects=Array.from({length:32},(_,i)=>({name:'Subject '+(i+1),score:40,max:50}));
  const pages=studio.premiumCertificatePages('results',{...sample,previewMode:false,subjects});
- assert.equal(pages.length,5);
- assert.ok(pages[4].includes('TOTAL'));
+ assert.equal(pages.length,4);
+ assert.ok(pages[3].includes('TOTAL'));
  assert.ok(!pages[0].includes('TOTAL'));
+ assert.ok(pages[3].includes('AUTHORIZED SIGNATORY'));
+ assert.ok(pages[3].includes('RESULT REFERENCE'));
 });
 test('Digital PDF export uses exact same SVG source as web preview instead of a separate plain document',()=>{
  const src=readFileSync(new URL('../premium-certificate-svg.js',import.meta.url),'utf8');
@@ -64,7 +66,7 @@ test('Digital PDF export uses exact same SVG source as web preview instead of a 
 test('Certificate ornaments and signature stay above the print-safe lower edge',()=>{
  const svg=studio.premiumCertificatePages('winner',{...studio.sampleCertificate('winner'),previewMode:false})[0];
  assert.match(svg,/CERTIFICATE ID:/);
- assert.match(svg,/y="947" font-size="14"/); // reference line no longer touches bottom border
+ assert.match(svg,/y="696" font-size="/); // reference moved above cards, clear of trophy and bottom trim
  assert.match(svg,/translate\(325\.22 812\)/); // trophy raised above printer trim
  assert.doesNotMatch(svg,/y="970"/);
  assert.doesNotMatch(svg,/y="967"/);
@@ -87,4 +89,13 @@ test('Long competition fields wrap within the metadata card rather than being cu
  const source=readFileSync(new URL('../premium-certificate-svg.js',import.meta.url),'utf8');
  assert.doesNotMatch(source,/String\(value\|\|'—'\)\.slice\(0,64\)/);
  assert.match(source,/lines\.map\(\(line,i\)=>T/);
+});
+
+test('Result statement displays eight numbered subjects on one page with an uncluttered separate footer',()=>{
+ const subjects=Array.from({length:8},(_,i)=>({name:'Long Subject '+(i+1),score:40,max:50}));
+ const svg=studio.premiumCertificatePages('results',{...studio.sampleCertificate('results'),subjects,previewMode:false})[0];
+ assert.match(svg,/RESULT REFERENCE/);
+ assert.match(svg,/AUTHORIZED SIGNATORY/);
+ assert.match(svg,/\>8\<\/text\>/);
+ assert.ok(svg.indexOf('RESULT REFERENCE:')>svg.indexOf('TOTAL'));
 });
