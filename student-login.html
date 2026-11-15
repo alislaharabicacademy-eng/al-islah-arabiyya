@@ -143,6 +143,7 @@ import{getFirestore,collection,doc,getDoc,getDocs,query,where,limit}from'https:/
 import{photoAvatar}from'./profile-photo.js';
 import{summarizeFees,indiaFeeClock,allRecordedPayments,validFeeLedger}from'./fee-ledger-utils.js';
 import{createCompetitionCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
+import{openPremiumPrintWindow,classifyCompetitionAward}from'./premium-certificate-svg.js';
 import{normalizeStudentCode,validateStudentDOB,matchStudentDobVerifier}from'./student-dob-verifier.js';
 const $=id=>document.getElementById(id);
 /* Student's own fee history is read solely from their verified private
@@ -358,10 +359,16 @@ async function loadPrivateDashboard(user,token){
     button.onclick=async()=>{
      button.disabled=true;
      try{const blob=await createCompetitionCertificatePdf(cert);downloadExamBlob(blob,'Competition_'+safePdfName(cert.studentName)+'_'+cert.id+'.pdf')}
-     catch(err){dashMessage('Certificate PDF could not be generated: '+err.message,true)}
+     catch(err){dashMessage('Direct PDF failed: '+err.message+'. Tap Print / Save Certificate as PDF instead.',true)}
      finally{button.disabled=false}
     };
-    section.append(button);card.append(section);
+    const printButton=document.createElement('button');printButton.type='button';printButton.className='btn secondary';
+    printButton.textContent='🖨 Print / Save Certificate as PDF';
+    printButton.onclick=()=>{
+     try{openPremiumPrintWindow(classifyCompetitionAward(cert.award),cert)}
+     catch(err){dashMessage('Print to PDF failed: '+err.message,true)}
+    };
+    section.append(button,printButton);card.append(section);
    }
    target.append(card);visible++;
   }

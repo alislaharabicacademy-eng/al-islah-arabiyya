@@ -480,6 +480,21 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <div id="homepageWinnersRankGrid" class="homepage-rank-grid"></div>
 <div class="actions"><button type="button" id="homepageWinnersSave">💾 Save &amp; Publish Winners</button><button type="button" class="secondary" id="homepageWinnersHide">🙈 Hide Winners Immediately</button><button type="button" class="secondary" id="homepageWinnersRefresh">↻ Refresh Published Results</button><a class="btn secondary" href="index.html#home-winners" target="_blank" rel="noopener">↗ Preview Website</a></div>
 <p id="homepageWinnersStatus" role="status" aria-live="polite">Open Examination Results to manage winners.</p></section>
+  <section class="section" id="publishedResultsRegisterPanel">
+   <h3>📘 Download All Published Results — Class-wise A4 PDF</h3>
+   <p class="section-note">Admin-only result register. Select one class or <strong>All Classes</strong> (Muallama, Muballigha, Alima, Hifz and any newly added course). Only published results are included. Each class is separated by examination and academic year. Ranks 1st / 2nd / 3rd are calculated from percentages, with ties sharing rank. If subject schemes differ, top ranks are withheld for review.</p>
+   <div class="fields">
+    <label>Class / Course<select id="batchResultCourse"><option value="all">All Classes</option></select></label>
+    <label>Academic Year<select id="batchResultYear"><option value="all">All Academic Years</option></select></label>
+    <label>Published Examination<select id="batchResultExam"><option value="all">All Published Exams</option></select></label>
+   </div>
+   <div class="actions">
+    <button type="button" id="downloadPublishedResultRegister">📄 Download Complete Published Result Register (PDF)</button>
+    <button type="button" class="secondary" id="downloadPublishedTop3">🏆 Download Class-wise First / Second / Third (PDF)</button>
+   </div>
+   <label style="display:flex;align-items:flex-start;gap:10px;margin-top:15px;font-size:13px"><input type="checkbox" style="width:20px;height:20px;flex:0 0 auto" id="batchReportShareConsent"><span>I confirm student/guardian permission before sharing the rank PDF in a WhatsApp group. The complete register contains all student names, scores and IDs and is for authorized Academy use only.</span></label>
+   <p class="status" id="batchResultStatus" role="status" aria-live="polite">Load saved results to choose a published exam or all classes.</p>
+  </section>
   <section class="section">
   <h3>📋 Saved Results &amp; Certificates</h3>
   <p class="section-note">Drafts are private. Published results are accessible only to people who have their unique result link. Official PDFs use the approved five-type vector certificate designs, original Academy logo, and editable vector text. <a href="certificate-studio.html" target="_blank" rel="noopener">Preview all five vector designs →</a></p>
@@ -1925,7 +1940,7 @@ $('syncStudentFeeAccounts').onclick=async()=>{
 
 async function ensurePdfLibrary(){
  if(window.jspdf?.jsPDF)return;
- const sources=['https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js','https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js'];
+ const sources=['./vendor/jspdf.umd.min.js','https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js','https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js'];
  for(const src of sources){try{await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=()=>reject(Error('CDN blocked'));document.head.appendChild(s)});if(window.jspdf?.jsPDF)return}catch(e){console.warn('PDF library source unavailable',src)}}
  throw Error('PDF generator could not load. Please open this page directly in Chrome with internet access.');
 }

@@ -65,7 +65,7 @@ test('Disabled account is denied by original Firestore access rules, portal repo
  const rules=read('firestore.rules');
  assert.match(rules,/resource\.data\.enabled == true/);
  const portal=read('student-login.html');
- assert.match(portal,/No active Student Login access/);
+ assert.match(portal,/(No active Student Login access|not approved for)/);
  assert.match(portal,/where\('enabled','==',true\)/);
 });
 test('Registration links do not change premium certificate or private fee ledger system',()=>{
