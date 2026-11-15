@@ -1,0 +1,147 @@
+
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#153f30"><title>Private Student Profile Update | Al Islah Arabic Academy</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eef4ef;color:#1e3d31;font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;line-height:1.6}
+header{background:linear-gradient(120deg,#102f24,#195d40);color:#fff9db;padding:24px 20px;text-align:center;border-bottom:5px solid #c7a257}
+header h1{font:700 clamp(22px,4vw,32px) Georgia,serif;margin:3px 0}header p{margin:0;letter-spacing:1.3px}
+main{max-width:790px;margin:24px auto;padding:0 16px}
+.card{background:#fff;border:1px solid #d1dfd6;border-radius:17px;padding:23px;margin:18px 0;box-shadow:0 12px 28px #153d2820}
+h2,h3{font-family:Georgia,serif;color:#0d4933}
+.note{padding:14px;background:#fff7e3;border-left:5px solid #b78d3d;border-radius:8px;color:#725627;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:14px}
+label{font-size:13px;display:block;font-weight:700;color:#245137}
+label small{display:block;color:#70806e;font-weight:400}
+input,select,textarea{display:block;width:100%;margin:7px 0 0;min-height:44px;border:1px solid #b9cabc;border-radius:9px;padding:10px 12px;font:inherit;background:#fdfefc;color:#173527}
+textarea{min-height:110px;resize:vertical}
+button{background:#15613f;color:#fff;padding:12px 22px;min-height:46px;border:none;border-radius:9px;cursor:pointer;font-weight:750}
+button:disabled{opacity:.6;cursor:wait}
+.status{font-size:13px;color:#276543;min-height:20px;white-space:pre-line}
+[hidden]{display:none!important}
+footer{text-align:center;padding:19px;color:#748377;font-size:12px}
+</style></head><body>
+<header><h1>MADRASA AL ISLAHUL ARABIYA</h1><p>SECURE STUDENT PROFILE UPDATE</p></header>
+<main>
+<div class="note">This form is for an existing Academy student only, through a private one-time invitation. Your proposed details will be reviewed by the Academy Administrator before being applied. This form does not issue a Student ID or change your approved login access.</div>
+<section class="card" id="loading"><h2>Checking Secure Invitation…</h2><p id="loadingMessage">Please use the private link shared by your Academy Administrator.</p></section>
+<section class="card" id="loginBox" hidden>
+<h2>🔐 Verify Your Email</h2>
+<p id="inviteSummary"></p>
+<p>Sign in with the <strong>exact Google email address</strong> approved for this invitation. A different account cannot submit student details.</p>
+<button type="button" id="googleLogin">Continue with Google</button>
+<p class="status" id="loginStatus" role="status"></p>
+</section>
+<section class="card" id="formBox" hidden>
+<h2>Student Update Registration Form</h2>
+<p class="note">Fields marked * are mandatory. Double-check spelling, DOB and course. Changes remain pending until the Admin approves them. Your Student ID remains unchanged.</p>
+<p id="studentIdentity"></p>
+<form id="studentUpdateForm">
+<div class="grid">
+<label>Student's Full Name *<input type="text" name="name" maxlength="120" minlength="2" required autocomplete="name"></label>
+<label>Date of Birth *<input type="date" name="dob" required></label>
+<label>Parent / Guardian Full Name *<input type="text" name="guardian" maxlength="120" minlength="2" required></label>
+<label>Contact Phone *<input type="tel" name="phone" minlength="7" maxlength="25" pattern="[0-9+() .-]{7,25}" required></label>
+<label>Academy Course / Class *<select name="course" id="updateCourse" required><option value="">Loading published courses…</option></select></label>
+<label>Verified Contact Email<input name="email" readonly type="email" required></label>
+</div>
+<label style="margin-top:14px">Complete Address *<textarea name="address" maxlength="700" minlength="5" required></textarea></label>
+<label style="margin-top:14px">Optional Message to the Admin<textarea name="notes" maxlength="1000"></textarea></label>
+<button id="submit" type="submit" style="margin-top:19px">📩 Submit Updated Details for Admin Review</button>
+<p class="status" id="formStatus" role="status" aria-live="polite"></p>
+</form></section>
+<section class="card" id="complete" hidden><h2>✅ Update Submitted</h2><p>Your request has been saved for Academy Admin review. Please contact the Academy if you need to change anything else.</p></section>
+</main>
+<footer>© Madrasa Al Islahul Arabiya · Private student data · No public student details</footer>
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+import {getFirestore,doc,getDoc,collection,getDocs,query,where,writeBatch,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search),token=params.get('token');
+const err=message=>{$('loading').hidden=false;$('loadingMessage').textContent=message;$('loginBox').hidden=true;$('formBox').hidden=true};
+if(params.get('preview')==='1'&&!token){
+ // Public form-only preview. No login, no student records, and NO submission.
+ $('loading').hidden=true;$('formBox').hidden=false;
+ $('studentIdentity').textContent='👁 SAMPLE FORM PREVIEW — NO STUDENT DATA LOADED';
+ const form=$('studentUpdateForm');
+ const course=$('updateCourse');
+ course.replaceChildren(new Option('Choose course / class',''));
+ for(const [id,name] of [['muallama','Muallama'],['muballigha','Muballigha'],['alima','Alima'],['tajweed-for-girls','Tajweed for Girls'],['maktab','Maktab Students']])
+  course.add(new Option(name,id));
+ form.elements.email.placeholder='Verified Google email appears here';
+ $('submit').disabled=true;
+ $('submit').textContent='SAMPLE PREVIEW ONLY — Submission Disabled';
+ $('formStatus').textContent='This is a design and mandatory-fields preview. For a real update the Admin must generate a private email-verified invitation.';
+}else if(!token||!/^[a-f0-9]{64}$/.test(token)){
+ err('Invalid or incomplete Student Profile Update link. Ask the Academy Admin for a new private invitation.');
+}else{
+ try{
+  const response=await fetch('./firebase-config.json');
+  if(!response.ok)throw Error('Academy connection settings unavailable.');
+  const app=initializeApp(await response.json());
+  const auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider();
+  provider.setCustomParameters({prompt:'select_account'});
+  let invite=null,user=null,done=false;
+  $('loading').hidden=true;$('loginBox').hidden=false;
+  $('inviteSummary').textContent='Invitation reference: '+token.slice(0,8)+'…';
+  $('googleLogin').onclick=async()=>{
+   $('loginStatus').textContent='Signing in securely…';
+   try{await signInWithPopup(auth,provider)}catch(e){$('loginStatus').textContent='Google sign-in failed: '+(e.message||e.code)}
+  };
+  onAuthStateChanged(auth,async account=>{
+   user=account;
+   if(!account||done){$('loginBox').hidden=done;$('formBox').hidden=true;return}
+   $('loginStatus').textContent='Checking your verified email…';
+   try{
+    await account.getIdToken(true);await account.reload();
+    if(!account.emailVerified)throw Error('Your Google email must be verified.');
+    const snap=await getDoc(doc(db,'studentUpdateInvites',token));
+    if(!snap.exists())throw Error('This invitation does not exist or is not accessible for this account.');
+    invite=snap.data();
+    if(invite.revoked||invite.used)throw Error('This invitation was already used or revoked. Request a fresh private link.');
+    if(String(invite.email||'').toLowerCase()!==String(account.email||'').toLowerCase())throw Error('The signed-in Google email does not match the invited email.');
+    const courses=await getDocs(query(collection(db,'courses'),where('published','==',true)));
+    const selector=$('updateCourse');selector.replaceChildren(new Option('Choose course / class',''));
+    courses.forEach(course=>{if(course.data().name)selector.add(new Option(course.data().name,course.id))});
+    if(selector.options.length<2)throw Error('Published course list unavailable. Contact the Admin.');
+    const form=$('studentUpdateForm');
+    form.elements.email.value=String(account.email).toLowerCase();
+    $('studentIdentity').textContent='Student: '+String(invite.studentName||'Student')+' · ID: '+String(invite.studentCode||'Academy record');
+    form.elements.dob.max=new Date().toISOString().slice(0,10);
+    $('loginBox').hidden=true;$('formBox').hidden=false;
+   }catch(e){$('formBox').hidden=true;$('loginBox').hidden=false;$('loginStatus').textContent=e.message||'Secure invitation unavailable.'}
+  });
+  $('studentUpdateForm').onsubmit=async event=>{
+   event.preventDefault();
+   if(done||!user||!invite)return;
+   const form=event.currentTarget,button=$('submit'),status=$('formStatus');
+   if(!form.reportValidity())return;
+   const field=n=>String(form.elements[n]?.value||'').trim();
+   if(field('email').toLowerCase()!==String(user.email||'').toLowerCase())return;
+   const data={
+    name:field('name').slice(0,120),dob:field('dob'),
+    guardian:field('guardian').slice(0,120),
+    phone:field('phone').slice(0,25),course:field('course'),
+    email:String(user.email||'').toLowerCase(),address:field('address').slice(0,700),
+    notes:field('notes').slice(0,1000),submittedAt:serverTimestamp()
+   };
+   if(!/^\d{4}-\d{2}-\d{2}$/.test(data.dob)||!data.name||!data.guardian||!data.phone||!data.course||data.address.length<5){
+    status.textContent='Please complete all mandatory fields.';return;
+   }
+   if(!confirm('Submit these student details to the Academy Admin for review? They will not overwrite your official details immediately.'))return;
+   button.disabled=true;status.textContent='Submitting securely…';
+   try{
+    const latest=await getDoc(doc(db,'studentUpdateInvites',token));
+    if(!latest.exists()||latest.data().used||latest.data().revoked)throw Error('Link already used or revoked.');
+    const batch=writeBatch(db);
+    batch.set(doc(db,'studentUpdateSubmissions',token),data);
+    batch.update(doc(db,'studentUpdateInvites',token),{used:true,usedAt:serverTimestamp()});
+    await batch.commit();
+    done=true;$('formBox').hidden=true;$('loginBox').hidden=true;$('complete').hidden=false;
+   }catch(e){status.textContent='Submission failed: '+(e.message||'Permission denied. Contact the Academy.');button.disabled=false}
+  };
+ }catch(e){err('Unable to open Academy secure form: '+e.message)}
+}
+</script>
+</body></html>

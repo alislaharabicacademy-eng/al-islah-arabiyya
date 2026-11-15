@@ -27,6 +27,12 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 #studentOfficialId{color:#145d3c;font-weight:900;letter-spacing:.095em;background:#eaf5ed;cursor:default}
 #studentIdBatchStatus{line-height:1.7;white-space:normal}
 #generateMissingStudentIds{min-height:43px}
+</style><style id="student-editor-visibility-style">
+#studentEditorPanel[hidden],#studentUpdateLinkPanel[hidden]{display:none!important}
+#studentEditorPanel .fields textarea{width:100%;min-height:72px;border:1px solid #c4d6ca;border-radius:9px;padding:11px;font:inherit}
+#studentUpdateRequestsPanel .record details{background:#f7faf7;padding:10px;border-radius:9px;margin:12px 0}
+#studentUpdateRequestsPanel summary{cursor:pointer;font-weight:700}
+#studentAccountSave[hidden],#studentAccountDisable[hidden],#studentAccountChangeEmail[hidden],.student-account-panel label[hidden]{display:none!important}
 </style><style id="student-account-administration-style">
 .student-account-panel[hidden]{display:none!important}
 .student-account-panel{padding:23px!important;border-radius:17px;border:1px solid #b7d8c1!important;background:linear-gradient(130deg,#eff8f0,#fcfffc)!important;margin:20px 0!important;box-shadow:0 9px 29px #0e513312}
@@ -499,17 +505,32 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
  </section>
 </div>
 <div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Official Student IDs are issued automatically on Save: <strong>ALIA00001, ALIA00002, ALIA00003…</strong> (ALIA + 5 digits). Existing students can be assigned IDs using the button below. These numbers are permanent, unique roll numbers — not login passwords. For online exam results, the separate private Exam Access ID and Date of Birth are used.</p>
-<div class="actions" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:15px 0"><button id="generateMissingStudentIds" class="secondary" type="button">✨ Generate ALIA IDs for Existing Students</button><span id="studentIdBatchStatus" role="status" class="section-note"></span></div><form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields">
-<label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required maxlength="120"></label><label>Course<select id="studentCourse"><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Guardian<input id="studentGuardian" maxlength="120"></label><label>Date of Birth (for secure exam result lookup)<input id="studentDob" type="date"></label><label>Contact Number<input id="studentPhone" maxlength="25"></label>
+<div class="actions" style="display:flex;flex-wrap:wrap;gap:10px;margin:15px 0">
+<button id="studentNewButton" type="button">＋ Add New Student</button>
+<button id="studentUpdatesButton" type="button" class="secondary">✏ Update Existing Student</button>
+<button id="copyStudentAdmissionLink" type="button" class="secondary">🔗 Copy New Student Admission Link</button>
+<span id="studentFormToggleStatus" class="section-note" role="status">The registration form is closed until Add or Edit is selected.</span></div>
+<div class="actions" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:15px 0"><button id="generateMissingStudentIds" class="secondary" type="button">✨ Generate ALIA IDs for Existing Students</button><span id="studentIdBatchStatus" role="status" class="section-note"></span></div><section id="studentEditorPanel" class="section" hidden style="background:#f5faf5;border:1px solid #c8d8cc;padding:18px;border-radius:13px">
+<div class="actions" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<h3 id="studentEditorTitle">＋ New Student Registration</h3>
+<button type="button" class="secondary" id="studentEditorClose">✕ Close Form</button></div>
+<p class="section-note"><strong>Mandatory:</strong> Student Name, Course, Guardian, Date of Birth, Contact Number and Complete Address. Contact Email and Photo are optional. Photo is optional. Student ID is issued automatically; never type your own ID.</p>
+<form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields">
+<label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required minlength="2" maxlength="120"></label><label>Course *<select id="studentCourse" required><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Parent / Guardian Name *<input id="studentGuardian" required minlength="2" maxlength="120"></label>
+<label>Date of Birth * (needed for secure Student Login)<input id="studentDob" type="date" required></label>
+<label>Parent / Student Contact Number *<input id="studentPhone" type="tel" required minlength="7" maxlength="25" pattern="[0-9+() .-]{7,25}"></label>
+<label>Contact Email (not automatically approved for login)<input id="studentEmail" type="email" maxlength="200" placeholder="guardian@example.com"></label>
+<label class="wide">Complete Address *<textarea id="studentAddress" required minlength="5" maxlength="700" rows="2"></textarea></label>
 <label class="wide">Student Profile Photo (JPG / PNG / WebP, optional)
  <input id="studentPhotoFile" type="file" accept="image/jpeg,image/png,image/webp">
  <small>Stored privately with the enrolled student record. Admin can update/remove it later.</small>
 </label>
 <div class="academy-photo-control" id="studentPhotoPreview"></div>
 <button type="button" class="secondary" id="studentPhotoClear">Remove Student Photo</button>
-<p id="studentPhotoStatus" class="section-note" role="status"></p><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select><small>Select Completed after confirming the whole year is finished. A published, passed Final/Annual exam is also required for auto-promotion.</small></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p><div id="studentBatchSummary" class="record"></div><div class="record"><strong>🎓 Automatic Year Promotion</strong><p>Muallama (Year 1) → Muballigha (Year 2) → Alima (Year 3). When the current course is marked Completed by Admin and its Final/Annual exam is published with a PASS, the student moves to the next year automatically. Official ALIA Student ID, guardian login, historical results and certificates are preserved. No automatic next stage beyond Alima.</p><button type="button" class="secondary" id="recheckStudentPromotions">↻ Recheck Completed Students for Promotion</button><p class="status" id="studentPromotionStatus"></p></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
+<p id="studentPhotoStatus" class="section-note" role="status"></p><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select><small>Select Completed after confirming the whole year is finished. A published, passed Final/Annual exam is also required for auto-promotion.</small></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">💾 Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p></section><div id="studentBatchSummary" class="record"></div><div class="record"><strong>🎓 Automatic Year Promotion</strong><p>Muallama (Year 1) → Muballigha (Year 2) → Alima (Year 3). When the current course is marked Completed by Admin and its Final/Annual exam is published with a PASS, the student moves to the next year automatically. Official ALIA Student ID, guardian login, historical results and certificates are preserved. No automatic next stage beyond Alima.</p><button type="button" class="secondary" id="recheckStudentPromotions">↻ Recheck Completed Students for Promotion</button><p class="status" id="studentPromotionStatus"></p></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
 <h3>🔐 Student Account · Approve &amp; Manage Login</h3>
-<p class="section-note">Students first enter their official <strong>ALIA Student ID + Date of Birth</strong>, then confirm with this admin-approved, email-verified Firebase account (email/password or Google). Save the Student Details with a valid ALIA ID and DOB before approving login. The academy never creates or stores student passwords. Reopen Save &amp; Approve Account once for accounts approved before this update.</p>
+<p class="section-note">Students enter <strong>ALIA Student ID + Date of Birth</strong>, then sign in with the admin-approved, verified email account. Once Approved, the Approve button disappears. Access can be disabled at any time without deleting the student, academic records or fee history. If a student completes the course and leaves, choose Disable Access manually (Completed can otherwise trigger progression).</p>
+<div id="studentAccountApprovalBadge" role="status" style="padding:9px 12px;margin:9px 0;border-radius:9px;background:#eaf3e9;color:#134832;font-weight:700">Checking access…</div>
 <strong id="studentAccountTitle"></strong>
 <div class="fields" style="margin:15px 0">
 <label>Student / Parent Login Email *<input id="studentAccountEmail" type="email" placeholder="guardian@example.com" autocomplete="off" maxlength="200"></label>
@@ -517,12 +538,28 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 </div>
 <label style="display:flex;align-items:center;gap:10px"><input id="studentAccountEnabled" type="checkbox" checked style="width:auto"> Grant student portal access to this email</label>
 <div class="actions" style="margin-top:18px">
-<button id="studentAccountSave" type="button">🔐 Save &amp; Approve Account</button>
+<button id="studentAccountSave" type="button">🔐 Approve Student Login</button>
+<button id="studentAccountChangeEmail" type="button" class="secondary" hidden>✏ Change Approved Email</button>
 <button id="studentAccountDisable" class="secondary" type="button">⛔ Disable Account Access</button>
 <button id="studentAccountClose" class="secondary" type="button">✕ Close</button>
 <a class="btn secondary" href="student-login.html" target="_blank" rel="noopener">↗ Student Login Page</a>
 </div><p id="studentAccountStatus" class="status" role="status"></p>
-</section><div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
+</section><section class="section" id="studentUpdateLinkPanel" hidden>
+<h3>🔗 Secure Student Profile Update Link</h3>
+<p class="section-note">Share a private, one-time link only with this student's verified parent/student email. The student sends proposed details; nothing is changed in official student records until the Admin reviews and saves the form.</p>
+<strong id="studentUpdateSelected"></strong>
+<div class="fields"><label>Approved Parent / Student Gmail or Email *<input type="email" id="studentUpdateEmail" maxlength="200" placeholder="guardian@gmail.com" required></label></div>
+<div class="actions"><button type="button" id="issueStudentUpdateLink">🔐 Generate Private Update Link</button><button class="secondary" type="button" id="closeStudentUpdateLink">✕ Close</button></div>
+<p class="status" id="studentUpdateLinkStatus" role="status"></p>
+<div id="studentUpdateInvites"></div>
+</section>
+<section class="section" id="studentUpdateRequestsPanel">
+<h3>📥 Submitted Student Details – Admin Review</h3>
+<p class="section-note">Student-submitted details do not overwrite official records. Open a request, load proposed fields into the student editor, check them and click Save Student. Then mark the request as reviewed.</p>
+<button type="button" id="refreshStudentUpdateRequests" class="secondary">↻ Refresh Student Update Requests</button>
+<div id="studentUpdateRequests"></div>
+</section>
+<div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
 <details id="monthlyStudentAttendancePanel" class="section student-monthly-panel">
  <summary>📊 Monthly Student Attendance Report</summary>
  <div class="monthly-report-shell">
@@ -582,6 +619,7 @@ import{initExamAdmin}from'./exam-admin.js';
 import{uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse}from'./admission-course-utils.js';
 import{validFeeLedger,indiaFeeClock}from'./fee-ledger-utils.js';
 import{initStudentAccountAdmin}from'./student-account-admin.js';
+import{initStudentProfileRequests}from'./student-profile-requests.js';
 import{maybePromoteStudent}from'./student-promotion.js';
 import{initCompetitionCertificateAdmin}from'./competition-certificates.js';
 import{initSiteSettingsAdmin}from'./site-settings-admin.js';
@@ -597,6 +635,7 @@ try{
 const app=initializeApp(config),auth=getAuth(app),db=getFirestore(app);
  const examAdmin=initExamAdmin({db,auth,onPromotion:syncAllTeacherRosters});
  const studentAccounts=initStudentAccountAdmin({db});
+ const studentProfileRequests=initStudentProfileRequests({db,auth,onLoadIntoEditor:openStudentEdit});
  const competitionAdmin=initCompetitionCertificateAdmin({db});
  const siteSettingsAdmin=initSiteSettingsAdmin({db,auth});
 $('setup').classList.add('hidden');$('login').classList.remove('hidden');
@@ -934,7 +973,7 @@ for(const kind of ['teacher','student']){
  });
  photoLoad(kind);
 }
-const schemas={teachers:['Name','Subject','Phone','Email','Notes'],students:['Name','Course','Batch','Guardian','Dob','Phone','State','Reference','ExamId']};
+const schemas={teachers:['Name','Subject','Phone','Email','Notes'],students:['Name','Course','Batch','Guardian','Dob','Phone','Email','Address','State','Reference','ExamId']};
 const isMaktabCourse=course=>['maktab','childrens-quran-maktab'].includes(courseKey(course));
 const batchOptions=Array.from({length:30},(_,i)=>'Batch '+(i+1));
 for(const label of batchOptions)$('studentBatch').add(new Option(label,label));
@@ -1015,6 +1054,44 @@ for(const kind of ['teacher','student']){
   }catch(err){$(kind+'Status').textContent='Save failed: '+err.message}
  };
 }
+const studentEditorPanel=$('studentEditorPanel');
+function showStudentEditor(mode='new'){
+ studentEditorPanel.hidden=false;
+ $('studentEditorTitle').textContent=mode==='edit'?'✏ Edit Existing Student Details':'＋ New Student Registration';
+ $('studentFormToggleStatus').textContent=mode==='edit'?'Review the selected student and save only approved changes.':'New student registration open. Complete the mandatory fields and Save.';
+ studentEditorPanel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('studentNewButton').onclick=()=>{resetRecord('student');showStudentEditor('new')};
+$('studentUpdatesButton').onclick=()=>{$('studentFormToggleStatus').textContent='Choose a student below and press Edit. The matching form will open inside Student Details.';studentEditorPanel.hidden=true;$('studentList').scrollIntoView({behavior:'smooth'})};
+$('studentEditorClose').onclick=()=>{studentEditorPanel.hidden=true;resetRecord('student');$('studentFormToggleStatus').textContent='Student form closed.'};
+$('copyStudentAdmissionLink').onclick=async()=>{
+ const url=new URL('admission.html',location.href).href;
+ try{await navigator.clipboard.writeText(url);$('studentFormToggleStatus').textContent='✓ New student application link copied. Applicants submit to Admissions for Admin approval.'}
+ catch(e){prompt('Copy New Student Admission Link:',url)}
+};
+function openStudentEdit(id,data,proposed=null){
+ $('studentId').value=id;
+ for(const field of schemas.students)$(('student'+field)).value=String(data[field.toLowerCase()]??'');
+ $('studentOfficialId').value=data.studentCode||'';
+ updateStudentBatchVisibility();photoLoad('student',data.photoData);
+ if(proposed){
+  const editable={Name:'studentName',Guardian:'studentGuardian',Dob:'studentDob',Phone:'studentPhone',Email:'studentEmail',Address:'studentAddress',Course:'studentCourse'};
+  for(const [field,control] of Object.entries(editable)){
+   const key=field.toLowerCase();
+   if(typeof proposed[key]==='string'&&proposed[key].trim()){
+    const el=$(control),candidate=proposed[key].trim();
+    if(el.tagName==='SELECT'){
+     if([...el.options].some(o=>o.value===candidate))el.value=candidate;
+     else $('studentStatus').textContent='⚠ Proposed course is not in the current Academy course list. Select a verified course manually.';
+    }else el.value=candidate;
+   }
+  }
+  updateStudentBatchVisibility();
+  $('studentStatus').textContent='⚠ Review proposed changes carefully; official student details are unchanged until Save Student.';
+ }
+ showStudentEditor('edit');
+}
+
 $('recheckStudentPromotions').onclick=async()=>{
  const button=$('recheckStudentPromotions'),status=$('studentPromotionStatus');
  button.disabled=true;status.textContent='Checking completed students and Final/Annual exam results…';
@@ -1053,8 +1130,20 @@ $('generateMissingStudentIds').onclick=async()=>{
  finally{button.disabled=false}
 };
 async function renderRecords(kind){const singular=kind.slice(0,-1),list=$(singular+'List');list.textContent='Loading…';try{const snap=await getDocs(query(collection(db,kind),limit(150)));list.replaceChildren();const rows=kind==='students'&&$('studentFilter').value!=='all'?snap.docs.filter(d=>courseKey(d.data().course)===$('studentFilter').value):snap.docs;
+const accessByStudent=new Map();
+if(kind==='students'){
+ try{const access=await getDocs(collection(db,'studentAccess'));for(const record of access.docs)accessByStudent.set(record.id,record.data())}
+ catch(err){console.warn('Student Account badges unavailable:',err.code||err.message)}
+}
 if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students';const counts={};for(const d of snap.docs){const s=d.data(),key=(s.course||'Unassigned')+(isMaktabCourse(s.course)?' · '+(s.batch||'Unassigned Batch'):'');counts[key]=(counts[key]||0)+1}$('studentBatchSummary').textContent='Batch-wise student totals: '+(Object.entries(counts).map(([key,n])=>key+': '+n).join(' | ')||'No students yet')}
-if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'ALIA ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');if(kind==='students')el.prepend(photoAvatar(data.photoData,'Photo of '+String(data.name||'student')));const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';if(kind==='students'){updateStudentBatchVisibility();$('studentOfficialId').value=data.studentCode||'';photoLoad('student',data.photoData);}$(singular+'Form').scrollIntoView({behavior:'smooth'})};buttons[1].onclick=async()=>{
+if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'ALIA ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');if(kind==='students'){
+ el.prepend(photoAvatar(data.photoData,'Photo of '+String(data.name||'student')));
+ const grant=accessByStudent.get(d.id);
+ const accessBadge=document.createElement('p');accessBadge.className='section-note';
+ accessBadge.style.cssText='font-weight:800;color:'+(grant?.enabled?'#0b6542':grant?'#ad3c31':'#8b6f35');
+ accessBadge.textContent=grant?.enabled?'✅ Login APPROVED · '+(grant.email||'Verified email'):grant?'⛔ Student Login DISABLED':'⏳ Student Login not approved';
+ el.append(accessBadge);
+ }const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{if(kind==='students')openStudentEdit(d.id,data);else{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';$(singular+'Form').scrollIntoView({behavior:'smooth'})}};buttons[1].onclick=async()=>{
  if(!confirm('Delete this '+singular+' record?'))return;
  try{
   if(kind==='students'){
@@ -1073,6 +1162,10 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
  };
  if(kind==='students'){
   el.querySelector('[data-fees]').onclick=()=>openFees(d);
+  const updateInvite=document.createElement('button');updateInvite.type='button';updateInvite.className='secondary';
+  updateInvite.textContent='🔗 Private Student Update Link';
+  updateInvite.onclick=()=>studentProfileRequests.openInvite({id:d.id,...data});
+  el.append(updateInvite);
   const manage=document.createElement('button');manage.type='button';manage.className='secondary';
   manage.textContent='🔐 Student Account Login';
   manage.onclick=()=>studentAccounts.open({id:d.id,...data});
