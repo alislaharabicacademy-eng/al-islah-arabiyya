@@ -89,7 +89,7 @@ test('Short Muballiga description only promises its two-year Sanad; Aalima keeps
  runInNewContext(readFileSync(new URL('course-curriculum.js',root),'utf8'),box);
  const c=box.window.AcademyCurriculum;
  const mub=c.description('muballigha','');
- assert.equal(mub,'Two-year programme for continued Islamic Studies. Students who successfully complete both the 1st and 2nd years will receive the Muballiga Sanad.');
+ assert.equal(mub,'Two-year program for continued Islamic Studies. Students who successfully complete both the 1st and 2nd years will receive the Muballiga Sanad.');
  assert.doesNotMatch(mub,/Aalima|admission fee/i);
  const ali=c.description('alima','');
  assert.match(ali,/not a direct admission/);
