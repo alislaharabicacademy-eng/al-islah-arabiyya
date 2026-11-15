@@ -789,6 +789,7 @@ async function load(){
  try{const s=await getDoc(doc(db,'courses',id));if(s.exists()){data={...data,...s.data()};courseRegistry.set(id,data);saved=true}}
  catch(e){error=e.message}
  for(const k of ['name','duration','description','eligibility','syllabus','fees','timings','admissionFee','monthlyFee','examFee','booksFee','paymentDue','paymentInstructions'])$(k).value=data[k]??'';
+ $('description').value=window.AcademyCurriculum.description(id,data.description);
  renderEligibilityPreview();
  $('kitabs').value=(Array.isArray(data.kitabs)&&data.kitabs.length?data.kitabs:window.AcademyCurriculum.books(id,data)).join('\n');$('published').checked=!!data.published;
  const curriculumGroup=$('yearlyCurriculumEditor');curriculumGroup.hidden=!['muballigha','alima'].includes(id);
