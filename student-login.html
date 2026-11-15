@@ -359,7 +359,7 @@ async function loadPrivateDashboard(user,token){
     button.onclick=async()=>{
      button.disabled=true;
      try{const blob=await createCompetitionCertificatePdf(cert);downloadExamBlob(blob,'Competition_'+safePdfName(cert.studentName)+'_'+cert.id+'.pdf')}
-     catch(err){dashMessage('Certificate PDF could not be generated: '+err.message,true)}
+     catch(err){dashMessage('Direct PDF failed: '+err.message+'. Tap Print / Save Certificate as PDF instead.',true)}
      finally{button.disabled=false}
     };
     const printButton=document.createElement('button');printButton.type='button';printButton.className='btn secondary';
