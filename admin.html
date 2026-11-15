@@ -375,7 +375,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
     <h2 style="margin-top:18px">✏️ Edit Course Details</h2>
     <p class="section-note">Edit the chosen course on this page. Course name is shown without duration in all selectors.</p>
     <label for="course">Selected Course
-      <select id="course"><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="childrens-quran-maktab">Children’s Qur’an Maktab</option><option value="tajweed-for-girls">Tajweed For Girls</option></select>
+      <select id="course"><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima (existing students only)</option><option value="boys-hifz">Boys Hifz Class</option><option value="childrens-quran-maktab">Children’s Qur’an Maktab</option><option value="tajweed-for-girls">Tajweed For Girls</option></select>
     </label>
     <div class="course-tools">
       <a id="coursePreview" class="btn secondary" href="courses.html?course=muallama" target="_blank" rel="noopener">↗ View Public Course Page</a>
@@ -501,7 +501,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
     <label>Academic Year *<input id="examResultYear" maxlength="30" placeholder="2026–2027" required></label>
     <label>Pass Percentage Per Subject *<input type="number" id="examResultPass" min="0" max="100" value="40" step="1" required></label>
    </div>
-   <label class="section-note" style="display:flex;align-items:center;gap:10px;margin:14px 0"><input type="checkbox" id="examFinalForPromotion" style="width:auto"> Final / Annual Examination (eligible for automatic promotion after Admin marks the year Completed)</label>
+   <label class="section-note" style="display:flex;align-items:center;gap:10px;margin:14px 0"><input type="checkbox" id="examFinalForPromotion" style="width:auto"> Final / Annual Examination (Muballiga Year 1 → Year 2 promotion; Year 2 confirms eligibility for optional paid Aalima)</label>
    <p class="section-note" id="examStudentSummary">Choose a student to show their class and batch.</p>
    <h3>📚 Subject Marks</h3>
    <div id="examSubjectRows"></div>
@@ -583,7 +583,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <button type="button" class="secondary" id="studentEditorClose">✕ Close Form</button></div>
 <p class="section-note"><strong>Mandatory:</strong> Student Name, Course, Guardian, Date of Birth, Contact Number and Complete Address. Contact Email and Photo are optional. Photo is optional. Student ID is issued automatically; never type your own ID.</p>
 <form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields">
-<label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required minlength="2" maxlength="120"></label><label>Course *<select id="studentCourse" required><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Parent / Guardian Name *<input id="studentGuardian" required minlength="2" maxlength="120"></label>
+<label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required minlength="2" maxlength="120"></label><label>Course *<select id="studentCourse" required><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label>Academic Stage<input id="studentAcademicStage" readonly placeholder="Automatic from verified stage"><small>New Muballiga admissions begin in Year 1. Year 2 is a verified promotion. Aalima requires a separate admission-fee payment and approval.</small></label><label id="legacyStudyYearWrap" hidden>Verify Existing Student's Muballiga Year *<select id="legacyStudyYear"><option value="">Choose verified stage</option><option value="1">Muballiga 1st Year</option><option value="2">Muballiga 2nd Year</option></select><small>Legacy records without a saved year must be checked against previous academic records before saving. Never guess.</small></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Parent / Guardian Name *<input id="studentGuardian" required minlength="2" maxlength="120"></label>
 <label>Date of Birth * (needed for secure Student Login)<input id="studentDob" type="date" required></label>
 <label>Parent / Student Contact Number *<input id="studentPhone" type="tel" required minlength="7" maxlength="25" pattern="[0-9+() .-]{7,25}"></label>
 <label>Contact Email (not automatically approved for login)<input id="studentEmail" type="email" maxlength="200" placeholder="guardian@example.com"></label>
@@ -594,7 +594,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 </label>
 <div class="academy-photo-control" id="studentPhotoPreview"></div>
 <button type="button" class="secondary" id="studentPhotoClear">Remove Student Photo</button>
-<p id="studentPhotoStatus" class="section-note" role="status"></p><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select><small>Select Completed after confirming the whole year is finished. A published, passed Final/Annual exam is also required for auto-promotion.</small></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">💾 Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p></section><div id="studentBatchSummary" class="record"></div><div class="record"><strong>🎓 Automatic Year Promotion</strong><p>Muallama (Year 1) → Muballigha (Year 2) → Alima (Year 3). When the current course is marked Completed by Admin and its Final/Annual exam is published with a PASS, the student moves to the next year automatically. Official ALIA Student ID, guardian login, historical results and certificates are preserved. No automatic next stage beyond Alima.</p><button type="button" class="secondary" id="recheckStudentPromotions">↻ Recheck Completed Students for Promotion</button><p class="status" id="studentPromotionStatus"></p></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
+<p id="studentPhotoStatus" class="section-note" role="status"></p><label>Enrollment Status<select id="studentState"><option>Active</option><option>Pending</option><option>Completed</option><option>Inactive</option></select><small>Year 1: Completed + passed Final/Annual exam promotes to Muballiga Year 2. Year 2: Completed + passed Final/Annual allows optional, fee-verified Aalima admission (not automatic).</small></label><label>Admission Reference<input id="studentReference" maxlength="60"></label></div><button type="submit">💾 Save Student</button><button type="button" class="secondary" id="studentClear">Clear</button></form><p id="studentStatus" role="status"></p></section><div id="studentBatchSummary" class="record"></div><div class="record"><strong>🎓 Automatic Year Promotion</strong><p>New intake begins at Muballiga Year 1 only. A passed Final/Annual exam and Admin-completed status advance Year 1 to Muballiga Year 2. After Year 2, students may finish with Muballiga Sanad OR opt into Aalima Year 3 after a separate admission fee is paid and verified by Admin. Aalima is never automatic. ALIA IDs and results are preserved; certificates are issued separately.</p><button type="button" class="secondary" id="recheckStudentPromotions">↻ Recheck Completed Students for Promotion</button><p class="status" id="studentPromotionStatus"></p></div><section class="section student-account-panel" id="studentAccountPanel" hidden>
 <h3>🔐 Student Account · Approve &amp; Manage Login</h3>
 <p class="section-note">Students enter <strong>ALIA Student ID + Date of Birth</strong>, then sign in with the admin-approved, verified email account. Once Approved, the Approve button disappears. Access can be disabled at any time without deleting the student, academic records or fee history. If a student completes the course and leaves, choose Disable Access manually (Completed can otherwise trigger progression).</p>
 <div id="studentAccountApprovalBadge" role="status" style="padding:9px 12px;margin:9px 0;border-radius:9px;background:#eaf3e9;color:#134832;font-weight:700">Checking access…</div>
@@ -683,11 +683,11 @@ import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,EmailAuthProvider,linkWithCredential,sendEmailVerification,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
-import{uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse}from'./admission-course-utils.js';
+import{uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse,isAalimaContinuation,publicAdmissionCourses}from'./admission-course-utils.js';
 import{validFeeLedger,indiaFeeClock}from'./fee-ledger-utils.js';
 import{initStudentAccountAdmin}from'./student-account-admin.js';
 import{initStudentProfileRequests}from'./student-profile-requests.js';
-import{maybePromoteStudent}from'./student-promotion.js';
+import{maybePromoteStudent,enrollAalimaYear3,courseYearOf}from'./student-promotion.js';
 import{initCompetitionCertificateAdmin}from'./competition-certificates.js';
 import{initSiteSettingsAdmin}from'./site-settings-admin.js';
 import{initHiringBoardAdmin}from'./hiring-board-admin.js';
@@ -751,7 +751,7 @@ function renderCourseList(){
   const edit=document.createElement('button');edit.type='button';edit.textContent='✏ Edit Details';edit.onclick=()=>openCourseEditor(id);
   const listed=admissionNamesFromEditor().some(n=>admissionCourseKey(n)===admissionCourseKey(name));
   const toggle=document.createElement('button');toggle.type='button';toggle.className='secondary';
-  toggle.textContent=listed?'✕ Hide from Admission':'＋ Show on Admission Form';
+  toggle.textContent=isAalimaContinuation(name)?'🔒 Aalima · Admin Only':listed?'✕ Hide from Admission':'＋ Show on Admission Form';toggle.disabled=isAalimaContinuation(name);
   toggle.onclick=async()=>{
    if(listed&&!confirm('Remove '+name+' from the public Admission Form? Student records and course details are kept.'))return;
    toggle.disabled=true;
@@ -837,7 +837,7 @@ const admissionDefaults=[
 {id:'notes',label:'Message / Preferred Timings',type:'textarea',required:false,visible:true}
 ];
 let admissionFields=admissionDefaults.map(x=>({...x}));
-const defaultAdmissionCourses=['Muallama','Muballigha','Alima','Boys Hifz Class',"Children's Qur'an Maktab",'Tajweed for Girls','Other enquiry'];
+const defaultAdmissionCourses=['Muallama','Muballigha','Boys Hifz Class',"Children's Qur'an Maktab",'Tajweed for Girls','Other enquiry'];
 function renderAdmissionEditor(){
  const box=$('admissionFieldEditor');box.replaceChildren();
  admissionFields.forEach((field,i)=>{
@@ -852,7 +852,7 @@ function renderAdmissionEditor(){
 }
 $('addAdmissionField').onclick=()=>{admissionFields.push({id:'custom_'+Date.now(),label:'New Question',type:'text',visible:true,required:false});renderAdmissionEditor()};
 function admissionNamesFromEditor(){
- return uniqueAdmissionCourses($('admissionCourseList').value.split('\n'));
+ return publicAdmissionCourses($('admissionCourseList').value.split('\n'));
 }
 function renderAdmissionCourseRows(){
  const root=$('admissionCourseRows');root.replaceChildren();
@@ -894,9 +894,9 @@ async function loadAdmissionSettings(){
   // Never merge back every published/default course; it reintroduced courses
   // already removed by Admin and caused the two Tajweed For Girls options.
   const raw=Array.isArray(data.admissionFormCourses)?data.admissionFormCourses:defaultAdmissionCourses;
-  $('admissionCourseList').value=uniqueAdmissionCourses(raw).join('\n');
+  $('admissionCourseList').value=publicAdmissionCourses(raw).join('\n');
   renderAdmissionCourseRows();renderAdmissionEditor();renderCourseList();
-  if(Array.isArray(data.admissionFormCourses)&&raw.length!==uniqueAdmissionCourses(raw).length)
+  if(Array.isArray(data.admissionFormCourses)&&raw.length!==publicAdmissionCourses(raw).length)
    $('admissionSettingsStatus').textContent='Duplicates were hidden in the editor. Click Save & Publish to clean the actual saved list.';
  }catch(e){$('admissionSettingsStatus').textContent='Load failed: '+e.message}
 }
@@ -935,8 +935,9 @@ async function setCourseAdmissionVisibility(name,visible){
  const snap=config.exists()?config:await getDoc(doc(db,'courses','muallama'));
  const original=snap.exists()?snap.data():{};
  const names=uniqueAdmissionCourses(Array.isArray(original.admissionFormCourses)?original.admissionFormCourses:defaultAdmissionCourses,{otherEnquiry:false});
+ if(visible&&isAalimaContinuation(name))throw Error('Aalima is admin-only paid continuation after Muballiga Year 2.');
  const key=admissionCourseKey(name);
- const next=visible?uniqueAdmissionCourses([...names,name]):uniqueAdmissionCourses(names.filter(n=>admissionCourseKey(n)!==key));
+ const next=visible?publicAdmissionCourses([...names,name]):publicAdmissionCourses(names.filter(n=>admissionCourseKey(n)!==key));
  if(next.length<2)throw Error('Cannot remove the final Academy course.');
  const batch=writeBatch(db);
  batch.set(doc(db,'courses','admission-form-config'),{
@@ -978,7 +979,7 @@ $('createCourse').onclick=async()=>{
   const legacySettings=publishedSettings.exists()?null:await getDoc(doc(db,'courses','muallama'));
   const prior=publishedSettings.exists()?publishedSettings.data():(legacySettings?.exists()?legacySettings.data():{});
   const current=Array.isArray(prior.admissionFormCourses)?prior.admissionFormCourses:defaultAdmissionCourses;
-  const updated=uniqueAdmissionCourses([...current,name]);
+  const updated=publicAdmissionCourses([...current,name]);
   const batch=writeBatch(db);
   batch.set(doc(db,'courses',id),{
    name,published:true,kitabs:[],duration:'',description:'',eligibility:'',
@@ -1060,6 +1061,14 @@ const isMaktabCourse=course=>['maktab','childrens-quran-maktab'].includes(course
 const batchOptions=Array.from({length:30},(_,i)=>'Batch '+(i+1));
 for(const label of batchOptions)$('studentBatch').add(new Option(label,label));
 function updateStudentBatchVisibility(){
+ const selected=$('studentCourse').value,original=$('studentId').dataset.course||'';
+ const year=Number($('studentId').dataset.year||0);
+ const verifyLegacy=selected==='muballigha'&&original==='muballigha'&&year!==1&&year!==2;
+ $('legacyStudyYearWrap').hidden=!verifyLegacy;
+ $('legacyStudyYear').required=verifyLegacy;
+ $('studentAcademicStage').value=selected==='muballigha'?
+  (verifyLegacy?'⚠ Legacy student: verify Year 1 or 2 below':'Muballiga · '+(original==='muballigha'&&year===2?'2nd Year':'1st Year')):
+  selected==='alima'?'Aalima · 3rd Year (private approval only)':'Not part of the Muballiga pathway';
  const maktab=isMaktabCourse($('studentCourse').value);
  $('studentBatchWrap').classList.toggle('hidden',!maktab);
  $('studentBatch').required=maktab;
@@ -1077,7 +1086,7 @@ async function syncOfficialCodeToExamResults(studentId,officialCode){
   await batch.commit();
  }
 }
-function resetRecord(kind){$(kind+'Form').reset();$(kind+'Id').value='';if(kind==='student'){updateStudentBatchVisibility();$('studentOfficialId').value='';photoLoad('student')}}
+function resetRecord(kind){$(kind+'Form').reset();$(kind+'Id').value='';if(kind==='student'){delete $('studentId').dataset.course;delete $('studentId').dataset.year;updateStudentBatchVisibility();$('studentOfficialId').value='';photoLoad('student')}}
 for(const kind of ['teacher','student']){
  $(kind+'Clear').onclick=()=>resetRecord(kind);
  $(kind+'Form').onsubmit=async e=>{
@@ -1089,6 +1098,16 @@ for(const kind of ['teacher','student']){
   try{
    if(kind==='student'){
     const previous=await getDoc(doc(db,'students',id));
+    const prior=previous.exists()?previous.data():{};
+    if(data.course==='alima'&&prior.course!=='alima')
+     throw Error('No direct Aalima admission. A completed Muballiga Year 2 student must use the separate fee-verified Aalima enrollment control in their card.');
+    data.courseYear=data.course==='muballigha'
+     ?prior.course==='muballigha'
+       ?([1,2].includes(Number(prior.courseYear))?Number(prior.courseYear):Number($('legacyStudyYear').value))
+       :1
+     :data.course==='alima'?3:0;
+    if(data.course==='muballigha'&&![1,2].includes(data.courseYear))
+     throw Error('Verify the legacy student year (1st or 2nd) against actual academic records before saving.');
     data.photoData=photoToSave('student');
     // Transactionally issue an official ALIA00001-style ID once only.
     // Keep the Firestore document ID and confidential exam access UUID unchanged.
@@ -1155,6 +1174,7 @@ function openStudentEdit(id,data,proposed=null){
  $('studentId').value=id;
  for(const field of schemas.students)$(('student'+field)).value=String(data[field.toLowerCase()]??'');
  $('studentOfficialId').value=data.studentCode||'';
+ $('studentId').dataset.course=data.course||'';$('studentId').dataset.year=[1,2].includes(Number(data.courseYear))?String(data.courseYear):'0';
  updateStudentBatchVisibility();photoLoad('student',data.photoData);
  if(proposed){
   const editable={Name:'studentName',Guardian:'studentGuardian',Dob:'studentDob',Phone:'studentPhone',Email:'studentEmail',Address:'studentAddress',Course:'studentCourse'};
@@ -1180,12 +1200,12 @@ $('recheckStudentPromotions').onclick=async()=>{
  try{
   const all=await getDocs(collection(db,'students'));let promoted=0,pending=0,errors=0;
   for(const s of all.docs){
-   if(s.data().state!=='Completed'||!['muallama','muballigha'].includes(s.data().course))continue;
+   if(s.data().state!=='Completed'||s.data().course!=='muballigha'||Number(s.data().courseYear)!==1)continue;
    try{const result=await maybePromoteStudent(db,s.id);if(result.promoted)promoted++;else pending++}
    catch(e){errors++;console.warn('Promotion failed for student',s.id,e)}
   }
   if(promoted)await syncAllTeacherRosters();
-  status.textContent='✓ Promoted '+promoted+' student(s). '+pending+' awaiting eligible Final/Annual pass. '+errors+' errors.';
+  status.textContent='✓ Promoted '+promoted+' from Muballiga Year 1 to Year 2. '+pending+' still awaiting qualifying Year 1 exams. '+errors+' errors. Aalima never enrolls automatically.';
   await renderRecords('students');
  }catch(e){status.textContent='Promotion check failed: '+e.message}
  finally{button.disabled=false}
@@ -1252,8 +1272,57 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
   manage.textContent='🔐 Student Account Login';
   manage.onclick=()=>studentAccounts.open({id:d.id,...data});
   el.append(manage);
+  if(data.course==='muballigha'){
+   const progress=document.createElement('p');progress.className='section-note';
+   progress.textContent='📚 Muballiga · '+(![1,2].includes(Number(data.courseYear))?'⚠ Legacy year needs Admin verification':Number(data.courseYear)===2?'2nd Year':'1st Year')+' · '+String(data.state||'');
+   el.append(progress);
+  }
+  if(data.course==='alima'&&data.aalimaAdmissionFee){
+   const paid=document.createElement('p');paid.className='section-note';
+   paid.textContent='✅ Aalima Year 3 separate admission fee verified: ₹'+Number(data.aalimaAdmissionFee.amount||0).toLocaleString('en-IN')+
+    ' · '+String(data.aalimaAdmissionFee.paidOn||'')+' · Reference: '+String(data.aalimaAdmissionFee.reference||'');
+   el.append(paid);
+  }
+  if(data.course==='muballigha'&&courseYearOf(data)===2&&data.state==='Completed'){
+   const wrapper=document.createElement('details');wrapper.className='record';
+   const head=document.createElement('summary');head.textContent='🎓 Optional Aalima 3rd Year · Verify separate admission fee & enroll';wrapper.append(head);
+   const note=document.createElement('p');note.className='section-note';
+   note.textContent='Students may instead finish after Muballiga Year 2 and receive Muballiga Sanad separately. Enrolling for Aalima is optional and requires a published/passed Year 2 Final/Annual exam plus actual admission-fee payment.';
+   wrapper.append(note);
+   const form=document.createElement('form');form.style.cssText='display:grid;gap:12px;margin-top:14px';
+   form.innerHTML='<label>Aalima admission fee received (₹) *<input name="amount" type="number" min="0.01" max="10000000" step="0.01" required></label>'+
+    '<label>Actual payment date *<input name="paidOn" type="date" required></label>'+
+    '<label>Payment / receipt reference *<input name="reference" type="text" minlength="3" maxlength="120" required></label>'+
+    '<label><input name="verified" type="checkbox" required style="width:auto"> I confirm the student chose Aalima and that the separate admission fee has been received and verified.</label>'+
+    '<button type="submit">✓ Verify Payment & Enroll in Aalima 3rd Year</button><p class="section-note" role="status"></p>';
+   const submit=form.querySelector('button'),message=form.querySelector('p');
+   form.onsubmit=async event=>{
+    event.preventDefault();if(!active||!form.reportValidity())return;
+    if(!confirm('Confirm voluntary Aalima continuation and verified separate admission-fee payment? This will keep the permanent ALIA Student ID and all existing results.'))return;
+    submit.disabled=true;message.textContent='Checking payment and completed Muballiga Year 2 exam…';
+    try{
+     const amount=Number(form.elements.amount.value);
+     const configured=await getDoc(doc(db,'courses','alima'));
+     const fee=Number(configured.exists()?configured.data().admissionFee:0)||0;
+     if(fee>0&&amount<fee&&!confirm('Aalima admission fee is ₹'+fee+' in Course Management, but ₹'+amount+' has been received. Continue only if the Academy authorised this concession.')){
+      message.textContent='Payment verification cancelled.';return;
+     }
+     const approved=await enrollAalimaYear3(db,d.id,{
+      amount,paidOn:form.elements.paidOn.value,
+      reference:form.elements.reference.value.trim(),verified:form.elements.verified.checked
+     });
+     const revised=(await getDoc(doc(db,'students',d.id))).data();
+     await studentAccounts.syncStudent(d.id,revised);
+     await syncAllTeacherRosters();
+     message.textContent='✓ Student enrolled in Aalima Year 3. Fee verified and recorded: '+approved.reference;
+     await renderRecords('students');
+    }catch(error){message.textContent='Enrollment not completed: '+error.message}
+    finally{submit.disabled=false}
+   };
+   wrapper.append(form);el.append(wrapper);
+  }
   const history=Array.isArray(data.promotionHistory)?data.promotionHistory:[];
-  if(history.length){const latest=history[history.length-1];const badge=document.createElement('p');badge.className='section-note';badge.textContent='🎓 Last Promotion: '+latest.fromCourse+' → '+latest.toCourse+' · '+(latest.completedAcademicYear||'Academic year not recorded');el.append(badge)}
+  if(history.length){const latest=history[history.length-1];const badge=document.createElement('p');badge.className='section-note';badge.textContent='🎓 Last Promotion: '+latest.fromCourse+(latest.fromYear?' Year '+latest.fromYear:'')+' → '+latest.toCourse+(latest.toYear?' Year '+latest.toYear:'')+' · '+(latest.completedAcademicYear||'Academic year not recorded');el.append(badge)}
   const copyOfficial=document.createElement('button');copyOfficial.type='button';copyOfficial.className='secondary';
   copyOfficial.textContent='📋 Copy Official ALIA Student ID';copyOfficial.disabled=!validOfficialStudentId(data.studentCode);
   copyOfficial.onclick=async()=>{

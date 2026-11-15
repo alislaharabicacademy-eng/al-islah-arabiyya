@@ -1,0 +1,37 @@
+name: Academy Academic Pathway Tests
+on:
+  pull_request:
+    paths:
+      - 'academic-pathway.js'
+      - 'student-promotion.js'
+      - 'student-account-admin.js'
+      - 'exam-admin.js'
+      - 'admission-course-utils.js'
+      - 'admin.html'
+      - 'admission.html'
+      - 'courses.html'
+      - 'all-courses.html'
+      - 'course-curriculum.js'
+      - 'student-login.html'
+      - 'tests/academic-pathway.test.mjs'
+      - 'tests/course-curriculum.test.mjs'
+      - '.github/workflows/academic-pathway-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'academic-pathway.js'
+      - 'student-promotion.js'
+      - 'admission-course-utils.js'
+      - 'tests/academic-pathway.test.mjs'
+      - '.github/workflows/academic-pathway-tests.yml'
+
+jobs:
+  verify-academic-path:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test first-year intake and optional paid Aalima continuation
+        run: node --test tests/academic-pathway.test.mjs tests/course-curriculum.test.mjs tests/admission-courses.test.mjs

@@ -117,7 +117,7 @@ export function initExamAdmin({db,auth,onPromotion}){
   const subjects=validateSubjects(true),scores=resultMath(subjects,passPercent);
   return {
    studentId:student.id,studentCode:student.studentCode||'',studentName:student.name||'Student',course:courseNames.get(student.course)||student.course||'—',
-   courseId:student.course||'',batch:student.batch||'',examTitle,examDate,academicYear,
+   courseId:student.course||'',courseYear:student.course==='muballigha'?(Number(student.courseYear)===2?2:1):student.course==='alima'?3:0,batch:student.batch||'',examTitle,examDate,academicYear,
    subjects,passPercent,...scores,finalForPromotion:$('examFinalForPromotion').checked,published
   };
  }
@@ -141,6 +141,11 @@ export function initExamAdmin({db,auth,onPromotion}){
    const id=oldId||makeId();
    if(!allowedId.test(id))throw Error('Invalid result reference. Create a new result.');
    const now=new Date().toISOString();
+   // Editing an old result must not silently change its original course year.
+   // Legacy Year 1 results without a courseYear remain Year 1.
+   if(old&&old.studentId===record.studentId&&old.courseId===record.courseId){
+    record.courseYear=[1,2,3].includes(Number(old.courseYear))?Number(old.courseYear):old.courseId==='muballigha'?1:record.courseYear;
+   }
    const payload={...record,createdAt:old?.createdAt||now,updatedAt:now};
    // Single atomic transaction keeps publication and confidential lookup index aligned.
    const batch=writeBatch(db);

@@ -28,3 +28,18 @@ export function removeAdmissionCourse(input,name){
  const key=admissionCourseKey(name);
  return uniqueAdmissionCourses(input,{otherEnquiry:false}).filter(s=>admissionCourseKey(s)!==key);
 }
+
+/* Public applications never include Year 2 or the optional Aalima Year 3.
+ * Existing student continuations are handled by the private Admin panel. */
+export function isAalimaContinuation(name){
+ const key=admissionCourseKey(name);
+ return /^(?:alima|aalima|alimah|aalimah)(?:3rdyear|year3|thirdyear)?$/.test(key);
+}
+export function publicAdmissionCourses(input){
+ return uniqueAdmissionCourses(input).filter(name=>!isAalimaContinuation(name));
+}
+export function publicAdmissionLabel(name){
+ const key=admissionCourseKey(name);
+ return key==='muballigha'||key==='muballiga'?
+  name+' — 1st Year (New Admissions Only)':name;
+}

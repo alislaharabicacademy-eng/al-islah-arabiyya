@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse} from '../admission-course-utils.js';
+import {uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse,publicAdmissionCourses,publicAdmissionLabel} from '../admission-course-utils.js';
 test('Tajweed for Girls appears once across static and stored spelling variants',()=>{
  const input=['Muallama','Tajweed For Girls','TAJWEED for girls','Tajweed For Girls — 1 Year','Other enquiry','Tajweed for Girls - 1 year'];
  assert.deepEqual(uniqueAdmissionCourses(input),['Muallama','Tajweed For Girls','Other enquiry']);
@@ -21,7 +21,7 @@ test('Legacy hybrid enquiries and repeated Other enquiry entries are removed',()
 test('Public form uses the canonical Admin settings list, not an unconditional union',()=>{
  const admission=readFileSync(new URL('../admission.html',import.meta.url),'utf8');
  assert.match(admission,/admission-form-config/);
- assert.match(admission,/const courses=uniqueAdmissionCourses\(names\)/);
+ assert.match(admission,/const courses=publicAdmissionCourses\(names\)/);
  assert.doesNotMatch(admission,/<option>Tajweed For Girls<\/option>/);
  assert.doesNotMatch(admission,/allCourseNames=\[\.\.\.builtInCourses/);
 });
@@ -44,7 +44,7 @@ test('Creating a new published course synchronizes its admission listing atomica
  assert.match(create,/writeBatch\(db\)/);
  assert.match(create,/batch\.set\(doc\(db,'courses',id\)/);
  assert.match(create,/batch\.set\(admissionRef/);
- assert.match(create,/uniqueAdmissionCourses\(\[\.\.\.current,name\]\)/);
+ assert.match(create,/publicAdmissionCourses\(\[\.\.\.current,name\]\)/);
  assert.match(create,/await batch\.commit\(\)/);
  assert.match(create,/registerCourseOption\(id,\{name\}\)/);
  assert.match(create,/renderAdmissionCourseRows\(\)/);
@@ -73,4 +73,11 @@ test('The student dashboard resolves a live published course name safely',()=>{
  const student=readFileSync(new URL('../student-login.html',import.meta.url),'utf8');
  assert.match(student,/getDoc\(doc\(db,'courses',access\.course\)\)/);
  assert.match(student,/className=String\(catalog\.data\(\)\.name\)\.trim\(\)/);
+});
+
+test('Only Muballiga Year 1 is in the public admission list; optional Aalima never appears',()=>{
+ const choices=publicAdmissionCourses(['Muallama','Muballigha','Alima','Aalima','Tajweed For Girls']);
+ assert.deepEqual(choices,['Muallama','Muballigha','Tajweed For Girls','Other enquiry']);
+ assert.match(publicAdmissionLabel('Muballigha'),/1st Year/);
+ assert.equal(uniqueAdmissionCourses(['Alima']).includes('Alima'),true); // Admin course records still exist
 });
