@@ -77,8 +77,9 @@ test('Year-specific final result, private studentAccess and dashboard are retain
  assert.match(exam,/courseYear:student\.course==='muballigha'/);
  assert.match(exam,/Editing an old result must not silently change/);
  const accounts=readFileSync(new URL('student-account-admin.js',root),'utf8');
- assert.match(accounts,/courseYear:courseYearOf\(student\)/);
- assert.match(accounts,/courseYear:courseYearOf\(data\)/);
+ assert.match(accounts,/courseYear:student\.course==='muballigha'/);
+ assert.match(accounts,/courseYear:data\.course==='muballigha'/);
+ assert.match(accounts,/\?0:courseYearOf\(data\)/);
  const portal=readFileSync(new URL('student-login.html',root),'utf8');
  assert.match(portal,/Number\(access\.courseYear\)===2/);
 });
