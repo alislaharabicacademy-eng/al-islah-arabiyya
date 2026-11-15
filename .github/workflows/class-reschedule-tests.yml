@@ -50,6 +50,6 @@ jobs:
           distribution: temurin
           java-version: '21'
       - name: Install Firestore test dependencies
-        run: npm install --no-save firebase@12 @firebase/rules-unit-testing@6
+        run: npm install --no-save firebase@13 @firebase/rules-unit-testing@6
       - name: Compile rules and check approval enforcement in Firestore emulator
         run: npx --yes firebase-tools@latest emulators:exec --only firestore --project demo-class-reschedule 'node --test tests/class-reschedule-rules.test.mjs'
