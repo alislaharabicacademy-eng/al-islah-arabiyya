@@ -44,10 +44,14 @@ export async function enrollAalimaYear3(db,studentId,payment){
  if(!studentId||typeof studentId!=='string'||studentId.includes('/'))throw Error('Invalid student record.');
  const amount=Number(payment?.amount),date=String(payment?.paidOn||'').trim();
  const reference=String(payment?.reference||'').trim(),confirmed=payment?.verified===true;
- if(!confirmed)throw Error('Admin must confirm that the Aadmission fee has actually been received.');
+ if(!confirmed)throw Error('Admin must confirm that the admission fee has actually been received.');
  if(!Number.isFinite(amount)||amount<=0||amount>10000000)throw Error('Enter the admission-fee amount actually received.');
  if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T12:00:00+05:30')))
   throw Error('Enter a valid admission-fee payment date.');
+ const todayParts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+ const part=key=>todayParts.find(x=>x.type===key)?.value||'';
+ const today=part('year')+'-'+part('month')+'-'+part('day');
+ if(date>today)throw Error('Future payment dates are not accepted.');
  if(reference.length<3||reference.length>120)throw Error('A payment reference or receipt number is required.');
  const studentRef=doc(db,'students',studentId);
  const results=await getDocs(query(collection(db,'examResults'),where('studentId','==',studentId)));
