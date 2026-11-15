@@ -60,3 +60,30 @@ test('Digital PDF export uses exact same SVG source as web preview instead of a 
  assert.match(documents,/return createPremiumVectorPdf\('results',record\)/);
  assert.match(documents,/createPremiumVectorPdf\(classifyCompetitionAward\(certificate\.award\),certificate\)/);
 });
+
+test('Certificate ornaments and signature stay above the print-safe lower edge',()=>{
+ const svg=studio.premiumCertificatePages('winner',{...studio.sampleCertificate('winner'),previewMode:false})[0];
+ assert.match(svg,/CERTIFICATE ID:/);
+ assert.match(svg,/y="947" font-size="14"/); // reference line no longer touches bottom border
+ assert.match(svg,/translate\(325\.22 812\)/); // trophy raised above printer trim
+ assert.doesNotMatch(svg,/y="970"/);
+ assert.doesNotMatch(svg,/y="967"/);
+});
+test('Long names and Arabic/Tamil scripts are kept in the certificate without silent truncation',()=>{
+ for(const name of ['Syed Abdul Rahman '.repeat(6).trim(),'முஹம்மது அப்துல் ரஹ்மான் '.repeat(5).trim(),'محمد عبد الرحمن '.repeat(6).trim()]){
+  const svg=studio.premiumCertificatePages('winner',{...studio.sampleCertificate('winner'),studentName:name,previewMode:false})[0];
+  assert.ok(svg.includes(name),'The complete original student name must remain in the vector text');
+  const size=Number(svg.match(/y="551" font-size="([\\d.]+)"/)?.[1]);
+  assert.ok(size>=9&&size<79,'Long names need a safe font size: '+size);
+ }
+});
+test('Long competition fields wrap within the metadata card rather than being cut to 64 chars',()=>{
+ const event='International Quran Memorisation and Tajweed Competition Senior Students Annual Programme 2027';
+ const course='Advanced Arabic Language and Islamic Studies Higher Level Students Programme';
+ const svg=studio.premiumCertificatePages('winner',{...studio.sampleCertificate('winner'),eventName:event,course,previewMode:false})[0];
+ assert.ok(svg.includes(event),'Event heading must retain the full title');
+ assert.ok(!svg.includes('Programme</text>')||svg.includes('Programme')); // keep text transparent in the vector source
+ const source=readFileSync(new URL('../premium-certificate-svg.js',import.meta.url),'utf8');
+ assert.doesNotMatch(source,/String\(value\|\|'—'\)\.slice\(0,64\)/);
+ assert.match(source,/lines\.map\(\(line,i\)=>T/);
+});
