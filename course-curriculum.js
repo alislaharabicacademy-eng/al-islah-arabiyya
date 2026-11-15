@@ -14,7 +14,7 @@
     {year:1,title:'Muballiga · 1st Year',subjects:['Noorani Qaidha','Hadees','Prophet Story','Surah Hifz','Masnoon Duas','Durus Lugathul Arabiya','Meezan','1 Min Madrasa']},
     {year:2,title:'Muballiga · 2nd Year',subjects:['Noorani Qaidha','Hadees','Fikh Muyassar','Qasas','Surah Hifz','Ajnaas','Avaamil','Minhajul Arabiya Part 2','Tarjuma']}
    ]),
-   award:'New admissions are accepted for Muballiga 1st Year only. Students who successfully complete both the 1st and 2nd years of the Muballiga course may finish their studies and receive the Muballiga Sanad. Students who wish to continue may apply for Aalima 3rd Year separately, after paying the additional Aalima admission fee and receiving Academy approval.'
+   award:'Students who successfully complete both the 1st and 2nd years will receive the Muballiga Sanad.'
   }),
   alima:Object.freeze({
    books:Object.freeze([]),
@@ -43,14 +43,28 @@
  function award(courseId){return CATALOG[courseId]?.award||'';}
  function description(courseId,savedDescription){
   const required=award(courseId);
-  const outdated=[
+  // Generated copy from previous website versions can remain in Firestore and
+  // in an already-saved Admin description. Remove those passages instead of
+  // showing both the long text and the new short description.
+  const oldGenerated=[
    'Students who successfully complete both the 1st and 2nd years of the Muballiga course will be awarded the Muballiga Sanad.',
-   'Students who complete both years of the Muballiga course and then successfully complete the 3rd year of Aalima will be awarded the Aalima Sanad.'
+   'Students who complete both years of the Muballiga course and then successfully complete the 3rd year of Aalima will be awarded the Aalima Sanad.',
+   "New admissions are accepted for Muballiga 1st Year only. Students who successfully complete both the 1st and 2nd years of the Muballiga course may finish their studies and receive the Muballiga Sanad. Students who wish to continue may apply for Aalima 3rd Year separately, after paying the additional Aalima admission fee and receiving Academy approval.",
+   'Two-year programme for continued Islamic study.',
+   'Two-year programme for continued Islamic Studies.'
   ];
-  const existing=outdated.reduce((text,sentence)=>text.split(sentence).join(''),String(savedDescription??'')).replace(/\s+/g,' ').trim();
-  if(!required)return existing;
-  // Keep admin-written descriptions, while clearly stating the complete Sanad pathway.
-  // An older generic description in Firestore must never hide this information.
+  let existing=String(savedDescription??'');
+  if(courseId==='muballigha'){
+   for(const passage of oldGenerated)existing=existing.split(passage).join(' ');
+   // Retain independent Admin-written information, but remove the default
+   // placeholder to keep the homepage card compact.
+   existing=existing.replace(/^Islamic learning programme\.\s*/i,'');
+   existing=existing.split(required).join(' ').replace(/\s+/g,' ').trim();
+   return ['Two-year programme for continued Islamic Studies.',existing,required].filter(Boolean).join(' ');
+  }
+  if(!required)return existing.trim();
+  for(const passage of oldGenerated.slice(0,2))existing=existing.split(passage).join(' ');
+  existing=existing.replace(/\s+/g,' ').trim();
   if(existing.includes(required))return existing;
   return [existing,required].filter(Boolean).join(' ');
  }
