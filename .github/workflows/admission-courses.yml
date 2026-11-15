@@ -15,6 +15,9 @@ on:
       - 'tests/certificate-vector.test.mjs'
       - 'tests/student-profile-workflow.test.mjs'
       - 'tests/exam-batch-report.test.mjs'
+      - 'courses.html'
+      - 'course-eligibility.js'
+      - 'tests/course-eligibility.test.mjs'
       - 'exam-batch-report.js'
       - 'exam-admin.js'
       - 'student-profile-requests.js'
@@ -36,6 +39,9 @@ on:
       - 'tests/certificate-vector.test.mjs'
       - 'tests/student-profile-workflow.test.mjs'
       - 'tests/exam-batch-report.test.mjs'
+      - 'courses.html'
+      - 'course-eligibility.js'
+      - 'tests/course-eligibility.test.mjs'
       - 'exam-batch-report.js'
       - 'exam-admin.js'
       - 'student-profile-requests.js'
@@ -52,4 +58,4 @@ jobs:
         with:
           node-version: '22'
       - name: Run Course Form Regression Checks
-        run: node --test tests/admission-courses.test.mjs tests/student-fees.test.mjs tests/certificate-vector.test.mjs tests/student-profile-workflow.test.mjs tests/exam-batch-report.test.mjs
+        run: node --test tests/admission-courses.test.mjs tests/student-fees.test.mjs tests/certificate-vector.test.mjs tests/student-profile-workflow.test.mjs tests/exam-batch-report.test.mjs tests/course-eligibility.test.mjs
