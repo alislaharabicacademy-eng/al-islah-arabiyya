@@ -32,7 +32,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 #studentEditorPanel .fields textarea{width:100%;min-height:72px;border:1px solid #c4d6ca;border-radius:9px;padding:11px;font:inherit}
 #studentUpdateRequestsPanel .record details{background:#f7faf7;padding:10px;border-radius:9px;margin:12px 0}
 #studentUpdateRequestsPanel summary{cursor:pointer;font-weight:700}
-#studentAccountSave[hidden],#studentAccountDisable[hidden],#studentAccountChangeEmail[hidden]{display:none!important}
+#studentAccountSave[hidden],#studentAccountDisable[hidden],#studentAccountChangeEmail[hidden],.student-account-panel label[hidden]{display:none!important}
 </style><style id="student-account-administration-style">
 .student-account-panel[hidden]{display:none!important}
 .student-account-panel{padding:23px!important;border-radius:17px;border:1px solid #b7d8c1!important;background:linear-gradient(130deg,#eff8f0,#fcfffc)!important;margin:20px 0!important;box-shadow:0 9px 29px #0e513312}
@@ -514,13 +514,13 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <div class="actions" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
 <h3 id="studentEditorTitle">＋ New Student Registration</h3>
 <button type="button" class="secondary" id="studentEditorClose">✕ Close Form</button></div>
-<p class="section-note"><strong>Mandatory:</strong> Student Name, Course, Guardian, Date of Birth and Contact Number. Address and Contact Email are optional. Photo is optional. Student ID is issued automatically; never type your own ID.</p>
+<p class="section-note"><strong>Mandatory:</strong> Student Name, Course, Guardian, Date of Birth, Contact Number and Complete Address. Contact Email and Photo are optional. Photo is optional. Student ID is issued automatically; never type your own ID.</p>
 <form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields">
 <label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required minlength="2" maxlength="120"></label><label>Course *<select id="studentCourse" required><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Parent / Guardian Name *<input id="studentGuardian" required minlength="2" maxlength="120"></label>
 <label>Date of Birth * (needed for secure Student Login)<input id="studentDob" type="date" required></label>
 <label>Parent / Student Contact Number *<input id="studentPhone" type="tel" required minlength="7" maxlength="25" pattern="[0-9+() .-]{7,25}"></label>
 <label>Contact Email (not automatically approved for login)<input id="studentEmail" type="email" maxlength="200" placeholder="guardian@example.com"></label>
-<label class="wide">Address<textarea id="studentAddress" maxlength="700" rows="2"></textarea></label>
+<label class="wide">Complete Address *<textarea id="studentAddress" required minlength="5" maxlength="700" rows="2"></textarea></label>
 <label class="wide">Student Profile Photo (JPG / PNG / WebP, optional)
  <input id="studentPhotoFile" type="file" accept="image/jpeg,image/png,image/webp">
  <small>Stored privately with the enrolled student record. Admin can update/remove it later.</small>
