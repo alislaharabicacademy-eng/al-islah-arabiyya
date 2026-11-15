@@ -84,16 +84,26 @@ test('Year-specific final result, private studentAccess and dashboard are retain
  assert.match(portal,/Number\(access\.courseYear\)===2/);
 });
 
-test('Sanad description clarifies optional choice and verified fee, not direct intake',()=>{
+test('Short Muballiga description only promises its two-year Sanad; Aalima keeps optional paid admission details',()=>{
  const box={window:{}};
  runInNewContext(readFileSync(new URL('course-curriculum.js',root),'utf8'),box);
  const c=box.window.AcademyCurriculum;
  const mub=c.description('muballigha','');
- assert.match(mub,/1st Year only/);
- assert.match(mub,/Muballiga Sanad/);
- assert.match(mub,/Aalima 3rd Year/);
+ assert.equal(mub,'Two-year programme for continued Islamic Studies. Students who successfully complete both the 1st and 2nd years will receive the Muballiga Sanad.');
+ assert.doesNotMatch(mub,/Aalima|admission fee/i);
  const ali=c.description('alima','');
  assert.match(ali,/not a direct admission/);
  assert.match(ali,/admission fee is paid and verified/);
  assert.match(ali,/Aalima Sanad/);
+});
+test('Outdated long Muballiga text is removed from the Admin editor without destroying custom content',()=>{
+ const box={window:{}};
+ runInNewContext(readFileSync(new URL('course-curriculum.js',root),'utf8'),box);
+ const c=box.window.AcademyCurriculum;
+ const old='Two-year programme for continued Islamic study. New admissions are accepted for Muballiga 1st Year only. Students who successfully complete both the 1st and 2nd years of the Muballiga course may finish their studies and receive the Muballiga Sanad. Students who wish to continue may apply for Aalima 3rd Year separately, after paying the additional Aalima admission fee and receiving Academy approval.';
+ const current=c.description('muballigha',old);
+ assert.equal(current,c.description('muballigha',''));
+ assert.equal(c.description('muballigha',current),current);
+ assert.match(c.description('muballigha',old+' Optional weekend classes.'),/Optional weekend classes/);
+ assert.doesNotMatch(current,/Aalima|admission fee/);
 });
