@@ -289,3 +289,34 @@ export async function createPremiumVectorPdf(type,record){
  if(!(blob instanceof Blob)||blob.size<1000)throw Error('Generated vector PDF is invalid');
  return blob;
 }
+
+
+/* Browser-native SVG print path: no svg2pdf CDN required. Chrome preserves
+ * vector borders and text when Print -> Save as PDF is selected.
+ * Opens a window immediately from the user's click (avoids popup blockers).
+ */
+export function openPremiumPrintWindow(type,record={}){
+ const win=window.open('','_blank');
+ if(!win)throw Error('Popup blocked. Allow popups for this Academy website and click Print again.');
+ const portrait=type==='results';
+ win.document.open();
+ win.document.write('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Academy Certificate - Print to PDF</title></head><body style="font:16px Arial,sans-serif;padding:24px">Preparing the original vector certificate for printing…</body></html>');
+ win.document.close();
+ (async()=>{
+  try{
+   const branding=record.previewMode?null:await loadSiteSettings({fresh:true}).catch(()=>null);
+   const r={...record,principal:record.previewMode?{}:(branding?.principal||{})};
+   const original=premiumCertificatePages(type,r);
+   // These print SVG pages use the exact SVG source as the visual preview.
+   const logoUrl=new URL(LOGO,location.href).href;
+   const pages=original.map(svg=>svg.replaceAll('href="'+LOGO+'"','href="'+logoUrl+'"'));
+   const html='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Al Islah Arabic Academy - Official PDF Print</title>'+
+   '<style>*{box-sizing:border-box}body{margin:0;background:#e4e8e4;font:16px Arial,sans-serif}header{padding:14px;background:#123f31;color:#fff;text-align:center}button{background:#f0cb82;border:0;border-radius:8px;padding:13px 22px;font-weight:bold;font-size:17px;cursor:pointer}.sheet{width:'+(portrait?'210':'297')+'mm;height:'+(portrait?'297':'210')+'mm;background:white;margin:10px auto;break-after:page}.sheet:last-child{break-after:auto}.sheet svg{display:block;width:100%;height:100%}@media print{@page{size:A4 '+(portrait?'portrait':'landscape')+';margin:0}html,body{margin:0!important;background:white!important}header{display:none!important}.sheet{margin:0!important;page-break-after:always}.sheet:last-child{page-break-after:auto}}</style></head><body>'+
+   '<header><strong>Original Premium Vector Certificate · A4</strong><p>Choose Print, then select <b>Save as PDF</b> on Chrome/Android. Keep scale 100% and margins None.</p><button onclick="window.print()">🖨 Print / Save as PDF</button></header>'+
+   pages.map(markup=>'<div class="sheet">'+markup+'</div>').join('')+'</body></html>';
+   if(win.closed)return;
+   win.document.open();win.document.write(html);win.document.close();
+  }catch(e){if(!win.closed){win.document.body.textContent='Unable to prepare certificate print: '+e.message}}
+ })();
+ return win;
+}
