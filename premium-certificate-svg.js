@@ -124,17 +124,38 @@ function banner(w,y,title,small=false){
  ${diamond(w/2,y+116,5)}
  </g>`;
 }
+// Estimate ink width conservatively: Tamil/Arabic letters cannot use Latin character counts.
+function textUnits(value){
+ return [...String(value??'')].reduce((n,ch)=>n+(/[\u0600-\u06FF\u0B80-\u0BFF\u2E80-\u9FFF]/u.test(ch)?1:/[MW@#%]/.test(ch)?.9:.58),0);
+}
+function fitFont(value,maxSize,maxWidth,minSize=9){
+ return Math.max(minSize,Math.min(maxSize,maxWidth/Math.max(1,textUnits(value))));
+}
 function studentName(w,y,name,fontSize=79){
- const n=String(name||'Student Name').slice(0,100),size=Math.max(20,Math.min(fontSize,1000/(Math.max(1,[...n].length)*.56)));
+ const n=String(name||'Student Name').trim(),size=fitFont(n,fontSize,Math.min(1030,w*.77),9);
  return T(w/2,y,n,size,'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" font-style="italic" fill="#07503D"')+
  `<path d="M${w*.25} ${y+21}H${w*.75}" fill="none" stroke="#D5A44B" stroke-width="2"/>${diamond(w/2,y+21,7)}`;
 }
+// Up to three readable rows in a metadata card. Never silently truncate IDs or events.
+function chipLines(value){
+ let remaining=String(value??'—').replace(/\s+/g,' ').trim()||'—';
+ const count=Math.min(3,Math.max(1,Math.ceil(textUnits(remaining)/12.5)));
+ const rows=[];
+ for(let i=0;i<count-1;i++){
+  const target=Math.ceil(remaining.length/(count-i));
+  const space=remaining.lastIndexOf(' ',target+6);
+  const cut=space>=target-7?space:target;
+  rows.push(remaining.slice(0,cut).trim());remaining=remaining.slice(cut).trim();
+ }
+ rows.push(remaining);return rows;
+}
 function chip(x,y,w,label,value){
- const txt=String(value??'-').slice(0,64),size=Math.max(11,Math.min(27,(w-20)/(Math.max(1,[...txt].length)*.55)));
+ const lines=chipLines(value),size=fitFont(lines.reduce((a,b)=>textUnits(a)>textUnits(b)?a:b,''),lines.length===1?27:20,w-26,8);
+ const baselines=lines.length===1?[80]:lines.length===2?[69,90]:[63,79,95];
  return `<rect x="${x}" y="${y}" width="${w}" height="102" rx="17" fill="#FFFCF6" stroke="#CFA04B" stroke-width="4"/>
  <path d="M${x+3} ${y+16}Q${x+3} ${y+3} ${x+18} ${y+3}H${x+w-18}Q${x+w-3} ${y+3} ${x+w-3} ${y+16}V${y+50}H${x+3}Z" fill="url(#green)"/>
  ${T(x+w/2,y+36,label,21,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#FFE2A0"')}
- ${T(x+w/2,y+80,txt,size,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#0B2649"')}`;
+ ${lines.map((line,i)=>T(x+w/2,y+baselines[i],line,size,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#0B2649"')).join('')}`;
 }
 function stamp(cx,cy,size=82){
  return `<circle cx="${cx}" cy="${cy}" r="${size+11}" fill="#3F174C" stroke="#DDB45D" stroke-width="10"/>
@@ -166,48 +187,49 @@ function certificate(kind,r){
  s+=T(w/2,452,'This certificate is proudly presented to',30,'text-anchor="middle" font-family="Georgia,serif" font-style="italic" fill="#1F3152"');
  s+=studentName(w,551,r.studentName);
  s+=T(w/2,624,desc,29,'text-anchor="middle" font-family="Georgia,serif" font-style="italic" fill="#222B50"');
- s+=T(w/2,677,event||'Academy Programme',Math.max(18,Math.min(35,1110/(Math.max(1,[...String(event||'Academy Programme')].length)*.56))),'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" fill="#4F1764"');
+ s+=T(w/2,677,event||'Academy Programme',fitFont(event||'Academy Programme',35,1050,11),'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" fill="#4F1764"');
  const cards=!competition?
  [['Student ID',r.studentCode],['Class',r.course],['Academic Year',r.academicYear],['Exam Date',dt],['Result',r.passed?'PASS':'PARTICIPATED']]:
  [['Student ID',r.studentCode],['Class',r.course],['Event',event||'Academy Event'],['Date',dt],
  ['Award / Role',kind==='winner'?award:kind==='event'?award.replace('Event ',''):'PARTICIPANT']];
- cards.forEach(([label,value],i)=>s+=chip(44+i*267,712,255,label,String(value||'—').slice(0,64)));
- if(kind==='winner')s+=trophy(w*.23,843,award);
- else if(kind==='event')s+=eventCrescent(w*.22,890);
- else if(kind==='participation'||kind==='exam-participation')s+=participationRosette(w*.22,886,'PARTICIPANT');
- else s+=participationRosette(w*.22,886,'EXCELLENCE');
-  s+=stamp(w/2,892,70);
+ // Decorative medals sit BEHIND the data cards; no award covers printed student details.
+ if(kind==='winner')s+=trophy(w*.23,812,award);
+ else if(kind==='event')s+=eventCrescent(w*.22,851);
+ else if(kind==='participation'||kind==='exam-participation')s+=participationRosette(w*.22,854,'PARTICIPANT');
+ else s+=participationRosette(w*.22,854,'EXCELLENCE');
+ s+=stamp(w/2,875,64);
+ cards.forEach(([label,value],i)=>s+=chip(44+i*267,712,255,label,value||'—'));
  const signer=r.principal&&typeof r.principal==='object'?r.principal:{};
  const signed=typeof signer.signatureData==='string'&&/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signer.signatureData);
- if(signed&&!r.previewMode)s+=`<image x="${w*.652}" y="842" width="${w*.205}" height="77" preserveAspectRatio="xMidYMid meet" href="${E(signer.signatureData)}" />`;
- s+=`<path d="M${w*.65} 917h${w*.21}" stroke="#1C2D50" stroke-width="3"/>
- ${T(w*.755,944,signer.name||'AUTHORIZED SIGNATORY',String(signer.name||'').length>30?17:22,'font-family="Georgia,serif" text-anchor="middle" fill="#1B2A50"')}
- ${T(w*.755,967,signer.name?(signer.designation||'Principal'):'Principal Signature',17,'font-family="Georgia,serif" font-style="italic" text-anchor="middle" fill="#425572"')}
- ${T(100,970,'CERTIFICATE ID: '+String(r.id||'ALIA-DEMO').slice(0,55),14,'font-family="Arial,sans-serif" text-anchor="start" fill="#263D56"')}`;
+ if(signed&&!r.previewMode)s+=`<image x="${w*.652}" y="822" width="${w*.205}" height="64" preserveAspectRatio="xMidYMid meet" href="${E(signer.signatureData)}" />`;
+ s+=`<path d="M${w*.65} 891h${w*.21}" stroke="#1C2D50" stroke-width="3"/>
+ ${T(w*.755,922,signer.name||'AUTHORIZED SIGNATORY',String(signer.name||'').length>30?17:22,'font-family="Georgia,serif" text-anchor="middle" fill="#1B2A50"')}
+ ${T(w*.755,947,signer.name?(signer.designation||'Principal'):'Principal Signature',17,'font-family="Georgia,serif" font-style="italic" text-anchor="middle" fill="#425572"')}
+ ${T(86,696,'CERTIFICATE ID: '+String(r.id||'ALIA-DEMO'),fitFont('CERTIFICATE ID: '+String(r.id||'ALIA-DEMO'),14,300,8),'font-family="Arial,sans-serif" text-anchor="start" fill="#263D56"')}`;
  return `<svg xmlns="${NS}" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${defs()}${s}</svg>`;
 }
 function resultPage(r,subjects,page,totalPages){
- const w=1000,h=1414,rows=subjects.slice(page*7,page*7+7);
- let s=frame(w,h)+brand(w,86,.82)+banner(w,281,'OFFICIAL EXAM RESULT STATEMENT',true);
- s+=T(w/2,457,'EXAMINATION RESULTS',28,'font-family="Georgia,serif" text-anchor="middle" fill="#172C4C"');
- s+=studentName(w,548,r.studentName,63);
- s+=chip(55,585,280,'Student ID',r.studentCode)+chip(360,585,280,'Class',r.course)+chip(665,585,280,'Academic Year',r.academicYear);
- s+=T(w/2,749,r.examTitle||'Annual Examination',32,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#4E165F"');
- s+=T(w/2,791,(r.examDate||'')+'  •  Page '+(page+1)+' of '+totalPages,21,'font-family="Georgia,serif" text-anchor="middle" fill="#243453"');
- const tableY=829;
- s+=`<rect x="69" y="${tableY}" width="863" height="62" rx="10" fill="url(#purple)" stroke="#D6A34D" stroke-width="4"/>`;
- s+=T(121,tableY+41,'S.NO.',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
- s+=T(274,tableY+41,'SUBJECT',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
- s+=T(790,tableY+41,'MARKS',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
+ const w=1000,h=1414,rows=subjects.slice(page*8,page*8+8);
+ let s=frame(w,h)+brand(w,78,.8)+banner(w,252,'OFFICIAL EXAM RESULT STATEMENT',true);
+ s+=T(w/2,417,'Student Name',24,'font-family="Georgia,serif" text-anchor="middle" fill="#172C4C"');
+ s+=studentName(w,512,r.studentName,63);
+ s+=chip(55,553,280,'Student ID',r.studentCode)+chip(360,553,280,'Class',r.course)+chip(665,553,280,'Academic Year',r.academicYear);
+ s+=T(w/2,699,r.examTitle||'Annual Examination',fitFont(r.examTitle||'Annual Examination',32,750,11),'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#4E165F"');
+ s+=T(w/2,738,(r.examDate||'')+'  •  Page '+(page+1)+' of '+totalPages,21,'font-family="Georgia,serif" text-anchor="middle" fill="#243453"');
+ const tableY=762;
+ s+=`<rect x="69" y="${tableY}" width="863" height="54" rx="10" fill="url(#purple)" stroke="#D6A34D" stroke-width="4"/>`;
+ s+=T(121,tableY+37,'S.NO.',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
+ s+=T(274,tableY+37,'SUBJECT',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
+ s+=T(790,tableY+37,'MARKS',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
  rows.forEach((item,i)=>{
-  const y=tableY+62+i*47;
-  s+=`<rect x="70" y="${y}" width="862" height="47" fill="${i%2?'#FFF8ED':'#FFFFFA'}" stroke="#D6B577" stroke-width="1.6"/>`;
-  s+=T(151,y+31,page*7+i+1,23,'font-family="Georgia,serif" text-anchor="middle" fill="#182C4A"');
-  s+=T(270,y+31,String(item.name||'Subject').slice(0,48),25,'font-family="Georgia,serif" fill="#182C4A"');
-  s+=T(823,y+31,(item.score??0)+' / '+(item.max??0),24,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#182C4A"');
+  const y=tableY+54+i*42;
+  s+=`<rect x="70" y="${y}" width="862" height="42" fill="${i%2?'#FFF8ED':'#FFFFFA'}" stroke="#D6B577" stroke-width="1.6"/>`;
+  s+=T(151,y+29,page*8+i+1,23,'font-family="Georgia,serif" text-anchor="middle" fill="#182C4A"');
+  s+=T(270,y+29,String(item.name||'Subject'),fitFont(item.name||'Subject',25,470,10),'font-family="Georgia,serif" fill="#182C4A"');
+  s+=T(823,y+29,(item.score??0)+' / '+(item.max??0),24,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#182C4A"');
  });
  if(page===totalPages-1){
-  const y=1261;
+  const y=1170;
   s+=`<rect x="69" y="${y}" width="862" height="85" rx="13" fill="#FFF7E9" stroke="#C99D47" stroke-width="4"/>`;
   [['TOTAL',(r.total??0)+' / '+(r.maxTotal??0)],['PERCENT',(Number(r.percent)||0).toFixed(2)+'%'],['GRADE',r.grade||'—'],['RESULT',r.passed?'PASS':'NEEDS IMPROVEMENT']].forEach(([label,value],i)=>{
    const x=180+i*215;
@@ -215,7 +237,20 @@ function resultPage(r,subjects,page,totalPages){
       T(x,y+61,value,String(value).length>13?15:26,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#112649"');
   });
  }
- s+=T(w/2,h-83,'RESULT REFERENCE: '+String(r.id||'ALIA-DEMO').slice(0,53),17,'text-anchor="middle" font-family="Arial,sans-serif" fill="#213656"');
+ // Final-page crest and an empty signature field; never forge the Principal's signature.
+ if(page===totalPages-1){
+  s+=stamp(w/2,1318,48);
+  const signer=r.principal&&typeof r.principal==='object'?r.principal:{};
+  const signed=typeof signer.signatureData==='string'&&/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signer.signatureData);
+  if(signed&&!r.previewMode)s+='<image x="710" y="1262" width="204" height="49" preserveAspectRatio="xMidYMid meet" href="'+E(signer.signatureData)+'"/>';
+  s+='<path d="M700 1317H925" stroke="#1C2D50" stroke-width="2.5"/>';
+  s+=T(812,1343,signer.name||'AUTHORIZED SIGNATORY',fitFont(signer.name||'AUTHORIZED SIGNATORY',17,230,10),'font-family="Georgia,serif" text-anchor="middle" fill="#1B2A50"');
+  s+=T(812,1366,signer.name?(signer.designation||'Principal'):'Principal Signature',13,'font-family="Georgia,serif" font-style="italic" text-anchor="middle" fill="#425572"');
+ }
+ // Reference is deliberately outside the marks/total table and the seal.
+ const ref='RESULT REFERENCE: '+String(r.id||'ALIA-DEMO');
+ s+='<rect x="64" y="1331" width="351" height="41" rx="9" fill="#FFF7E9" fill-opacity=".87" stroke="#D0A052" stroke-width="1.5"/>';
+ s+=T(79,1359,ref,fitFont(ref,14,318,8),'font-family="Arial,sans-serif" fill="#213656"');
  return `<svg xmlns="${NS}" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${defs()}${s}</svg>`;
 }
 function previewWatermark(markup,portrait){
@@ -228,7 +263,7 @@ export function premiumCertificatePages(type,record={}){
  let pages=[];
  if(type==='results'){
   const items=Array.isArray(record.subjects)?record.subjects:[];
-  const count=Math.max(1,Math.ceil(items.length/7));
+  const count=Math.max(1,Math.ceil(items.length/8));
   pages=Array.from({length:count},(_,i)=>resultPage(record,items,i,count));
  }else{
   if(!['exam','exam-achievement','exam-participation','winner','participation','event'].includes(type))throw Error('Unknown certificate type');

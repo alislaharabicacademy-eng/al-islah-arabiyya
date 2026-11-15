@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import{readFileSync}from'node:fs';
 const code=readFileSync(new URL('../premium-certificate-svg.js',import.meta.url),'utf8')
  .replace(/^import\s.+$/gm,'').replace(/^export /gm,'');
-const studio=new Function(code+'\nreturn {premiumCertificatePages,sampleCertificate,CERTIFICATE_TYPES,classifyCompetitionAward};')();
+const studio=new Function(code+'\nreturn {premiumCertificatePages,sampleCertificate,CERTIFICATE_TYPES,classifyCompetitionAward,chipLines};')();
 for(const [kind] of studio.CERTIFICATE_TYPES){
  test('Premium '+kind+' template is full-page SVG with original Academy logo and SAMPLE warning in preview',()=>{
   const pages=studio.premiumCertificatePages(kind,studio.sampleCertificate(kind));
@@ -48,9 +48,11 @@ test('Portrait result statement paginates large marksheets to avoid rows overlap
  const sample=studio.sampleCertificate('results');
  const subjects=Array.from({length:32},(_,i)=>({name:'Subject '+(i+1),score:40,max:50}));
  const pages=studio.premiumCertificatePages('results',{...sample,previewMode:false,subjects});
- assert.equal(pages.length,5);
- assert.ok(pages[4].includes('TOTAL'));
+ assert.equal(pages.length,4);
+ assert.ok(pages[3].includes('TOTAL'));
  assert.ok(!pages[0].includes('TOTAL'));
+ assert.ok(pages[3].includes('AUTHORIZED SIGNATORY'));
+ assert.ok(pages[3].includes('RESULT REFERENCE'));
 });
 test('Digital PDF export uses exact same SVG source as web preview instead of a separate plain document',()=>{
  const src=readFileSync(new URL('../premium-certificate-svg.js',import.meta.url),'utf8');
@@ -59,4 +61,41 @@ test('Digital PDF export uses exact same SVG source as web preview instead of a 
  const documents=readFileSync(new URL('../exam-documents.js',import.meta.url),'utf8');
  assert.match(documents,/return createPremiumVectorPdf\('results',record\)/);
  assert.match(documents,/createPremiumVectorPdf\(classifyCompetitionAward\(certificate\.award\),certificate\)/);
+});
+
+test('Certificate ornaments and signature stay above the print-safe lower edge',()=>{
+ const svg=studio.premiumCertificatePages('winner',{...studio.sampleCertificate('winner'),previewMode:false})[0];
+ assert.match(svg,/CERTIFICATE ID:/);
+ assert.match(svg,/y="696" font-size="/); // reference moved above cards, clear of trophy and bottom trim
+ assert.match(svg,/translate\(325\.22 812\)/); // trophy raised above printer trim
+ assert.doesNotMatch(svg,/y="970"/);
+ assert.doesNotMatch(svg,/y="967"/);
+});
+test('Long names and Arabic/Tamil scripts are kept in the certificate without silent truncation',()=>{
+ for(const name of ['Syed Abdul Rahman '.repeat(6).trim(),'முஹம்மது அப்துல் ரஹ்மான் '.repeat(5).trim(),'محمد عبد الرحمن '.repeat(6).trim()]){
+  const svg=studio.premiumCertificatePages('winner',{...studio.sampleCertificate('winner'),studentName:name,previewMode:false})[0];
+  assert.ok(svg.includes(name),'The complete original student name must remain in the vector text');
+  const size=Number(svg.match(/y="551" font-size="([\d.]+)"/)?.[1]);
+  assert.ok(size>=9&&size<79,'Long names need a safe font size: '+size);
+ }
+});
+test('Long competition fields wrap within the metadata card rather than being cut to 64 chars',()=>{
+ const event='International Quran Memorisation and Tajweed Competition Senior Students Annual Programme 2027';
+ const course='Advanced Arabic Language and Islamic Studies Higher Level Students Programme';
+ const svg=studio.premiumCertificatePages('winner',{...studio.sampleCertificate('winner'),eventName:event,course,previewMode:false})[0];
+ assert.ok(svg.includes(event),'Event heading must retain the full title');
+ assert.equal(studio.chipLines(event).join('').replace(/\s/g,''),event.replace(/\s/g,''));
+ assert.equal(studio.chipLines(course).join('').replace(/\s/g,''),course.replace(/\s/g,''));
+ const source=readFileSync(new URL('../premium-certificate-svg.js',import.meta.url),'utf8');
+ assert.doesNotMatch(source,/String\(value\|\|'—'\)\.slice\(0,64\)/);
+ assert.match(source,/lines\.map\(\(line,i\)=>T/);
+});
+
+test('Result statement displays eight numbered subjects on one page with an uncluttered separate footer',()=>{
+ const subjects=Array.from({length:8},(_,i)=>({name:'Long Subject '+(i+1),score:40,max:50}));
+ const svg=studio.premiumCertificatePages('results',{...studio.sampleCertificate('results'),subjects,previewMode:false})[0];
+ assert.match(svg,/RESULT REFERENCE/);
+ assert.match(svg,/AUTHORIZED SIGNATORY/);
+ assert.match(svg,/\>8\<\/text\>/);
+ assert.ok(svg.indexOf('RESULT REFERENCE:')>svg.indexOf('TOTAL'));
 });
