@@ -73,7 +73,7 @@ export function initTeacherReschedules({db, auth, teacherId, teacher, assignment
     const submit = el('button','🟠 Submit for Admin Approval');
     submit.type='button';
     submit.onclick = async () => {
-      const assignment = assignments[Number(picker.value)];
+      const assignment = picker.value === '' ? null : assignments[Number(picker.value)];
       try { await submitRequest(assignment,date.value,proposed.value,time.value,reason.value,submit); }
       catch(error) { message('Request failed: '+error.message,true); }
     };
@@ -122,12 +122,12 @@ export function initTeacherReschedules({db, auth, teacherId, teacher, assignment
       box.append(el('p','Ask Admin to refresh your teacher roster before makeup attendance.'));return;
     }
     const today = getToday();
-    const dayRef = doc(db,'teacherAttendance',teacherId,'days',today);
+    const dayRef = doc(db,'teacherAttendance',teacherId,'days',request.confirmedDate);
     const day = await getDoc(dayRef);
     const saved = findMakeupRecord(day.data()?.subjects,request,request.id);
     if(saved) {
       box.append(el('p','✅ Makeup class attendance saved. This class is completed.'));
-      const text = attendanceMessage(request,saved,today);
+      const text = attendanceMessage(request,saved,request.confirmedDate);
       const copy = el('button','📋 Copy Makeup Attendance');copy.type='button';copy.onclick=async()=>{try{await navigator.clipboard.writeText(text);message('✓ Makeup report copied.');}catch(e){window.prompt('Copy report:',text);}};
       const share = el('button','📤 Share to WhatsApp');share.type='button';share.onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');
       const preview = el('textarea');preview.readOnly=true;preview.value=text;preview.rows=11;
