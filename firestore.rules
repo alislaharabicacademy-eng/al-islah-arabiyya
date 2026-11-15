@@ -168,7 +168,10 @@ service cloud.firestore {
         && request.resource.data.email == request.auth.token.email
         && request.resource.data.markedAt == request.time
         && request.resource.data.subjects is map
-        && request.resource.data.subjects.size() == 1;
+        && request.resource.data.subjects.size() == 1
+        && validSubmittedClass(teacherId, day,
+          request.resource.data.subjects.keys()[0],
+          request.resource.data.subjects[request.resource.data.subjects.keys()[0]]);
 
       allow update: if isAdmin()
         || (
@@ -184,6 +187,9 @@ service cloud.firestore {
           && request.resource.data.subjects.size() == resource.data.subjects.size() + 1
           && request.resource.data.subjects.diff(resource.data.subjects).removedKeys().size() == 0
           && request.resource.data.subjects.diff(resource.data.subjects).changedKeys().size() == 0
+           && validSubmittedClass(teacherId, day,
+             request.resource.data.subjects.keys().removeAll(resource.data.subjects.keys())[0],
+             request.resource.data.subjects[request.resource.data.subjects.keys().removeAll(resource.data.subjects.keys())[0]])
         );
 
       allow delete: if isAdmin();
@@ -1146,8 +1152,8 @@ service cloud.firestore {
   }
 }
 ))
-        && (request.resource.data.proposedDate == '')
-          == (request.resource.data.proposedTime == '')
+        && ((request.resource.data.proposedDate == '')
+          == (request.resource.data.proposedTime == ''))
         && request.resource.data.reason is string
         && request.resource.data.reason.size() >= 5
         && request.resource.data.reason.size() <= 500
@@ -1659,6 +1665,36 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time
       );
       allow delete: if isAdmin();
+    }
+
+    // New subject attendance is normal OR an authenticated, approved makeup.
+    // Only the one added subject key may be submitted by a teacher in a write.
+    function validSubmittedClass(teacherId, day, key, record) {
+      return record is map && (
+        (
+          !key.matches('.*__makeup__.*')
+          && !record.keys().hasAny(['classType', 'rescheduleRequestId'])
+        ) || (
+          record.classType == 'makeup'
+          && record.rescheduleRequestId is string
+          && record.rescheduleRequestId.size() <= 100
+          && record.course is string
+          && record.batch is string
+          && record.subject is string
+          && record.originalDate is string
+          && key == record.course + '__'
+            + ((record.course == 'maktab' || record.course == 'childrens-quran-maktab')
+              ? record.batch + '__' : '')
+            + record.subject + '__makeup__' + record.rescheduleRequestId
+          && exists(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId))
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.status == 'approved'
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.confirmedDate == day
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.originalDate == record.originalDate
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.course == record.course
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.batch == record.batch
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.subject == record.subject
+        )
+      );
     }
 
     match /teacherAttendance/{teacherId}/days/{day} {
