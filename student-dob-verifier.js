@@ -1,6 +1,6 @@
-/* A DOB knowledge check for already Firebase-authenticated, admin-approved
- * student accounts. The five-digit ALIA ID is a public roll number, not a
- * password: ALWAYS enforce a verified-email Firebase session as well. */
+/* Normalization and legacy DOB-verifier helpers.
+ * Client-side validation does not authorize access. Student ID + DOB login
+ * must be verified by the rate-limited Cloud Function (never direct Firestore). */
 const OFFICIAL_RE=/^ALIA[0-9]{5}$/;
 const B64=/^[A-Za-z0-9_-]+$/;
 function base64Url(bytes){
