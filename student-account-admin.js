@@ -6,7 +6,26 @@ import{validFeeLedger}from'./fee-ledger-utils.js';
 export function initStudentAccountAdmin({db}){
  const $=id=>document.getElementById(id);
  const panel=$('studentAccountPanel'),status=$('studentAccountStatus');
- let selected=null,previous=null;
+ let selected=null,previous=null,changingEmail=false;
+ function showApprovalState(){
+  const badge=$('studentAccountApprovalBadge'),approved=previous?.enabled===true;
+  badge.textContent=approved?'✅ APPROVED — Student Login enabled for '+String(previous.email||''):
+   previous?'⛔ ACCESS DISABLED — Student cannot enter the Dashboard':'⏳ PENDING — No Student Login approved yet';
+  badge.style.background=approved?'#e0f6e7':previous?'#fff0ed':'#fff5df';
+  badge.style.color=approved?'#115333':previous?'#952e28':'#76561b';
+  $('studentAccountSave').hidden=approved&&!changingEmail;
+  $('studentAccountSave').textContent=changingEmail?'🔐 Save New Approved Email':previous?'🔓 Re-approve Student Login':'🔐 Approve Student Login';
+  $('studentAccountChangeEmail').hidden=!approved||changingEmail;
+  $('studentAccountDisable').hidden=!approved;
+  $('studentAccountEmail').readOnly=approved&&!changingEmail;
+  $('studentAccountEnabled').checked=approved||(!previous||previous.enabled===true);
+ }
+ $('studentAccountChangeEmail').onclick=()=>{
+  if(!previous?.enabled)return;
+  if(!confirm('Change this approved student login email? The old verified email will lose access after you save.'))return;
+  changingEmail=true;showApprovalState();$('studentAccountEmail').focus();
+ };
+
  async function feeSnapshot(student){
   let monthlyFee=0;
   try{
@@ -24,7 +43,8 @@ export function initStudentAccountAdmin({db}){
  }
  async function open(student){
   if(!student?.id)throw Error('Save the student first.');
-  selected={...student};previous=null;panel.hidden=false;
+  selected={...student};previous=null;changingEmail=false;panel.hidden=false;
+  showApprovalState();
   $('studentAccountTitle').textContent=(student.name||'Student')+' · '+(student.studentCode||'ALIA ID pending')+' · '+(student.course||'No class');
   $('studentAccountEmail').value='';$('studentAccountEnabled').checked=true;
   msg('Loading student access…');
@@ -35,6 +55,7 @@ export function initStudentAccountAdmin({db}){
    previous=snap.exists()?snap.data():null;
    $('studentAccountEmail').value=previous?.email||'';
    $('studentAccountEnabled').checked=previous?previous.enabled===true:true;
+   showApprovalState();
    msg(!student.studentCode||!student.dob?'First save this student with an ALIA ID and Date of Birth before enabling account login.':previous?(previous.enabled?'✓ Account enabled for '+previous.email+' · Student ID + DOB are required for login.':'Account disabled. Re-enable when ready.'):'No account linked yet. Approve a guardian email and students can enter ALIA Student ID + DOB first.');
   }catch(err){msg('Unable to read account: '+err.message)}
  }
@@ -43,7 +64,9 @@ export function initStudentAccountAdmin({db}){
   const button=$('studentAccountSave'),off=$('studentAccountDisable');
   button.disabled=true;off.disabled=true;
   try{
-   const email=emailValue(),enabled=!disable&&$('studentAccountEnabled').checked;
+   const email=disable?String(previous?.email||'').trim().toLowerCase():emailValue();
+   const enabled=!disable&&$('studentAccountEnabled').checked;
+   if(disable&&!previous?.enabled)throw Error('The account is already disabled or not yet approved.');
    if(previous?.email&&previous.email!==email&&!confirm('Change the linked email address? The old account will lose access.'))return;
    if(enabled&&!confirm('Enable account access to this student for '+email+'? Confirm this is the approved student or guardian email.'))return;
    if(!enabled&&!confirm('Disable student dashboard access for this student?'))return;
@@ -71,8 +94,9 @@ export function initStudentAccountAdmin({db}){
     createdAt:previous?.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()
    };
    await setDoc(doc(db,'studentAccess',selected.id),data);
-   previous=data;$('studentAccountEnabled').checked=enabled;
-   msg(enabled?'✓ Approved '+email+'. Students enter ALIA ID + Date of Birth first, then verify with this approved account (email/password or Google).':'✓ Student account disabled. This email can no longer enter the student dashboard.');
+   previous=data;changingEmail=false;showApprovalState();
+   msg(enabled?'✓ APPROVED! Student Login is now available to this verified email; the Approve button is hidden.':'⛔ DISABLED! This student/guardian account can no longer open the Student Dashboard. Records and fees remain saved.');
+   alert(enabled?'✅ STUDENT LOGIN APPROVED\n'+String(student.name||'Student')+' · '+email+'\nStudent ID + DOB and verified email are required.':'⛔ STUDENT LOGIN DISABLED\n'+String(student.name||'Student')+'\nAccount access is blocked; Student ID and academic/fee records are preserved.');
   }catch(err){msg('Account save failed: '+err.message)}
   finally{button.disabled=false;off.disabled=false}
  }
@@ -95,7 +119,7 @@ export function initStudentAccountAdmin({db}){
   else payload.enabled=false; // Never leave a stale DOB verifier enabled.
   await setDoc(ref,payload,{merge:true});
  }
- function close(){selected=null;previous=null;panel.hidden=true;$('studentAccountEmail').value='';msg('')}
+ function close(){selected=null;previous=null;changingEmail=false;panel.hidden=true;$('studentAccountEmail').value='';msg('')}
  $('studentAccountSave').addEventListener('click',()=>save(false));
  $('studentAccountDisable').addEventListener('click',()=>save(true));
  $('studentAccountClose').addEventListener('click',close);
