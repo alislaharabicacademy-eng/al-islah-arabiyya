@@ -329,7 +329,7 @@ header{z-index:30}header .nav{position:relative}header .links{gap:clamp(8px,1vw,
   .catch(()=>{el.textContent='—';el.parentElement.title='Visit counter temporarily unavailable'})
   .finally(()=>clearTimeout(timer));
 })();
-</script><script type="module" id="academy-live-course-catalog">
+</script><script src="./course-curriculum.js"></script><script type="module" id="academy-live-course-catalog">
 import{initializeApp,getApps}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import{getFirestore,collection,query,where,getDocs}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 const courseGrid=document.getElementById('homepageCourseGrid');
@@ -349,7 +349,7 @@ function displayCourses(courses){
   article.append(icon,title);
   if(d.tamil){const t=document.createElement('p');t.className='course-tamil';t.textContent=d.tamil;article.append(t)}
   if(d.duration){const duration=document.createElement('div');duration.className='duration';duration.textContent=d.duration;article.append(duration)}
-  const hint=document.createElement('p');hint.textContent=d.description||'Discover course details, eligibility and class timings.';article.append(hint);
+  const hint=document.createElement('p');hint.textContent=window.AcademyCurriculum.description(d.id,d.description)||'Discover course details, eligibility and class timings.';article.append(hint);
   const details=document.createElement('a');details.href='courses.html?course='+encodeURIComponent(d.id);details.textContent='More Details →';
   const apply=document.createElement('a');apply.href='admission.html?course='+encodeURIComponent(d.name);apply.textContent='Apply Now →';
   apply.style.marginLeft='12px';article.append(details,apply);courseGrid.append(article);
