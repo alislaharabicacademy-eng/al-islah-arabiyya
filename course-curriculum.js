@@ -14,14 +14,14 @@
     {year:1,title:'Muballiga · 1st Year',subjects:['Noorani Qaidha','Hadees','Prophet Story','Surah Hifz','Masnoon Duas','Durus Lugathul Arabiya','Meezan','1 Min Madrasa']},
     {year:2,title:'Muballiga · 2nd Year',subjects:['Noorani Qaidha','Hadees','Fikh Muyassar','Qasas','Surah Hifz','Ajnaas','Avaamil','Minhajul Arabiya Part 2','Tarjuma']}
    ]),
-   award:'Muballiga Sanad — after successful completion of the 2nd Year.'
+   award:'Students who successfully complete both the 1st and 2nd years of the Muballiga course will be awarded the Muballiga Sanad.'
   }),
   alima:Object.freeze({
    books:Object.freeze([]),
    years:Object.freeze([
     {year:3,title:'Aalima · 3rd Year',subjects:['Tarjuma','Tafseer','Janzani','Asharathul Mubashara','Qasas Nabiyeen','Zaad Thalibeen','Fikh Muyassar']}
    ]),
-   award:'Aalima Sanad — after successful completion of the 3rd Year.'
+   award:'Students who complete both years of the Muballiga course and then successfully complete the 3rd year of Aalima will be awarded the Aalima Sanad.'
   })
  });
  function normaliseYears(years){
@@ -41,5 +41,14 @@
   return [...(CATALOG[courseId]?.books||[])];
  }
  function award(courseId){return CATALOG[courseId]?.award||'';}
- root.AcademyCurriculum={years,books,award};
+ function description(courseId,savedDescription){
+  const existing=String(savedDescription??'').trim();
+  const required=award(courseId);
+  if(!required)return existing;
+  // Keep admin-written descriptions, while clearly stating the complete Sanad pathway.
+  // An older generic description in Firestore must never hide this information.
+  if(existing.includes(required))return existing;
+  return [existing,required].filter(Boolean).join(' ');
+ }
+ root.AcademyCurriculum={years,books,award,description};
 })(window);
