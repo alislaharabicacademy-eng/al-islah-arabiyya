@@ -25,6 +25,8 @@ jobs:
           curl -fsS http://127.0.0.1:8765/exam-batch-report.js >/dev/null
       - name: Download full register and top-three PDF in Chrome
         run: node tests/batch-result-browser.mjs
+      - name: Install PDF inspection tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
       - name: Validate PDF texts and page count
         run: |
           set -euo pipefail
