@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import{readFileSync}from'node:fs';
 const code=readFileSync(new URL('../premium-certificate-svg.js',import.meta.url),'utf8')
  .replace(/^import\s.+$/gm,'').replace(/^export /gm,'');
-const studio=new Function(code+'\nreturn {premiumCertificatePages,sampleCertificate,CERTIFICATE_TYPES,classifyCompetitionAward};')();
+const studio=new Function(code+'\nreturn {premiumCertificatePages,sampleCertificate,CERTIFICATE_TYPES,classifyCompetitionAward,chipLines};')();
 for(const [kind] of studio.CERTIFICATE_TYPES){
  test('Premium '+kind+' template is full-page SVG with original Academy logo and SAMPLE warning in preview',()=>{
   const pages=studio.premiumCertificatePages(kind,studio.sampleCertificate(kind));
@@ -73,7 +73,7 @@ test('Long names and Arabic/Tamil scripts are kept in the certificate without si
  for(const name of ['Syed Abdul Rahman '.repeat(6).trim(),'முஹம்மது அப்துல் ரஹ்மான் '.repeat(5).trim(),'محمد عبد الرحمن '.repeat(6).trim()]){
   const svg=studio.premiumCertificatePages('winner',{...studio.sampleCertificate('winner'),studentName:name,previewMode:false})[0];
   assert.ok(svg.includes(name),'The complete original student name must remain in the vector text');
-  const size=Number(svg.match(/y="551" font-size="([\\d.]+)"/)?.[1]);
+  const size=Number(svg.match(/y="551" font-size="([\d.]+)"/)?.[1]);
   assert.ok(size>=9&&size<79,'Long names need a safe font size: '+size);
  }
 });
@@ -82,7 +82,8 @@ test('Long competition fields wrap within the metadata card rather than being cu
  const course='Advanced Arabic Language and Islamic Studies Higher Level Students Programme';
  const svg=studio.premiumCertificatePages('winner',{...studio.sampleCertificate('winner'),eventName:event,course,previewMode:false})[0];
  assert.ok(svg.includes(event),'Event heading must retain the full title');
- assert.ok(!svg.includes('Programme</text>')||svg.includes('Programme')); // keep text transparent in the vector source
+ assert.equal(studio.chipLines(event).join('').replace(/\s/g,''),event.replace(/\s/g,''));
+ assert.equal(studio.chipLines(course).join('').replace(/\s/g,''),course.replace(/\s/g,''));
  const source=readFileSync(new URL('../premium-certificate-svg.js',import.meta.url),'utf8');
  assert.doesNotMatch(source,/String\(value\|\|'—'\)\.slice\(0,64\)/);
  assert.match(source,/lines\.map\(\(line,i\)=>T/);
