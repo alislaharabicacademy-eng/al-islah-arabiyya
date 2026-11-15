@@ -56,6 +56,8 @@ button:disabled{opacity:.55;cursor:wait}
 .exam-card h5{font:700 18px Georgia,serif;margin:0 0 8px;color:#114d34}
 .exam-card p{color:#5d7461;font-size:12px;margin:6px 0}
 .exam-card a{margin-top:12px}
+.email-account-choice{padding:14px;background:#f0f8f0;border:1px solid #c4dfcc;border-radius:12px;margin:15px 0}
+.email-account-choice p{font-size:13px;overflow-wrap:anywhere;margin:0 0 8px}
 #studentAuthCard{max-width:620px}
 #emailVerifyNotice{background:#fff8e9;border:1px solid #ecd8a5}
 footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font-size:12px}
@@ -67,24 +69,15 @@ footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font
 <nav><a href="index.html">⌂ Home</a><a href="exam-results.html">🏅 Public Exam Checker</a><a href="admission.html">Apply Now</a></nav></header>
 <main>
 <div class="intro"><h2>🎓 Student Account Login</h2>
-<p>Enter your official <strong>ALIA Student ID</strong> and <strong>Date of Birth</strong> to begin your secure student account login.</p></div>
-<section class="card" id="studentIdentityCard">
-<div class="student-id-illustration"><span aria-hidden="true">🎓</span><div><strong>ALIA00001</strong><small>OFFICIAL STUDENT ID · EXAMPLE</small></div></div>
-<h3>🔐 Login with Student ID &amp; DOB</h3>
-<form id="studentIdentityForm">
-<label>Official Student ID
-<input id="studentOfficialCode" type="text" required maxlength="9" minlength="9" pattern="ALIA[0-9]{5}" placeholder="ALIA00001" autocomplete="off" spellcheck="false" aria-describedby="studentIdentityHint"></label>
-<label>Date of Birth
-<input id="studentIdentityDOB" type="date" required autocomplete="bday"></label>
-<button id="studentIdentityContinue" type="submit">🔒 Continue to Secure Login →</button>
-</form>
-<p id="studentIdentityStatus" class="status" role="status" aria-live="polite"></p>
-<p class="identity-hint" id="studentIdentityHint">Enter your permanent ID issued by the Madrasa. The next step confirms your identity with your administrator-approved account, so someone who guesses your ID and birth date cannot open your private dashboard.</p>
-</section>
-<section class="card" id="studentAuthCard" hidden>
-<h3>✅ Verify Your Approved Account</h3>
-<p class="auth-help">Student ID and Date of Birth received. For your privacy, sign in with the student/guardian email approved by your Madrasa. This protects student data even if someone knows your birth date.</p>
-<button id="studentIdentityBack" type="button" class="secondary">← Change Student ID / DOB</button>
+<p>First choose your <strong>approved student or parent email account</strong>. Then enter the student’s <strong>ALIA ID and Date of Birth</strong>.</p></div>
+<section class="card" id="studentAuthCard">
+<h3>📧 Step 1 · Choose Email Account</h3>
+<p class="auth-help">Sign in using the email approved by the Madrasa for this student. To use a different Google account, tap <strong>Choose a Different Google Account</strong>.</p>
+<div class="email-account-choice" id="studentCurrentAccount" hidden>
+ <p>✅ Signed in as: <strong id="studentCurrentEmail"></strong></p>
+ <div class="actions"><button id="studentContinueEmail" type="button">Continue with This Email →</button>
+ <button id="studentChooseDifferentGoogle" type="button" class="secondary">↻ Choose a Different Google Account</button></div>
+</div>
 <div class="auth-switch" role="tablist" aria-label="Account access options">
 <button type="button" id="authTabSignIn" aria-selected="true" role="tab">🔐 Sign In</button>
 <button type="button" id="authTabCreate" aria-selected="false" role="tab">✨ Create Account</button>
@@ -96,7 +89,7 @@ footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font
 <label>Password<input id="studentLoginPassword" type="password" autocomplete="current-password" required minlength="6" placeholder="Enter your account password"></label>
 <button id="studentEmailSignIn" type="submit">🔐 Sign In to Student Account</button>
 </form>
-<div class="actions"><button id="studentGoogleSignIn" class="google" type="button">🌐 Continue with Google</button>
+<div class="actions"><button id="studentGoogleSignIn" class="google" type="button">🌐 Sign in / Choose Google Account</button>
 <button id="studentResetPassword" class="secondary" type="button">Forgot Password?</button></div>
 </div>
 <div id="authCreatePanel" hidden><h3>Register Your Student Account</h3>
@@ -111,6 +104,21 @@ footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font
 </div>
 <p class="status" id="studentAuthStatus" role="status" aria-live="polite"></p>
 </section>
+<section class="card" id="studentIdentityCard" hidden>
+<div class="student-id-illustration"><span aria-hidden="true">🎓</span><div><strong>ALIA00001</strong><small>OFFICIAL STUDENT ID · EXAMPLE</small></div></div>
+<h3>🔐 Step 2 · Student ID &amp; DOB</h3>
+<p class="auth-help" id="studentSelectedEmail">Email account selected.</p>
+<button id="studentIdentitySwitchEmail" type="button" class="secondary">↻ Change Email Account</button>
+<form id="studentIdentityForm">
+<label>Official Student ID
+<input id="studentOfficialCode" type="text" required maxlength="9" minlength="9" pattern="ALIA[0-9]{5}" placeholder="ALIA00001" autocomplete="off" spellcheck="false" aria-describedby="studentIdentityHint"></label>
+<label>Date of Birth
+<input id="studentIdentityDOB" type="date" required autocomplete="bday"></label>
+<button id="studentIdentityContinue" type="submit">🔓 Open My Student Dashboard →</button>
+</form>
+<p id="studentIdentityStatus" class="status" role="status" aria-live="polite"></p>
+<p class="identity-hint" id="studentIdentityHint">Enter the official ALIA ID and Date of Birth for the student linked to the selected email account. This is not a separate password.</p>
+</section>
 <section class="card" id="emailVerifyNotice" hidden>
 <h3>✉️ Verify Your Email</h3>
 <p>Verify your email address using the Firebase verification message. Until verified, you cannot access the student dashboard.</p>
@@ -121,12 +129,12 @@ footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font
 </section>
 <section class="card" id="studentPrivateDashboard" hidden>
 <div class="dashboard-header"><div><h3>🕌 My Madrasa Dashboard</h3>
-<small id="studentSignedEmail"></small></div><div class="actions"><button id="studentChangeId" class="secondary" type="button">🔑 Change Student ID</button><button id="studentDashboardSignOut" class="secondary" type="button">↩ Sign Out</button></div></div>
+<small id="studentSignedEmail"></small></div><div class="actions"><button id="studentChangeId" class="secondary" type="button">🔑 Change Student ID</button><button id="studentDashboardChangeEmail" class="secondary" type="button">📧 Change Email</button><button id="studentDashboardSignOut" class="secondary" type="button">↩ Sign Out</button></div></div>
 <p class="status" id="studentDashboardStatus" role="status" aria-live="polite"></p>
 <div id="studentAccountCards"></div>
 <button id="studentRefreshDashboard" class="secondary" type="button">↻ Refresh My Results</button>
 </section>
-<p class="note"><strong>Account Security:</strong> Your official ALIA Student ID and Date of Birth are the first login step. A verified, Madrasa-approved email or Google account is also required for private dashboard access. The five-digit Student ID and DOB alone are not secure passwords. To view a public published result without an account, use the <a href="exam-results.html"><strong>Exam Checker</strong></a> with its separate private Exam Access ID or result reference code.</p>
+<p class="note"><strong>Account Security:</strong> Your official ALIA Student ID and Date of Birth are the first login step. First select an approved verified email or Google account. Then enter Student ID and DOB to open the private dashboard. The five-digit Student ID and DOB alone are not secure passwords. To view a public published result without an account, use the <a href="exam-results.html"><strong>Exam Checker</strong></a> with its separate private Exam Access ID or result reference code.</p>
 </main><footer>© Madrasa Al Islahul Arabiya · Faith · Learning · Excellence</footer>
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
