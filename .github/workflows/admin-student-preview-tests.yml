@@ -1,0 +1,49 @@
+name: Audited Admin Student Preview Security
+
+on:
+  pull_request:
+    paths:
+      - 'firestore.rules'
+      - 'student-login.html'
+      - 'admin-student-preview.js'
+      - 'tests/admin-student-preview-rules.test.mjs'
+      - '.github/workflows/admin-student-preview-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  firestore-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify frontend module syntax and student login protections
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('student-login.html').read_text()
+          assert 'studentOfficialCode' in html and 'studentIdentityDOB' in html
+          assert 'initAdminStudentPreview' in html
+          assert 'adminStudentPreview' in html
+          assert 'syedatheil40@gmail.com' not in html
+          assert 'syedatheil40@gmail.com' not in Path('admin-student-preview.js').read_text()
+          matches=re.findall(r'<script type="module">([\s\S]*?)</script>',html)
+          assert matches
+          Path('/tmp/student-login-preview.mjs').write_text('\n'.join(matches))
+          PY
+          node --check /tmp/student-login-preview.mjs
+          node --check --input-type=module < admin-student-preview.js
+          node --check tests/admin-student-preview-rules.test.mjs
+      - name: Install Firestore security test dependencies
+        run: npm install --no-save firebase@13 @firebase/rules-unit-testing@6
+      - name: Verify administrator previews, immutable audit, and guardian isolation
+        run: npx --yes firebase-tools@latest emulators:exec --only firestore --project demo-admin-student-preview 'node --test tests/admin-student-preview-rules.test.mjs'
