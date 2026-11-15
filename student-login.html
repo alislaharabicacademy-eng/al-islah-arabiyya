@@ -264,7 +264,7 @@ async function loadPrivateDashboard(user,token){
   const snap=await getDocs(query(collection(db,'studentAccess'),where('email','==',email),where('enabled','==',true),limit(30)));
   if(token!==loadingToken)return;
   if(snap.empty){
-   dashMessage('This account has not been approved for the entered Student ID. Ask the Madrasa admin to approve your email in Student Details → Student Account Login.',true);
+   dashMessage('🚫 No active Student Login access for this ID and verified email. The account may not yet be approved, or the Academy may have disabled access after course completion. Contact the Academy Admin.',true);
    return;
   }
   let visible=0;
