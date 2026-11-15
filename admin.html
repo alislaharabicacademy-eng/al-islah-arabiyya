@@ -252,6 +252,22 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 .home-feature-fields input,.home-feature-fields select{width:100%;max-width:100%;padding:10px;border:1px solid #ccd9ca;border-radius:9px}
 #examHomeWinnerUploadStatus{font-size:12px;color:#5b6a5d}
 @media(max-width:900px){.homepage-rank-grid,.home-feature-fields{grid-template-columns:1fr}}
+</style><style id="hiring-admin-styles">
+#hiringSettings{scroll-margin-top:22px;margin-top:24px;border:1px solid #cdb77c;background:linear-gradient(150deg,#fffdf7,#f2f9f4)}
+#hiringSettings h3{font:700 25px Georgia,serif}
+#hiringSettings .hiring-explainer{font-size:13px;line-height:1.8;color:#476152;margin:9px 0 14px}
+.hiring-editor-card{background:#fff;border:1px solid #d6e2d8;border-radius:14px;padding:17px;margin:15px 0;box-shadow:0 8px 22px #0d332008}
+.hiring-editor-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid #e3e9df;padding-bottom:8px}
+.hiring-editor-top h4{margin:0;font-size:19px;color:#145036}
+.hiring-remove{background:#fff0ec!important;color:#973a31!important;margin:0!important}
+.hiring-fields{margin-top:11px}.hiring-fields label{margin-top:4px}
+.hiring-fields textarea[data-hiring-field="criteria"]{min-height:145px}
+.hiring-board-actions{display:flex;gap:8px;flex-wrap:wrap;padding:16px 0}
+.hiring-board-actions button{margin:0}
+#hiringUnpublish{background:#a53d32}
+#hiringBoardStatus{background:#eaf5ea;border:1px solid #c6dfcc;border-radius:11px;padding:13px;color:#175037;line-height:1.65}
+#hiringBoardStatus.error{background:#fff0ec;border-color:#e3b4a9;color:#9a2e23}
+@media(max-width:650px){.hiring-board-actions button{flex:1 1 100%}.hiring-editor-top{align-items:flex-start}}
 </style><style id="course-eligibility-admin-preview">
 .admin-eligibility-preview{list-style:none;counter-reset:eligible;margin:7px 0 16px;padding:0;display:grid;gap:9px}
 .admin-eligibility-preview>li{counter-increment:eligible;position:relative;padding:11px 12px 11px 52px;min-width:0;
@@ -267,7 +283,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <section class="academy-menu-group" data-menu-group="academics"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuAcademics"><span>📚 Academics</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuAcademics" hidden><button type="button" data-tab="academic">Academic Year</button><button type="button" data-tab="courses">Course Details</button><button type="button" data-tab="newcourse">Add New Course</button><button type="button" data-tab="exams">🎓 Exam Results & Certificates</button><button type="button" id="openHomepageWinnersPanel">🏆 Homepage First / Second / Third</button><a href="certificate-studio.html" target="_blank" rel="noopener">✦ Premium Certificate Design Studio (Vector PDF)</a><a href="exam-results.html" target="_blank" rel="noopener">↗ View Published Results</a></div></section>
 <section class="academy-menu-group" data-menu-group="admissions"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuAdmissions"><span>📝 Admissions</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuAdmissions" hidden><button type="button" data-tab="applications">New Applications</button><button type="button" data-tab="admissionSettings">Admission Form Settings</button><a href="admission.html">↗ Open Admission Form</a></div></section>
 <section class="academy-menu-group" data-menu-group="people"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuPeople"><span>👩‍🏫 Teachers &amp; Students</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuPeople" hidden><button type="button" data-tab="teachers">Teacher Details</button><button type="button" data-tab="students">Student Details</button></div></section>
-<section class="academy-menu-group" data-menu-group="management"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuManagement"><span>⚙️ Management</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuManagement" hidden><button type="button" data-tab="fees">Fee Structure</button><button type="button" data-tab="settings">🎨 Website Settings &amp; Principal</button><a href="index.html">↗ Website Home</a></div></section>
+<section class="academy-menu-group" data-menu-group="management"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuManagement"><span>⚙️ Management</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuManagement" hidden><button type="button" data-tab="fees">Fee Structure</button><button type="button" data-tab="settings">🎨 Website Settings &amp; Principal</button><button type="button" id="openHiringSettings">📣 Hiring &amp; Vacancies</button><a href="index.html">↗ Website Home</a></div></section>
 </div></aside><header><div class="top"><div><img src="1_20261112_080707_0000.png" alt="Academy logo" style="width:74px;height:74px;object-fit:contain;float:right;margin-left:12px"><div class="brand">Madrasa Al Islahul Arabiya</div><h1 class="brand-title">Academy Control Center</h1><p class="subtitle">Secure course management dashboard</p></div><nav><a href="index.html">⌂ Home</a><a id="previewTop" href="courses.html?course=muallama" target="_blank" rel="noopener">↗ Course Preview</a></nav></div></header>
 <main><div class="hero"><div><h2>Course Management</h2><p>Update course information and control what students can see.</p></div><span class="badge">● ADMIN DASHBOARD</span></div>
 <div id="setup" class="card notice">Loading secure admin login…</div>
@@ -284,7 +300,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <p>Customise the live website without changing its code. Save &amp; Publish updates the homepage, Academy contact information and principal details. Uploaded principal signature is reused on newly generated official PDF certificates and principal-signature spaces.</p>
 <a href="index.html" target="_blank" rel="noopener" style="color:#ffdb8c;font-weight:750">↗ Preview live homepage</a></div>
 <p class="section-note">Course names, academic year, fees and admissions are managed by their existing dedicated editors. This page controls the website appearance, information and authorised principal identity.</p>
-<div class="site-settings-quicklinks"><button type="button" class="secondary" data-tab="academic">📅 Edit Academic Year</button><button type="button" class="secondary" data-tab="courses">📚 Edit Courses</button><button type="button" class="secondary" data-tab="admissionSettings">📝 Edit Admission Form</button><button type="button" class="secondary" data-tab="fees">💳 Edit Fee Structure</button><a href="index.html#courses" target="_blank" rel="noopener">↗ View Homepage</a></div>
+<div class="site-settings-quicklinks"><a href="#hiringSettings">📣 Hiring &amp; Careers</a><button type="button" class="secondary" data-tab="academic">📅 Edit Academic Year</button><button type="button" class="secondary" data-tab="courses">📚 Edit Courses</button><button type="button" class="secondary" data-tab="admissionSettings">📝 Edit Admission Form</button><button type="button" class="secondary" data-tab="fees">💳 Edit Fee Structure</button><a href="index.html#courses" target="_blank" rel="noopener">↗ View Homepage</a></div>
 <form id="siteSettingsForm">
 <section class="site-settings-group"><h3>🏛️ Academy Branding &amp; Theme</h3>
 <div class="site-settings-fields">
@@ -328,7 +344,21 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 </section>
 <div class="site-settings-actions"><button type="submit" id="siteSettingsSave">💾 Save &amp; Publish Website Settings</button><button type="button" id="siteSettingsReload" class="secondary">↻ Reload Saved Settings</button><button type="button" id="siteSettingsRestoreText" class="secondary">Reset Text to Defaults</button></div>
 <p id="siteSettingsStatus" role="status" aria-live="polite">Sign in as admin to load saved website settings.</p>
-</form></div></div><div id="tab-overview" class="tabpage"><h2>Dashboard Overview</h2><p class="muted">Welcome to the academy management center. Open the ☰ menu to manage records.</p><div class="admin-overview"><div class="overview-card">📚<strong>Courses</strong>Manage programmes</div><div class="overview-card">👩‍🏫<strong>Teachers</strong>Staff directory</div><div class="overview-card">🎓<strong>Students</strong>Enrolments</div><div class="overview-card">📩<strong>Admissions</strong>Review applications</div></div></div><div class="tabs"><button class="active" data-tab="courses">📚 Courses</button><button data-tab="teachers">👩‍🏫 Teachers</button><button data-tab="students">🎓 Students</button><button data-tab="exams">🏅 Exam Results</button><button data-tab="applications">📩 New Applications</button></div><div id="tab-courses" class="tabpage hidden">
+</form>
+<section class="site-settings-group" id="hiringSettings" aria-labelledby="hiringSectionTitle">
+<h3 id="hiringSectionTitle">📣 Hiring &amp; Careers — Homepage Vacancies</h3>
+<p class="hiring-explainer">Manage teacher and staff recruitment entirely from Admin Settings. Save private drafts without changing the website. Only clicking <strong>Publish to Homepage</strong> makes the jobs public. <strong>Unpublish Immediately</strong> removes all public vacancies while preserving your last saved draft. Add eligibility criteria <strong>one point per line</strong>.</p>
+<div class="site-settings-fields">
+<label>Public Hiring Section Heading<input id="hiringHeading" maxlength="100" value="Join Our Teaching Team" placeholder="We're Hiring!"></label>
+<label>Public Short Introduction<input id="hiringSubtitle" maxlength="260" value="Explore current opportunities at our Academy."></label>
+</div>
+<div id="hiringPositions" aria-live="polite"></div>
+<button id="hiringAddPosition" class="secondary" type="button">＋ Add Another Job Position (maximum 8)</button>
+<div class="hiring-board-actions"><button id="hiringSaveDraft" class="secondary" type="button">💾 Save Private Draft</button><button id="hiringPublish" type="button">📣 Publish to Homepage</button><button id="hiringUnpublish" type="button">🙈 Unpublish Immediately</button></div>
+<p id="hiringBoardStatus" role="status" aria-live="polite">Sign in as Academy admin to manage recruitment.</p>
+<a href="index.html#careers" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;color:#175b41;font-weight:800">↗ Preview Homepage Hiring Section</a>
+</section>
+</div></div><div id="tab-overview" class="tabpage"><h2>Dashboard Overview</h2><p class="muted">Welcome to the academy management center. Open the ☰ menu to manage records.</p><div class="admin-overview"><div class="overview-card">📚<strong>Courses</strong>Manage programmes</div><div class="overview-card">👩‍🏫<strong>Teachers</strong>Staff directory</div><div class="overview-card">🎓<strong>Students</strong>Enrolments</div><div class="overview-card">📩<strong>Admissions</strong>Review applications</div></div></div><div class="tabs"><button class="active" data-tab="courses">📚 Courses</button><button data-tab="teachers">👩‍🏫 Teachers</button><button data-tab="students">🎓 Students</button><button data-tab="exams">🏅 Exam Results</button><button data-tab="applications">📩 New Applications</button></div><div id="tab-courses" class="tabpage hidden">
   <div class="section">
     <h2>📚 Course Management</h2>
     <p class="section-note">Choose a course and click Edit Details. The editing form opens on the next screen.</p>
@@ -653,6 +683,7 @@ import{initStudentProfileRequests}from'./student-profile-requests.js';
 import{maybePromoteStudent}from'./student-promotion.js';
 import{initCompetitionCertificateAdmin}from'./competition-certificates.js';
 import{initSiteSettingsAdmin}from'./site-settings-admin.js';
+import{initHiringBoardAdmin}from'./hiring-board-admin.js';
 import{stampPrincipalOnPdf}from'./site-settings.js';
 import{compressProfilePhoto,photoAvatar,isProfilePhoto}from'./profile-photo.js';
 import{ensureOfficialStudentId,validOfficialStudentId}from'./student-numbering.js';
@@ -668,6 +699,7 @@ const app=initializeApp(config),auth=getAuth(app),db=getFirestore(app);
  const studentProfileRequests=initStudentProfileRequests({db,auth,onLoadIntoEditor:openStudentEdit});
  const competitionAdmin=initCompetitionCertificateAdmin({db});
  const siteSettingsAdmin=initSiteSettingsAdmin({db,auth});
+ const hiringBoardAdmin=initHiringBoardAdmin({db,auth});
 $('setup').classList.add('hidden');$('login').classList.remove('hidden');
 $('signIn').onclick=async()=>{try{await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){$('setup').classList.remove('hidden');$('setup').textContent='Login failed: '+e.message}};
 $('passwordLoginForm').onsubmit=async e=>{e.preventDefault();const address=$('adminEmail').value.trim().toLowerCase();if(address!==email){$('passwordLoginStatus').textContent='Only the authorized admin email can sign in.';return}const button=$('passwordSignIn');button.disabled=true;$('passwordLoginStatus').textContent='Signing in securely…';try{await signInWithEmailAndPassword(auth,address,$('adminPassword').value);$('adminPassword').value='';$('passwordLoginStatus').textContent='✓ Password accepted. Checking admin access…';if(!auth.currentUser.emailVerified)$('passwordLoginStatus').textContent='Password accepted. Please verify your email using the button above before entering the dashboard.'}catch(err){$('passwordLoginStatus').textContent='Login failed ('+err.code+'). Please check your email and password.'}finally{button.disabled=false}};
@@ -904,8 +936,9 @@ async function setCourseAdmissionVisibility(name,visible){
  $('admissionCourseList').value=next.join('\n');renderAdmissionCourseRows();renderCourseList();
  $('admissionSettingsStatus').textContent=visible?'✓ Course added to published admissions.':'✓ Course hidden from published admissions. Existing student and course records were not deleted.';
 }
+$('openHiringSettings').onclick=()=>{if(!active)return;switchTab('settings');setTimeout(()=>$('hiringSettings').scrollIntoView({behavior:'smooth',block:'start'}),180)};
 $('openHomepageWinnersPanel').onclick=()=>{switchTab('exams');setTimeout(()=>$('homepageWinnersPanel').scrollIntoView({behavior:'smooth',block:'start'}),200)};
-function switchTab(tab){if(tab==='settings'&&active)siteSettingsAdmin.load();if(tab==='exams'&&active){examAdmin.load().catch(e=>{$('examEditorStatus').textContent='Could not load exam system: '+e.message});examAdmin.winners.load().catch(e=>{$('homepageWinnersStatus').textContent='Could not load homepage winners: '+e.message});competitionAdmin.load().catch(e=>{$('competitionStatus').textContent='Could not load competitions: '+e.message})}if(tab!=='teachers'){if($('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();if($('teacherCatalogPanel'))closeTeacherCatalog();}tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
+function switchTab(tab){if(tab==='settings'&&active){siteSettingsAdmin.load();hiringBoardAdmin.load();}if(tab==='exams'&&active){examAdmin.load().catch(e=>{$('examEditorStatus').textContent='Could not load exam system: '+e.message});examAdmin.winners.load().catch(e=>{$('homepageWinnersStatus').textContent='Could not load homepage winners: '+e.message});competitionAdmin.load().catch(e=>{$('competitionStatus').textContent='Could not load competitions: '+e.message})}if(tab!=='teachers'){if($('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();if($('teacherCatalogPanel'))closeTeacherCatalog();}tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
 $('openNewCourse').onclick=()=>{
  $('newCourseName').value='';$('newCourseId').value='';$('newCourseStatus').textContent='';
  switchTab('newcourse');
