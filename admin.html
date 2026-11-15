@@ -27,6 +27,12 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 #studentOfficialId{color:#145d3c;font-weight:900;letter-spacing:.095em;background:#eaf5ed;cursor:default}
 #studentIdBatchStatus{line-height:1.7;white-space:normal}
 #generateMissingStudentIds{min-height:43px}
+</style><style id="student-editor-visibility-style">
+#studentEditorPanel[hidden],#studentUpdateLinkPanel[hidden]{display:none!important}
+#studentEditorPanel .fields textarea{width:100%;min-height:72px;border:1px solid #c4d6ca;border-radius:9px;padding:11px;font:inherit}
+#studentUpdateRequestsPanel .record details{background:#f7faf7;padding:10px;border-radius:9px;margin:12px 0}
+#studentUpdateRequestsPanel summary{cursor:pointer;font-weight:700}
+#studentAccountSave[hidden],#studentAccountDisable[hidden],#studentAccountChangeEmail[hidden]{display:none!important}
 </style><style id="student-account-administration-style">
 .student-account-panel[hidden]{display:none!important}
 .student-account-panel{padding:23px!important;border-radius:17px;border:1px solid #b7d8c1!important;background:linear-gradient(130deg,#eff8f0,#fcfffc)!important;margin:20px 0!important;box-shadow:0 9px 29px #0e513312}
@@ -1124,8 +1130,20 @@ $('generateMissingStudentIds').onclick=async()=>{
  finally{button.disabled=false}
 };
 async function renderRecords(kind){const singular=kind.slice(0,-1),list=$(singular+'List');list.textContent='Loading…';try{const snap=await getDocs(query(collection(db,kind),limit(150)));list.replaceChildren();const rows=kind==='students'&&$('studentFilter').value!=='all'?snap.docs.filter(d=>courseKey(d.data().course)===$('studentFilter').value):snap.docs;
+const accessByStudent=new Map();
+if(kind==='students'){
+ try{const access=await getDocs(collection(db,'studentAccess'));for(const record of access.docs)accessByStudent.set(record.id,record.data())}
+ catch(err){console.warn('Student Account badges unavailable:',err.code||err.message)}
+}
 if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students';const counts={};for(const d of snap.docs){const s=d.data(),key=(s.course||'Unassigned')+(isMaktabCourse(s.course)?' · '+(s.batch||'Unassigned Batch'):'');counts[key]=(counts[key]||0)+1}$('studentBatchSummary').textContent='Batch-wise student totals: '+(Object.entries(counts).map(([key,n])=>key+': '+n).join(' | ')||'No students yet')}
-if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'ALIA ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');if(kind==='students')el.prepend(photoAvatar(data.photoData,'Photo of '+String(data.name||'student')));const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{if(kind==='students')openStudentEdit(d.id,data);else{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';$(singular+'Form').scrollIntoView({behavior:'smooth'})}};buttons[1].onclick=async()=>{
+if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'ALIA ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');if(kind==='students'){
+ el.prepend(photoAvatar(data.photoData,'Photo of '+String(data.name||'student')));
+ const grant=accessByStudent.get(d.id);
+ const accessBadge=document.createElement('p');accessBadge.className='section-note';
+ accessBadge.style.cssText='font-weight:800;color:'+(grant?.enabled?'#0b6542':grant?'#ad3c31':'#8b6f35');
+ accessBadge.textContent=grant?.enabled?'✅ Login APPROVED · '+(grant.email||'Verified email'):grant?'⛔ Student Login DISABLED':'⏳ Student Login not approved';
+ el.append(accessBadge);
+ }const buttons=el.querySelectorAll('button');buttons[0].onclick=()=>{if(kind==='students')openStudentEdit(d.id,data);else{$(singular+'Id').value=d.id;for(const field of schemas[kind])$(singular+field).value=data[field.toLowerCase()]||'';$(singular+'Form').scrollIntoView({behavior:'smooth'})}};buttons[1].onclick=async()=>{
  if(!confirm('Delete this '+singular+' record?'))return;
  try{
   if(kind==='students'){
