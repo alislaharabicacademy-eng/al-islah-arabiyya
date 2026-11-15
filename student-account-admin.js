@@ -89,7 +89,7 @@ export function initStudentAccountAdmin({db}){
    const fees=await feeSnapshot(student);
    const data={
     studentId:selected.id,email,enabled,studentCode:String(student.studentCode||''),...dobVerifier,...fees,
-    studentName:String(student.name||'Student'),photoData:isProfilePhoto(student.photoData)?student.photoData:'',course:String(student.course||''),courseYear:courseYearOf(student),
+    studentName:String(student.name||'Student'),photoData:isProfilePhoto(student.photoData)?student.photoData:'',course:String(student.course||''),courseYear:student.course==='muballigha'&&![1,2].includes(Number(student.courseYear))?0:courseYearOf(student),
     batch:String(student.batch||''),state:String(student.state||'Active'),resultIds,
     promotionHistory:Array.isArray(student.promotionHistory)?student.promotionHistory:[],
     competitionCertificates:Array.isArray(student.competitionCertificates)?student.competitionCertificates:[],
@@ -111,7 +111,7 @@ export function initStudentAccountAdmin({db}){
   const latest=await getDoc(doc(db,'students',studentId));
   const fees=await feeSnapshot(latest.exists()?latest.data():data);
   const payload={...fees,
-   studentName:String(data.name||'Student'),studentCode,photoData:isProfilePhoto(data.photoData)?data.photoData:'',course:String(data.course||''),courseYear:courseYearOf(data),
+   studentName:String(data.name||'Student'),studentCode,photoData:isProfilePhoto(data.photoData)?data.photoData:'',course:String(data.course||''),courseYear:data.course==='muballigha'&&![1,2].includes(Number(data.courseYear))?0:courseYearOf(data),
    batch:String(data.batch||''),state:String(data.state||'Active'),
    promotionHistory:Array.isArray(data.promotionHistory)?data.promotionHistory:[],
    competitionCertificates:Array.isArray(data.competitionCertificates)?data.competitionCertificates:[],
