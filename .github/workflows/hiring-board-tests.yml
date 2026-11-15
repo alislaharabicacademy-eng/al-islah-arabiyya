@@ -1,0 +1,28 @@
+name: Hiring Board Unit Tests
+
+on:
+  pull_request:
+    paths:
+      - 'hiring-board-*.js'
+      - 'tests/hiring-board.test.mjs'
+      - '.github/workflows/hiring-board-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'hiring-board-*.js'
+      - 'tests/hiring-board.test.mjs'
+      - '.github/workflows/hiring-board-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/hiring-board.test.mjs
