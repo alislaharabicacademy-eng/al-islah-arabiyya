@@ -19,7 +19,7 @@ try{
   try{
    await page.goto(root+'/certificate-studio.html?type='+type,{waitUntil:'domcontentloaded'});
    await page.waitForSelector('#vectorDownload:not([disabled])',{timeout:15000});
-   const download=page.waitForEvent('download',{timeout:60000});
+   const download=page.waitForEvent('download',{timeout:18000});
    await page.locator('#vectorDownload').click();
    const item=await download;
    const path=resolve(output,type+'.pdf');
