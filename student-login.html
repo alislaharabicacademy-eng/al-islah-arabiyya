@@ -198,15 +198,38 @@ function renderPrivateFeeLedger(access,card){
 const identityCard=$('studentIdentityCard'),identityStatus=$('studentIdentityStatus');
 const authCard=$('studentAuthCard'),verification=$('emailVerifyNotice'),dashboard=$('studentPrivateDashboard');
 const authStatus=$('studentAuthStatus'),verifyStatus=$('studentVerifyStatus'),dashboardStatus=$('studentDashboardStatus');
-let auth=null,db=null,loadingToken=0,activeUser=null,identityGate=null;
+let auth=null,db=null,loadingToken=0,activeUser=null,identityGate=null,accountChosen=false;
 function identityMessage(value,error=false){identityStatus.className='status'+(error?' error':'');identityStatus.textContent=value}
-function showIdentityStep(){
- ++loadingToken;identityGate=null;
+function showEmailStep(){
+ ++loadingToken;identityGate=null;accountChosen=false;
  $('studentIdentityDOB').value='';
+ identityCard.hidden=true;authCard.hidden=false;verification.hidden=true;dashboard.hidden=true;
+ $('studentAccountCards').replaceChildren();
+ const user=auth?.currentUser;
+ $('studentCurrentAccount').hidden=!user?.emailVerified;
+ $('studentCurrentEmail').textContent=user?.email||'';
+ authMessage(user?.emailVerified?'Continue with this email, or choose a different Google account.':
+  'Select the email approved by the Madrasa for your student.');
+ authCard.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function showIdentityStep(){
+ const user=auth?.currentUser;
+ if(!user){showEmailStep();return}
+ if(!user.emailVerified){openAuthenticatedState(user);return}
+ ++loadingToken;identityGate=null;accountChosen=true;
+ $('studentIdentityDOB').value='';
+ $('studentSelectedEmail').textContent='✅ Selected email: '+(user.email||'verified account');
  identityCard.hidden=false;authCard.hidden=true;verification.hidden=true;dashboard.hidden=true;
  $('studentAccountCards').replaceChildren();
- identityMessage('Enter your official ALIA Student ID and DOB to continue.');
+ identityMessage('Enter the official ALIA ID and DOB linked to the selected email.');
  identityCard.scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function chooseAnotherGoogleAccount(){
+ ++loadingToken;identityGate=null;accountChosen=false;
+ try{
+  if(auth?.currentUser)await signOut(auth);
+  await googleSignIn();
+ }catch(err){showEmailStep();authMessage('Unable to switch Google account: '+authError(err),true)}
 }
 $('studentOfficialCode').addEventListener('input',event=>{
  const field=event.target,caret=field.selectionStart;
@@ -219,18 +242,20 @@ $('studentIdentityForm').addEventListener('submit',async event=>{
  try{
   const studentCode=normalizeStudentCode($('studentOfficialCode').value);
   const dob=validateStudentDOB($('studentIdentityDOB').value);
+  if(!auth?.currentUser){showEmailStep();authMessage('Select an email account first.',true);return}
   identityGate={studentCode,dob};
-  identityMessage('✓ Details entered. Confirming your academy-approved account…');
+  identityMessage('Checking Student ID and DOB for the selected email…');
   identityCard.hidden=true;$('studentIdentityDOB').value='';
-  if(auth?.currentUser){
-   if(!auth.currentUser.emailVerified)openAuthenticatedState(auth.currentUser);
-   else await loadPrivateDashboard(auth.currentUser,++loadingToken);
-  }else{authCard.hidden=false;verification.hidden=true;dashboard.hidden=true;}
+  if(!auth.currentUser.emailVerified)openAuthenticatedState(auth.currentUser);
+  else await loadPrivateDashboard(auth.currentUser,++loadingToken);
  }catch(err){identityMessage(err.message,true)}
  finally{button.disabled=false}
 });
-$('studentIdentityBack').addEventListener('click',showIdentityStep);
 $('studentChangeId').addEventListener('click',showIdentityStep);
+$('studentIdentitySwitchEmail').addEventListener('click',showEmailStep);
+$('studentDashboardChangeEmail').addEventListener('click',showEmailStep);
+$('studentContinueEmail').addEventListener('click',showIdentityStep);
+$('studentChooseDifferentGoogle').addEventListener('click',chooseAnotherGoogleAccount);
 function authMessage(value,error=false){authStatus.className='status'+(error?' error':'');authStatus.textContent=value}
 function verifyMessage(value,error=false){verifyStatus.className='status'+(error?' error':'');verifyStatus.textContent=value}
 function dashMessage(value,error=false){dashboardStatus.className='status'+(error?' error':'');dashboardStatus.textContent=value}
@@ -243,7 +268,7 @@ function showAuthTab(mode){
 $('authTabSignIn').onclick=()=>showAuthTab('signin');
 $('authTabCreate').onclick=()=>showAuthTab('create');
 function openAuthenticatedState(user){
- identityCard.hidden=!!identityGate;
+ identityCard.hidden=true;
  authCard.hidden=true;verification.hidden=!user||user.emailVerified;
  dashboard.hidden=true;
  if(user&&!user.emailVerified)verifyMessage('Please verify '+(user.email||'your email')+' before opening your Madrasa dashboard.');
@@ -272,7 +297,7 @@ async function loadPrivateDashboard(user,token){
   const snap=await getDocs(query(collection(db,'studentAccess'),where('email','==',email),where('enabled','==',true),limit(30)));
   if(token!==loadingToken)return;
   if(snap.empty){
-   dashMessage('🚫 No active Student Login access for this ID and verified email. The account may not yet be approved, or the Academy may have disabled access after course completion. Contact the Academy Admin.',true);
+   dashMessage('🚫 This Student ID is not approved for '+email+'. Tap Change Email to choose its approved account, or ask the Madrasa Admin to approve the selected email in Student Details → Student Account Login.',true);
    return;
   }
   let visible=0;
@@ -345,7 +370,7 @@ async function loadPrivateDashboard(user,token){
    identityGate={studentCode:entered.studentCode,dob:entered.dob};
    dashMessage('✓ ALIA Student ID, DOB and approved email verified. Published results loaded.');
   }else if(token===loadingToken){
-   dashMessage('The ALIA Student ID, Date of Birth and approved email do not match. Check the details with the Madrasa. Use Change Student ID to try again.',true);
+   dashMessage('Student ID, DOB or the selected approved email does not match. Tap Change Student ID or Change Email to try again.',true);
   }
  }catch(err){if(token===loadingToken)dashMessage('Unable to load student dashboard: '+(err.code==='permission-denied'?'Permission denied. Please confirm email verification and administrator approval.':err.message),true)}
 }
@@ -354,16 +379,20 @@ async function refreshAuthState(){
  verifyMessage('Checking email verification…');
  try{
   await user.reload();await user.getIdToken(true);
-  if(user.emailVerified){openAuthenticatedState(user);if(identityGate)await loadPrivateDashboard(user,++loadingToken);else showIdentityStep()}
+  if(user.emailVerified){if(identityGate)await loadPrivateDashboard(user,++loadingToken);else showIdentityStep()}
   else verifyMessage('Your email has not been verified yet. Open the verification email, then select I Verified.');
  }catch(err){verifyMessage(authError(err),true)}
 }
 async function googleSignIn(){
- authMessage('Opening secure Google Sign-In…');
- try{await signInWithPopup(auth,new GoogleAuthProvider())}
- catch(err){
+ authMessage('Choose the Google account approved by the Madrasa…');
+ const provider=new GoogleAuthProvider();
+ provider.setCustomParameters({prompt:'select_account'});
+ try{
+  await signInWithPopup(auth,provider);
+  if(auth.currentUser?.emailVerified)showIdentityStep();
+ }catch(err){
   if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(err.code)){
-   try{await signInWithRedirect(auth,new GoogleAuthProvider());return}
+   try{await signInWithRedirect(auth,provider);return}
    catch(redirectErr){authMessage(authError(redirectErr),true);return}
   }
   authMessage(authError(err),true);
@@ -377,6 +406,7 @@ $('studentEmailLogin').onsubmit=async event=>{
  try{
   await signInWithEmailAndPassword(auth,safeEmail($('studentLoginEmail').value),$('studentLoginPassword').value);
   $('studentLoginPassword').value='';
+  if(auth.currentUser?.emailVerified)showIdentityStep();
  }catch(err){authMessage(authError(err),true)}
  finally{btn.disabled=false}
 };
@@ -410,10 +440,10 @@ $('studentSendVerification').onclick=async()=>{
 };
 $('studentVerificationRetry').onclick=refreshAuthState;
 async function logout(){
- ++loadingToken;activeUser=null;identityGate=null;
+ ++loadingToken;activeUser=null;identityGate=null;accountChosen=false;
  try{await signOut(auth)}catch(err){dashMessage(authError(err),true)}
  $('studentLoginPassword').value='';$('studentAccountCards').replaceChildren();
- showIdentityStep();
+ showEmailStep();
 }
 $('studentDashboardSignOut').onclick=logout;$('studentVerifySignOut').onclick=logout;
 $('studentRefreshDashboard').onclick=()=>{if(auth.currentUser&&auth.currentUser.emailVerified&&identityGate)loadPrivateDashboard(auth.currentUser,++loadingToken)};
@@ -423,17 +453,11 @@ try{
  auth=getAuth(app);db=getFirestore(app);
  onAuthStateChanged(auth,async user=>{
   const token=++loadingToken;activeUser=user;
-  if(!user){
-   authCard.hidden=!identityGate;identityCard.hidden=!!identityGate;
-   verification.hidden=true;dashboard.hidden=true;
-   $('studentAccountCards').replaceChildren();return;
-  }
-  if(!identityGate){
-   identityCard.hidden=false;authCard.hidden=true;verification.hidden=true;dashboard.hidden=true;
-   return;
-  }
+  if(!user){showEmailStep();return}
   if(!user.emailVerified){openAuthenticatedState(user);return}
-  await loadPrivateDashboard(user,token);
+  if(identityGate){await loadPrivateDashboard(user,token);return}
+  if(accountChosen){showIdentityStep();return}
+  showEmailStep();
  });
 }catch(err){authMessage('Unable to start secure student login: '+err.message,true)}
 </script><script type="module" src="./site-settings-public.js"></script></body></html>
