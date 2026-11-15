@@ -58,8 +58,7 @@ async function renderHiring() {
       grid.append(card);
     }
     root.hidden = false;
-    const menuLink = document.querySelector('[data-careers-nav]');
-    if (menuLink) menuLink.hidden = false;
+    document.querySelectorAll('[data-careers-nav]').forEach(link => { link.hidden = false; });
   } catch (error) {
     console.warn('Published hiring board unavailable. Hidden until it can be verified.', error);
   }
