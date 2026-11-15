@@ -30,6 +30,7 @@ const d=defaults[id]||{name:'Course Details',kitabs:[]};
 const isBaseCourse=['muallama','muballigha','alima','boys-hifz','childrens-quran-maktab','tajweed-for-girls'].includes(id);
 function render(x){
  for(const k of ['name','duration','description','syllabus','fees','timings'])document.getElementById(k).textContent=x[k]||'Details will be announced soon.';
+ document.getElementById('description').textContent=window.AcademyCurriculum.description(id,x.description)||'Details will be announced soon.';
  window.AcademyEligibility.render(document.getElementById('eligibility'),x.eligibility);
  const ul=document.getElementById('kitabs');ul.replaceChildren();
  const books=window.AcademyCurriculum.books(id,x);
