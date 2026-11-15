@@ -42,8 +42,12 @@
  }
  function award(courseId){return CATALOG[courseId]?.award||'';}
  function description(courseId,savedDescription){
-  const existing=String(savedDescription??'').trim();
   const required=award(courseId);
+  const outdated=[
+   'Students who successfully complete both the 1st and 2nd years of the Muballiga course will be awarded the Muballiga Sanad.',
+   'Students who complete both years of the Muballiga course and then successfully complete the 3rd year of Aalima will be awarded the Aalima Sanad.'
+  ];
+  const existing=outdated.reduce((text,sentence)=>text.split(sentence).join(''),String(savedDescription??'')).replace(/\s+/g,' ').trim();
   if(!required)return existing;
   // Keep admin-written descriptions, while clearly stating the complete Sanad pathway.
   // An older generic description in Firestore must never hide this information.
