@@ -18,7 +18,8 @@ export function initStudentAccountAdmin({db}){
   $('studentAccountChangeEmail').hidden=!approved||changingEmail;
   $('studentAccountDisable').hidden=!approved;
   $('studentAccountEmail').readOnly=approved&&!changingEmail;
-  $('studentAccountEnabled').checked=approved||(!previous||previous.enabled===true);
+  $('studentAccountEnabled').checked=true;
+  $('studentAccountEnabled').closest('label').hidden=true; // Explicit Approve / Disable actions; no ambiguous toggle.
  }
  $('studentAccountChangeEmail').onclick=()=>{
   if(!previous?.enabled)return;
@@ -65,7 +66,7 @@ export function initStudentAccountAdmin({db}){
   button.disabled=true;off.disabled=true;
   try{
    const email=disable?String(previous?.email||'').trim().toLowerCase():emailValue();
-   const enabled=!disable&&$('studentAccountEnabled').checked;
+   const enabled=!disable;
    if(disable&&!previous?.enabled)throw Error('The account is already disabled or not yet approved.');
    if(previous?.email&&previous.email!==email&&!confirm('Change the linked email address? The old account will lose access.'))return;
    if(enabled&&!confirm('Enable account access to this student for '+email+'? Confirm this is the approved student or guardian email.'))return;
