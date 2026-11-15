@@ -34,6 +34,7 @@ export function initHiringBoardAdmin({db, auth}) {
     busy = value;
     for (const button of [add, draftButton, publishButton, hideButton]) button.disabled = value;
     rows.querySelectorAll('button').forEach(button => { button.disabled = value; });
+    updateNumbers();
   }
   function updateNumbers() {
     [...rows.children].forEach((row, index) => {
