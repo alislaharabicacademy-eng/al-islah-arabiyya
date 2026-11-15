@@ -24,12 +24,13 @@ export function groupedPublishedResults(input,{course='all',academicYear='all',e
    ||String(a.studentName).localeCompare(String(b.studentName)));
   const scheme=new Set(ordered.map(r=>(Array.isArray(r.subjects)?r.subjects:[])
    .map(s=>keyPart(s.name)+':'+Number(s.max||0)).sort().join(';')));
-  let place=0,last=null;
-  const ranked=ordered.map((r,i)=>{
+  let place=0,last=null,passedSeen=0;
+  const ranked=ordered.map(r=>{
    let rank=null;
    if(r.passed===true){
+    passedSeen++;
     const value=Number(r.percent||0);
-    if(last===null||Math.abs(value-last)>0.00001){place=i+1;last=value}
+    if(last===null||Math.abs(value-last)>0.00001){place=passedSeen;last=value}
     rank=place;
    }
    return {...r,rank};
