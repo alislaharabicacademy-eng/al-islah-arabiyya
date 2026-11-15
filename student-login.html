@@ -188,7 +188,8 @@ function show(data){
  if(!certs.length){const p=document.createElement('p');p.textContent='No competition certificates issued yet.';card.append(p)}
  for(const cert of certs){
   if(!/^COMP-[A-F0-9]{20}$/.test(String(cert.id||'')))continue;
-  const row=document.createElement('section');row.className='exam-card',name=document.createElement('h5'),info=document.createElement('p'),btn=document.createElement('button');
+  const row=document.createElement('section');row.className='exam-card';
+  const name=document.createElement('h5'),info=document.createElement('p'),btn=document.createElement('button');
   name.textContent=String(cert.eventName||'Competition');info.textContent=String(cert.award||'Participation')+' · '+String(cert.eventDate||'')+' · '+String(cert.id);
   btn.type='button';btn.className='btn';btn.textContent='📕 Download Competition Certificate PDF';
   btn.onclick=async()=>{btn.disabled=true;try{const blob=await createCompetitionCertificatePdf(cert);downloadExamBlob(blob,'Competition_'+safePdfName(cert.studentName)+'_'+cert.id+'.pdf')}catch(e){msg(dashStatus,'PDF error: '+e.message,true)}finally{btn.disabled=false}};
