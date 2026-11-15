@@ -683,11 +683,11 @@ import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,EmailAuthProvider,linkWithCredential,sendEmailVerification,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
-import{uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse}from'./admission-course-utils.js';
+import{uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse,isAalimaContinuation,publicAdmissionCourses}from'./admission-course-utils.js';
 import{validFeeLedger,indiaFeeClock}from'./fee-ledger-utils.js';
 import{initStudentAccountAdmin}from'./student-account-admin.js';
 import{initStudentProfileRequests}from'./student-profile-requests.js';
-import{maybePromoteStudent}from'./student-promotion.js';
+import{maybePromoteStudent,enrollAalimaYear3,courseYearOf}from'./student-promotion.js';
 import{initCompetitionCertificateAdmin}from'./competition-certificates.js';
 import{initSiteSettingsAdmin}from'./site-settings-admin.js';
 import{initHiringBoardAdmin}from'./hiring-board-admin.js';
@@ -751,7 +751,7 @@ function renderCourseList(){
   const edit=document.createElement('button');edit.type='button';edit.textContent='✏ Edit Details';edit.onclick=()=>openCourseEditor(id);
   const listed=admissionNamesFromEditor().some(n=>admissionCourseKey(n)===admissionCourseKey(name));
   const toggle=document.createElement('button');toggle.type='button';toggle.className='secondary';
-  toggle.textContent=listed?'✕ Hide from Admission':'＋ Show on Admission Form';
+  toggle.textContent=isAalimaContinuation(name)?'🔒 Aalima · Admin Only':listed?'✕ Hide from Admission':'＋ Show on Admission Form';toggle.disabled=isAalimaContinuation(name);
   toggle.onclick=async()=>{
    if(listed&&!confirm('Remove '+name+' from the public Admission Form? Student records and course details are kept.'))return;
    toggle.disabled=true;
@@ -837,7 +837,7 @@ const admissionDefaults=[
 {id:'notes',label:'Message / Preferred Timings',type:'textarea',required:false,visible:true}
 ];
 let admissionFields=admissionDefaults.map(x=>({...x}));
-const defaultAdmissionCourses=['Muallama','Muballigha','Alima','Boys Hifz Class',"Children's Qur'an Maktab",'Tajweed for Girls','Other enquiry'];
+const defaultAdmissionCourses=['Muallama','Muballigha','Boys Hifz Class',"Children's Qur'an Maktab",'Tajweed for Girls','Other enquiry'];
 function renderAdmissionEditor(){
  const box=$('admissionFieldEditor');box.replaceChildren();
  admissionFields.forEach((field,i)=>{
@@ -852,7 +852,7 @@ function renderAdmissionEditor(){
 }
 $('addAdmissionField').onclick=()=>{admissionFields.push({id:'custom_'+Date.now(),label:'New Question',type:'text',visible:true,required:false});renderAdmissionEditor()};
 function admissionNamesFromEditor(){
- return uniqueAdmissionCourses($('admissionCourseList').value.split('\n'));
+ return publicAdmissionCourses($('admissionCourseList').value.split('\n'));
 }
 function renderAdmissionCourseRows(){
  const root=$('admissionCourseRows');root.replaceChildren();
@@ -894,9 +894,9 @@ async function loadAdmissionSettings(){
   // Never merge back every published/default course; it reintroduced courses
   // already removed by Admin and caused the two Tajweed For Girls options.
   const raw=Array.isArray(data.admissionFormCourses)?data.admissionFormCourses:defaultAdmissionCourses;
-  $('admissionCourseList').value=uniqueAdmissionCourses(raw).join('\n');
+  $('admissionCourseList').value=publicAdmissionCourses(raw).join('\n');
   renderAdmissionCourseRows();renderAdmissionEditor();renderCourseList();
-  if(Array.isArray(data.admissionFormCourses)&&raw.length!==uniqueAdmissionCourses(raw).length)
+  if(Array.isArray(data.admissionFormCourses)&&raw.length!==publicAdmissionCourses(raw).length)
    $('admissionSettingsStatus').textContent='Duplicates were hidden in the editor. Click Save & Publish to clean the actual saved list.';
  }catch(e){$('admissionSettingsStatus').textContent='Load failed: '+e.message}
 }
@@ -935,8 +935,9 @@ async function setCourseAdmissionVisibility(name,visible){
  const snap=config.exists()?config:await getDoc(doc(db,'courses','muallama'));
  const original=snap.exists()?snap.data():{};
  const names=uniqueAdmissionCourses(Array.isArray(original.admissionFormCourses)?original.admissionFormCourses:defaultAdmissionCourses,{otherEnquiry:false});
+ if(visible&&isAalimaContinuation(name))throw Error('Aalima is admin-only paid continuation after Muballiga Year 2.');
  const key=admissionCourseKey(name);
- const next=visible?uniqueAdmissionCourses([...names,name]):uniqueAdmissionCourses(names.filter(n=>admissionCourseKey(n)!==key));
+ const next=visible?publicAdmissionCourses([...names,name]):publicAdmissionCourses(names.filter(n=>admissionCourseKey(n)!==key));
  if(next.length<2)throw Error('Cannot remove the final Academy course.');
  const batch=writeBatch(db);
  batch.set(doc(db,'courses','admission-form-config'),{
@@ -978,7 +979,7 @@ $('createCourse').onclick=async()=>{
   const legacySettings=publishedSettings.exists()?null:await getDoc(doc(db,'courses','muallama'));
   const prior=publishedSettings.exists()?publishedSettings.data():(legacySettings?.exists()?legacySettings.data():{});
   const current=Array.isArray(prior.admissionFormCourses)?prior.admissionFormCourses:defaultAdmissionCourses;
-  const updated=uniqueAdmissionCourses([...current,name]);
+  const updated=publicAdmissionCourses([...current,name]);
   const batch=writeBatch(db);
   batch.set(doc(db,'courses',id),{
    name,published:true,kitabs:[],duration:'',description:'',eligibility:'',
