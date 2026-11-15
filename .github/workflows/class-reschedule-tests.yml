@@ -19,12 +19,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
       - name: Check JavaScript syntax
         run: |
           node --check --input-type=module < class-reschedule-utils.js
           node --check --input-type=module < class-reschedule-teacher.js
           node --check --input-type=module < class-reschedule-admin.js
+          node --check tests/class-reschedule-rules.test.mjs
           python3 - <<'PY'
           from pathlib import Path
           import re
@@ -44,7 +45,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
