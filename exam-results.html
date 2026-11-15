@@ -69,7 +69,7 @@ footer{background:#0b3829;color:#e9dec0;text-align:center;padding:24px;font-size
 <div id="examResultInfo" class="info"></div>
 <h3>📚 Subject-wise Marks</h3><div class="tablewrap"><table><thead><tr><th>Subject</th><th>Obtained</th><th>Maximum</th></tr></thead><tbody id="publicExamSubjects"></tbody></table></div>
 <div class="summary"><div>Total Marks<strong id="publicTotal"></strong></div><div>Percentage<strong id="publicPercent"></strong></div><div>Grade<strong id="publicGrade"></strong></div><div>Result<strong id="publicPass"></strong></div></div>
-<div class="buttons"><button id="publicDownloadResult" type="button">📕 Result PDF</button><button id="publicDownloadCertificate" class="secondary" type="button">🏅 Certificate PDF</button></div>
+<div class="buttons"><button id="publicDownloadResult" type="button">📕 Result PDF</button><button id="publicDownloadCertificate" class="secondary" type="button">🏅 Certificate PDF</button><button id="publicPrintResult" class="secondary" type="button">🖨 Print Result as PDF</button><button id="publicPrintCertificate" class="secondary" type="button">🖨 Print Certificate as PDF</button></div>
 <p class="note" id="publicReference"></p><p class="note">This online verification confirms that the result currently appears as published in the Madrasa database. A certificate records examination achievement or participation; it is not proof of completion of an entire course.</p>
 </section>
 </main><footer>© Madrasa Al Islahul Arabiya · Official Examination Portal</footer>
@@ -78,6 +78,7 @@ import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app
 import{getFirestore,getDoc,doc}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{createExamResultPdf,createExamCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
+import{openPremiumPrintWindow}from'./premium-certificate-svg.js';
 const $=id=>document.getElementById(id);
 const status=$('resultCheckStatus'),panel=$('publishedResultPanel'),button=$('resultLookupButton');
 let db=null,record=null;
@@ -182,6 +183,14 @@ async function download(which){
  }catch(e){status.textContent='PDF download failed: '+e.message;status.className='status error'}
  finally{b.disabled=false;b.textContent=old}
 }
+function printPdf(type){
+ if(!record||record.published!==true)return;
+ const certificateKind=record.passed===true?(Number(record.percent||0)>=80?'exam':'exam-achievement'):'exam-participation';
+ try{openPremiumPrintWindow(type==='result'?'results':certificateKind,record)}
+ catch(e){status.textContent='Print / Save PDF failed: '+e.message;status.className='status error'}
+}
+$('publicPrintResult').onclick=()=>printPdf('result');
+$('publicPrintCertificate').onclick=()=>printPdf('certificate');
 $('publicDownloadResult').onclick=()=>download('result');
 $('publicDownloadCertificate').onclick=()=>download('certificate');
 const fromUrl=new URLSearchParams(location.search).get('id');
