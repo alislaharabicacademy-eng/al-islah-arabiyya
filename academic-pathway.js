@@ -22,7 +22,7 @@ export function validFinalFor(student,result){
 }
 export function promotionEligibility(student,result){
  if(String(student?.course||'')!=='muballigha')return {eligible:false,reason:'This programme does not have an automatic year change.'};
- if(courseYearOf(student)!==1)return {eligible:false,reason:'Muballiga Year 2 is the end of the two-year programme. Aalima requires separate choice, admin approval and verified admission-fee payment.'};
+ if(Number(student?.courseYear)!==1)return {eligible:false,reason:'Muballiga year is not explicitly verified as Year 1, or the student has completed Year 2. Only verified Year 1 can auto-promote; Aalima needs separate admission.'};
  if(student?.state!=='Completed')return {eligible:false,reason:'Admin has not marked Muballiga Year 1 Completed.'};
  if(!validFinalFor(student,result))return {eligible:false,reason:'Year 1 requires a published, passed Final/Annual exam matching the student and year.'};
  return {eligible:true,nextCourse:'muballigha',nextYear:2,label:'Muballiga · 2nd Year'};
