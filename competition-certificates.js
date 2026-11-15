@@ -96,7 +96,7 @@ export function initCompetitionCertificateAdmin({db}){
    text('✓ Certificate issued: '+certificate.id+'. Available to approved students in their Dashboard.');
    await showCertificates();
    try{const blob=await createCompetitionCertificatePdf(certificate);downloadExamBlob(blob,'Competition_'+safePdfName(certificate.studentName)+'_'+certificate.id+'.pdf')}
-   catch(e){text('Certificate saved. PDF download failed: '+e.message,true)}
+   catch(e){text('Certificate saved. Direct PDF failed: '+e.message+'. Use Print / Save as PDF if available.',true)}
   }catch(e){text('Could not issue certificate: '+e.message,true)}
   finally{issue.disabled=false}
  };
