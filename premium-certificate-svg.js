@@ -139,7 +139,7 @@ function studentName(w,y,name,fontSize=79){
 // Up to three readable rows in a metadata card. Never silently truncate IDs or events.
 function chipLines(value){
  let remaining=String(value??'—').replace(/\s+/g,' ').trim()||'—';
- const count=Math.min(3,Math.max(1,Math.ceil(textUnits(remaining)/21)));
+ const count=Math.min(3,Math.max(1,Math.ceil(textUnits(remaining)/12.5)));
  const rows=[];
  for(let i=0;i<count-1;i++){
   const target=Math.ceil(remaining.length/(count-i));
@@ -205,31 +205,31 @@ function certificate(kind,r){
  s+=`<path d="M${w*.65} 891h${w*.21}" stroke="#1C2D50" stroke-width="3"/>
  ${T(w*.755,922,signer.name||'AUTHORIZED SIGNATORY',String(signer.name||'').length>30?17:22,'font-family="Georgia,serif" text-anchor="middle" fill="#1B2A50"')}
  ${T(w*.755,947,signer.name?(signer.designation||'Principal'):'Principal Signature',17,'font-family="Georgia,serif" font-style="italic" text-anchor="middle" fill="#425572"')}
- ${T(100,947,'CERTIFICATE ID: '+String(r.id||'ALIA-DEMO').slice(0,55),14,'font-family="Arial,sans-serif" text-anchor="start" fill="#263D56"')}`;
+ ${T(86,696,'CERTIFICATE ID: '+String(r.id||'ALIA-DEMO'),fitFont('CERTIFICATE ID: '+String(r.id||'ALIA-DEMO'),14,300,8),'font-family="Arial,sans-serif" text-anchor="start" fill="#263D56"')}`;
  return `<svg xmlns="${NS}" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${defs()}${s}</svg>`;
 }
 function resultPage(r,subjects,page,totalPages){
- const w=1000,h=1414,rows=subjects.slice(page*7,page*7+7);
- let s=frame(w,h)+brand(w,86,.82)+banner(w,281,'OFFICIAL EXAM RESULT STATEMENT',true);
- s+=T(w/2,457,'EXAMINATION RESULTS',28,'font-family="Georgia,serif" text-anchor="middle" fill="#172C4C"');
- s+=studentName(w,548,r.studentName,63);
- s+=chip(55,585,280,'Student ID',r.studentCode)+chip(360,585,280,'Class',r.course)+chip(665,585,280,'Academic Year',r.academicYear);
- s+=T(w/2,749,r.examTitle||'Annual Examination',fitFont(r.examTitle||'Annual Examination',32,750,11),'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#4E165F"');
- s+=T(w/2,791,(r.examDate||'')+'  •  Page '+(page+1)+' of '+totalPages,21,'font-family="Georgia,serif" text-anchor="middle" fill="#243453"');
- const tableY=829;
- s+=`<rect x="69" y="${tableY}" width="863" height="62" rx="10" fill="url(#purple)" stroke="#D6A34D" stroke-width="4"/>`;
- s+=T(121,tableY+41,'S.NO.',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
+ const w=1000,h=1414,rows=subjects.slice(page*8,page*8+8);
+ let s=frame(w,h)+brand(w,78,.8)+banner(w,252,'OFFICIAL EXAM RESULT STATEMENT',true);
+ s+=T(w/2,417,'Student Name',24,'font-family="Georgia,serif" text-anchor="middle" fill="#172C4C"');
+ s+=studentName(w,512,r.studentName,63);
+ s+=chip(55,553,280,'Student ID',r.studentCode)+chip(360,553,280,'Class',r.course)+chip(665,553,280,'Academic Year',r.academicYear);
+ s+=T(w/2,699,r.examTitle||'Annual Examination',fitFont(r.examTitle||'Annual Examination',32,750,11),'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#4E165F"');
+ s+=T(w/2,738,(r.examDate||'')+'  •  Page '+(page+1)+' of '+totalPages,21,'font-family="Georgia,serif" text-anchor="middle" fill="#243453"');
+ const tableY=762;
+ s+=`<rect x="69" y="${tableY}" width="863" height="54" rx="10" fill="url(#purple)" stroke="#D6A34D" stroke-width="4"/>`;
+ s+=T(121,tableY+37,'S.NO.',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
  s+=T(274,tableY+41,'SUBJECT',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
  s+=T(790,tableY+41,'MARKS',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
  rows.forEach((item,i)=>{
-  const y=tableY+62+i*47;
-  s+=`<rect x="70" y="${y}" width="862" height="47" fill="${i%2?'#FFF8ED':'#FFFFFA'}" stroke="#D6B577" stroke-width="1.6"/>`;
-  s+=T(151,y+31,page*7+i+1,23,'font-family="Georgia,serif" text-anchor="middle" fill="#182C4A"');
-  s+=T(270,y+31,String(item.name||'Subject'),fitFont(item.name||'Subject',25,470,10),'font-family="Georgia,serif" fill="#182C4A"');
-  s+=T(823,y+31,(item.score??0)+' / '+(item.max??0),24,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#182C4A"');
+  const y=tableY+54+i*42;
+  s+=`<rect x="70" y="${y}" width="862" height="42" fill="${i%2?'#FFF8ED':'#FFFFFA'}" stroke="#D6B577" stroke-width="1.6"/>`;
+  s+=T(151,y+29,page*7+i+1,23,'font-family="Georgia,serif" text-anchor="middle" fill="#182C4A"');
+  s+=T(270,y+29,String(item.name||'Subject'),fitFont(item.name||'Subject',25,470,10),'font-family="Georgia,serif" fill="#182C4A"');
+  s+=T(823,y+29,(item.score??0)+' / '+(item.max??0),24,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#182C4A"');
  });
  if(page===totalPages-1){
-  const y=1261;
+  const y=1170;
   s+=`<rect x="69" y="${y}" width="862" height="85" rx="13" fill="#FFF7E9" stroke="#C99D47" stroke-width="4"/>`;
   [['TOTAL',(r.total??0)+' / '+(r.maxTotal??0)],['PERCENT',(Number(r.percent)||0).toFixed(2)+'%'],['GRADE',r.grade||'—'],['RESULT',r.passed?'PASS':'NEEDS IMPROVEMENT']].forEach(([label,value],i)=>{
    const x=180+i*215;
@@ -237,7 +237,20 @@ function resultPage(r,subjects,page,totalPages){
       T(x,y+61,value,String(value).length>13?15:26,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#112649"');
   });
  }
- s+=T(w/2,h-83,'RESULT REFERENCE: '+String(r.id||'ALIA-DEMO').slice(0,53),17,'text-anchor="middle" font-family="Arial,sans-serif" fill="#213656"');
+ // Final-page crest and an empty signature field; never forge the Principal's signature.
+ if(page===totalPages-1){
+  s+=stamp(w/2,1318,48);
+  const signer=r.principal&&typeof r.principal==='object'?r.principal:{};
+  const signed=typeof signer.signatureData==='string'&&/^data:image\\/png;base64,[A-Za-z0-9+/=]+$/.test(signer.signatureData);
+  if(signed&&!r.previewMode)s+='<image x="710" y="1262" width="204" height="49" preserveAspectRatio="xMidYMid meet" href="'+E(signer.signatureData)+'"/>';
+  s+='<path d="M700 1317H925" stroke="#1C2D50" stroke-width="2.5"/>';
+  s+=T(812,1343,signer.name||'AUTHORIZED SIGNATORY',fitFont(signer.name||'AUTHORIZED SIGNATORY',17,230,10),'font-family="Georgia,serif" text-anchor="middle" fill="#1B2A50"');
+  s+=T(812,1366,signer.name?(signer.designation||'Principal'):'Principal Signature',13,'font-family="Georgia,serif" font-style="italic" text-anchor="middle" fill="#425572"');
+ }
+ // Reference is deliberately outside the marks/total table and the seal.
+ const ref='RESULT REFERENCE: '+String(r.id||'ALIA-DEMO');
+ s+='<rect x="64" y="1331" width="351" height="41" rx="9" fill="#FFF7E9" fill-opacity=".87" stroke="#D0A052" stroke-width="1.5"/>';
+ s+=T(79,1359,ref,fitFont(ref,14,318,8),'font-family="Arial,sans-serif" fill="#213656"');
  return `<svg xmlns="${NS}" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${defs()}${s}</svg>`;
 }
 function previewWatermark(markup,portrait){
@@ -250,7 +263,7 @@ export function premiumCertificatePages(type,record={}){
  let pages=[];
  if(type==='results'){
   const items=Array.isArray(record.subjects)?record.subjects:[];
-  const count=Math.max(1,Math.ceil(items.length/7));
+  const count=Math.max(1,Math.ceil(items.length/8));
   pages=Array.from({length:count},(_,i)=>resultPage(record,items,i,count));
  }else{
   if(!['exam','exam-achievement','exam-participation','winner','participation','event'].includes(type))throw Error('Unknown certificate type');
