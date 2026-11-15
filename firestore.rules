@@ -3,10 +3,24 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAdmin() {
+    // The original Academy owner remains authorized. Additional admin grants
+    // are private Firestore documents rather than email addresses in public code.
+    function isPrimaryAdmin() {
       return request.auth != null
         && request.auth.token.email == 'alislaharabicacademy@gmail.com'
         && request.auth.token.email_verified == true;
+    }
+
+    function hasPrivateAdminGrant() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && exists(/databases/$(database)/documents/adminAccess/$(request.auth.token.email))
+        && get(/databases/$(database)/documents/adminAccess/$(request.auth.token.email)).data.enabled == true;
+    }
+
+    function isAdmin() {
+      return isPrimaryAdmin() || hasPrivateAdminGrant();
     }
 
     function signedInTeacher(teacherId) {
@@ -14,6 +28,24 @@ service cloud.firestore {
         && request.auth.token.email_verified == true
         && exists(/databases/$(database)/documents/teacherAccess/$(teacherId))
         && get(/databases/$(database)/documents/teacherAccess/$(teacherId)).data.email == request.auth.token.email;
+    }
+
+    // The grant collection has no list access, including for secondary admins.
+    match /adminAccess/{grantEmail} {
+      allow get: if isPrimaryAdmin()
+        || (request.auth != null
+          && request.auth.token.email_verified == true
+          && request.auth.token.email == grantEmail);
+      allow list: if false;
+      allow create, update: if isPrimaryAdmin()
+        && grantEmail.matches('^[^/@ ]+@[^/@ ]+\\.[^/@ ]+$')
+        && grantEmail != 'alislaharabicacademy@gmail.com'
+        && request.resource.data.keys().hasOnly(['enabled','updatedAt','grantedBy'])
+        && request.resource.data.keys().hasAll(['enabled','updatedAt','grantedBy'])
+        && request.resource.data.enabled is bool
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.grantedBy == request.auth.uid;
+      allow delete: if isPrimaryAdmin();
     }
 
     // Published website appearance and principal signatory profile.
