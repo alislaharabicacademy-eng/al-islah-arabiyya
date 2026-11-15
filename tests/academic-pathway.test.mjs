@@ -22,6 +22,7 @@ test('New admission is Muballiga Year 1 and is the only automatic promotion path
   eligible:true,nextCourse:'muballigha',nextYear:2,label:'Muballiga · 2nd Year'
  });
  assert.equal(promotionEligibility(year2,exam2).eligible,false);
+ assert.equal(promotionEligibility({course:'muballigha',state:'Completed'},exam1).eligible,false);
  assert.equal(promotionEligibility({course:'muallama',state:'Completed'},exam1).eligible,false);
  assert.equal(promotionEligibility({...year1,state:'Active'},exam1).eligible,false);
 });
@@ -61,6 +62,8 @@ test('Public pages do not offer direct Aalima admission',()=>{
 test('Admin is not allowed to enter Aalima directly, even from student edit form',()=>{
  const admin=readFileSync(new URL('admin.html',root),'utf8');
  assert.match(admin,/data\.course==='alima'&&prior\.course!=='alima'/);
+ assert.match(admin,/legacyStudyYearWrap/);
+ assert.match(admin,/Verify the legacy student year/);
  assert.match(admin,/enrollAalimaYear3\(db,d\.id/);
  assert.match(admin,/verified:form\.elements\.verified\.checked/);
  const promo=readFileSync(new URL('student-promotion.js',root),'utf8');
