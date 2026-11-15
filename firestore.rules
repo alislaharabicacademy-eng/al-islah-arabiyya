@@ -48,6 +48,25 @@ service cloud.firestore {
       allow delete: if isPrimaryAdmin();
     }
 
+    // Auditable, read-only administrator preview of teacher dashboards.
+    // Teacher identity is never replaced by an administrator identity.
+    match /adminTeacherPreviews/{eventId} {
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['teacherId','actorUid','actorEmail','createdAt','purpose'])
+        && request.resource.data.keys().hasAll(['teacherId','actorUid','actorEmail','createdAt','purpose'])
+        && request.resource.data.teacherId is string
+        && request.resource.data.teacherId.size() > 0
+        && request.resource.data.teacherId.size() <= 160
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.actorEmail == request.auth.token.email
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.purpose == 'teacher_dashboard_preview'
+        && exists(/databases/$(database)/documents/teachers/$(request.resource.data.teacherId));
+      // The owner can inspect a permanent audit trail in Firebase.
+      allow get, list: if isPrimaryAdmin();
+      allow update, delete: if false;
+    }
+
     // Published website appearance and principal signatory profile.
     // Public read is intentional because official certificate PDFs can be downloaded
     // through unguessable published result links. Only verified Academy admin writes.

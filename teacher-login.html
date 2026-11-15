@@ -11,7 +11,7 @@
 *{box-sizing:border-box}
 body{margin:0;background:radial-gradient(circle at 90% -10%,#dceadf 0%,transparent 48%),var(--bg);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Arial,sans-serif;color:var(--ink)}
 a{text-decoration:none;color:inherit}
-button,input{font:inherit}
+button,input,select{font:inherit}
 header{background:linear-gradient(120deg,#09271c,#194f37);color:white;border-bottom:4px solid var(--gold);padding:20px 18px}
 .head{max-width:1050px;margin:auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
 .brand{display:flex;align-items:center;gap:13px}
@@ -31,7 +31,7 @@ h1{font-size:clamp(32px,5vw,52px);margin:12px 0;color:#14392b}
 .card p{color:#617467}
 label{display:block;font-weight:750;margin:22px 0 8px}
 input{display:block;width:100%;min-height:51px;padding:13px 15px;border-radius:10px;border:1px solid #cbd9cd;background:#f9fbf8;color:var(--ink)}
-input:focus,button:focus-visible,a:focus-visible{outline:3px solid #c9a765;outline-offset:3px}
+input:focus,select:focus,button:focus-visible,a:focus-visible{outline:3px solid #c9a765;outline-offset:3px}
 button,.button{display:inline-flex;align-items:center;justify-content:center;gap:11px;min-height:48px;padding:12px 18px;border-radius:11px;border:0;background:var(--green);color:white;font-weight:800;cursor:pointer}
 button:disabled{opacity:.6;cursor:wait}
 .google{width:100%;margin-top:16px;background:#fff;color:#224834;border:1px solid #bbd0c0;box-shadow:0 5px 15px #13372210;font-size:16px}
@@ -61,6 +61,12 @@ button:disabled{opacity:.6;cursor:wait}
 .assignment small{color:#708475}
 .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
 .secondary{background:#eaf1e9;color:#1d593c}
+.teacher-picker{display:block;width:100%;min-height:51px;padding:12px 15px;border:1px solid #cbd9cd;border-radius:10px;background:#f9fbf8;color:var(--ink)}
+.preview-warning{background:#fff8e8;border:1px solid #efdbac;border-radius:10px;padding:12px 16px;font-size:13px;color:#654c23!important}
+.preview-details{margin-top:22px;border-top:1px solid #dce7d8;padding-top:18px}
+.preview-teacher-name{margin:8px 0}
+.preview-heading{margin:0}
+.preview-actions{margin-top:16px}
 footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 @media(max-width:750px){.grid{grid-template-columns:1fr}.card{padding:24px}main{margin-top:30px}.head{gap:10px}.brand img{width:52px;height:52px}.brand strong{font-size:19px}}
 @media(prefers-reduced-motion:no-preference){.card{animation:arrive .5s ease-out both}@keyframes arrive{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}}
@@ -91,13 +97,29 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 <div class="actions"><a class="button" id="attendanceLink" href="teacher-attendance.html">📋 Open Attendance</a><button id="logout" type="button" class="secondary">Sign Out</button></div>
 <p class="hint">Results, marks and certificates will appear here when those teacher permissions are implemented. Your current access includes assigned classes and attendance.</p>
 </section>
+<section class="card" id="adminPreview" hidden>
+<span class="eyebrow">Academy administration</span>
+<h2>Teacher Dashboard Preview</h2>
+<p class="preview-warning">Administrator preview · Read-only. You are not signed in as the teacher. Viewing a teacher's dashboard is recorded in the Academy security audit.</p>
+<label for="previewTeacher">Select teacher to preview</label>
+<select id="previewTeacher" class="teacher-picker"><option value="">Choose a teacher</option></select>
+<p id="previewStatus" class="status" role="status" aria-live="polite">Loading approved teachers…</p>
+<div id="previewDetails" class="preview-details" hidden>
+<h3 id="previewName" class="preview-teacher-name">Teacher</h3>
+<div class="stats"><div class="stat"><strong id="previewClassCount">0</strong><small>Assigned Classes</small></div><div class="stat"><strong id="previewSubjectCount">0</strong><small>Assigned Subjects</small></div></div>
+<h3 class="preview-heading">📚 Assigned Classes &amp; Subjects</h3>
+<div id="previewAssignments"></div>
+<p class="hint">This preview has no teacher attendance submission, teacher authentication, or impersonation actions. Use the normal Admin Panel for authorized changes.</p>
+</div>
+<div class="actions preview-actions"><a class="button" href="admin.html">↗ Open Admin Panel</a><button id="adminPreviewLogout" class="secondary" type="button">Sign Out</button></div>
+</section>
 </div>
 </main>
 <footer>© Madrasa Al Islahul Arabiya · Authorized Teachers Only</footer>
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
-import {getFirestore,doc,getDoc} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import {getFirestore,doc,getDoc,getDocs,collection,addDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 
 const $ = id => document.getElementById(id);
 const login=$('loginCard'),dashboard=$('dashboard'),info=$('loginInfo');
@@ -105,13 +127,93 @@ let auth=null,db=null,checkVersion=0;
 const normalizeEmail=email=>String(email||'').trim().toLowerCase();
 const teacherGoogleLookupId=email=>'google-email-'+encodeURIComponent(normalizeEmail(email));
 function status(message,error=false){const el=$('loginStatus');el.textContent=message;el.className='status'+(error?' error':'')}
-function showLogin(){login.hidden=false;info.hidden=false;dashboard.hidden=true;}
+function showLogin(){login.hidden=false;info.hidden=false;dashboard.hidden=true;$('adminPreview').hidden=true;}
 function friendlyError(e){
  if(e.code==='permission-denied')return 'This Google account is not approved for teacher access. Please contact the Academy Admin.';
  if(e.code==='auth/unauthorized-domain')return 'This website domain is not enabled in Firebase Authentication. Contact Admin.';
  if(e.code==='auth/popup-closed-by-user')return 'Google sign-in was cancelled.';
  return e.message||'Could not verify teacher access.';
 }
+const academyOwner='alislaharabicacademy@gmail.com';
+let previewVersion=0;
+async function isAcademyAdmin(user){
+ const email=normalizeEmail(user?.email);
+ if(!email||!user.emailVerified)return false;
+ if(email===academyOwner)return true;
+ try{
+   const grant=await getDoc(doc(db,'adminAccess',email));
+   return grant.exists() && grant.data().enabled===true;
+ }catch(error){
+   // Ordinary teachers cannot inspect admin grant documents.
+   return false;
+ }
+}
+function renderPreviewAssignments(assignments){
+ const classes=new Set(assignments.filter(a=>a.course).map(a=>[a.course,a.batch||''].join('|')));
+ const subjects=new Set(assignments.map(a=>a.subject).filter(Boolean));
+ $('previewClassCount').textContent=String(classes.size);
+ $('previewSubjectCount').textContent=String(subjects.size);
+ const root=$('previewAssignments');root.replaceChildren();
+ if(!assignments.length){
+   const p=document.createElement('p');
+   p.textContent='No published class assignments.';
+   root.append(p);
+ }else for(const a of assignments){
+   const row=document.createElement('article');row.className='assignment';
+   const title=document.createElement('strong');
+   title.textContent=(a.courseName||a.course||'Class')+(a.batch?' · '+a.batch:'');
+   const detail=document.createElement('small');
+   detail.textContent=[a.subject||'Subject not assigned',a.timing||'',Array.isArray(a.students)?a.students.length+' students':''].filter(Boolean).join(' · ');
+   row.append(title,detail);root.append(row);
+ }
+}
+async function showAdminTeacherPreview(user,version){
+ $('adminPreview').hidden=false;
+ login.hidden=true;info.hidden=true;dashboard.hidden=true;
+ const picker=$('previewTeacher');
+ picker.replaceChildren(new Option('Choose a teacher',''));
+ $('previewDetails').hidden=true;
+ $('previewStatus').textContent='Loading teacher directory…';
+ const snapshot=await getDocs(collection(db,'teachers'));
+ if(version!==checkVersion)return;
+ const teachers=snapshot.docs.map(d=>({id:d.id,name:String(d.data().name||'Teacher')}));
+ teachers.sort((a,b)=>a.name.localeCompare(b.name));
+ teachers.forEach(t=>picker.add(new Option(t.name,t.id)));
+ $('previewStatus').textContent=teachers.length?'Select a teacher to open a read-only, audited preview.':'No teacher profiles are available yet.';
+ const currentVersion=++previewVersion;
+ picker.onchange=async()=>{
+   const selected=picker.value;
+   const viewVersion=++previewVersion;
+   $('previewDetails').hidden=true;
+   if(!selected){$('previewStatus').textContent='Choose a teacher to preview.';return}
+   $('previewStatus').textContent='Recording administrator preview…';
+   try{
+     // The privileged access record must be committed before any teacher data
+     // is rendered. The server validates the acting admin and destination.
+     await addDoc(collection(db,'adminTeacherPreviews'),{
+       teacherId:selected,actorUid:user.uid,actorEmail:user.email,
+       createdAt:serverTimestamp(),purpose:'teacher_dashboard_preview'
+     });
+     const [teacher,roster]=await Promise.all([
+       getDoc(doc(db,'teachers',selected)),
+       getDoc(doc(db,'teacherRosters',selected))
+     ]);
+     if(viewVersion!==previewVersion||version!==checkVersion)return;
+     if(!teacher.exists())throw Error('Teacher profile no longer exists.');
+     const fields=roster.exists()?roster.data():{};
+     const assignments=Array.isArray(fields.assignments)?fields.assignments:
+       (Array.isArray(teacher.data().assignments)?teacher.data().assignments:[]);
+     $('previewName').textContent=teacher.data().name||'Teacher';
+     renderPreviewAssignments(assignments);
+     $('previewDetails').hidden=false;
+     $('previewStatus').textContent='Read-only view opened. Access recorded in the security audit.';
+   }catch(error){
+     if(viewVersion===previewVersion)
+       $('previewStatus').textContent='Could not open this preview. Check administrator permission and retry.';
+   }
+ };
+}
+
 async function loadDashboard(user){
  const version=++checkVersion;
  showLogin();
@@ -123,6 +225,11 @@ async function loadDashboard(user){
   if(token.signInProvider!=='google.com')throw Error('Sign in with Google to open your teacher dashboard.');
   const email=normalizeEmail(user.email);
   if(!email)throw Error('Google account email is missing.');
+  if(await isAcademyAdmin(user)){
+    if(version!==checkVersion)return;
+    await showAdminTeacherPreview(user,version);
+    return;
+  }
   const alias=await getDoc(doc(db,'teacherAccess',teacherGoogleLookupId(email)));
   if(!alias.exists())throw Error('This Gmail has not been enabled. Ask Admin to enable Google Login in Teacher Management.');
   const mapping=alias.data();
@@ -168,7 +275,8 @@ $('googleLogin').onclick=async()=>{
   }else status(friendlyError(e),true);
  }finally{button.disabled=false}
 };
-$('logout').onclick=async()=>{++checkVersion;try{await signOut(auth)}catch(e){status(friendlyError(e),true)}showLogin()};
+$('logout').onclick=async()=>{++checkVersion;++previewVersion;try{await signOut(auth)}catch(e){status(friendlyError(e),true)}showLogin()};
+$('adminPreviewLogout').onclick=async()=>{++checkVersion;++previewVersion;try{await signOut(auth)}catch(e){status(friendlyError(e),true)}showLogin()};
 
 try{
  const conf=await fetch('firebase-config.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Firebase configuration unavailable.');return r.json()});
