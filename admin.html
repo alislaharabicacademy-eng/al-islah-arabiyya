@@ -583,7 +583,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <button type="button" class="secondary" id="studentEditorClose">✕ Close Form</button></div>
 <p class="section-note"><strong>Mandatory:</strong> Student Name, Course, Guardian, Date of Birth, Contact Number and Complete Address. Contact Email and Photo are optional. Photo is optional. Student ID is issued automatically; never type your own ID.</p>
 <form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields">
-<label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required minlength="2" maxlength="120"></label><label>Course *<select id="studentCourse" required><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label>Academic Stage<input id="studentAcademicStage" readonly placeholder="Automatic from verified stage"><small>New Muballiga admissions begin in Year 1. Year 2 is a verified promotion. Aalima requires a separate admission-fee payment and approval.</small></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Parent / Guardian Name *<input id="studentGuardian" required minlength="2" maxlength="120"></label>
+<label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required minlength="2" maxlength="120"></label><label>Course *<select id="studentCourse" required><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label>Academic Stage<input id="studentAcademicStage" readonly placeholder="Automatic from verified stage"><small>New Muballiga admissions begin in Year 1. Year 2 is a verified promotion. Aalima requires a separate admission-fee payment and approval.</small></label><label id="legacyStudyYearWrap" hidden>Verify Existing Student's Muballiga Year *<select id="legacyStudyYear"><option value="">Choose verified stage</option><option value="1">Muballiga 1st Year</option><option value="2">Muballiga 2nd Year</option></select><small>Legacy records without a saved year must be checked against previous academic records before saving. Never guess.</small></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Parent / Guardian Name *<input id="studentGuardian" required minlength="2" maxlength="120"></label>
 <label>Date of Birth * (needed for secure Student Login)<input id="studentDob" type="date" required></label>
 <label>Parent / Student Contact Number *<input id="studentPhone" type="tel" required minlength="7" maxlength="25" pattern="[0-9+() .-]{7,25}"></label>
 <label>Contact Email (not automatically approved for login)<input id="studentEmail" type="email" maxlength="200" placeholder="guardian@example.com"></label>
@@ -1062,9 +1062,12 @@ const batchOptions=Array.from({length:30},(_,i)=>'Batch '+(i+1));
 for(const label of batchOptions)$('studentBatch').add(new Option(label,label));
 function updateStudentBatchVisibility(){
  const selected=$('studentCourse').value,original=$('studentId').dataset.course||'';
- const year=Number($('studentId').dataset.year||1);
+ const year=Number($('studentId').dataset.year||0);
+ const verifyLegacy=selected==='muballigha'&&original==='muballigha'&&year!==1&&year!==2;
+ $('legacyStudyYearWrap').hidden=!verifyLegacy;
+ $('legacyStudyYear').required=verifyLegacy;
  $('studentAcademicStage').value=selected==='muballigha'?
-  'Muballiga · '+(original==='muballigha'&&year===2?'2nd Year':'1st Year'):
+  (verifyLegacy?'⚠ Legacy student: verify Year 1 or 2 below':'Muballiga · '+(original==='muballigha'&&year===2?'2nd Year':'1st Year')):
   selected==='alima'?'Aalima · 3rd Year (private approval only)':'Not part of the Muballiga pathway';
  const maktab=isMaktabCourse($('studentCourse').value);
  $('studentBatchWrap').classList.toggle('hidden',!maktab);
@@ -1099,8 +1102,12 @@ for(const kind of ['teacher','student']){
     if(data.course==='alima'&&prior.course!=='alima')
      throw Error('No direct Aalima admission. A completed Muballiga Year 2 student must use the separate fee-verified Aalima enrollment control in their card.');
     data.courseYear=data.course==='muballigha'
-      ?prior.course==='muballigha'&&courseYearOf(prior)===2?2:1
-      :data.course==='alima'?3:0;
+     ?prior.course==='muballigha'
+       ?([1,2].includes(Number(prior.courseYear))?Number(prior.courseYear):Number($('legacyStudyYear').value))
+       :1
+     :data.course==='alima'?3:0;
+    if(data.course==='muballigha'&&![1,2].includes(data.courseYear))
+     throw Error('Verify the legacy student year (1st or 2nd) against actual academic records before saving.');
     data.photoData=photoToSave('student');
     // Transactionally issue an official ALIA00001-style ID once only.
     // Keep the Firestore document ID and confidential exam access UUID unchanged.
@@ -1167,7 +1174,7 @@ function openStudentEdit(id,data,proposed=null){
  $('studentId').value=id;
  for(const field of schemas.students)$(('student'+field)).value=String(data[field.toLowerCase()]??'');
  $('studentOfficialId').value=data.studentCode||'';
- $('studentId').dataset.course=data.course||'';$('studentId').dataset.year=String(courseYearOf(data));
+ $('studentId').dataset.course=data.course||'';$('studentId').dataset.year=[1,2].includes(Number(data.courseYear))?String(data.courseYear):'0';
  updateStudentBatchVisibility();photoLoad('student',data.photoData);
  if(proposed){
   const editable={Name:'studentName',Guardian:'studentGuardian',Dob:'studentDob',Phone:'studentPhone',Email:'studentEmail',Address:'studentAddress',Course:'studentCourse'};
@@ -1193,7 +1200,7 @@ $('recheckStudentPromotions').onclick=async()=>{
  try{
   const all=await getDocs(collection(db,'students'));let promoted=0,pending=0,errors=0;
   for(const s of all.docs){
-   if(s.data().state!=='Completed'||s.data().course!=='muballigha'||courseYearOf(s.data())!==1)continue;
+   if(s.data().state!=='Completed'||s.data().course!=='muballigha'||Number(s.data().courseYear)!==1)continue;
    try{const result=await maybePromoteStudent(db,s.id);if(result.promoted)promoted++;else pending++}
    catch(e){errors++;console.warn('Promotion failed for student',s.id,e)}
   }
@@ -1267,7 +1274,7 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
   el.append(manage);
   if(data.course==='muballigha'){
    const progress=document.createElement('p');progress.className='section-note';
-   progress.textContent='📚 Muballiga · '+(courseYearOf(data)===2?'2nd Year':'1st Year')+' · '+String(data.state||'');
+   progress.textContent='📚 Muballiga · '+(![1,2].includes(Number(data.courseYear))?'⚠ Legacy year needs Admin verification':Number(data.courseYear)===2?'2nd Year':'1st Year')+' · '+String(data.state||'');
    el.append(progress);
   }
   if(data.course==='alima'&&data.aalimaAdmissionFee){
