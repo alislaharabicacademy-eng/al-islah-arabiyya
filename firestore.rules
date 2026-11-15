@@ -32,6 +32,16 @@ service cloud.firestore {
       allow read, write: if isAdmin() && docId == 'current';
     }
 
+    // Visitors can fetch only the public careers document. Drafts are admin-only.
+    match /hiringBoard/{docId} {
+      allow get: if docId == 'current' || isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin() && docId == 'current';
+    }
+    match /hiringBoardAdmin/{docId} {
+      allow read, write: if isAdmin() && docId == 'current';
+    }
+
     match /siteSettings/{settingId} {
       allow get: if settingId == 'public' || isAdmin();
       allow list: if isAdmin();
