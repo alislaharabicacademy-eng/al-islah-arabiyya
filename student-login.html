@@ -323,7 +323,7 @@ async function loadPrivateDashboard(user,token){
    if(token!==loadingToken)return;
    const card=document.createElement('article');card.className='student-card';
    const title=document.createElement('h4');title.textContent=access.studentName||'Student';
-   const stage=access.course==='muballigha'?' · Year: '+(Number(access.courseYear)===2?'2nd':'1st'):
+   const stage=access.course==='muballigha'?' · Year: '+(Number(access.courseYear)===2?'2nd':Number(access.courseYear)===1?'1st':'Admin verification pending'):
     access.course==='alima'?' · Year: 3rd':'';
    const details=document.createElement('p');details.textContent='Official Student ID: '+(access.studentCode||'Not assigned yet')+'  ·  Class: '+className+stage+(access.batch?' · Batch: '+access.batch:'')+' · Status: '+(access.state||'Active');
    const label=document.createElement('span');label.className='tag';label.textContent='✓ Verified Student Account';
