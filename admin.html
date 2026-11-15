@@ -1265,8 +1265,57 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
   manage.textContent='🔐 Student Account Login';
   manage.onclick=()=>studentAccounts.open({id:d.id,...data});
   el.append(manage);
+  if(data.course==='muballigha'){
+   const progress=document.createElement('p');progress.className='section-note';
+   progress.textContent='📚 Muballiga · '+(courseYearOf(data)===2?'2nd Year':'1st Year')+' · '+String(data.state||'');
+   el.append(progress);
+  }
+  if(data.course==='alima'&&data.aalimaAdmissionFee){
+   const paid=document.createElement('p');paid.className='section-note';
+   paid.textContent='✅ Aalima Year 3 separate admission fee verified: ₹'+Number(data.aalimaAdmissionFee.amount||0).toLocaleString('en-IN')+
+    ' · '+String(data.aalimaAdmissionFee.paidOn||'')+' · Reference: '+String(data.aalimaAdmissionFee.reference||'');
+   el.append(paid);
+  }
+  if(data.course==='muballigha'&&courseYearOf(data)===2&&data.state==='Completed'){
+   const wrapper=document.createElement('details');wrapper.className='record';
+   const head=document.createElement('summary');head.textContent='🎓 Optional Aalima 3rd Year · Verify separate admission fee & enroll';wrapper.append(head);
+   const note=document.createElement('p');note.className='section-note';
+   note.textContent='Students may instead finish after Muballiga Year 2 and receive Muballiga Sanad separately. Enrolling for Aalima is optional and requires a published/passed Year 2 Final/Annual exam plus actual admission-fee payment.';
+   wrapper.append(note);
+   const form=document.createElement('form');form.style.cssText='display:grid;gap:12px;margin-top:14px';
+   form.innerHTML='<label>Aalima admission fee received (₹) *<input name="amount" type="number" min="0.01" max="10000000" step="0.01" required></label>'+
+    '<label>Actual payment date *<input name="paidOn" type="date" required></label>'+
+    '<label>Payment / receipt reference *<input name="reference" type="text" minlength="3" maxlength="120" required></label>'+
+    '<label><input name="verified" type="checkbox" required style="width:auto"> I confirm the student chose Aalima and that the separate admission fee has been received and verified.</label>'+
+    '<button type="submit">✓ Verify Payment & Enroll in Aalima 3rd Year</button><p class="section-note" role="status"></p>';
+   const submit=form.querySelector('button'),message=form.querySelector('p');
+   form.onsubmit=async event=>{
+    event.preventDefault();if(!active||!form.reportValidity())return;
+    if(!confirm('Confirm voluntary Aalima continuation and verified separate admission-fee payment? This will keep the permanent ALIA Student ID and all existing results.'))return;
+    submit.disabled=true;message.textContent='Checking payment and completed Muballiga Year 2 exam…';
+    try{
+     const amount=Number(form.elements.amount.value);
+     const configured=await getDoc(doc(db,'courses','alima'));
+     const fee=Number(configured.exists()?configured.data().admissionFee:0)||0;
+     if(fee>0&&amount<fee&&!confirm('Aalima admission fee is ₹'+fee+' in Course Management, but ₹'+amount+' has been received. Continue only if the Academy authorised this concession.')){
+      message.textContent='Payment verification cancelled.';return;
+     }
+     const approved=await enrollAalimaYear3(db,d.id,{
+      amount,paidOn:form.elements.paidOn.value,
+      reference:form.elements.reference.value.trim(),verified:form.elements.verified.checked
+     });
+     const revised=(await getDoc(doc(db,'students',d.id))).data();
+     await studentAccounts.syncStudent(d.id,revised);
+     await syncAllTeacherRosters();
+     message.textContent='✓ Student enrolled in Aalima Year 3. Fee verified and recorded: '+approved.reference;
+     await renderRecords('students');
+    }catch(error){message.textContent='Enrollment not completed: '+error.message}
+    finally{submit.disabled=false}
+   };
+   wrapper.append(form);el.append(wrapper);
+  }
   const history=Array.isArray(data.promotionHistory)?data.promotionHistory:[];
-  if(history.length){const latest=history[history.length-1];const badge=document.createElement('p');badge.className='section-note';badge.textContent='🎓 Last Promotion: '+latest.fromCourse+' → '+latest.toCourse+' · '+(latest.completedAcademicYear||'Academic year not recorded');el.append(badge)}
+  if(history.length){const latest=history[history.length-1];const badge=document.createElement('p');badge.className='section-note';badge.textContent='🎓 Last Promotion: '+latest.fromCourse+(latest.fromYear?' Year '+latest.fromYear:'')+' → '+latest.toCourse+(latest.toYear?' Year '+latest.toYear:'')+' · '+(latest.completedAcademicYear||'Academic year not recorded');el.append(badge)}
   const copyOfficial=document.createElement('button');copyOfficial.type='button';copyOfficial.className='secondary';
   copyOfficial.textContent='📋 Copy Official ALIA Student ID';copyOfficial.disabled=!validOfficialStudentId(data.studentCode);
   copyOfficial.onclick=async()=>{
