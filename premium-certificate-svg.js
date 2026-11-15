@@ -245,19 +245,30 @@ export function sampleCertificate(type='exam'){
  return base;
 }
 let libraries=null;
+const scriptLoads=new Map();
 function include(src){
- return new Promise((resolve,reject)=>{let s=[...document.scripts].find(x=>x.src===src);if(s?.dataset.ready==='yes')return resolve();
-  if(!s){s=document.createElement('script');s.src=src;s.async=true;document.head.append(s)}
-  s.addEventListener('load',()=>{s.dataset.ready='yes';resolve()},{once:true});
-  s.addEventListener('error',()=>reject(Error('Cannot load vector PDF library')),{once:true});
- });
+ const url=new URL(src,document.baseURI).href;
+ if(scriptLoads.has(url))return scriptLoads.get(url);
+ const promise=new Promise((resolve,reject)=>{
+  const prior=[...document.scripts].find(x=>x.src===url);
+  if(prior?.dataset.ready==='yes')return resolve();
+  const script=prior||document.createElement('script');
+  script.src=url;script.async=true;
+  script.addEventListener('load',()=>{script.dataset.ready='yes';resolve()},{once:true});
+  script.addEventListener('error',()=>reject(Error('PDF library not available: '+src)),{once:true});
+  if(!prior)document.head.append(script);
+ }).catch(e=>{scriptLoads.delete(url);throw e});
+ scriptLoads.set(url,promise);return promise;
 }
 async function library(){
- if(window.jspdf?.jsPDF?.API?.svg)return window.jspdf.jsPDF;
+ if(typeof window.jspdf?.jsPDF?.API?.svg==='function')return window.jspdf.jsPDF;
  if(!libraries)libraries=(async()=>{
-  if(!window.jspdf?.jsPDF)await include('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js');
-  await include('https://cdn.jsdelivr.net/npm/svg2pdf.js@2.8.1/dist/svg2pdf.umd.min.js');
-  if(typeof window.jspdf?.jsPDF?.API?.svg!=='function')throw Error('Vector PDF engine not available');
+  // Root cause confirmed in real Chrome: public CDN returned 404/ERR_BLOCKED_BY_ORB.
+  // Host pinned open-source libraries WITH the Academy website.
+  if(!window.jspdf?.jsPDF)await include('./vendor/jspdf.umd.min.js');
+  await include('./vendor/svg2pdf.umd.min.js');
+  if(typeof window.jspdf?.jsPDF?.API?.svg!=='function')
+   throw Error('Vector PDF engine did not initialize. Use Print / Save as PDF in Chrome.');
   return window.jspdf.jsPDF;
  })().catch(e=>{libraries=null;throw e});
  return libraries;
