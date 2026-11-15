@@ -3,6 +3,7 @@ import{collection,getDocs,getDoc,doc,setDoc,writeBatch,arrayUnion,arrayRemove}fr
 import{examStudentLookupKey}from'./exam-lookup.js';
 import{createExamResultPdf,createExamCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
 import{groupedPublishedResults,publishedResultFilterOptions,createAcademyPublishedRegisterPdf}from'./exam-batch-report.js';
+import{openPremiumPrintWindow}from'./premium-certificate-svg.js';
 import{maybePromoteStudent}from'./student-promotion.js';
 import{initHomepageWinners}from'./homepage-winners-admin.js';
 import{compressProfilePhoto}from'./profile-photo.js';
@@ -302,6 +303,7 @@ export function initExamAdmin({db,auth,onPromotion}){
     }));
     actions.append(button('📕 Result PDF',async()=>downloadExamBlob(await createExamResultPdf(record),'Exam_Result_'+safePdfName(record.studentName)+'.pdf')));
     actions.append(button('🏅 Certificate PDF',async()=>downloadExamBlob(await createExamCertificatePdf(record),'Exam_Certificate_'+safePdfName(record.studentName)+'.pdf'),false));
+    actions.append(button('🖨 Print Certificate to PDF',()=>openPremiumPrintWindow(record.passed===true?(Number(record.percent||0)>=80?'exam':'exam-achievement'):'exam-participation',record)));
     actions.append(button('🔒 Unpublish',()=>revoke(record)));
    }else{
     actions.append(button('🌐 Review & Publish',()=>{edit(record);status('Check marks, then click Publish Result.')} ,false));
