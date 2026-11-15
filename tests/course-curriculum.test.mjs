@@ -44,6 +44,15 @@ test('Aalima award description requires prior Muballiga and completed 3rd year',
  assert.equal(curriculum.description('alima',s),s);
 });
 
+test('Muballiga description stays short even if stored records contain previous long copy',()=>{
+ const previous='Two-year programme for continued Islamic study. New admissions are accepted for Muballiga 1st Year only. Students who successfully complete both the 1st and 2nd years of the Muballiga course may finish their studies and receive the Muballiga Sanad. Students who wish to continue may apply for Aalima 3rd Year separately, after paying the additional Aalima admission fee and receiving Academy approval.';
+ const text=curriculum.description('muballigha',previous);
+ assert.match(text,/Two-year program for continued Islamic Studies/);
+ assert.match(text,/Muballiga Sanad/);
+ assert.doesNotMatch(text,/Aalima|admission fee/);
+ assert.equal(text,curriculum.description('muballigha',text));
+});
+
 test('Unrelated course descriptions are unchanged',()=>{
  assert.equal(curriculum.description('muallama','Muallama course'),'Muallama course');
 });
