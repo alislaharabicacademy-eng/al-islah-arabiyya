@@ -219,12 +219,12 @@ function resultPage(r,subjects,page,totalPages){
  const tableY=762;
  s+=`<rect x="69" y="${tableY}" width="863" height="54" rx="10" fill="url(#purple)" stroke="#D6A34D" stroke-width="4"/>`;
  s+=T(121,tableY+37,'S.NO.',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
- s+=T(274,tableY+41,'SUBJECT',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
- s+=T(790,tableY+41,'MARKS',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
+ s+=T(274,tableY+37,'SUBJECT',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
+ s+=T(790,tableY+37,'MARKS',24,'font-family="Georgia,serif" fill="#FBE4A2" font-weight="bold"');
  rows.forEach((item,i)=>{
   const y=tableY+54+i*42;
   s+=`<rect x="70" y="${y}" width="862" height="42" fill="${i%2?'#FFF8ED':'#FFFFFA'}" stroke="#D6B577" stroke-width="1.6"/>`;
-  s+=T(151,y+29,page*7+i+1,23,'font-family="Georgia,serif" text-anchor="middle" fill="#182C4A"');
+  s+=T(151,y+29,page*8+i+1,23,'font-family="Georgia,serif" text-anchor="middle" fill="#182C4A"');
   s+=T(270,y+29,String(item.name||'Subject'),fitFont(item.name||'Subject',25,470,10),'font-family="Georgia,serif" fill="#182C4A"');
   s+=T(823,y+29,(item.score??0)+' / '+(item.max??0),24,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#182C4A"');
  });
@@ -241,7 +241,7 @@ function resultPage(r,subjects,page,totalPages){
  if(page===totalPages-1){
   s+=stamp(w/2,1318,48);
   const signer=r.principal&&typeof r.principal==='object'?r.principal:{};
-  const signed=typeof signer.signatureData==='string'&&/^data:image\\/png;base64,[A-Za-z0-9+/=]+$/.test(signer.signatureData);
+  const signed=typeof signer.signatureData==='string'&&/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signer.signatureData);
   if(signed&&!r.previewMode)s+='<image x="710" y="1262" width="204" height="49" preserveAspectRatio="xMidYMid meet" href="'+E(signer.signatureData)+'"/>';
   s+='<path d="M700 1317H925" stroke="#1C2D50" stroke-width="2.5"/>';
   s+=T(812,1343,signer.name||'AUTHORIZED SIGNATORY',fitFont(signer.name||'AUTHORIZED SIGNATORY',17,230,10),'font-family="Georgia,serif" text-anchor="middle" fill="#1B2A50"');
