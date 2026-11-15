@@ -209,6 +209,515 @@ service cloud.firestore {
       );
     }
 
+    // One-time existing-student profile update links, always issued by Admin.
+    // The matching verified Google email may GET only its own invitation.
+    // Parent/student submissions never edit students/ or studentAccess/.
+    match /studentUpdateInvites/{token} {
+      allow get: if isAdmin() || (
+        token.matches('^[a-f0-9]{64}
+      allow get: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+        );
+
+      allow list, create, delete: if isAdmin();
+
+      allow update: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+          && resource.data.used == false
+          && resource.data.revoked == false
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedAt'])
+          && request.resource.data.used == true
+          && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+        );
+    }
+
+    match /teacherSubmissions/{token} {
+      allow read, update, delete: if isAdmin();
+
+      allow create: if token.matches('^[a-f0-9]{64}$')
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/teacherInvites/$(token))
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.email == request.auth.token.email
+        && request.resource.data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+        && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+        && request.resource.data.keys().hasOnly([
+          'fullName', 'dob', 'phone', 'email', 'address', 'academicEducation',
+          'academicInstitution', 'academicYear', 'madrasaName',
+          'madrasaLocation', 'sanad', 'sanadInstitution', 'sanadYear',
+          'experience', 'previousInstitution', 'subjects', 'languages',
+          'notes', 'photoPath', 'photoData', 'academicPath', 'sanadPath', 'submittedAt'
+        ])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 120
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() > 0
+        && request.resource.data.phone.size() <= 25
+        && request.resource.data.address is string
+        && request.resource.data.address.size() > 0
+        && request.resource.data.address.size() <= 700
+        && request.resource.data.madrasaName is string
+        && request.resource.data.madrasaName.size() > 0
+        && request.resource.data.madrasaName.size() <= 200
+        && request.resource.data.sanad is string
+        && request.resource.data.sanad.size() > 0
+        && request.resource.data.sanad.size() <= 200
+        && (
+          !('photoPath' in request.resource.data)
+          || request.resource.data.photoPath.matches(
+            '^teacher-registration/' + token + '/photo\\.(jpg|png)$'
+          )
+        )
+        && (
+          !('photoData' in request.resource.data)
+          || (
+            request.resource.data.photoData is string
+            && request.resource.data.photoData.size() <= 105000
+            && request.resource.data.photoData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+          )
+        )
+        && (
+          !('academicPath' in request.resource.data)
+          || request.resource.data.academicPath.matches(
+            '^teacher-registration/' + token + '/academic\\.(jpg|png|pdf)$'
+          )
+        )
+        && (
+          !('sanadPath' in request.resource.data)
+          || request.resource.data.sanadPath.matches(
+            '^teacher-registration/' + token + '/sanadFile\\.(jpg|png|pdf)$'
+          )
+        );
+    }
+  }
+}
+)
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && resource.data.email == request.auth.token.email
+      );
+      allow list, create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        token.matches('^[a-f0-9]{64}
+      allow get: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+        );
+
+      allow list, create, delete: if isAdmin();
+
+      allow update: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+          && resource.data.used == false
+          && resource.data.revoked == false
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedAt'])
+          && request.resource.data.used == true
+          && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+        );
+    }
+
+    match /teacherSubmissions/{token} {
+      allow read, update, delete: if isAdmin();
+
+      allow create: if token.matches('^[a-f0-9]{64}$')
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/teacherInvites/$(token))
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.email == request.auth.token.email
+        && request.resource.data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+        && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+        && request.resource.data.keys().hasOnly([
+          'fullName', 'dob', 'phone', 'email', 'address', 'academicEducation',
+          'academicInstitution', 'academicYear', 'madrasaName',
+          'madrasaLocation', 'sanad', 'sanadInstitution', 'sanadYear',
+          'experience', 'previousInstitution', 'subjects', 'languages',
+          'notes', 'photoPath', 'photoData', 'academicPath', 'sanadPath', 'submittedAt'
+        ])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 120
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() > 0
+        && request.resource.data.phone.size() <= 25
+        && request.resource.data.address is string
+        && request.resource.data.address.size() > 0
+        && request.resource.data.address.size() <= 700
+        && request.resource.data.madrasaName is string
+        && request.resource.data.madrasaName.size() > 0
+        && request.resource.data.madrasaName.size() <= 200
+        && request.resource.data.sanad is string
+        && request.resource.data.sanad.size() > 0
+        && request.resource.data.sanad.size() <= 200
+        && (
+          !('photoPath' in request.resource.data)
+          || request.resource.data.photoPath.matches(
+            '^teacher-registration/' + token + '/photo\\.(jpg|png)$'
+          )
+        )
+        && (
+          !('photoData' in request.resource.data)
+          || (
+            request.resource.data.photoData is string
+            && request.resource.data.photoData.size() <= 105000
+            && request.resource.data.photoData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+          )
+        )
+        && (
+          !('academicPath' in request.resource.data)
+          || request.resource.data.academicPath.matches(
+            '^teacher-registration/' + token + '/academic\\.(jpg|png|pdf)$'
+          )
+        )
+        && (
+          !('sanadPath' in request.resource.data)
+          || request.resource.data.sanadPath.matches(
+            '^teacher-registration/' + token + '/sanadFile\\.(jpg|png|pdf)$'
+          )
+        );
+    }
+  }
+}
+)
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && resource.data.email == request.auth.token.email
+        && resource.data.used == false
+        && resource.data.revoked == false
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedAt'])
+        && request.resource.data.used == true
+        && request.resource.data.usedAt == request.time
+        && existsAfter(/databases/$(database)/documents/studentUpdateSubmissions/$(token))
+      );
+    }
+
+    match /studentUpdateSubmissions/{token} {
+      allow read, update, delete: if isAdmin();
+      allow create: if isAdmin() || (
+        token.matches('^[a-f0-9]{64}
+      allow get: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+        );
+
+      allow list, create, delete: if isAdmin();
+
+      allow update: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+          && resource.data.used == false
+          && resource.data.revoked == false
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedAt'])
+          && request.resource.data.used == true
+          && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+        );
+    }
+
+    match /teacherSubmissions/{token} {
+      allow read, update, delete: if isAdmin();
+
+      allow create: if token.matches('^[a-f0-9]{64}$')
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/teacherInvites/$(token))
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.email == request.auth.token.email
+        && request.resource.data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+        && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+        && request.resource.data.keys().hasOnly([
+          'fullName', 'dob', 'phone', 'email', 'address', 'academicEducation',
+          'academicInstitution', 'academicYear', 'madrasaName',
+          'madrasaLocation', 'sanad', 'sanadInstitution', 'sanadYear',
+          'experience', 'previousInstitution', 'subjects', 'languages',
+          'notes', 'photoPath', 'photoData', 'academicPath', 'sanadPath', 'submittedAt'
+        ])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 120
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() > 0
+        && request.resource.data.phone.size() <= 25
+        && request.resource.data.address is string
+        && request.resource.data.address.size() > 0
+        && request.resource.data.address.size() <= 700
+        && request.resource.data.madrasaName is string
+        && request.resource.data.madrasaName.size() > 0
+        && request.resource.data.madrasaName.size() <= 200
+        && request.resource.data.sanad is string
+        && request.resource.data.sanad.size() > 0
+        && request.resource.data.sanad.size() <= 200
+        && (
+          !('photoPath' in request.resource.data)
+          || request.resource.data.photoPath.matches(
+            '^teacher-registration/' + token + '/photo\\.(jpg|png)$'
+          )
+        )
+        && (
+          !('photoData' in request.resource.data)
+          || (
+            request.resource.data.photoData is string
+            && request.resource.data.photoData.size() <= 105000
+            && request.resource.data.photoData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+          )
+        )
+        && (
+          !('academicPath' in request.resource.data)
+          || request.resource.data.academicPath.matches(
+            '^teacher-registration/' + token + '/academic\\.(jpg|png|pdf)$'
+          )
+        )
+        && (
+          !('sanadPath' in request.resource.data)
+          || request.resource.data.sanadPath.matches(
+            '^teacher-registration/' + token + '/sanadFile\\.(jpg|png|pdf)$'
+          )
+        );
+    }
+  }
+}
+)
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/studentUpdateInvites/$(token))
+        && get(/databases/$(database)/documents/studentUpdateInvites/$(token)).data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/studentUpdateInvites/$(token)).data.revoked == false
+        && get(/databases/$(database)/documents/studentUpdateInvites/$(token)).data.used == false
+        && getAfter(/databases/$(database)/documents/studentUpdateInvites/$(token)).data.used == true
+        && request.resource.data.keys().hasAll([
+          'name','dob','guardian','phone','course','email','address','notes','submittedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'name','dob','guardian','phone','course','email','address','notes','submittedAt'
+        ])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.guardian is string
+        && request.resource.data.guardian.size() >= 2
+        && request.resource.data.guardian.size() <= 120
+        && request.resource.data.dob is string
+        && request.resource.data.dob.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}
+      allow get: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+        );
+
+      allow list, create, delete: if isAdmin();
+
+      allow update: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+          && resource.data.used == false
+          && resource.data.revoked == false
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedAt'])
+          && request.resource.data.used == true
+          && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+        );
+    }
+
+    match /teacherSubmissions/{token} {
+      allow read, update, delete: if isAdmin();
+
+      allow create: if token.matches('^[a-f0-9]{64}$')
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/teacherInvites/$(token))
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.email == request.auth.token.email
+        && request.resource.data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+        && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+        && request.resource.data.keys().hasOnly([
+          'fullName', 'dob', 'phone', 'email', 'address', 'academicEducation',
+          'academicInstitution', 'academicYear', 'madrasaName',
+          'madrasaLocation', 'sanad', 'sanadInstitution', 'sanadYear',
+          'experience', 'previousInstitution', 'subjects', 'languages',
+          'notes', 'photoPath', 'photoData', 'academicPath', 'sanadPath', 'submittedAt'
+        ])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 120
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() > 0
+        && request.resource.data.phone.size() <= 25
+        && request.resource.data.address is string
+        && request.resource.data.address.size() > 0
+        && request.resource.data.address.size() <= 700
+        && request.resource.data.madrasaName is string
+        && request.resource.data.madrasaName.size() > 0
+        && request.resource.data.madrasaName.size() <= 200
+        && request.resource.data.sanad is string
+        && request.resource.data.sanad.size() > 0
+        && request.resource.data.sanad.size() <= 200
+        && (
+          !('photoPath' in request.resource.data)
+          || request.resource.data.photoPath.matches(
+            '^teacher-registration/' + token + '/photo\\.(jpg|png)$'
+          )
+        )
+        && (
+          !('photoData' in request.resource.data)
+          || (
+            request.resource.data.photoData is string
+            && request.resource.data.photoData.size() <= 105000
+            && request.resource.data.photoData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+          )
+        )
+        && (
+          !('academicPath' in request.resource.data)
+          || request.resource.data.academicPath.matches(
+            '^teacher-registration/' + token + '/academic\\.(jpg|png|pdf)$'
+          )
+        )
+        && (
+          !('sanadPath' in request.resource.data)
+          || request.resource.data.sanadPath.matches(
+            '^teacher-registration/' + token + '/sanadFile\\.(jpg|png|pdf)$'
+          )
+        );
+    }
+  }
+}
+)
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() >= 7
+        && request.resource.data.phone.size() <= 25
+        && request.resource.data.course is string
+        && request.resource.data.course.matches('^[a-z0-9]+(-[a-z0-9]+)*
+      allow get: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+        );
+
+      allow list, create, delete: if isAdmin();
+
+      allow update: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+          && resource.data.used == false
+          && resource.data.revoked == false
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedAt'])
+          && request.resource.data.used == true
+          && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+        );
+    }
+
+    match /teacherSubmissions/{token} {
+      allow read, update, delete: if isAdmin();
+
+      allow create: if token.matches('^[a-f0-9]{64}$')
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/teacherInvites/$(token))
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.email == request.auth.token.email
+        && request.resource.data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+        && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+        && request.resource.data.keys().hasOnly([
+          'fullName', 'dob', 'phone', 'email', 'address', 'academicEducation',
+          'academicInstitution', 'academicYear', 'madrasaName',
+          'madrasaLocation', 'sanad', 'sanadInstitution', 'sanadYear',
+          'experience', 'previousInstitution', 'subjects', 'languages',
+          'notes', 'photoPath', 'photoData', 'academicPath', 'sanadPath', 'submittedAt'
+        ])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 120
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() > 0
+        && request.resource.data.phone.size() <= 25
+        && request.resource.data.address is string
+        && request.resource.data.address.size() > 0
+        && request.resource.data.address.size() <= 700
+        && request.resource.data.madrasaName is string
+        && request.resource.data.madrasaName.size() > 0
+        && request.resource.data.madrasaName.size() <= 200
+        && request.resource.data.sanad is string
+        && request.resource.data.sanad.size() > 0
+        && request.resource.data.sanad.size() <= 200
+        && (
+          !('photoPath' in request.resource.data)
+          || request.resource.data.photoPath.matches(
+            '^teacher-registration/' + token + '/photo\\.(jpg|png)$'
+          )
+        )
+        && (
+          !('photoData' in request.resource.data)
+          || (
+            request.resource.data.photoData is string
+            && request.resource.data.photoData.size() <= 105000
+            && request.resource.data.photoData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+          )
+        )
+        && (
+          !('academicPath' in request.resource.data)
+          || request.resource.data.academicPath.matches(
+            '^teacher-registration/' + token + '/academic\\.(jpg|png|pdf)$'
+          )
+        )
+        && (
+          !('sanadPath' in request.resource.data)
+          || request.resource.data.sanadPath.matches(
+            '^teacher-registration/' + token + '/sanadFile\\.(jpg|png|pdf)$'
+          )
+        );
+    }
+  }
+}
+)
+        && request.resource.data.course.size() <= 80
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 200
+        && request.resource.data.address is string
+        && request.resource.data.address.size() >= 5
+        && request.resource.data.address.size() <= 700
+        && request.resource.data.notes is string
+        && request.resource.data.notes.size() <= 1000
+        && request.resource.data.submittedAt is timestamp
+        && request.resource.data.submittedAt == request.time
+      );
+    }
+
     match /teacherInvites/{token} {
       allow get: if isAdmin()
         || (
