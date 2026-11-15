@@ -67,6 +67,30 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Read-only administrator previews of private student academic dashboards.
+    // Every individual preview is recorded before the profile is opened.
+    // Records are append-only, and the real signed-in admin is preserved.
+    match /adminStudentPreviews/{eventId} {
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'studentId', 'actorUid', 'actorEmail', 'createdAt', 'purpose'
+        ])
+        && request.resource.data.keys().hasAll([
+          'studentId', 'actorUid', 'actorEmail', 'createdAt', 'purpose'
+        ])
+        && request.resource.data.studentId is string
+        && request.resource.data.studentId.size() > 0
+        && request.resource.data.studentId.size() <= 160
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.actorEmail == request.auth.token.email
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.purpose == 'student_dashboard_preview'
+        && exists(/databases/$(database)/documents/students/$(request.resource.data.studentId));
+      // Owner can inspect the permanent audit trail in Firebase.
+      allow get, list: if isPrimaryAdmin();
+      allow update, delete: if false;
+    }
+
     // Published website appearance and principal signatory profile.
     // Public read is intentional because official certificate PDFs can be downloaded
     // through unguessable published result links. Only verified Academy admin writes.
