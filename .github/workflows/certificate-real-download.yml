@@ -1,0 +1,48 @@
+name: Download Real Certificates in Chrome
+on:
+  pull_request:
+    paths:
+      - 'premium-certificate-svg.js'
+      - 'exam-documents.js'
+      - 'exam-admin.js'
+      - 'exam-batch-report.js'
+      - 'certificate-studio.html'
+      - 'tests/certificate-browser-download.mjs'
+      - '.github/workflows/certificate-real-download.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test-real-certificate-download:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright browser controller
+        run: npm install --no-save --ignore-scripts playwright@1.56.1
+      - name: Start local Academy website
+        run: |
+          python3 -m http.server 8765 >/tmp/alia-web.log 2>&1 &
+          sleep 3
+          curl -fsS http://127.0.0.1:8765/certificate-studio.html >/dev/null
+      - name: Download five PDFs from actual Certificate Studio in Chrome
+        env:
+          CHROME: /usr/bin/google-chrome
+        run: node tests/certificate-browser-download.mjs
+      - name: PDF structure and searchable-text checks
+        run: |
+          set -euo pipefail
+          for i in exam winner participation event results; do
+            pdfinfo "certificate-download-proof/$i.pdf" | grep 'Pages:'
+            pdftotext "certificate-download-proof/$i.pdf" "certificate-download-proof/$i.txt"
+            test -s "certificate-download-proof/$i.txt"
+          done
+      - name: Upload verified test PDFs and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-real-browser-certificate-pdfs
+          path: certificate-download-proof/
+          retention-days: 7
