@@ -124,17 +124,38 @@ function banner(w,y,title,small=false){
  ${diamond(w/2,y+116,5)}
  </g>`;
 }
+// Estimate ink width conservatively: Tamil/Arabic letters cannot use Latin character counts.
+function textUnits(value){
+ return [...String(value??'')].reduce((n,ch)=>n+(/[\u0600-\u06FF\u0B80-\u0BFF\u2E80-\u9FFF]/u.test(ch)?1:/[MW@#%]/.test(ch)?.9:.58),0);
+}
+function fitFont(value,maxSize,maxWidth,minSize=9){
+ return Math.max(minSize,Math.min(maxSize,maxWidth/Math.max(1,textUnits(value))));
+}
 function studentName(w,y,name,fontSize=79){
- const n=String(name||'Student Name').slice(0,100),size=Math.max(20,Math.min(fontSize,1000/(Math.max(1,[...n].length)*.56)));
+ const n=String(name||'Student Name').trim(),size=fitFont(n,fontSize,Math.min(1030,w*.77),9);
  return T(w/2,y,n,size,'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" font-style="italic" fill="#07503D"')+
  `<path d="M${w*.25} ${y+21}H${w*.75}" fill="none" stroke="#D5A44B" stroke-width="2"/>${diamond(w/2,y+21,7)}`;
 }
+// Up to three readable rows in a metadata card. Never silently truncate IDs or events.
+function chipLines(value){
+ let remaining=String(value??'—').replace(/\s+/g,' ').trim()||'—';
+ const count=Math.min(3,Math.max(1,Math.ceil(textUnits(remaining)/21)));
+ const rows=[];
+ for(let i=0;i<count-1;i++){
+  const target=Math.ceil(remaining.length/(count-i));
+  const space=remaining.lastIndexOf(' ',target+6);
+  const cut=space>=target-7?space:target;
+  rows.push(remaining.slice(0,cut).trim());remaining=remaining.slice(cut).trim();
+ }
+ rows.push(remaining);return rows;
+}
 function chip(x,y,w,label,value){
- const txt=String(value??'-').slice(0,64),size=Math.max(11,Math.min(27,(w-20)/(Math.max(1,[...txt].length)*.55)));
+ const lines=chipLines(value),size=fitFont(lines.reduce((a,b)=>textUnits(a)>textUnits(b)?a:b,''),lines.length===1?27:20,w-26,8);
+ const baselines=lines.length===1?[80]:lines.length===2?[69,90]:[63,79,95];
  return `<rect x="${x}" y="${y}" width="${w}" height="102" rx="17" fill="#FFFCF6" stroke="#CFA04B" stroke-width="4"/>
  <path d="M${x+3} ${y+16}Q${x+3} ${y+3} ${x+18} ${y+3}H${x+w-18}Q${x+w-3} ${y+3} ${x+w-3} ${y+16}V${y+50}H${x+3}Z" fill="url(#green)"/>
  ${T(x+w/2,y+36,label,21,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#FFE2A0"')}
- ${T(x+w/2,y+80,txt,size,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#0B2649"')}`;
+ ${lines.map((line,i)=>T(x+w/2,y+baselines[i],line,size,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#0B2649"')).join('')}`;
 }
 function stamp(cx,cy,size=82){
  return `<circle cx="${cx}" cy="${cy}" r="${size+11}" fill="#3F174C" stroke="#DDB45D" stroke-width="10"/>
@@ -166,24 +187,25 @@ function certificate(kind,r){
  s+=T(w/2,452,'This certificate is proudly presented to',30,'text-anchor="middle" font-family="Georgia,serif" font-style="italic" fill="#1F3152"');
  s+=studentName(w,551,r.studentName);
  s+=T(w/2,624,desc,29,'text-anchor="middle" font-family="Georgia,serif" font-style="italic" fill="#222B50"');
- s+=T(w/2,677,event||'Academy Programme',Math.max(18,Math.min(35,1110/(Math.max(1,[...String(event||'Academy Programme')].length)*.56))),'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" fill="#4F1764"');
+ s+=T(w/2,677,event||'Academy Programme',fitFont(event||'Academy Programme',35,1050,11),'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" fill="#4F1764"');
  const cards=!competition?
  [['Student ID',r.studentCode],['Class',r.course],['Academic Year',r.academicYear],['Exam Date',dt],['Result',r.passed?'PASS':'PARTICIPATED']]:
  [['Student ID',r.studentCode],['Class',r.course],['Event',event||'Academy Event'],['Date',dt],
  ['Award / Role',kind==='winner'?award:kind==='event'?award.replace('Event ',''):'PARTICIPANT']];
- cards.forEach(([label,value],i)=>s+=chip(44+i*267,712,255,label,String(value||'—').slice(0,64)));
- if(kind==='winner')s+=trophy(w*.23,843,award);
- else if(kind==='event')s+=eventCrescent(w*.22,890);
- else if(kind==='participation'||kind==='exam-participation')s+=participationRosette(w*.22,886,'PARTICIPANT');
- else s+=participationRosette(w*.22,886,'EXCELLENCE');
-  s+=stamp(w/2,892,70);
+ // Decorative medals sit BEHIND the data cards; no award covers printed student details.
+ if(kind==='winner')s+=trophy(w*.23,812,award);
+ else if(kind==='event')s+=eventCrescent(w*.22,851);
+ else if(kind==='participation'||kind==='exam-participation')s+=participationRosette(w*.22,854,'PARTICIPANT');
+ else s+=participationRosette(w*.22,854,'EXCELLENCE');
+ s+=stamp(w/2,875,64);
+ cards.forEach(([label,value],i)=>s+=chip(44+i*267,712,255,label,value||'—'));
  const signer=r.principal&&typeof r.principal==='object'?r.principal:{};
  const signed=typeof signer.signatureData==='string'&&/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signer.signatureData);
- if(signed&&!r.previewMode)s+=`<image x="${w*.652}" y="842" width="${w*.205}" height="77" preserveAspectRatio="xMidYMid meet" href="${E(signer.signatureData)}" />`;
- s+=`<path d="M${w*.65} 917h${w*.21}" stroke="#1C2D50" stroke-width="3"/>
- ${T(w*.755,944,signer.name||'AUTHORIZED SIGNATORY',String(signer.name||'').length>30?17:22,'font-family="Georgia,serif" text-anchor="middle" fill="#1B2A50"')}
- ${T(w*.755,967,signer.name?(signer.designation||'Principal'):'Principal Signature',17,'font-family="Georgia,serif" font-style="italic" text-anchor="middle" fill="#425572"')}
- ${T(100,970,'CERTIFICATE ID: '+String(r.id||'ALIA-DEMO').slice(0,55),14,'font-family="Arial,sans-serif" text-anchor="start" fill="#263D56"')}`;
+ if(signed&&!r.previewMode)s+=`<image x="${w*.652}" y="822" width="${w*.205}" height="64" preserveAspectRatio="xMidYMid meet" href="${E(signer.signatureData)}" />`;
+ s+=`<path d="M${w*.65} 891h${w*.21}" stroke="#1C2D50" stroke-width="3"/>
+ ${T(w*.755,922,signer.name||'AUTHORIZED SIGNATORY',String(signer.name||'').length>30?17:22,'font-family="Georgia,serif" text-anchor="middle" fill="#1B2A50"')}
+ ${T(w*.755,947,signer.name?(signer.designation||'Principal'):'Principal Signature',17,'font-family="Georgia,serif" font-style="italic" text-anchor="middle" fill="#425572"')}
+ ${T(100,947,'CERTIFICATE ID: '+String(r.id||'ALIA-DEMO').slice(0,55),14,'font-family="Arial,sans-serif" text-anchor="start" fill="#263D56"')}`;
  return `<svg xmlns="${NS}" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${defs()}${s}</svg>`;
 }
 function resultPage(r,subjects,page,totalPages){
@@ -192,7 +214,7 @@ function resultPage(r,subjects,page,totalPages){
  s+=T(w/2,457,'EXAMINATION RESULTS',28,'font-family="Georgia,serif" text-anchor="middle" fill="#172C4C"');
  s+=studentName(w,548,r.studentName,63);
  s+=chip(55,585,280,'Student ID',r.studentCode)+chip(360,585,280,'Class',r.course)+chip(665,585,280,'Academic Year',r.academicYear);
- s+=T(w/2,749,r.examTitle||'Annual Examination',32,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#4E165F"');
+ s+=T(w/2,749,r.examTitle||'Annual Examination',fitFont(r.examTitle||'Annual Examination',32,750,11),'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#4E165F"');
  s+=T(w/2,791,(r.examDate||'')+'  •  Page '+(page+1)+' of '+totalPages,21,'font-family="Georgia,serif" text-anchor="middle" fill="#243453"');
  const tableY=829;
  s+=`<rect x="69" y="${tableY}" width="863" height="62" rx="10" fill="url(#purple)" stroke="#D6A34D" stroke-width="4"/>`;
@@ -203,7 +225,7 @@ function resultPage(r,subjects,page,totalPages){
   const y=tableY+62+i*47;
   s+=`<rect x="70" y="${y}" width="862" height="47" fill="${i%2?'#FFF8ED':'#FFFFFA'}" stroke="#D6B577" stroke-width="1.6"/>`;
   s+=T(151,y+31,page*7+i+1,23,'font-family="Georgia,serif" text-anchor="middle" fill="#182C4A"');
-  s+=T(270,y+31,String(item.name||'Subject').slice(0,48),25,'font-family="Georgia,serif" fill="#182C4A"');
+  s+=T(270,y+31,String(item.name||'Subject'),fitFont(item.name||'Subject',25,470,10),'font-family="Georgia,serif" fill="#182C4A"');
   s+=T(823,y+31,(item.score??0)+' / '+(item.max??0),24,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#182C4A"');
  });
  if(page===totalPages-1){
