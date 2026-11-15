@@ -1,0 +1,43 @@
+name: Browser Test Published Exam Batch PDFs
+on:
+  pull_request:
+    paths:
+      - 'exam-batch-report.js'
+      - 'exam-admin.js'
+      - 'tests/batch-result-browser.mjs'
+      - '.github/workflows/batch-result-browser.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  batch-report-pdfs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --ignore-scripts playwright@1.56.1
+      - name: Start local academy website
+        run: |
+          python3 -m http.server 8765 >/tmp/alia-web.log 2>&1 &
+          sleep 3
+          curl -fsS http://127.0.0.1:8765/exam-batch-report.js >/dev/null
+      - name: Download full register and top-three PDF in Chrome
+        run: node tests/batch-result-browser.mjs
+      - name: Validate PDF texts and page count
+        run: |
+          set -euo pipefail
+          for t in full top3; do
+            pdfinfo "batch-report-proof/$t.pdf" | grep 'Pages:'
+            pdftotext "batch-report-proof/$t.pdf" "batch-report-proof/$t.txt"
+            grep -q 'AL ISLAH' "batch-report-proof/$t.txt"
+            grep -q 'Muallama' "batch-report-proof/$t.txt"
+            grep -q 'Alima' "batch-report-proof/$t.txt"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: academy-class-wise-results-pdf-proof
+          path: batch-report-proof/
+          retention-days: 7
