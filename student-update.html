@@ -58,9 +58,22 @@ import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-
 import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import {getFirestore,doc,getDoc,collection,getDocs,query,where,writeBatch,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 const $=id=>document.getElementById(id);
-const token=new URLSearchParams(location.search).get('token');
+const params=new URLSearchParams(location.search),token=params.get('token');
 const err=message=>{$('loading').hidden=false;$('loadingMessage').textContent=message;$('loginBox').hidden=true;$('formBox').hidden=true};
-if(!token||!/^[a-f0-9]{64}$/.test(token)){
+if(params.get('preview')==='1'&&!token){
+ // Public form-only preview. No login, no student records, and NO submission.
+ $('loading').hidden=true;$('formBox').hidden=false;
+ $('studentIdentity').textContent='👁 SAMPLE FORM PREVIEW — NO STUDENT DATA LOADED';
+ const form=$('studentUpdateForm');
+ const course=$('updateCourse');
+ course.replaceChildren(new Option('Choose course / class',''));
+ for(const [id,name] of [['muallama','Muallama'],['muballigha','Muballigha'],['alima','Alima'],['tajweed-for-girls','Tajweed for Girls'],['maktab','Maktab Students']])
+  course.add(new Option(name,id));
+ form.elements.email.placeholder='Verified Google email appears here';
+ $('submit').disabled=true;
+ $('submit').textContent='SAMPLE PREVIEW ONLY — Submission Disabled';
+ $('formStatus').textContent='This is a design and mandatory-fields preview. For a real update the Admin must generate a private email-verified invitation.';
+}else if(!token||!/^[a-f0-9]{64}$/.test(token)){
  err('Invalid or incomplete Student Profile Update link. Ask the Academy Admin for a new private invitation.');
 }else{
  try{
