@@ -17,8 +17,8 @@ export async function maybePromoteStudent(db,studentId){
   const studentSnap=await tx.get(studentRef);
   if(!studentSnap.exists())return {promoted:false,reason:'Student record no longer exists.'};
   const student=studentSnap.data();
-  if(String(student.course)!=='muballigha'||courseYearOf(student)!==1)
-   return {promoted:false,reason:'No automatic promotion: only Muballiga Year 1 progresses to Year 2. Aalima admission must be approved separately.'};
+  if(String(student.course)!=='muballigha'||Number(student.courseYear)!==1)
+   return {promoted:false,reason:'No automatic promotion: confirm legacy Muballiga year in Admin. Only verified Year 1 progresses to Year 2. Aalima admission requires separate fee approval.'};
   if(student.state!=='Completed')return {promoted:false,reason:'Admin has not marked Muballiga Year 1 Completed.'};
   const candidate=matchingFinal(snapResults,student).find(x=>!(student.promotionHistory||[]).some(h=>h.finalResultId===x.id));
   if(!candidate)return {promoted:false,reason:'No new published, passed Muballiga 1st Year Final/Annual result.'};
