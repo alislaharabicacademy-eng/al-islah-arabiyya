@@ -51,7 +51,7 @@ test('teacher needs an approved request before makeup class attendance can be sa
     await assertSucceeds(setDoc(doc(db,day),{
       date:confirmedDate,teacherId,email:'wafa@example.com',markedAt:serverTimestamp(),subjects:{[key]:attendance}
     }));
-    await assertFails(updateDoc(doc(db,day),{'subjects.'+key+'.students.studentA.status':'absent'}));
+    await assertFails(updateDoc(doc(db,day),{['subjects.'+key+'.students.studentA.status']:'absent'}));
     const stranger=env.authenticatedContext('someone-else',{email:'stranger@example.com',email_verified:true});
     await assertFails(getDoc(doc(stranger.firestore(),requestPath)));
   }finally{await env.cleanup();}
