@@ -117,7 +117,7 @@ export function initExamAdmin({db,auth,onPromotion}){
   const subjects=validateSubjects(true),scores=resultMath(subjects,passPercent);
   return {
    studentId:student.id,studentCode:student.studentCode||'',studentName:student.name||'Student',course:courseNames.get(student.course)||student.course||'—',
-   courseId:student.course||'',batch:student.batch||'',examTitle,examDate,academicYear,
+   courseId:student.course||'',courseYear:student.course==='muballigha'?(Number(student.courseYear)===2?2:1):student.course==='alima'?3:0,batch:student.batch||'',examTitle,examDate,academicYear,
    subjects,passPercent,...scores,finalForPromotion:$('examFinalForPromotion').checked,published
   };
  }
