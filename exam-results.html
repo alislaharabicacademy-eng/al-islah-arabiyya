@@ -180,7 +180,7 @@ async function download(which){
   const pdf=which==='result'?await createExamResultPdf(record):await createExamCertificatePdf(record);
   const prefix=which==='result'?'Exam_Result_':'Exam_Certificate_';
   downloadExamBlob(pdf,prefix+safePdfName(record.studentName)+'.pdf');
- }catch(e){status.textContent='PDF download failed: '+e.message;status.className='status error'}
+ }catch(e){status.textContent='Direct PDF download failed: '+e.message+'. Use Print Certificate as PDF or Print Result as PDF below; choose Save as PDF in Chrome.';status.className='status error'}
  finally{b.disabled=false;b.textContent=old}
 }
 function printPdf(type){
