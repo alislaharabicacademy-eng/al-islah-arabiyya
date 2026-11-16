@@ -31,6 +31,13 @@ button:disabled{opacity:.55;cursor:wait}
 .status{white-space:pre-wrap;padding:12px 15px;background:#edf6ec;border:1px solid #cae3cf;border-radius:9px;margin:17px 0}
 .status.bad{background:#fff0ec;color:#8f322b;border-color:#ecc3b9}
 .photo{font-size:12px;color:#567060}
+.subheading{grid-column:1/-1;margin:10px 0 0;font:700 21px Georgia,serif;color:#15472f;border-bottom:1px solid #d9e5db;padding-bottom:9px}
+.select-hint{font-size:12px;margin:5px 0;color:#627a69}
+.radio-options{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 4px}
+.radio-options label{border:1px solid #c4dac8;background:#f5faf5;border-radius:11px;padding:10px 13px;display:flex;align-items:center;gap:8px;margin:0;cursor:pointer}
+.radio-options input{width:auto;margin:0;accent-color:#145f3a}
+.choice-label{font-weight:800;color:#245338;margin-top:7px}
+.education-control{min-width:0}
 #photoPreview{width:88px;height:88px;object-fit:cover;border-radius:10px;border:1px solid #b5ceb8;display:block;margin-top:10px}
 footer{text-align:center;color:#667b6b;font-size:12px;padding:30px}
 @media(max-width:570px){.grid{grid-template-columns:1fr}main{margin:20px auto}.card{padding:19px}.brand img{width:52px;height:52px}}
@@ -54,19 +61,31 @@ footer{text-align:center;color:#667b6b;font-size:12px;padding:30px}
 <label>Contact / WhatsApp Number *<input name="phone" id="phone" type="tel" required minlength="7" maxlength="25" pattern="[0-9+() .-]{7,25}"></label>
 <label>Parent / Student Email (optional)<input name="email" id="email" type="email" maxlength="200" autocomplete="email"></label>
 <label>Original Academy Joining Date *<input name="joiningDate" id="joiningDate" type="date" required></label>
-<label>Current Course / Class *<select name="course" id="course" required>
-<option value="">Choose current course</option>
-<option value="muallama">Muallama</option>
-<option value="muballigha">Muballiga</option>
-<option value="alima">Aalima</option>
-<option value="boys-hifz">Boys Hifz</option>
-<option value="maktab">Maktab</option>
-</select></label>
+<label>Current Academy Course / Class *<select name="course" id="course" required disabled>
+<option value="">Loading Academy courses…</option>
+</select><small class="select-hint" id="courseStatus" role="status">Course names are maintained in Admin → Course Management. Only published courses are available here.</small></label>
 <label id="yearField" hidden>Current Muballiga Year *<select name="courseYear" id="courseYear">
 <option value="">Choose your current year</option><option value="1">1st Year</option><option value="2">2nd Year</option>
 </select></label>
 <label id="batchField" hidden>Maktab Batch *<select name="batch" id="batch"><option value="">Choose batch</option></select></label>
 <label class="full">Complete Home Address *<textarea name="address" id="address" rows="3" required minlength="5" maxlength="700"></textarea></label>
+<div class="full"><h2 class="subheading">🏫 School / College Education</h2>
+<p class="select-hint">Tell us what you study <strong>outside the Academy</strong>. This is separate from your Madrasa course.</p>
+<div class="choice-label">Where are you currently studying? *</div>
+<div class="radio-options" role="radiogroup" aria-label="Outside Academy studies">
+<label><input type="radio" name="educationLevel" value="school" required>🏫 School</label>
+<label><input type="radio" name="educationLevel" value="college">🎓 College / University</label>
+<label><input type="radio" name="educationLevel" value="not-studying">Not currently studying outside Madrasa</label>
+</div></div>
+<label id="schoolStandardField" class="education-control" hidden>Which Standard / Class? *<select id="schoolStandard" name="schoolStandard">
+<option value="">Choose School Standard</option>
+<option value="Pre-KG">Pre-KG</option><option value="LKG">LKG</option><option value="UKG">UKG</option>
+</select></label>
+<label id="collegeCourseField" class="education-control" hidden>Which College Course / Degree? *<input id="collegeCourse" name="collegeCourse" maxlength="120" placeholder="Example: B.Com, B.A. Arabic, B.Sc. Computer Science"></label>
+<label id="collegeYearField" class="education-control" hidden>Year of College Study (optional)<select id="collegeYear" name="collegeYear"><option value="">Select Year (if applicable)</option>
+<option value="1">1st Year</option><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option><option value="5">5th Year</option><option value="6">6th Year</option>
+</select></label>
+<label class="full" id="institutionNameField" hidden>School / College Name (optional)<input id="institutionName" name="institutionName" maxlength="150" placeholder="Current School or College Name"></label>
 <label class="full">Student Photo (optional)<input name="photo" id="photo" type="file" accept="image/jpeg,image/png,image/webp"><small class="photo">A compact ID-card photo will be saved privately for Admin review. Upload only with the student's or guardian's permission.</small><img id="photoPreview" alt="Selected profile photo preview" hidden></label>
 <label class="full">Notes for Admin (optional)<textarea id="notes" name="notes" maxlength="500" placeholder="Earlier register number, class timing, or any correction. Do not include Aadhaar or passwords."></textarea></label>
 </div>
@@ -87,6 +106,7 @@ footer{text-align:center;color:#667b6b;font-size:12px;padding:30px}
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import{getFirestore,doc,getDoc,setDoc,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{compressProfilePhoto,isProfilePhoto}from'./profile-photo.js';
+import{fetchPublishedAcademyCourses}from'./academy-course-catalog.js';
 const $=id=>document.getElementById(id);
 const key=new URLSearchParams(location.search).get('key');
 let db=null,photoData='',ready=false;
@@ -105,6 +125,36 @@ function syncCourse(){
  if(course!=='maktab')$('batch').value='';
 }
 $('course').addEventListener('change',syncCourse);
+for(let i=1;i<=12;i++)$('schoolStandard').add(new Option(i+(i%10===1&&i!==11?'st':i%10===2&&i!==12?'nd':i%10===3&&i!==13?'rd':'th')+' Standard',String(i)));
+function syncEducation(){
+ const level=document.querySelector('input[name="educationLevel"]:checked')?.value||'';
+ const school=level==='school',college=level==='college';
+ $('schoolStandardField').hidden=!school;
+ $('collegeCourseField').hidden=!college;$('collegeYearField').hidden=!college;
+ $('institutionNameField').hidden=!(school||college);
+ $('schoolStandard').required=school;$('collegeCourse').required=college;
+ if(!school)$('schoolStandard').value='';
+ if(!college){$('collegeCourse').value='';$('collegeYear').value=''}
+ if(!school&&!college)$('institutionName').value='';
+}
+document.querySelectorAll('input[name="educationLevel"]').forEach(
+ radio=>radio.addEventListener('change',syncEducation)
+);
+syncEducation();
+async function loadAcademyCourses(){
+ const select=$('course'),note=$('courseStatus');
+ select.disabled=true;select.replaceChildren(new Option('Loading Academy courses…',''));
+ const courses=await fetchPublishedAcademyCourses(db);
+ if(!courses.length){
+  select.replaceChildren(new Option('No published Academy courses available',''));
+  throw Error('No published Academy courses found. Ask Admin to publish courses under Course Management.');
+ }
+ select.replaceChildren(new Option('Choose current Academy course',''));
+ for(const course of courses)select.add(new Option(course.name,course.id));
+ select.disabled=false;
+ note.textContent='✓ '+courses.length+' live course(s) synced from Academy Course Management.';
+ syncCourse();
+}
 for(let i=1;i<=30;i++)$('batch').add(new Option('Batch '+i,'Batch '+i));
 $('dob').max=nowIndia();$('joiningDate').max=nowIndia();
 $('photo').onchange=async()=>{
@@ -136,6 +186,7 @@ async function verifyLink(){
    throw Error('The registration invitation is closed.');
   const exp=link.data().expiresAt?.toMillis?.();
   if(!exp||exp<=Date.now())throw Error('This registration invitation has expired.');
+  await loadAcademyCourses();
   $('loading').hidden=true;$('registration').hidden=false;ready=true;
  }catch(e){error('Existing Student Registration is closed or unavailable. Ask your Academy Admin for an active link. '+(e.code==='permission-denied'?'':(e.message||'')));}
 }
@@ -147,6 +198,18 @@ $('existingStudentForm').onsubmit=async event=>{
  const course=get('course'),dob=get('dob'),joiningDate=get('joiningDate');
  const year=course==='muballigha'?Number(get('courseYear')):course==='alima'?3:0;
  const batch=course==='maktab'?get('batch'):'';
+ const educationLevel=get('educationLevel'),schoolStandard=get('schoolStandard');
+ const collegeCourse=get('collegeCourse'),collegeYear=get('collegeYear');
+ const institutionName=get('institutionName');
+ if(!['school','college','not-studying'].includes(educationLevel)){
+  status.textContent='Please choose School, College or Not currently studying.';return;
+ }
+ if(educationLevel==='school'&&!schoolStandard){
+  status.textContent='Please select the current school standard.';return;
+ }
+ if(educationLevel==='college'&&!collegeCourse){
+  status.textContent='Please enter the college course / degree.';return;
+ }
  if(!/^\d{4}-\d{2}-\d{2}$/.test(dob)||dob>nowIndia()||
     !/^\d{4}-\d{2}-\d{2}$/.test(joiningDate)||joiningDate>nowIndia()){
   status.textContent='Enter valid past dates for DOB and original joining date.';return;
@@ -160,6 +223,10 @@ $('existingStudentForm').onsubmit=async event=>{
   dob,phone:get('phone').slice(0,25),email:get('email').toLowerCase().slice(0,200),
   joiningDate,course,courseYear:year,batch,address:get('address').slice(0,700),
   notes:get('notes').slice(0,500),photoData:photoData||'',
+  educationLevel,schoolStandard:educationLevel==='school'?schoolStandard:'',
+  collegeCourse:educationLevel==='college'?collegeCourse.slice(0,120):'',
+  collegeYear:educationLevel==='college'?collegeYear:'',
+  institutionName:educationLevel==='not-studying'?'':institutionName.slice(0,150),
   linkToken:key,source:'existing-academy-student-form',status:'Pending Review',
   submittedAt:serverTimestamp()
  };
@@ -181,7 +248,7 @@ $('another').onclick=()=>{
  $('existingStudentForm').reset();photoData='';
  $('photoPreview').hidden=true;$('photoPreview').removeAttribute('src');
  $('formStatus').textContent='Enter details for a different already-enrolled student.';
- syncCourse();
+ syncCourse();syncEducation();
 };
 verifyLink();
 </script>
