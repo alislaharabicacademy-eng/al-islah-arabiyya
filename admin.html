@@ -1250,12 +1250,15 @@ for(const kind of ['teacher','student']){
    data.batch=isMaktabCourse(data.course)?data.batch:'';
    if(!data.examid)data.examid=crypto.randomUUID();
    const level=$('studentEducationLevel').value;
-   if(level&&!['school','college','not-studying'].includes(level))
-    throw Error('Choose a valid School / College Education Status.');
-   if(level==='school'&&!$('studentSchoolStandard').value)
-    throw Error('Choose the student’s current school standard.');
-   if(level==='college'&&!$('studentCollegeCourse').value.trim())
-    throw Error('Enter the student’s current college course or degree.');
+   if(level&&!['school','college','not-studying'].includes(level)){
+    $('studentStatus').textContent='Choose a valid School / College Education Status.';return;
+   }
+   if(level==='school'&&!$('studentSchoolStandard').value){
+    $('studentStatus').textContent='Choose the student’s current school standard.';return;
+   }
+   if(level==='college'&&!$('studentCollegeCourse').value.trim()){
+    $('studentStatus').textContent='Enter the student’s current college course or degree.';return;
+   }
    data.educationLevel=level;
    data.schoolStandard=level==='school'?$('studentSchoolStandard').value:'';
    data.collegeCourse=level==='college'?$('studentCollegeCourse').value.trim().slice(0,120):'';
@@ -1521,6 +1524,17 @@ if(kind==='students'){
 }
 if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students';const counts={};for(const d of snap.docs){const s=d.data(),key=(s.course||'Unassigned')+(isMaktabCourse(s.course)?' · '+(s.batch||'Unassigned Batch'):'');counts[key]=(counts[key]||0)+1}$('studentBatchSummary').textContent='Batch-wise student totals: '+(Object.entries(counts).map(([key,n])=>key+': '+n).join(' | ')||'No students yet')}
 if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'ALIA ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');if(kind==='students'){
+ if(data.educationLevel){
+  const edu=document.createElement('p'),label=document.createElement('small');
+  label.textContent='School / College Studies: ';
+  const details=data.educationLevel==='school'?'School · '+String(data.schoolStandard||'Standard not recorded'):
+   data.educationLevel==='college'?'College · '+String(data.collegeCourse||'Course not recorded')+
+     (data.collegeYear?' · Year '+data.collegeYear:''):
+   'Not currently studying outside Madrasa';
+  edu.append(label,document.createTextNode(details+
+   (data.institutionName?' · '+String(data.institutionName):'')));
+  el.append(edu);
+ }
  el.prepend(photoAvatar(data.photoData,'Photo of '+String(data.name||'student')));
  const grant=accessByStudent.get(d.id);
  const accessBadge=document.createElement('p');accessBadge.className='section-note';
