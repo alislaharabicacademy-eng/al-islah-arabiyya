@@ -1,0 +1,43 @@
+name: Academy Teacher and Admin Dual Role Login
+
+on:
+  pull_request:
+    paths:
+      - 'teacher-login.html'
+      - 'teacher-role-routing.js'
+      - 'tests/teacher-role-routing.test.mjs'
+      - '.github/workflows/teacher-dual-role-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-teacher-dual-role:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Ensure teacher dashboard and Master Admin preview are distinct
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          src=Path('teacher-login.html').read_text()
+          modules=re.findall(r'<script type="module">([\s\S]*?)</script>',src)
+          assert len(modules)==1
+          assert 'teacherPortalLanding' in src
+          assert 'dualRolePanel' in src
+          assert 'myTeacherSwitchMode' in src and 'adminPreviewSwitchMode' in src
+          assert 'teacher-attendance.html' in src
+          assert 'verifiedLinkedTeacher' in src
+          assert "getDoc(doc(db,'teacherAccess',teacherGoogleLookupId(email)))" in src
+          assert "getDoc(doc(db,'teacherAccess',id))" in src
+          assert 'syedatheil40@gmail.com' not in src
+          Path('/tmp/academy-teacher-dual-role.mjs').write_text('\n'.join(modules))
+          PY
+          node --check /tmp/academy-teacher-dual-role.mjs
+          node --check teacher-role-routing.js
+          node --test tests/teacher-role-routing.test.mjs
