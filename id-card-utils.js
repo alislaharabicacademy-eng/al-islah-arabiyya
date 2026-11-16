@@ -141,7 +141,7 @@ export async function renderCardCanvas(card,side='front',{settings={},draft=fals
  const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas print processing unavailable.');
  ctx.scale(1190/856,750/540);
  const isFront=side==='front';
- const logoPromise=imgReady('1_20261112_080707_0000.png');
+ const logoPromise=imgReady(new URL('./1_20261112_080707_0000.png',import.meta.url).href);
  const photoPromise=imgReady(card.photoData||'');
  if(isFront){
   const g=ctx.createLinearGradient(0,0,856,540);g.addColorStop(0,palette.dark);g.addColorStop(1,palette.mid);
