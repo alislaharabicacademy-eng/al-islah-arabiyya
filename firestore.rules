@@ -483,7 +483,11 @@ service cloud.firestore {
         && resource.data.expiresAt is timestamp
         && resource.data.expiresAt > request.time
       );
-      allow list, create, update, delete: if isAdmin()
+      // List queries have no concrete token document ID. Applying a regex
+      // guard to that unbound wildcard blocks even approved administrators
+      // from listing links, so Create/Rotate fails before it writes anything.
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin()
         && token.matches('^[a-f0-9]{64}$');
     }
 
