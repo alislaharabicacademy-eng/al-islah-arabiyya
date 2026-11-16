@@ -143,6 +143,7 @@ import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-
 import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import {getFirestore,doc,getDoc,getDocs,collection,addDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {attachPersonalIdCard} from './id-card-personal.js';
+import {teacherPortalLanding} from './teacher-role-routing.js';
 
 const $ = id => document.getElementById(id);
 const login=$('loginCard'),dashboard=$('dashboard'),info=$('loginInfo');
@@ -385,19 +386,20 @@ async function loadDashboard(user){
   if(version!==checkVersion)return;
   // Dual-role accounts get an explicit switch instead of having the admin
   // preview silently override their personal teacher attendance dashboard.
-  if(admin&&linked){
+  const landing=teacherPortalLanding(admin,Boolean(linked));
+  if(landing==='choose-role'){
    showDualRoleChoice(user,linked);
    return;
   }
-  if(admin){
+  if(landing==='admin-preview'){
    // Administrator without a valid linked teacher keeps current admin preview.
    await showAdminTeacherPreview(user,version);
    return;
   }
-  if(teacherError)throw teacherError;
-  if(!linked)throw Error(
-   'This Gmail has not been enabled for teacher access. Ask Admin to enable Google Login in Teacher Management.'
-  );
+  if(landing==='unauthorized'){
+   if(teacherError)throw teacherError;
+   throw Error('This Gmail has not been enabled for teacher access. Ask Admin to enable Google Login in Teacher Management.');
+  }
   await showPersonalTeacherDashboard(user,version,linked);
  }catch(error){
   if(version===checkVersion)status(friendlyError(error),true);
