@@ -176,13 +176,13 @@ export async function renderCardCanvas(card,side='front',{settings={},draft=fals
   rounded(ctx,25,108,806,397,17);ctx.stroke();
   let y=155;
   const kind=card.kind==='student';
-  if(kind&&options.showGuardian)y=labelLine(ctx,'FATHER / GUARDIAN',card.guardian||'',y,{maxWidth:560});
-  if(options.showEmergencyPhone)y=labelLine(ctx,'EMERGENCY CONTACT',card.emergencyPhone||'',y,{maxWidth:560});
+  if(kind&&options.showGuardian)y=labelLine(ctx,'FATHER / GUARDIAN',card.guardian||'',y,{maxWidth:400});
+  if(options.showEmergencyPhone)y=labelLine(ctx,'EMERGENCY CONTACT',card.emergencyPhone||'',y,{maxWidth:400});
   if(options.showBloodGroup)y=labelLine(ctx,'BLOOD GROUP',card.bloodGroup||'',y,{maxWidth:300});
   if(options.showDob&&kind)y=labelLine(ctx,'DATE OF BIRTH',card.dob||'',y,{maxWidth:300});
-  if(options.showAddress&&card.address)y=labelLine(ctx,'ADDRESS',card.address,y,{maxWidth:520});
-  if(!kind&&card.subject)y=labelLine(ctx,'SPECIALIZATION',card.subject,y,{maxWidth:535});
-  if(y===155)y=labelLine(ctx,'ACADEMY',card.institution||'Madrasa Al Islahul Arabiya',y,{maxWidth:560});
+  if(options.showAddress&&card.address)y=labelLine(ctx,'ADDRESS',card.address,y,{maxWidth:400});
+  if(!kind&&card.subject)y=labelLine(ctx,'SPECIALIZATION',card.subject,y,{maxWidth:400});
+  if(y===155)y=labelLine(ctx,'ACADEMY',card.institution||'Madrasa Al Islahul Arabiya',y,{maxWidth:400});
   fitted(ctx,'CARD VERIFICATION',600,154,225,{size:17,minSize:14,color:palette.dark,weight:800,align:'center'});
   const code=validVerificationCode(card.verificationCode)?card.verificationCode:'';
   if(code&&!draft){
