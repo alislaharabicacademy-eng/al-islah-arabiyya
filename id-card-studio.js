@@ -114,7 +114,7 @@ async function existingCard(kind,id){
 }
 async function draw(card,draftFlag){
  const current=++changed;
- const settingsNow=formSettings();
+ const settingsNow=(!draftFlag&&card.printSettings)?card.printSettings:formSettings();
  const [front,back]=await Promise.all([
   renderCardCanvas(card,'front',{settings:settingsNow,draft:draftFlag}),
   renderCardCanvas(card,'back',{settings:settingsNow,draft:draftFlag})
