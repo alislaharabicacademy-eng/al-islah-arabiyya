@@ -120,9 +120,10 @@ function error(message){
 function syncCourse(){
  const course=$('course').value;
  $('yearField').hidden=course!=='muballigha';$('courseYear').required=course==='muballigha';
- $('batchField').hidden=course!=='maktab';$('batch').required=course==='maktab';
+ const maktab=['maktab','childrens-quran-maktab'].includes(course);
+ $('batchField').hidden=!maktab;$('batch').required=maktab;
  if(course!=='muballigha')$('courseYear').value='';
- if(course!=='maktab')$('batch').value='';
+ if(!maktab)$('batch').value='';
 }
 $('course').addEventListener('change',syncCourse);
 for(let i=1;i<=12;i++)$('schoolStandard').add(new Option(i+(i%10===1&&i!==11?'st':i%10===2&&i!==12?'nd':i%10===3&&i!==13?'rd':'th')+' Standard',String(i)));
@@ -197,7 +198,8 @@ $('existingStudentForm').onsubmit=async event=>{
  const get=name=>String(form.elements[name]?.value||'').trim();
  const course=get('course'),dob=get('dob'),joiningDate=get('joiningDate');
  const year=course==='muballigha'?Number(get('courseYear')):course==='alima'?3:0;
- const batch=course==='maktab'?get('batch'):'';
+ const maktab=['maktab','childrens-quran-maktab'].includes(course);
+ const batch=maktab?get('batch'):'';
  const educationLevel=get('educationLevel'),schoolStandard=get('schoolStandard');
  const collegeCourse=get('collegeCourse'),collegeYear=get('collegeYear');
  const institutionName=get('institutionName');
@@ -217,7 +219,7 @@ $('existingStudentForm').onsubmit=async event=>{
  if(course==='muballigha'&&![1,2].includes(year)){
   status.textContent='Select the current Muballiga year.';return;
  }
- if(course==='maktab'&&!batch){status.textContent='Select the Maktab batch.';return}
+ if(maktab&&!batch){status.textContent='Select the Maktab batch.';return}
  const payload={
   name:get('name').slice(0,120),guardian:get('guardian').slice(0,120),
   dob,phone:get('phone').slice(0,25),email:get('email').toLowerCase().slice(0,200),
