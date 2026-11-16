@@ -1,0 +1,58 @@
+name: Academy Normal vs Master Admin Roles
+
+on:
+  pull_request:
+    paths:
+      - 'firestore.rules'
+      - 'admin.html'
+      - 'admin-access-setup.html'
+      - 'teacher-login.html'
+      - 'admin-role-status.js'
+      - 'tests/private-admin-access-rules.test.mjs'
+      - 'tests/admin-student-preview-rules.test.mjs'
+      - 'tests/admin-teacher-preview-rules.test.mjs'
+      - 'tests/existing-student-intake-rules.test.mjs'
+      - '.github/workflows/admin-role-boundaries-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  role-boundaries:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate UI modules and distinguish Normal / Master access
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          rules=Path('firestore.rules').read_text()
+          admin=Path('admin.html').read_text()
+          setup=Path('admin-access-setup.html').read_text()
+          teacher=Path('teacher-login.html').read_text()
+          assert 'function isNormalAdmin()' in rules
+          assert 'function isMasterAdmin()' in rules
+          assert 'allow get: if role == \'master\' && isMasterAdmin()' in rules
+          assert 'allow get, list: if isMasterAdmin()' in rules
+          assert 'allow create, update: if isMasterAdmin()' in rules
+          assert 'Normal Admin' in admin and 'isVerifiedMasterAdmin(db,user)' in admin
+          assert 'isVerifiedMasterAdmin(db,user)' in teacher
+          assert "master?'Master Admin':'Normal Admin'" in teacher
+          assert 'Normal Admin' in setup and 'isVerifiedMasterAdmin(db,user)' in setup
+          for file in ['admin.html','teacher-login.html','admin-access-setup.html','admin-role-status.js']:
+            assert 'syedatheil40@gmail.com' not in Path(file).read_text(), 'Master account email must not appear in user-facing source'
+          for path in ['admin.html','admin-access-setup.html','teacher-login.html']:
+            html=Path(path).read_text()
+            modules=re.findall(r'<script type="module">([\s\S]*?)</script>',html)
+            assert modules,('Missing script module',path)
+            Path('/tmp/'+path+'.mjs').write_text('\n'.join(modules))
+          PY
+          node --check /tmp/admin.html.mjs
+          node --check /tmp/admin-access-setup.html.mjs
+          node --check /tmp/teacher-login.html.mjs
+          node --check admin-role-status.js
