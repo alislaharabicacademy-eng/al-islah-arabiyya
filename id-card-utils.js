@@ -162,7 +162,7 @@ function curvedTrim(ctx,palette){
 function textRows(card,options){
  const rows=[];
  const value=(label,entry)=>{
-  const text=String(entry||'').replace(/\\s+/g,' ').trim();
+  const text=String(entry||'').replace(/\s+/g,' ').trim();
   if(text)rows.push([label,text]);
  };
  if(card.kind==='student'&&options.showGuardian)
