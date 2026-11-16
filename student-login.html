@@ -153,6 +153,7 @@ import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signInWithE
 import{getFirestore,collection,doc,getDoc,getDocs,query,where,limit}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{photoAvatar}from'./profile-photo.js';
 import{initAdminStudentPreview}from'./admin-student-preview.js';
+import{attachPersonalIdCard}from'./id-card-personal.js';
 import{summarizeFees,indiaFeeClock,allRecordedPayments,validFeeLedger}from'./fee-ledger-utils.js';
 import{createCompetitionCertificatePdf,downloadExamBlob,safePdfName}from'./exam-documents.js';
 import{openPremiumPrintWindow,classifyCompetitionAward}from'./premium-certificate-svg.js';
@@ -386,6 +387,8 @@ async function loadPrivateDashboard(user,token){
     section.append(button,printButton);card.append(section);
    }
    target.append(card);visible++;
+   await attachPersonalIdCard({db,kind:'student',holderId:access.studentId||accessDoc.id,container:card,
+    isCurrent:()=>token===loadingToken&&auth.currentUser?.uid===user.uid});
   }
   // Never retain DOB for longer than the current entry/verification step.
   if(token===loadingToken&&visible){
