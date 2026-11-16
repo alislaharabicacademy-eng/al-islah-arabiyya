@@ -8,6 +8,7 @@ on:
       - 'teacher-login.html'
       - 'id-card-*.js'
       - 'id-card-studio.html'
+      - 'tests/id-card-render-fixture.html'
       - 'verify-id.html'
       - 'vendor/qrcode.min.js'
       - 'firestore.rules'
@@ -74,19 +75,34 @@ jobs:
           python3 -m http.server 8766 >/tmp/id-card-site.log 2>&1 &
           sleep 3
           curl -fsS http://127.0.0.1:8766/tests/id-card-render-fixture.html >/dev/null
-      - name: Check actual browser QR, front/back preview and PVC/A4 PDF downloads
+      - name: Check actual browser portrait QR, front/back previews and card-size PDF downloads
         env:
           CHROME: /usr/bin/google-chrome
           PORT: '8766'
         run: node tests/id-card-browser-print.mjs
-      - name: Inspect print page sizes and PDF page counts
+      - name: Verify NO A4 page — each PDF page is exactly portrait 54 × 85.6 mm
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq poppler-utils
-          test "$(pdfinfo id-card-print-proof/student-pvc-smoke.pdf | awk '/^Pages:/ {print $2}')" = 2
-          test "$(pdfinfo id-card-print-proof/bulk-a4-smoke.pdf | awk '/^Pages:/ {print $2}')" = 4
-          pdfinfo id-card-print-proof/student-pvc-smoke.pdf | grep 'Page size:'
-          pdfinfo id-card-print-proof/bulk-a4-smoke.pdf | grep 'Page size:'
+          python3 - <<'PY'
+          import re, subprocess
+          from pathlib import Path
+          samples=[('student-pvc-smoke.pdf',2),('bulk-portrait-smoke.pdf',6)]
+          for name,expected in samples:
+              path=Path('id-card-print-proof')/name
+              output=subprocess.check_output(['pdfinfo',str(path)],text=True)
+              pages=int(re.search(r'^Pages:\s+(\d+)',output,re.M).group(1))
+              assert pages==expected,(name,pages,expected)
+              match=re.search(r'^Page size:\s+([\d.]+)\s+x\s+([\d.]+)\s+pts',output,re.M)
+              assert match,output
+              width,height=map(float,match.groups())
+              # Physical dimensions in points: mm * 72 / 25.4
+              assert abs(width-54*72/25.4)<.3,(name,width)
+              assert abs(height-85.6*72/25.4)<.3,(name,height)
+              assert width<height,(name,'not portrait')
+              assert height<300,(name,'large paper mistakenly used')
+              print('PASS',name,'pages',pages,'mm=54x85.6 portrait, no A4')
+          PY
           pdftoppm -f 1 -l 2 -png -r 130 id-card-print-proof/student-pvc-smoke.pdf id-card-print-proof/pvc-page >/dev/null 2>&1
           test -s id-card-print-proof/pvc-page-1.png
       - name: Upload ID card PDF and image proofs
