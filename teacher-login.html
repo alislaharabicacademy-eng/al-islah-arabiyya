@@ -67,6 +67,15 @@ button:disabled{opacity:.6;cursor:wait}
 .preview-teacher-name{margin:8px 0}
 .preview-heading{margin:0}
 .preview-actions{margin-top:16px}
+.dual-role-choice{border:1px solid #cbb37f;background:#fffdf5}
+.dual-role-choice .eyebrow{color:#9b762e}
+.dual-role-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:20px 0}
+.dual-role-card{min-width:0;display:flex;flex-direction:column;text-align:left;align-items:flex-start;gap:8px;padding:18px;background:#f1f7f0;color:#164e36;border:1px solid #cae2d0;border-radius:13px;line-height:1.5}
+.dual-role-card.admin{background:#fff5df;color:#654c23;border-color:#e5d0a3}
+.dual-role-card strong{font-size:18px}
+.dual-role-card small{font-size:12px;font-weight:550}
+.dual-role-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+@media(max-width:560px){.dual-role-cards{grid-template-columns:1fr}}
 footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 @media(max-width:750px){.grid{grid-template-columns:1fr}.card{padding:24px}main{margin-top:30px}.head{gap:10px}.brand img{width:52px;height:52px}.brand strong{font-size:19px}}
 @media(prefers-reduced-motion:no-preference){.card{animation:arrive .5s ease-out both}@keyframes arrive{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}}
@@ -94,8 +103,20 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 <div class="stats"><div class="stat"><strong id="classCount">0</strong><small>Assigned Classes</small></div><div class="stat"><strong id="subjectCount">0</strong><small>Assigned Subjects</small></div></div>
 <h3>📚 My Classes &amp; Subjects</h3>
 <div id="teacherAssignments"></div><div id="myTeacherIdCard"></div>
-<div class="actions"><a class="button" id="attendanceLink" href="teacher-attendance.html">📋 Open Attendance</a><button id="logout" type="button" class="secondary">Sign Out</button></div>
+<div class="actions"><a class="button" id="attendanceLink" href="teacher-attendance.html">📋 Open Attendance</a><button id="myTeacherSwitchMode" type="button" class="secondary" hidden>⇄ Teacher / Master Admin</button><button id="logout" type="button" class="secondary">Sign Out</button></div>
 <p class="hint">Results, marks and certificates will appear here when those teacher permissions are implemented. Your current access includes assigned classes and attendance.</p>
+</section>
+<section class="card dual-role-choice" id="dualRolePanel" hidden>
+<span class="eyebrow">Two approved roles · One Google account</span>
+<h2>Choose Your Dashboard</h2>
+<p>Your Google account is approved as both an Academy teacher and an administrator. These are <strong>separate roles</strong>; choose which view you want to use.</p>
+<p class="status" id="dualRoleTeacherInfo">Your linked teacher profile is available.</p>
+<div class="dual-role-cards">
+<button type="button" id="openMyTeacherRole" class="dual-role-card"><strong>👩‍🏫 My Teacher Dashboard</strong><small>Open your own assigned subjects, class timetable, attendance and personal teacher ID card. This is your real teacher profile.</small></button>
+<button type="button" id="openMasterAdminRole" class="dual-role-card admin"><strong>👑 Master Admin — All Teachers</strong><small>Select and inspect any teacher's classes in the audited, read-only administrator preview. No impersonation or teacher attendance submission.</small></button>
+</div>
+<div class="dual-role-actions"><a class="button" href="admin.html">↗ Full Admin Panel</a><button type="button" id="dualRoleLogout" class="secondary">Sign Out</button></div>
+<p class="hint">Your own teacher attendance works only through My Teacher Dashboard. Administrator previews are read-only and recorded in the security audit.</p>
 </section>
 <section class="card" id="adminPreview" hidden>
 <span class="eyebrow">Academy administration</span>
@@ -111,7 +132,8 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 <div id="previewAssignments"></div>
 <p class="hint">This preview has no teacher attendance submission, teacher authentication, or impersonation actions. Use the normal Admin Panel for authorized changes.</p>
 </div>
-<div class="actions preview-actions"><a class="button" href="admin.html">↗ Open Admin Panel</a><button id="adminPreviewLogout" class="secondary" type="button">Sign Out</button></div>
+<div class="actions preview-actions"><a class="button" href="admin.html">↗ Open Admin Panel</a><button id="adminPreviewSwitchMode" class="secondary" type="button" hidden>⇄ My Teacher / Master Admin</button><button id="adminPreviewLogout" class="secondary" type="button">Sign Out</button></div>
+<p class="hint">If your Gmail is also registered as a teacher but My Teacher Dashboard is not offered, ask the Academy admin to select your Teacher Details record and enable its Google Login mapping.</p>
 </section>
 </div>
 </main>
@@ -121,6 +143,7 @@ import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-
 import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import {getFirestore,doc,getDoc,getDocs,collection,addDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {attachPersonalIdCard} from './id-card-personal.js';
+import {teacherPortalLanding} from './teacher-role-routing.js';
 
 const $ = id => document.getElementById(id);
 const login=$('loginCard'),dashboard=$('dashboard'),info=$('loginInfo');
@@ -128,7 +151,10 @@ let auth=null,db=null,checkVersion=0;
 const normalizeEmail=email=>String(email||'').trim().toLowerCase();
 const teacherGoogleLookupId=email=>'google-email-'+encodeURIComponent(normalizeEmail(email));
 function status(message,error=false){const el=$('loginStatus');el.textContent=message;el.className='status'+(error?' error':'')}
-function showLogin(){login.hidden=false;info.hidden=false;dashboard.hidden=true;$('adminPreview').hidden=true;}
+function showLogin(){
+ login.hidden=false;info.hidden=false;dashboard.hidden=true;
+ $('adminPreview').hidden=true;$('dualRolePanel').hidden=true;
+}
 function friendlyError(e){
  if(e.code==='permission-denied')return 'This Google account is not approved for teacher access. Please contact the Academy Admin.';
  if(e.code==='auth/unauthorized-domain')return 'This website domain is not enabled in Firebase Authentication. Contact Admin.';
@@ -215,57 +241,169 @@ async function showAdminTeacherPreview(user,version){
  };
 }
 
+
+let dualAccount=null;
+
+async function verifiedLinkedTeacher(email){
+ // A real teacher role is only granted by the existing Academy-approved
+ // email->teacher mapping AND the matching teacherAccess record.
+ const alias=await getDoc(doc(db,'teacherAccess',teacherGoogleLookupId(email)));
+ if(!alias.exists())return null;
+ const mapping=alias.data();
+ if(normalizeEmail(mapping.email)!==email||typeof mapping.teacherId!=='string'||
+    !mapping.teacherId||mapping.teacherId.includes('/'))
+   throw Error('Invalid teacher Google mapping. Contact Academy Admin.');
+ const id=mapping.teacherId;
+ const grant=await getDoc(doc(db,'teacherAccess',id));
+ if(!grant.exists())throw Error('Your teacher account has been revoked or is unavailable.');
+ const profile=grant.data();
+ if(normalizeEmail(profile.email)!==email)
+   throw Error('This Gmail does not match the approved teacher profile. Contact Academy Admin.');
+ return {id,profile};
+}
+
+function showDualRoleChoice(user,linked){
+ if(auth.currentUser?.uid!==user.uid)return;
+ dualAccount={user,linked};
+ ++previewVersion;
+ login.hidden=true;info.hidden=true;dashboard.hidden=true;
+ $('adminPreview').hidden=true;$('dualRolePanel').hidden=false;
+ $('dualRoleTeacherInfo').textContent=
+   'Your personal teacher profile: '+String(linked.profile.name||user.displayName||'Teacher')+
+   ' · Select My Teacher Dashboard for normal classes and attendance.';
+ $('myTeacherSwitchMode').hidden=false;
+ $('adminPreviewSwitchMode').hidden=false;
+}
+
+async function showPersonalTeacherDashboard(user,version,linked,{dual=false}={}){
+ if(!linked||!user?.emailVerified)throw Error('Approved teacher profile required.');
+ const {id,profile}=linked;
+ // Even a full admin's real teacher role is bound to the exact email mapping.
+ if(normalizeEmail(profile.email)!==normalizeEmail(user.email))
+   throw Error('Teacher account email does not match the signed-in Google account.');
+ const roster=await getDoc(doc(db,'teacherRosters',id));
+ if(version!==checkVersion||auth.currentUser?.uid!==user.uid)return;
+ const assignments=Array.isArray(roster.exists()?roster.data().assignments:null)?
+  roster.data().assignments:[];
+ $('teacherName').textContent=profile.name||user.displayName||'Teacher';
+ $('teacherEmail').textContent=dual?'My approved Teacher Profile · Administrator access available':user.email||'';
+ const avatar=$('teacherAvatar');avatar.replaceChildren();
+ if(user.photoURL){
+  const img=document.createElement('img');img.src=user.photoURL;img.alt='';
+  img.referrerPolicy='no-referrer';avatar.append(img);
+ }else avatar.textContent='👩‍🏫';
+ const classes=new Set(assignments.filter(a=>a.course).map(a=>[a.course,a.batch||''].join('|')));
+ const subjects=new Set(assignments.map(a=>a.subject).filter(Boolean));
+ $('classCount').textContent=String(classes.size);
+ $('subjectCount').textContent=String(subjects.size);
+ const root=$('teacherAssignments');root.replaceChildren();
+ if(!assignments.length){
+  const p=document.createElement('p');
+  p.textContent='No class assignments have been published yet. Contact your Admin.';
+  root.append(p);
+ }else for(const a of assignments){
+  const row=document.createElement('article');row.className='assignment';
+  const title=document.createElement('strong');
+  title.textContent=(a.courseName||a.course||'Class')+(a.batch?' · '+a.batch:'');
+  const details=document.createElement('small');
+  details.textContent=[a.subject||'Subject not assigned',a.timing||'',
+   Array.isArray(a.students)?a.students.length+' students':''].filter(Boolean).join(' · ');
+  row.append(title,details);root.append(row);
+ }
+ const link=new URL('teacher-attendance.html',location.href);
+ link.searchParams.set('id',id);
+ $('attendanceLink').href=link.href;
+ $('myTeacherSwitchMode').hidden=!dual;
+ login.hidden=true;info.hidden=true;$('dualRolePanel').hidden=true;
+ $('adminPreview').hidden=true;dashboard.hidden=false;
+ const idMount=$('myTeacherIdCard');idMount.replaceChildren();
+ attachPersonalIdCard({db,kind:'teacher',holderId:id,container:idMount,
+  isCurrent:()=>version===checkVersion&&auth.currentUser?.uid===user.uid});
+}
+
+async function openPersonalDualRole(){
+ if(!dualAccount)return;
+ const {user,linked}=dualAccount;
+ if(auth.currentUser?.uid!==user.uid)return;
+ const version=++checkVersion;++previewVersion;
+ $('dualRolePanel').hidden=true;$('adminPreview').hidden=true;
+ try{
+  await showPersonalTeacherDashboard(user,version,linked,{dual:true});
+ }catch(error){
+  if(version!==checkVersion)return;
+  showDualRoleChoice(user,linked);
+  $('dualRoleTeacherInfo').textContent='Could not open your teacher profile: '+friendlyError(error);
+ }
+}
+async function openAdminDualRole(){
+ if(!dualAccount)return;
+ const {user,linked}=dualAccount;
+ if(auth.currentUser?.uid!==user.uid)return;
+ const version=++checkVersion;++previewVersion;
+ $('dualRolePanel').hidden=true;dashboard.hidden=true;
+ try{
+  await showAdminTeacherPreview(user,version);
+ }catch(error){
+  if(version!==checkVersion)return;
+  showDualRoleChoice(user,linked);
+  $('dualRoleTeacherInfo').textContent='Could not open Master Admin preview: '+friendlyError(error);
+ }
+}
+$('openMyTeacherRole').onclick=openPersonalDualRole;
+$('openMasterAdminRole').onclick=openAdminDualRole;
+$('myTeacherSwitchMode').onclick=()=>{
+ if(dualAccount&&auth.currentUser?.uid===dualAccount.user.uid){
+  ++checkVersion;showDualRoleChoice(dualAccount.user,dualAccount.linked);
+ }
+};
+$('adminPreviewSwitchMode').onclick=()=>{
+ if(dualAccount&&auth.currentUser?.uid===dualAccount.user.uid){
+  ++checkVersion;showDualRoleChoice(dualAccount.user,dualAccount.linked);
+ }
+};
+
 async function loadDashboard(user){
  const version=++checkVersion;
+ ++previewVersion;
+ dualAccount=null;
  showLogin();
+ $('myTeacherSwitchMode').hidden=true;
+ $('adminPreviewSwitchMode').hidden=true;
  if(!user){status('Continue with your Academy-approved Google account.');return}
  if(!user.emailVerified){status('Please use a Google account with a verified email.',true);return}
- status('Checking Google sign-in and Academy approval…');
+ status('Checking Google sign-in and your Academy roles…');
  try{
   const token=await user.getIdTokenResult(true);
-  if(token.signInProvider!=='google.com')throw Error('Sign in with Google to open your teacher dashboard.');
+  if(token.signInProvider!=='google.com')
+   throw Error('Sign in with Google to open your teacher dashboard.');
   const email=normalizeEmail(user.email);
   if(!email)throw Error('Google account email is missing.');
-  if(await isAcademyAdmin(user)){
-    if(version!==checkVersion)return;
-    await showAdminTeacherPreview(user,version);
-    return;
-  }
-  const alias=await getDoc(doc(db,'teacherAccess',teacherGoogleLookupId(email)));
-  if(!alias.exists())throw Error('This Gmail has not been enabled. Ask Admin to enable Google Login in Teacher Management.');
-  const mapping=alias.data();
-  if(normalizeEmail(mapping.email)!==email||typeof mapping.teacherId!=='string'||!mapping.teacherId||mapping.teacherId.includes('/'))throw Error('Invalid teacher Google mapping. Contact Admin.');
-  const id=mapping.teacherId;
-  const grant=await getDoc(doc(db,'teacherAccess',id));
-  if(!grant.exists())throw Error('Teacher access not found or revoked.');
-  const profile=grant.data();
-  if(normalizeEmail(profile.email)!==email)throw Error('This Gmail is not approved for your teacher record.');
-  const roster=await getDoc(doc(db,'teacherRosters',id));
+  const admin=await isAcademyAdmin(user);
   if(version!==checkVersion)return;
-  const assignments=Array.isArray(roster.exists()?roster.data().assignments:null)?roster.data().assignments:[];
-  $('teacherName').textContent=profile.name||user.displayName||'Teacher';
-  $('teacherEmail').textContent=user.email||'';
-  const avatar=$('teacherAvatar');avatar.replaceChildren();
-  if(user.photoURL){const img=document.createElement('img');img.src=user.photoURL;img.alt='';img.referrerPolicy='no-referrer';avatar.append(img)}
-  else avatar.textContent='👩‍🏫';
-  const classes=new Set(assignments.filter(a=>a.course).map(a=>[a.course,a.batch||''].join('|')));
-  const subjects=new Set(assignments.map(a=>a.subject).filter(Boolean));
-  $('classCount').textContent=String(classes.size);
-  $('subjectCount').textContent=String(subjects.size);
-  const root=$('teacherAssignments');root.replaceChildren();
-  if(!assignments.length){const p=document.createElement('p');p.textContent='No class assignments have been published yet. Contact your Admin.';root.append(p)}
-  else for(const a of assignments){
-   const row=document.createElement('article');row.className='assignment';
-   const title=document.createElement('strong');title.textContent=(a.courseName||a.course||'Class')+(a.batch?' · '+a.batch:'');
-   const details=document.createElement('small');details.textContent=[a.subject||'Subject not assigned',a.timing||'',Array.isArray(a.students)?a.students.length+' students':''].filter(Boolean).join(' · ');
-   row.append(title,details);root.append(row);
+  let linked=null,teacherError=null;
+  try{linked=await verifiedLinkedTeacher(email)}
+  catch(error){teacherError=error;}
+  if(version!==checkVersion)return;
+  // Dual-role accounts get an explicit switch instead of having the admin
+  // preview silently override their personal teacher attendance dashboard.
+  const landing=teacherPortalLanding(admin,Boolean(linked));
+  if(landing==='choose-role'){
+   showDualRoleChoice(user,linked);
+   return;
   }
-  const link=new URL('teacher-attendance.html',location.href);link.searchParams.set('id',id);$('attendanceLink').href=link.href;
-  login.hidden=true;info.hidden=true;dashboard.hidden=false;
-  const idMount=$('myTeacherIdCard');idMount.replaceChildren();
-  attachPersonalIdCard({db,kind:'teacher',holderId:id,container:idMount,
-   isCurrent:()=>version===checkVersion&&auth.currentUser?.uid===user.uid});
- }catch(e){if(version===checkVersion)status(friendlyError(e),true)}
+  if(landing==='admin-preview'){
+   // Administrator without a valid linked teacher keeps current admin preview.
+   await showAdminTeacherPreview(user,version);
+   return;
+  }
+  if(landing==='unauthorized'){
+   if(teacherError)throw teacherError;
+   throw Error('This Gmail has not been enabled for teacher access. Ask Admin to enable Google Login in Teacher Management.');
+  }
+  await showPersonalTeacherDashboard(user,version,linked);
+ }catch(error){
+  if(version===checkVersion)status(friendlyError(error),true);
+ }
 }
 $('googleLogin').onclick=async()=>{
  if(!auth)return status('Google login is still initializing. Please try again.',true);
@@ -279,8 +417,15 @@ $('googleLogin').onclick=async()=>{
   }else status(friendlyError(e),true);
  }finally{button.disabled=false}
 };
-$('logout').onclick=async()=>{++checkVersion;++previewVersion;try{await signOut(auth)}catch(e){status(friendlyError(e),true)}showLogin()};
-$('adminPreviewLogout').onclick=async()=>{++checkVersion;++previewVersion;try{await signOut(auth)}catch(e){status(friendlyError(e),true)}showLogin()};
+async function logoutPortal(){
+ ++checkVersion;++previewVersion;dualAccount=null;
+ try{await signOut(auth)}
+ catch(e){status(friendlyError(e),true)}
+ showLogin();
+}
+$('logout').onclick=logoutPortal;
+$('adminPreviewLogout').onclick=logoutPortal;
+$('dualRoleLogout').onclick=logoutPortal;
 
 try{
  const conf=await fetch('firebase-config.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Firebase configuration unavailable.');return r.json()});
