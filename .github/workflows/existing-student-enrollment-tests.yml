@@ -1,0 +1,41 @@
+name: Existing Academy Student Enrollment Checks
+
+on:
+  pull_request:
+    paths:
+      - 'admin.html'
+      - 'existing-student-enrollment.js'
+      - 'tests/existing-student-enrollment.test.mjs'
+      - '.github/workflows/existing-student-enrollment-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  historical-enrollment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate admin form and historic student workflow
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          source=Path('admin.html').read_text()
+          for term in ['studentExistingButton','studentHistoricIntake','existingMuballighaYear',
+            'existingAalimaFeeReference','existingStudentRecordsVerified',
+            'existingAcademyStudentDetails','findDuplicateAcademyStudent',
+            'ensureOfficialStudentId']:
+            assert term in source,term
+          mods=re.findall(r'<script type="module">([\s\S]*?)</script>',source)
+          assert mods,'No admin module found'
+          Path('/tmp/academy-admin-historic-intake.mjs').write_text('\n'.join(mods))
+          PY
+          node --check /tmp/academy-admin-historic-intake.mjs
+          node --check existing-student-enrollment.js
+      - name: Test old admissions, year 2, Aalima verification and duplicate protection
+        run: node --test tests/existing-student-enrollment.test.mjs

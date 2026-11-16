@@ -580,6 +580,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Official Student IDs are issued automatically on Save: <strong>ALIA00001, ALIA00002, ALIA00003…</strong> (ALIA + 5 digits). Existing students can be assigned IDs using the button below. These numbers are permanent, unique roll numbers — not login passwords. For online exam results, the separate private Exam Access ID and Date of Birth are used.</p>
 <div class="actions" style="display:flex;flex-wrap:wrap;gap:10px;margin:15px 0">
 <button id="studentNewButton" type="button">＋ Add New Student</button>
+<button id="studentExistingButton" type="button" class="secondary">📚 Register Existing Academy Student</button>
 <button id="studentUpdatesButton" type="button" class="secondary">✏ Update Existing Student</button>
 <button id="copyStudentAdmissionLink" type="button" class="secondary">🔗 Copy New Student Admission Link</button>
 <span id="studentFormToggleStatus" class="section-note" role="status">The registration form is closed until Add or Edit is selected.</span></div>
@@ -588,7 +589,22 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <h3 id="studentEditorTitle">＋ New Student Registration</h3>
 <button type="button" class="secondary" id="studentEditorClose">✕ Close Form</button></div>
 <p class="section-note"><strong>Mandatory:</strong> Student Name, Course, Guardian, Date of Birth, Contact Number and Complete Address. Contact Email and Photo are optional. Photo is optional. Student ID is issued automatically; never type your own ID.</p>
-<form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId"><div class="fields">
+<form id="studentForm"><input type="hidden" id="studentId"><input type="hidden" id="studentExamId">
+<fieldset id="studentHistoricIntake" hidden style="border:2px solid #b7d3bb;background:#fffdf3;border-radius:12px;padding:14px;margin:0 0 18px">
+<legend style="font-weight:850;color:#204f33">📚 Existing Academy Student — Historical Admission</legend>
+<p class="section-note"><strong>Only for students already attending the Academy but not yet saved in this website.</strong> This does not create a new public admission, charge a fee, or claim a new payment. If their record already appears below, use Update Existing Student instead.</p>
+<div class="fields">
+<label>Original Academy Joining Date *<input id="existingStudentEnrollmentDate" type="date"></label>
+<label id="existingMuballighaYearWrap" hidden>Verified Current Muballiga Year *<select id="existingMuballighaYear"><option value="">Select actual year from previous register</option><option value="1">1st Year</option><option value="2">2nd Year</option></select></label>
+</div>
+<div id="existingAalimaEvidence" hidden>
+<label style="display:flex;align-items:flex-start;gap:8px"><input type="checkbox" id="existingAalimaEligibilityVerified" style="width:auto;margin-top:5px"><span>I checked the Academy records: this student completed Muballiga Year 2 and their Aalima admission fee was previously paid and approved. This is a historical record entry, not a new payment.</span></label>
+<label>Original Aalima Admission Fee Receipt / Register Reference *<input id="existingAalimaFeeReference" maxlength="120" placeholder="Previous fee receipt or admission register reference"></label>
+</div>
+<label style="display:flex;align-items:flex-start;gap:8px"><input type="checkbox" id="existingStudentRecordsVerified" style="width:auto;margin-top:5px"><span><strong>I verified the previous Academy admission register and checked this student does not already exist in the online Students list.</strong></span></label>
+<p class="section-note">A new official ALIA Student ID is assigned only after Save. Earlier fees and attendance are <strong>not</strong> automatically recreated; record them separately using reliable historical records.</p>
+</fieldset>
+<div class="fields">
 <label>Official Student ID (Auto Generated)<input id="studentOfficialId" readonly placeholder="Automatically assigned after Save Student"></label><label>Student Name *<input id="studentName" required minlength="2" maxlength="120"></label><label>Course *<select id="studentCourse" required><option value="">Select course</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select></label><label>Academic Stage<input id="studentAcademicStage" readonly placeholder="Automatic from verified stage"><small>New Muballiga admissions begin in Year 1. Year 2 is a verified promotion. Aalima requires a separate admission-fee payment and approval.</small></label><label id="legacyStudyYearWrap" hidden>Verify Existing Student's Muballiga Year *<select id="legacyStudyYear"><option value="">Choose verified stage</option><option value="1">Muballiga 1st Year</option><option value="2">Muballiga 2nd Year</option></select><small>Legacy records without a saved year must be checked against previous academic records before saving. Never guess.</small></label><label id="studentBatchWrap" class="hidden">Maktab Batch <select id="studentBatch"><option value="">Choose batch</option></select></label><label>Parent / Guardian Name *<input id="studentGuardian" required minlength="2" maxlength="120"></label>
 <label>Date of Birth * (needed for secure Student Login)<input id="studentDob" type="date" required></label>
 <label>Parent / Student Contact Number *<input id="studentPhone" type="tel" required minlength="7" maxlength="25" pattern="[0-9+() .-]{7,25}"></label>
@@ -701,6 +717,7 @@ import{initClassRescheduleAdmin}from'./class-reschedule-admin.js';
 import{stampPrincipalOnPdf}from'./site-settings.js';
 import{compressProfilePhoto,photoAvatar,isProfilePhoto}from'./profile-photo.js';
 import{ensureOfficialStudentId,validOfficialStudentId}from'./student-numbering.js';
+import{existingAcademyStudentDetails,findDuplicateAcademyStudent}from'./existing-student-enrollment.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
 const $=id=>document.getElementById(id),email='alislaharabicacademy@gmail.com';
 // Private administrator email addresses are never embedded in public source.
@@ -1118,6 +1135,19 @@ for(const kind of ['teacher','student']){
  photoLoad(kind);
 }
 const schemas={teachers:['Name','Subject','Phone','Email','Notes'],students:['Name','Course','Batch','Guardian','Dob','Phone','Email','Address','State','Reference','ExamId']};
+let studentEditorMode='new';
+const isHistoricEnrollment=()=>studentEditorMode==='existing'&&!$('studentId').value;
+function updateHistoricIntakeVisibility(){
+ const historic=isHistoricEnrollment(),course=$('studentCourse').value;
+ $('studentHistoricIntake').hidden=!historic;
+ $('existingStudentEnrollmentDate').required=historic;
+ $('existingMuballighaYearWrap').hidden=!historic||course!=='muballigha';
+ $('existingMuballighaYear').required=historic&&course==='muballigha';
+ $('existingAalimaEvidence').hidden=!historic||course!=='alima';
+ $('existingAalimaEligibilityVerified').required=historic&&course==='alima';
+ $('existingAalimaFeeReference').required=historic&&course==='alima';
+ $('existingStudentRecordsVerified').required=historic;
+}
 const isMaktabCourse=course=>['maktab','childrens-quran-maktab'].includes(courseKey(course));
 const batchOptions=Array.from({length:30},(_,i)=>'Batch '+(i+1));
 for(const label of batchOptions)$('studentBatch').add(new Option(label,label));
@@ -1128,12 +1158,16 @@ function updateStudentBatchVisibility(){
  $('legacyStudyYearWrap').hidden=!verifyLegacy;
  $('legacyStudyYear').required=verifyLegacy;
  $('studentAcademicStage').value=selected==='muballigha'?
-  (verifyLegacy?'⚠ Legacy student: verify Year 1 or 2 below':'Muballiga · '+(original==='muballigha'&&year===2?'2nd Year':'1st Year')):
-  selected==='alima'?'Aalima · 3rd Year (private approval only)':'Not part of the Muballiga pathway';
+  (isHistoricEnrollment()?'Existing Muballiga · verify Year 1 or 2 from old register':
+   verifyLegacy?'⚠ Legacy student: verify Year 1 or 2 below':
+    'Muballiga · '+(original==='muballigha'&&year===2?'2nd Year':'1st Year')):
+  selected==='alima'?(isHistoricEnrollment()?'Existing Aalima · 3rd Year (historical verification required)':
+   'Aalima · 3rd Year (private approval only)'):'Not part of the Muballiga pathway';
  const maktab=isMaktabCourse($('studentCourse').value);
  $('studentBatchWrap').classList.toggle('hidden',!maktab);
  $('studentBatch').required=maktab;
  if(!maktab)$('studentBatch').value='';
+ updateHistoricIntakeVisibility();
 }
 $('studentCourse').addEventListener('change',updateStudentBatchVisibility);
 updateStudentBatchVisibility();
@@ -1160,13 +1194,33 @@ for(const kind of ['teacher','student']){
    if(kind==='student'){
     const previous=await getDoc(doc(db,'students',id));
     const prior=previous.exists()?previous.data():{};
-    if(data.course==='alima'&&prior.course!=='alima')
-     throw Error('No direct Aalima admission. A completed Muballiga Year 2 student must use the separate fee-verified Aalima enrollment control in their card.');
-    data.courseYear=data.course==='muballigha'
-     ?prior.course==='muballigha'
-       ?([1,2].includes(Number(prior.courseYear))?Number(prior.courseYear):Number($('legacyStudyYear').value))
-       :1
-     :data.course==='alima'?3:0;
+    if(isHistoricEnrollment()){
+     // Backfill existing Academy students without inventing admissions or fees.
+     const existing=await getDocs(collection(db,'students'));
+     const duplicate=findDuplicateAcademyStudent(
+      existing.docs.map(d=>({id:d.id,data:d.data()})),data
+     );
+     if(duplicate)throw Error('This name and DOB already have an online student record ('+
+      String(duplicate.data.studentCode||duplicate.id)+'). Use Update Existing Student instead.');
+     Object.assign(data,existingAcademyStudentDetails({
+      course:data.course,year:$('existingMuballighaYear').value,
+      enrollmentDate:$('existingStudentEnrollmentDate').value,
+      verified:$('existingStudentRecordsVerified').checked,
+      aalimaVerified:$('existingAalimaEligibilityVerified').checked,
+      aalimaFeeReference:$('existingAalimaFeeReference').value,
+      today:new Date(Date.now()+330*60000).toISOString().slice(0,10),
+      actorUid:auth.currentUser?.uid,actorEmail:auth.currentUser?.email
+     }));
+     data.state='Active';
+    }else{
+     if(data.course==='alima'&&prior.course!=='alima')
+      throw Error('No direct new Aalima admission. A completed Muballiga Year 2 student must use the separate fee-verified Aalima enrollment control in their card.');
+     data.courseYear=data.course==='muballigha'
+      ?prior.course==='muballigha'
+        ?([1,2].includes(Number(prior.courseYear))?Number(prior.courseYear):Number($('legacyStudyYear').value))
+        :1
+      :data.course==='alima'?3:0;
+    }
     if(data.course==='muballigha'&&![1,2].includes(data.courseYear))
      throw Error('Verify the legacy student year (1st or 2nd) against actual academic records before saving.');
     data.photoData=photoToSave('student');
@@ -1218,20 +1272,29 @@ for(const kind of ['teacher','student']){
 }
 const studentEditorPanel=$('studentEditorPanel');
 function showStudentEditor(mode='new'){
+ studentEditorMode=mode;
  studentEditorPanel.hidden=false;
- $('studentEditorTitle').textContent=mode==='edit'?'✏ Edit Existing Student Details':'＋ New Student Registration';
- $('studentFormToggleStatus').textContent=mode==='edit'?'Review the selected student and save only approved changes.':'New student registration open. Complete the mandatory fields and Save.';
+ $('studentEditorTitle').textContent=mode==='edit'?'✏ Edit Existing Student Details':
+  mode==='existing'?'📚 Register an Already-Enrolled Academy Student':'＋ New Student Registration';
+ $('studentFormToggleStatus').textContent=mode==='edit'?
+  'Review the selected student and save only approved changes.':
+  mode==='existing'?
+   'Enter an existing learner from the previous Academy register, preserving their original joining date and verified current academic year.':
+   'New student registration open. Complete the mandatory fields and Save.';
+ updateStudentBatchVisibility();
  studentEditorPanel.scrollIntoView({behavior:'smooth',block:'start'});
 }
-$('studentNewButton').onclick=()=>{resetRecord('student');showStudentEditor('new')};
+$('studentNewButton').onclick=()=>{studentEditorMode='new';resetRecord('student');showStudentEditor('new')};
+$('studentExistingButton').onclick=()=>{studentEditorMode='existing';resetRecord('student');showStudentEditor('existing')};
 $('studentUpdatesButton').onclick=()=>{$('studentFormToggleStatus').textContent='Choose a student below and press Edit. The matching form will open inside Student Details.';studentEditorPanel.hidden=true;$('studentList').scrollIntoView({behavior:'smooth'})};
-$('studentEditorClose').onclick=()=>{studentEditorPanel.hidden=true;resetRecord('student');$('studentFormToggleStatus').textContent='Student form closed.'};
+$('studentEditorClose').onclick=()=>{studentEditorPanel.hidden=true;studentEditorMode='new';resetRecord('student');$('studentFormToggleStatus').textContent='Student form closed.'};
 $('copyStudentAdmissionLink').onclick=async()=>{
  const url=new URL('admission.html',location.href).href;
  try{await navigator.clipboard.writeText(url);$('studentFormToggleStatus').textContent='✓ New student application link copied. Applicants submit to Admissions for Admin approval.'}
  catch(e){prompt('Copy New Student Admission Link:',url)}
 };
 function openStudentEdit(id,data,proposed=null){
+ studentEditorMode='edit';
  $('studentId').value=id;
  for(const field of schemas.students)$(('student'+field)).value=String(data[field.toLowerCase()]??'');
  $('studentOfficialId').value=data.studentCode||'';
