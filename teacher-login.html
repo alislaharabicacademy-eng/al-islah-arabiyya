@@ -93,7 +93,7 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 <div class="profile"><span class="avatar" id="teacherAvatar" aria-hidden="true">👩‍🏫</span><span><h2 id="teacherName">Teacher Dashboard</h2><p id="teacherEmail"></p></span></div>
 <div class="stats"><div class="stat"><strong id="classCount">0</strong><small>Assigned Classes</small></div><div class="stat"><strong id="subjectCount">0</strong><small>Assigned Subjects</small></div></div>
 <h3>📚 My Classes &amp; Subjects</h3>
-<div id="teacherAssignments"></div>
+<div id="teacherAssignments"></div><div id="myTeacherIdCard"></div>
 <div class="actions"><a class="button" id="attendanceLink" href="teacher-attendance.html">📋 Open Attendance</a><button id="logout" type="button" class="secondary">Sign Out</button></div>
 <p class="hint">Results, marks and certificates will appear here when those teacher permissions are implemented. Your current access includes assigned classes and attendance.</p>
 </section>
@@ -120,6 +120,7 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import {getFirestore,doc,getDoc,getDocs,collection,addDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import {attachPersonalIdCard} from './id-card-personal.js';
 
 const $ = id => document.getElementById(id);
 const login=$('loginCard'),dashboard=$('dashboard'),info=$('loginInfo');
@@ -261,6 +262,9 @@ async function loadDashboard(user){
   }
   const link=new URL('teacher-attendance.html',location.href);link.searchParams.set('id',id);$('attendanceLink').href=link.href;
   login.hidden=true;info.hidden=true;dashboard.hidden=false;
+  const idMount=$('myTeacherIdCard');idMount.replaceChildren();
+  attachPersonalIdCard({db,kind:'teacher',holderId:id,container:idMount,
+   isCurrent:()=>version===checkVersion&&auth.currentUser?.uid===user.uid});
  }catch(e){if(version===checkVersion)status(friendlyError(e),true)}
 }
 $('googleLogin').onclick=async()=>{

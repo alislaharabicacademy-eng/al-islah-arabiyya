@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#113b2a">
+<title>ID Card Studio | Madrasa Al Islahul Arabiya</title>
+<style>
+:root{--green:#124b36;--dark:#0d2d22;--gold:#c5a86c;--ink:#1c4431;--muted:#5c7363}
+*{box-sizing:border-box}body{margin:0;background:#eef4ee;color:var(--ink);font:15px/1.6 system-ui,-apple-system,Arial,sans-serif}
+a{color:inherit;text-decoration:none}button,input,select{font:inherit}
+header{background:linear-gradient(120deg,#0c2c21,#21563e);border-bottom:4px solid var(--gold);color:#fff}
+.top{max-width:1180px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px}
+.brand{display:flex;align-items:center;gap:12px}.brand img{height:65px;width:65px;object-fit:contain}
+.brand h1{font:700 clamp(21px,2.7vw,29px) Georgia,serif;margin:0;color:#f7e6ba}
+.brand small{font-size:11px;letter-spacing:.12em;color:#d8e6dd}
+nav{display:flex;gap:9px;flex-wrap:wrap}nav a{border:1px solid #d5b87f77;padding:9px 13px;border-radius:9px;font-weight:700;font-size:13px}
+main{max-width:1180px;margin:27px auto 75px;padding:0 18px}
+.intro{margin-bottom:20px}.intro h2{font:700 32px Georgia,serif;color:#164532;margin:0 0 6px}
+.intro p{margin:0;color:var(--muted)}
+.card{background:#fff;border:1px solid #d8e5d7;box-shadow:0 9px 28px #14391e10;border-radius:16px;padding:22px;margin:16px 0}
+h3{font:700 23px Georgia,serif;color:#164e36;margin:0 0 12px}
+h4{font-size:17px;margin:14px 0 8px}
+label{display:block;font-size:13px;font-weight:700;color:#315641}
+input:not([type=checkbox]),select{width:100%;padding:11px 12px;background:#fcfefb;border:1px solid #b6cdbb;color:var(--ink);border-radius:10px;min-height:44px;margin-top:7px}
+button,.button{border:0;background:#176546;border-radius:10px;padding:12px 18px;color:#fff;cursor:pointer;font-weight:800;font-size:13px;min-height:44px}
+button.secondary,.button.secondary{background:#eef6ef;color:#15573a;border:1px solid #c7dccb}
+button.danger{background:#9d392d}button:disabled{opacity:.5;cursor:wait}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.issuer-layout{display:grid;grid-template-columns:minmax(260px,.92fr) minmax(360px,1.08fr);gap:18px}
+.preview-area{background:#f0f5f0;border:1px solid #cddfcf;border-radius:14px;padding:16px}
+.preview-area h4{margin:4px 0 8px}
+.id-visual{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+.id-visual canvas{display:block;width:100%;max-width:420px;height:auto;border-radius:11px;box-shadow:0 12px 25px #10291e24}
+.flag{display:inline-block;background:#e5f3e5;border:1px solid #c3ddca;color:#155438;padding:5px 10px;border-radius:100px;font-size:12px;font-weight:800}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.checks label{display:flex;align-items:center;gap:8px;font-weight:600;padding:10px;background:#f2f7f1;border-radius:9px}
+.checks input{accent-color:#16613e}
+.status{background:#f0f8ef;border:1px solid #cae3ce;padding:13px 15px;border-radius:11px;font-size:13px;line-height:1.8;white-space:pre-wrap}
+.note{background:#fff8e9;border:1px solid #ebd9ac;padding:13px;border-radius:11px;color:#664f2c;font-size:13px}
+p.muted{color:var(--muted);font-size:13px}
+footer{text-align:center;padding:28px;font-size:12px;color:#69816e}
+[hidden]{display:none!important}
+@media(max-width:830px){.issuer-layout,.grid,.checks{grid-template-columns:1fr}.top{flex-wrap:wrap}.card{padding:17px}}
+</style></head>
+<body>
+<header><div class="top"><div class="brand"><img src="1_20261112_080707_0000.png" alt="Academy Logo"><div><h1>Madrasa Al Islahul Arabiya</h1><small>OFFICIAL ID CARD STUDIO</small></div></div><nav><a href="admin.html">↗ Admin Panel</a><a href="index.html">⌂ Home</a></nav></div></header>
+<main>
+<div class="intro"><h2>🪪 Student &amp; Teacher ID Card Studio</h2>
+<p>Issue, preview, revoke and print official two-sided Academy identity cards. Use the existing Student &amp; Teacher records.</p></div>
+<section class="card" id="loginPanel">
+<h3>🔐 Administrator Sign-In</h3>
+<p class="muted">Verified Academy administrators only. Your real authenticated identity remains recorded by Firebase.</p>
+<div class="actions"><button type="button" id="signIn">Continue with Google</button></div>
+<p id="loginStatus" class="status" role="status">Sign in to access the private card studio.</p>
+</section>
+<div id="studio" hidden>
+<section class="card"><div class="actions" style="justify-content:space-between;align-items:center">
+<div><span class="flag">Verified Academy Administrator</span><p class="muted">No private administrator email is displayed on ID cards or the public verification page.</p></div>
+<button id="signOut" class="secondary" type="button">Sign Out</button>
+</div></section>
+<section class="card" id="settingsBox">
+<h3>🎨 Card Designs &amp; Printed Fields</h3>
+<p class="muted">Settings apply to new prints and preview. Guardian details and DOB are off by default where appropriate. Avoid displaying unnecessary personal information on lost cards.</p>
+<div class="grid">
+<label>Student Card Theme<select id="studentTheme"><option value="emerald">Emerald Green &amp; Gold</option><option value="sapphire">Sapphire Blue &amp; Gold</option><option value="plum">Royal Plum &amp; Gold</option></select></label>
+<label>Teacher Card Theme<select id="teacherTheme"><option value="plum">Royal Plum &amp; Gold</option><option value="emerald">Emerald Green &amp; Gold</option><option value="sapphire">Sapphire Blue &amp; Gold</option></select></label>
+<label>Academic Year<input id="academicYear" maxlength="24" placeholder="2026–2027"></label>
+<label>Default Valid Until<input id="defaultValidity" type="date"></label>
+</div>
+<h4>Back Side Fields</h4>
+<div class="checks">
+<label><input type="checkbox" id="showGuardian"> Guardian / Parent Name</label>
+<label><input type="checkbox" id="showEmergencyPhone"> Emergency Contact</label>
+<label><input type="checkbox" id="showBloodGroup"> Blood Group (only if supplied)</label>
+<label><input type="checkbox" id="showDob"> Date of Birth (sensitive)</label>
+<label><input type="checkbox" id="showAddress"> Residential Address (sensitive)</label>
+</div>
+<div class="actions"><button id="saveSettings" type="button">💾 Save Card Design Settings</button></div>
+<p id="settingsStatus" class="status" role="status">Changes are only saved after clicking Save.</p>
+</section>
+<div class="issuer-layout">
+<section class="card">
+<h3>🎫 Issue Individual ID</h3>
+<label>Card Category<select id="cardKind"><option value="student">🎓 Student</option><option value="teacher">👩‍🏫 Teacher</option></select></label>
+<label style="margin-top:15px">Select Existing Record<select id="cardHolder"><option value="">Choose a student or teacher</option></select></label>
+<label style="margin-top:15px">Card Valid Until<input type="date" id="cardValidUntil"></label>
+<div class="actions">
+<button type="button" id="previewCard">👀 Preview Front &amp; Back</button>
+<button type="button" id="issueCard">✅ Issue / Publish ID Card</button>
+</div>
+<div class="actions">
+<button type="button" id="downloadPvc" class="secondary">⬇ Download PVC Card PDF</button>
+<button type="button" id="reissueCard" class="secondary">🔄 Reissue / Replace Card</button>
+<button type="button" id="revokeCard" class="danger">⛔ Revoke ID</button>
+</div>
+<p id="cardStatus" class="status" role="status">Choose a person to preview an ID card. Issuing is a separate action and creates a secure QR verification record.</p>
+</section>
+<section class="card">
+<h3>✨ Live Front &amp; Back Preview</h3>
+<p class="muted">Standard PVC size: <strong>85.6 × 54 mm</strong>. Preview is watermarked until issued.</p>
+<div class="preview-area">
+<h4>FRONT</h4><div class="id-visual"><canvas id="previewFront" width="1190" height="750" aria-label="ID card front preview"></canvas></div>
+<h4 style="margin-top:20px">BACK</h4><div class="id-visual"><canvas id="previewBack" width="1190" height="750" aria-label="ID card back preview"></canvas></div>
+</div>
+</section>
+</div>
+<section class="card">
+<h3>🖨️ Bulk ID Cards &amp; A4 Printing</h3>
+<p class="muted">Generate unissued ID cards from existing Academy records or print up to 80 currently active cards as A4 sheets. Two-sided sheets have mirrored back columns for long-edge duplex printing.</p>
+<label for="bulkPage" style="max-width:220px">Batch Page (80 cards per page)<input type="number" id="bulkPage" min="1" max="999" value="1"></label>
+<div class="actions">
+<button type="button" id="issueBulk">⚡ Issue Missing Cards (up to 80)</button>
+<button type="button" id="printBulk" class="secondary">🖨 Download A4 Bulk PDF (up to 80)</button>
+<button type="button" id="reloadPeople" class="secondary">↻ Refresh Student / Teacher Records</button>
+</div>
+<p class="note">Verify names, photographs, expiry dates and print preview before printing. Cards only become QR-verifiable after the administrator issues them. Older QR tokens are revoked on reissue.</p>
+<p id="bulkStatus" class="status" role="status">Choose the Student or Teacher category above. No bulk issuance occurs without your confirmation.</p>
+</section>
+<section class="card">
+<h3>🔳 Public QR ID Verification</h3>
+<p class="muted">A scanned code opens the official public verification page. It shows only the card holder's name, role, ID, expiry and current validity — never DOB, address, photo, phone, guardian or payment data.</p>
+<a href="verify-id.html" target="_blank" rel="noopener" class="button secondary">↗ Public Verification Page</a>
+</section>
+</div>
+</main><footer>© Madrasa Al Islahul Arabiya • Secure Identity Issuance</footer>
+<script type="module" src="./id-card-studio.js"></script>
+</body></html>

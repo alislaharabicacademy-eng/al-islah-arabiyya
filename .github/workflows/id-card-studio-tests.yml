@@ -1,0 +1,98 @@
+name: Academy ID Card Studio - Security and Print
+
+on:
+  pull_request:
+    paths:
+      - 'admin.html'
+      - 'student-login.html'
+      - 'teacher-login.html'
+      - 'id-card-*.js'
+      - 'id-card-studio.html'
+      - 'verify-id.html'
+      - 'vendor/qrcode.min.js'
+      - 'firestore.rules'
+      - 'tests/id-card-*'
+      - '.github/workflows/id-card-studio-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  firestore-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Check ID scripts and inline browser modules
+        run: |
+          for js in id-card-utils.js id-card-studio.js id-card-personal.js; do node --check --input-type=module < "$js"; done
+          node --check tests/id-card-security-rules.test.mjs
+          node --check tests/id-card-utils.test.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          for name in ('admin.html','teacher-login.html','student-login.html','verify-id.html'):
+              source=Path(name).read_text()
+              inline=re.findall(r'<script type="module">([\s\S]*?)</script>',source)
+              assert inline, name+' has no inline module'
+              Path('/tmp/'+name+'.mjs').write_text('\n'.join(inline))
+          studio=Path('id-card-studio.html').read_text()
+          assert 'id-card-studio.js' in studio
+          assert 'id-card-studio.html' in Path('admin.html').read_text()
+          assert 'id-card-personal.js' in Path('student-login.html').read_text()
+          assert 'id-card-personal.js' in Path('teacher-login.html').read_text()
+          assert 'syedatheil40@gmail.com' not in studio
+          assert 'syedatheil40@gmail.com' not in Path('id-card-utils.js').read_text()
+          assert 'syedatheil40@gmail.com' not in Path('id-card-studio.js').read_text()
+          PY
+          for html in admin.html teacher-login.html student-login.html verify-id.html; do node --check "/tmp/$html.mjs"; done
+      - name: Run pure ID card tests
+        run: node --test tests/id-card-utils.test.mjs
+      - name: Install Firebase emulator tests
+        run: npm install --no-save firebase@13 @firebase/rules-unit-testing@6
+      - name: Test QR privacy, self-service and revoked-card rules
+        run: npx --yes firebase-tools@latest emulators:exec --only firestore --project demo-academy-id-card 'node --test tests/id-card-security-rules.test.mjs'
+
+  real-browser-print:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install Playwright controller
+        run: npm install --no-save --ignore-scripts playwright@1.56.1
+      - name: Start isolated local Academy website
+        run: |
+          python3 -m http.server 8766 >/tmp/id-card-site.log 2>&1 &
+          sleep 3
+          curl -fsS http://127.0.0.1:8766/tests/id-card-render-fixture.html >/dev/null
+      - name: Check actual browser QR, front/back preview and PVC/A4 PDF downloads
+        env:
+          CHROME: /usr/bin/google-chrome
+          PORT: '8766'
+        run: node tests/id-card-browser-print.mjs
+      - name: Inspect print page sizes and PDF page counts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils
+          test "$(pdfinfo id-card-print-proof/student-pvc-smoke.pdf | awk '/^Pages:/ {print $2}')" = 2
+          test "$(pdfinfo id-card-print-proof/bulk-a4-smoke.pdf | awk '/^Pages:/ {print $2}')" = 4
+          pdfinfo id-card-print-proof/student-pvc-smoke.pdf | grep 'Page size:'
+          pdfinfo id-card-print-proof/bulk-a4-smoke.pdf | grep 'Page size:'
+          pdftoppm -f 1 -l 2 -png -r 130 id-card-print-proof/student-pvc-smoke.pdf id-card-print-proof/pvc-page >/dev/null 2>&1
+          test -s id-card-print-proof/pvc-page-1.png
+      - name: Upload ID card PDF and image proofs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: academy-id-card-browser-print-proof
+          path: id-card-print-proof/
+          retention-days: 7

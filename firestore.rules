@@ -91,6 +91,85 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Official ID cards: admins issue, publish, revoke and reissue cards.
+    // Card photos/contact data are private; public QR verification uses a
+    // separate minimally scoped document with an unguessable 128-bit token.
+    function isIssuedCardOwner(cardId) {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && resource.data.published == true
+        && resource.data.status == 'active'
+        && (
+          (
+            resource.data.kind == 'student'
+            && cardId == 'student__' + resource.data.holderId
+            && exists(/databases/$(database)/documents/studentAccess/$(resource.data.holderId))
+            && get(/databases/$(database)/documents/studentAccess/$(resource.data.holderId)).data.enabled == true
+            && get(/databases/$(database)/documents/studentAccess/$(resource.data.holderId)).data.email == request.auth.token.email
+          )
+          || (
+            resource.data.kind == 'teacher'
+            && cardId == 'teacher__' + resource.data.holderId
+            && exists(/databases/$(database)/documents/teacherAccess/$(resource.data.holderId))
+            && get(/databases/$(database)/documents/teacherAccess/$(resource.data.holderId)).data.email == request.auth.token.email
+          )
+        );
+    }
+
+    match /idCardSettings/{docId} {
+      allow get: if isAdmin() && docId == 'current';
+      allow list: if false;
+      allow create, update, delete: if isAdmin() && docId == 'current';
+    }
+
+    match /idCards/{cardId} {
+      allow get: if isAdmin() || isIssuedCardOwner(cardId);
+      allow list: if isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.kind in ['student','teacher']
+        && request.resource.data.holderId is string
+        && request.resource.data.holderId.size() > 0
+        && request.resource.data.holderId.size() <= 160
+        && cardId == request.resource.data.kind + '__' + request.resource.data.holderId
+        && request.resource.data.verificationCode is string
+        && request.resource.data.verificationCode.matches('^[a-f0-9]{32}$')
+        && request.resource.data.published == true
+        && request.resource.data.status in ['active','revoked']
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.validUntil is string
+        && request.resource.data.validUntil.matches('^\\d{4}-\\d{2}-\\d{2}$');
+      allow delete: if isAdmin();
+    }
+
+    match /idCardPublic/{token} {
+      // Only direct links to a high-entropy identifier; no listing or
+      // student-address/guardian/blood-group/phone fields are permitted.
+      allow get: if token.matches('^[a-f0-9]{32}$')
+        && resource.data.published == true;
+      allow list: if false;
+      allow create, update: if isAdmin()
+        && token.matches('^[a-f0-9]{32}$')
+        && request.resource.data.keys().hasOnly([
+          'published','status','kind','holderName','displayId','validUntil'
+        ])
+        && request.resource.data.keys().hasAll([
+          'published','status','kind','holderName','displayId','validUntil'
+        ])
+        && request.resource.data.published == true
+        && request.resource.data.status in ['active','revoked']
+        && request.resource.data.kind in ['student','teacher']
+        && request.resource.data.holderName is string
+        && request.resource.data.holderName.size() > 0
+        && request.resource.data.holderName.size() <= 120
+        && request.resource.data.displayId is string
+        && request.resource.data.displayId.size() <= 48
+        && request.resource.data.validUntil is string
+        && request.resource.data.validUntil.matches('^\\d{4}-\\d{2}-\\d{2}$');
+      allow delete: if isAdmin();
+    }
+
     // Published website appearance and principal signatory profile.
     // Public read is intentional because official certificate PDFs can be downloaded
     // through unguessable published result links. Only verified Academy admin writes.

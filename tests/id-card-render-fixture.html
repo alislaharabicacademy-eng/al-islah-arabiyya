@@ -1,0 +1,31 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Academy ID Card Print Smoke Test</title><link rel="icon" href="data:,">
+<style>body{font:16px system-ui;background:#ecf3eb;margin:20px}h1{color:#165337}
+.grid{display:flex;gap:18px;flex-wrap:wrap}.grid canvas{width:460px;max-width:100%;height:auto;border-radius:10px;box-shadow:0 10px 25px #0e3e3128}</style>
+</head><body><h1>Academy ID Card • Actual 300+ DPI Print Render</h1><p id="status">Loading PDF renderer...</p><div class="grid" id="cards"></div>
+<script type="module">
+import {renderCardCanvas,createIdCardPdf,newVerificationCode} from '../id-card-utils.js';
+const code=newVerificationCode();
+const settings={studentTheme:'emerald',teacherTheme:'plum',academicYear:'2026–2027',
+ showGuardian:true,showEmergencyPhone:true,showBloodGroup:true,showDob:false,showAddress:false};
+const student={kind:'student',holderId:'test-student',name:'Test Student With A Reasonably Long Name',
+ displayId:'ALIA00001',course:'Muballigha — Second Year',batch:'A',guardian:'Example Parent',
+ emergencyPhone:'0000000000',bloodGroup:'O+',verificationCode:code,status:'active',
+ issueDate:'2026-11-16',validUntil:'2027-11-16',institution:'Madrasa Al Islahul Arabiya',printSettings:settings};
+const teacher={...student,kind:'teacher',holderId:'test-teacher',name:'Teacher Demonstration',
+ displayId:'ALIT-1234567890',course:'Qur’an & Tajweed',subject:'Arabic, Islamic Studies',verificationCode:newVerificationCode()};
+window.smokeReady=(async()=>{
+ try{
+  const nodes=await Promise.all(['front','back'].map(side=>renderCardCanvas(student,side,{settings})));
+  const preview=document.getElementById('cards');preview.append(...nodes);
+  window.makePVC=async()=>{(await createIdCardPdf([student],{layout:'pvc',settings})).save('student-pvc-smoke.pdf')};
+  window.makeA4=async()=>{
+   const cards=Array.from({length:9},(_,i)=>({...((i%2)?teacher:student),displayId:'TEST'+i,
+    verificationCode:newVerificationCode()}));
+   (await createIdCardPdf(cards,{layout:'a4',settings})).save('bulk-a4-smoke.pdf');
+  };
+  document.getElementById('status').textContent='Ready: scan QR, print double-sided PVC and duplex A4.';
+  return true;
+ }catch(error){document.getElementById('status').textContent='ERROR: '+error.stack;throw error}
+})();
+</script></body></html>
