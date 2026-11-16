@@ -90,7 +90,7 @@ footer{text-align:center;padding:28px;font-size:12px;color:#69816e}
 <button type="button" id="issueCard">✅ Issue / Publish ID Card</button>
 </div>
 <div class="actions">
-<button type="button" id="downloadPvc" class="secondary">⬇ Download PVC Card PDF</button>
+<button type="button" id="downloadPvc" class="secondary">⬇ Download Portrait Card-Only PDF</button>
 <button type="button" id="reissueCard" class="secondary">🔄 Reissue / Replace Card</button>
 <button type="button" id="revokeCard" class="danger">⛔ Revoke ID</button>
 </div>
@@ -98,23 +98,23 @@ footer{text-align:center;padding:28px;font-size:12px;color:#69816e}
 </section>
 <section class="card">
 <h3>✨ Live Front &amp; Back Preview</h3>
-<p class="muted">Standard PVC size: <strong>85.6 × 54 mm</strong>. Preview is watermarked until issued.</p>
+<p class="muted">Portrait ID size: <strong>54 × 85.6 mm</strong> (top to bottom). Each PDF page contains the card only, with no A4 paper around it. Preview is watermarked until issued.</p>
 <div class="preview-area">
-<h4>FRONT</h4><div class="id-visual"><canvas id="previewFront" width="1190" height="750" aria-label="ID card front preview"></canvas></div>
-<h4 style="margin-top:20px">BACK</h4><div class="id-visual"><canvas id="previewBack" width="1190" height="750" aria-label="ID card back preview"></canvas></div>
+<h4>FRONT</h4><div class="id-visual"><canvas id="previewFront" width="750" height="1190" aria-label="ID card front preview"></canvas></div>
+<h4 style="margin-top:20px">BACK</h4><div class="id-visual"><canvas id="previewBack" width="750" height="1190" aria-label="ID card back preview"></canvas></div>
 </div>
 </section>
 </div>
 <section class="card">
-<h3>🖨️ Bulk ID Cards &amp; A4 Printing</h3>
-<p class="muted">Generate unissued ID cards from existing Academy records or print up to 80 currently active cards as A4 sheets. Two-sided sheets have mirrored back columns for long-edge duplex printing.</p>
+<h3>🖨️ Bulk Portrait ID Cards — Card-Size PDF Only</h3>
+<p class="muted">Issue missing cards in batches of up to 80, or download existing issued cards. Every front and back is its own exact-size <strong>54 × 85.6 mm portrait PDF page</strong>. No A4 sheet or blank outer margins.</p>
 <label for="bulkPage" style="max-width:220px">Batch Page (80 cards per page)<input type="number" id="bulkPage" min="1" max="999" value="1"></label>
 <div class="actions">
 <button type="button" id="issueBulk">⚡ Issue Missing Cards (up to 80)</button>
-<button type="button" id="printBulk" class="secondary">🖨 Download A4 Bulk PDF (up to 80)</button>
+<button type="button" id="printBulk" class="secondary">⬇ Download Bulk Portrait Card-Only PDF (up to 80)</button>
 <button type="button" id="reloadPeople" class="secondary">↻ Refresh Student / Teacher Records</button>
 </div>
-<p class="note">Verify names, photographs, expiry dates and print preview before printing. Cards only become QR-verifiable after the administrator issues them. Older QR tokens are revoked on reissue.</p>
+<p class="note">Portrait reference format (top-to-bottom), with an academy header, central photograph and a separate QR verification back. Verify names, photos and expiry dates before printing. QR verification activates only after issuance; older QR codes are revoked on reissue.</p>
 <p id="bulkStatus" class="status" role="status">Choose the Student or Teacher category above. No bulk issuance occurs without your confirmation.</p>
 </section>
 <section class="card">

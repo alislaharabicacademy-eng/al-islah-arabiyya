@@ -19,12 +19,12 @@ window.smokeReady=(async()=>{
   const nodes=await Promise.all(['front','back'].map(side=>renderCardCanvas(student,side,{settings})));
   const preview=document.getElementById('cards');preview.append(...nodes);
   window.makePVC=async()=>{(await createIdCardPdf([student],{layout:'pvc',settings})).save('student-pvc-smoke.pdf')};
-  window.makeA4=async()=>{
-   const cards=Array.from({length:9},(_,i)=>({...((i%2)?teacher:student),displayId:'TEST'+i,
+  window.makeBulk=async()=>{
+   const cards=Array.from({length:3},(_,i)=>({...((i%2)?teacher:student),displayId:'TEST'+i,
     verificationCode:newVerificationCode()}));
-   (await createIdCardPdf(cards,{layout:'a4',settings})).save('bulk-a4-smoke.pdf');
+   (await createIdCardPdf(cards,{layout:'pvc',settings})).save('bulk-portrait-smoke.pdf');
   };
-  document.getElementById('status').textContent='Ready: scan QR, print double-sided PVC and duplex A4.';
+  document.getElementById('status').textContent='Ready: portrait front/back ID card PDFs with no A4 pages.';
   return true;
  }catch(error){document.getElementById('status').textContent='ERROR: '+error.stack;throw error}
 })();

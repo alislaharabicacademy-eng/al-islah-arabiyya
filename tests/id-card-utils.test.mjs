@@ -6,8 +6,9 @@ import {
  verificationUrl
 } from '../id-card-utils.js';
 test('real PVC CR80 ID dimensions and safe privacy defaults',()=>{
- assert.equal(CARD_WIDTH_MM,85.6);
- assert.equal(CARD_HEIGHT_MM,54);
+ assert.equal(CARD_WIDTH_MM,54);
+ assert.equal(CARD_HEIGHT_MM,85.6);
+ assert.ok(CARD_HEIGHT_MM>CARD_WIDTH_MM,'Official PVC ID must be portrait, not landscape');
  assert.equal(CARD_SETTINGS_DEFAULTS.studentTheme,'emerald');
  assert.equal(CARD_SETTINGS_DEFAULTS.teacherTheme,'plum');
  for(const key of ['showDob','showBloodGroup','showAddress'])assert.equal(CARD_SETTINGS_DEFAULTS[key],false);

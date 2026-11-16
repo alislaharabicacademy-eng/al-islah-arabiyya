@@ -19,8 +19,11 @@ try{
  await page.evaluate(()=>window.smokeReady);
  const canvases=await page.locator('#cards canvas').count();
  if(canvases!==2)throw Error('Expected front/back preview canvases, got '+canvases);
+const dimensions=await page.locator('#cards canvas').evaluateAll(cs=>cs.map(c=>[c.width,c.height]));
+if(dimensions.some(([w,h])=>w>=h||w<650||h<1000))
+ throw Error('Cards must render top-to-bottom at high resolution: '+JSON.stringify(dimensions));
  await page.screenshot({path:resolve(output,'preview.png'),fullPage:true});
- for(const [action,file] of [['makePVC','student-pvc-smoke.pdf'],['makeA4','bulk-a4-smoke.pdf']]){
+ for(const [action,file] of [['makePVC','student-pvc-smoke.pdf'],['makeBulk','bulk-portrait-smoke.pdf']]){
   const request=page.waitForEvent('download',{timeout:35000});
   await page.evaluate(name=>window[name](),action);
   const download=await request;
@@ -31,5 +34,5 @@ try{
   console.log('PASS '+action+' valid '+content.length+'-byte PDF');
  }
  if(errors.length)throw Error('Browser runtime errors: '+errors.join('\n'));
- console.log('PASS front/back previews, local QR generation and 2 actual PDF downloads');
+ console.log('PASS portrait front/back previews, local QR generation and 2 card-size PDFs');
 }finally{await browser.close()}
