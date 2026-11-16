@@ -105,6 +105,7 @@ async function buildCard(kind,record,id,issued=null){
   institution:institute,
   issueDate:issued?.issueDate||today(),validUntil,
   verificationCode:issued?.verificationCode||'',status:issued?.status||'draft',
+  printSettings:issued?.printSettings||formSettings(),
   published:issued?.published===true
  };
 }
