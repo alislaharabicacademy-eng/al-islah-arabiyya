@@ -13,6 +13,8 @@ test('real PVC CR80 ID dimensions and safe privacy defaults',()=>{
  for(const key of ['showDob','showBloodGroup','showAddress'])assert.equal(CARD_SETTINGS_DEFAULTS[key],false);
  assert.equal(normalizedCardSettings({studentTheme:'unknown',showDob:'true'}).studentTheme,'emerald');
  assert.equal(normalizedCardSettings({showDob:'true'}).showDob,false);
+ assert.equal(normalizedCardSettings({defaultValidUntil:'2027-11-16'}).defaultValidUntil,'2027-11-16');
+ assert.equal(normalizedCardSettings({defaultValidUntil:'invalid'}).defaultValidUntil,'');
 });
 test('Firestore card ids are stable and correctly scoped',()=>{
  assert.equal(cardDocumentId('student','student123'),'student__student123');
