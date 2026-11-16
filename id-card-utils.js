@@ -29,7 +29,7 @@ export function normalizedCardSettings(value={}){
  for(const item of ['showDob','showGuardian','showEmergencyPhone','showBloodGroup','showAddress','showSignature'])
   result[item]=value[item]===true;
  if(typeof value.academicYear==='string')result.academicYear=value.academicYear.slice(0,24);
- if(typeof value.defaultValidUntil==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(value.defaultValidUntil))
+ if(typeof value.defaultValidUntil==='string'&&/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(value.defaultValidUntil))
   result.defaultValidUntil=value.defaultValidUntil;
  return result;
 }
