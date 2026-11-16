@@ -13,7 +13,7 @@ const future=()=>Timestamp.fromDate(new Date(Date.now()+10*86400000));
 const past=()=>Timestamp.fromDate(new Date(Date.now()-10*86400000));
 const base=()=>({
  name:'Example Student',guardian:'Example Guardian',dob:'2010-05-21',
- phone:'9876543210',email:'',joiningDate:'2024-05-21',course:'muballigha',
+ phone:'9876543210',email:'parent@example.com',joiningDate:'2024-05-21',course:'muballigha',
  courseYear:2,batch:'',address:'Example Street, Panruti',
  notes:'Already studying in second year',photoData:'',
  educationLevel:'school',schoolStandard:'10',collegeCourse:'',collegeYear:'',
@@ -104,6 +104,14 @@ test('students can self-submit only to a valid opened link, without viewing anyo
   }));
   await assertFails(setDoc(doc(visitor,'existingStudentRequests','5'.repeat(32)),{
    ...base(),admin:true
+  }));
+  // The parent/student email is mandatory for a submission; it may be the
+  // guardian's address and does not by itself grant a Student Login.
+  await assertFails(setDoc(doc(visitor,'existingStudentRequests','e'.repeat(32)),{
+   ...base(),email:''
+  }));
+  await assertFails(setDoc(doc(visitor,'existingStudentRequests','f'.repeat(32)),{
+   ...base(),email:'not-an-email'
   }));
 
   // New custom course from Admin Course Management: published, no special
