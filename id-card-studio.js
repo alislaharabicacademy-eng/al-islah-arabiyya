@@ -151,7 +151,7 @@ async function issueOne(kind,record,{reissue=false,validUntil=null}={}){
  if(validUntil)draft.validUntil=validUntil;
  const code=newVerificationCode();
  const card={
-  ...draft,verificationCode:code,status:'active',published:true,
+  ...draft,verificationCode:code,status:'active',published:true,printSettings:formSettings(),
   issueDate:today(),validUntil:draft.validUntil,
   createdAt:previous?.createdAt||serverTimestamp(),updatedAt:serverTimestamp()
  };
