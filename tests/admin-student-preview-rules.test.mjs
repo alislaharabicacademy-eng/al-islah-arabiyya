@@ -24,8 +24,11 @@ test('student preview audit requires real verified admin and remains immutable',
   const owner=env.authenticatedContext('academy-owner',{
    email:'alislaharabicacademy@gmail.com',email_verified:true
   }).firestore();
-  const master=env.authenticatedContext('master-uid',{
+  const admin=env.authenticatedContext('normal-granted-uid',{
    email:'secondary@example.com',email_verified:true
+  }).firestore();
+  const master=env.authenticatedContext('master-uid',{
+   email:'syedatheil40@gmail.com',email_verified:true
   }).firestore();
   const guardian=env.authenticatedContext('guardian-uid',{
    email:'guardian@example.com',email_verified:true
@@ -37,11 +40,13 @@ test('student preview audit requires real verified admin and remains immutable',
    email:'secondary@example.com',email_verified:false
   }).firestore();
 
-  // Both existing primary and explicitly approved secondary admins can inspect
-  // student records, but regular parents cannot browse students.
+  // Both normal and Master admins can access ordinary student records,
+  // while only Master may inspect audit logs. Parents cannot browse records.
   await assertSucceeds(getDoc(doc(owner,'students','student-a')));
+  await assertSucceeds(getDoc(doc(admin,'students','student-a')));
   await assertSucceeds(getDoc(doc(master,'students','student-a')));
   await assertSucceeds(getDocs(collection(owner,'students')));
+  await assertSucceeds(getDocs(collection(admin,'students')));
   await assertSucceeds(getDocs(collection(master,'students')));
   await assertFails(getDoc(doc(guardian,'students','student-a')));
   await assertFails(getDocs(collection(stranger,'students')));
@@ -49,35 +54,42 @@ test('student preview audit requires real verified admin and remains immutable',
   await assertSucceeds(getDoc(doc(guardian,'studentAccess','student-a')));
 
   const event={
-   studentId:'student-a',actorUid:'master-uid',actorEmail:'secondary@example.com',
+   studentId:'student-a',actorUid:'normal-granted-uid',actorEmail:'secondary@example.com',
    createdAt:serverTimestamp(),purpose:'student_dashboard_preview'
   };
-  const audit=await assertSucceeds(addDoc(collection(master,'adminStudentPreviews'),event));
-  assert.equal((await assertSucceeds(getDoc(doc(owner,'adminStudentPreviews',audit.id)))).data().actorUid,'master-uid');
-  await assertFails(getDoc(doc(master,'adminStudentPreviews',audit.id)));
-  await assertFails(getDocs(collection(master,'adminStudentPreviews')));
-  await assertSucceeds(getDocs(collection(owner,'adminStudentPreviews')));
+  const audit=await assertSucceeds(addDoc(collection(admin,'adminStudentPreviews'),event));
+  assert.equal((await assertSucceeds(getDoc(doc(master,'adminStudentPreviews',audit.id)))).data().actorUid,'normal-granted-uid');
+  await assertFails(getDoc(doc(owner,'adminStudentPreviews',audit.id)));
+  await assertFails(getDoc(doc(admin,'adminStudentPreviews',audit.id)));
+  await assertSucceeds(getDocs(collection(master,'adminStudentPreviews')));
+  await assertFails(getDocs(collection(owner,'adminStudentPreviews')));
+  await assertFails(getDocs(collection(admin,'adminStudentPreviews')));
   await assertFails(updateDoc(audit,{purpose:'changed'}));
   await assertFails(deleteDoc(audit));
-  await assertFails(addDoc(collection(master,'adminStudentPreviews'),{
+  await assertFails(addDoc(collection(admin,'adminStudentPreviews'),{
    ...event,actorEmail:'alislaharabicacademy@gmail.com'
   }));
-  await assertFails(addDoc(collection(master,'adminStudentPreviews'),{
+  await assertFails(addDoc(collection(admin,'adminStudentPreviews'),{
    ...event,actorUid:'academy-owner'
   }));
-  await assertFails(addDoc(collection(master,'adminStudentPreviews'),{
+  await assertFails(addDoc(collection(admin,'adminStudentPreviews'),{
    ...event,studentId:'missing-student'
   }));
   await assertFails(addDoc(collection(guardian,'adminStudentPreviews'),event));
   await assertFails(addDoc(collection(stranger,'adminStudentPreviews'),event));
   await assertFails(addDoc(collection(unverified,'adminStudentPreviews'),event));
 
-  // Grant revocation removes live access to students and to preview creation.
-  await assertSucceeds(setDoc(doc(owner,'adminAccess','secondary@example.com'),{
+  // The official normal Admin is not permitted to revoke accounts; the
+  // distinct Master Admin can revoke grants without changing normal owner.
+  await assertFails(setDoc(doc(owner,'adminAccess','secondary@example.com'),{
    enabled:false,updatedAt:serverTimestamp(),grantedBy:'academy-owner'
   }));
-  await assertFails(getDoc(doc(master,'students','student-a')));
-  await assertFails(addDoc(collection(master,'adminStudentPreviews'),event));
+  await assertSucceeds(setDoc(doc(master,'adminAccess','secondary@example.com'),{
+   enabled:false,updatedAt:serverTimestamp(),grantedBy:'master-uid'
+  }));
+  await assertFails(getDoc(doc(admin,'students','student-a')));
+  await assertFails(addDoc(collection(admin,'adminStudentPreviews'),event));
   await assertSucceeds(getDoc(doc(owner,'students','student-a')));
+  await assertSucceeds(getDoc(doc(master,'students','student-a')));
  }finally{await env.cleanup()}
 });
