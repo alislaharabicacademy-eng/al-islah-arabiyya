@@ -745,6 +745,7 @@ import{compressProfilePhoto,photoAvatar,isProfilePhoto}from'./profile-photo.js';
 import{ensureOfficialStudentId,validOfficialStudentId}from'./student-numbering.js';
 import{existingAcademyStudentDetails,findDuplicateAcademyStudent}from'./existing-student-enrollment.js';
 import{academyCourseLabel}from'./academy-course-catalog.js';
+import{isVerifiedMasterAdmin}from'./admin-role-status.js';
 import{initExistingStudentIntakeAdmin}from'./existing-student-intake-admin.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
 const $=id=>document.getElementById(id),email='alislaharabicacademy@gmail.com';
@@ -809,8 +810,12 @@ onAuthStateChanged(auth,async user=>{
   $('login').classList.toggle('hidden',active);
   $('editor').classList.toggle('hidden',!active);
   if(active){
-    // The official Academy address is a contact label, not an impersonated sign-in.
-    $('signedIn').textContent='Academy contact: '+email+' · Full administrator access';
+    // Display a true, server-verified role; the official Academy email is
+    // NORMAL Admin and private Master email is never displayed in the UI.
+    const masterRole=await isVerifiedMasterAdmin(db,user);
+    if(auth.currentUser?.uid!==user.uid)return;
+    $('signedIn').textContent='Academy contact: '+email+' · '+
+      (masterRole?'Master Admin':'Normal Admin');
     const linked=user.providerData.some(p=>p.providerId==='password');
     $('passwordSetupPanel').classList.toggle('hidden',linked);
     await hydrateCourseOptions();
