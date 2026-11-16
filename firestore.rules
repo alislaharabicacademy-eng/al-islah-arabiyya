@@ -472,6 +472,92 @@ service cloud.firestore {
       );
     }
 
+    // Shared, unguessable Academy-generated intake link for students who
+    // joined before the website existed. Closed by default; staff enable it
+    // explicitly, and the link expires automatically after a limited window.
+    // No student/guardian data is stored in an invitation.
+    match /existingStudentIntakeLinks/{token} {
+      allow get: if isAdmin() || (
+        token.matches('^[a-f0-9]{64}$')
+        && resource.data.enabled == true
+        && resource.data.expiresAt is timestamp
+        && resource.data.expiresAt > request.time
+      );
+      allow list, create, update, delete: if isAdmin()
+        && token.matches('^[a-f0-9]{64}$');
+    }
+
+    // Self-submitted registration details are private and only create an
+    // ADMIN REVIEW REQUEST. Applicants cannot list, read, edit, approve,
+    // create official ALIA numbers or change existing student records.
+    match /existingStudentRequests/{requestId} {
+      allow get, list, update, delete: if isAdmin();
+      allow create: if isAdmin() || (
+        requestId.matches('^[a-f0-9]{32}$')
+        && request.resource.data.keys().hasAll([
+          'name','guardian','dob','phone','email','joiningDate','course',
+          'courseYear','batch','address','notes','photoData','linkToken',
+          'source','status','submittedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'name','guardian','dob','phone','email','joiningDate','course',
+          'courseYear','batch','address','notes','photoData','linkToken',
+          'source','status','submittedAt'
+        ])
+        && request.resource.data.linkToken is string
+        && request.resource.data.linkToken.matches('^[a-f0-9]{64}$')
+        && exists(/databases/$(database)/documents/existingStudentIntakeLinks/$(request.resource.data.linkToken))
+        && get(/databases/$(database)/documents/existingStudentIntakeLinks/$(request.resource.data.linkToken)).data.enabled == true
+        && get(/databases/$(database)/documents/existingStudentIntakeLinks/$(request.resource.data.linkToken)).data.expiresAt > request.time
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.guardian is string
+        && request.resource.data.guardian.size() >= 2
+        && request.resource.data.guardian.size() <= 120
+        && request.resource.data.dob is string
+        && request.resource.data.dob.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.joiningDate is string
+        && request.resource.data.joiningDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches('^[0-9+() .-]{7,25}$')
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 200
+        && (request.resource.data.email == ''
+          || request.resource.data.email.matches('^[^/@ ]+@[^/@ ]+\\.[^/@ ]+$'))
+        && request.resource.data.course is string
+        && request.resource.data.course in [
+          'muallama','muballigha','alima','boys-hifz','maktab'
+        ]
+        && request.resource.data.courseYear is int
+        && (
+          (request.resource.data.course == 'muballigha'
+            && request.resource.data.courseYear in [1,2])
+          || (request.resource.data.course == 'alima'
+            && request.resource.data.courseYear == 3)
+          || (request.resource.data.course in ['muallama','boys-hifz','maktab']
+            && request.resource.data.courseYear == 0)
+        )
+        && request.resource.data.batch is string
+        && request.resource.data.batch.size() <= 60
+        && (request.resource.data.course != 'maktab' || request.resource.data.batch.size() > 0)
+        && request.resource.data.address is string
+        && request.resource.data.address.size() >= 5
+        && request.resource.data.address.size() <= 700
+        && request.resource.data.notes is string
+        && request.resource.data.notes.size() <= 500
+        && request.resource.data.photoData is string
+        && request.resource.data.photoData.size() <= 105000
+        && (
+          request.resource.data.photoData == ''
+          || request.resource.data.photoData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+        )
+        && request.resource.data.source == 'existing-academy-student-form'
+        && request.resource.data.status == 'Pending Review'
+        && request.resource.data.submittedAt == request.time
+      );
+    }
+
     // One-time existing-student update invitations.
     // Parents submit to a private review queue, never directly to students/.
     match /studentUpdateInvites/{token} {
