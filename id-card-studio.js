@@ -220,10 +220,10 @@ async function downloadSingle(){
  try{
   const card=await existingCard(kind,id);
   if(!isCurrentCard(card))throw Error('No currently valid issued card. Issue or reissue first.');
-  status('cardStatus','Creating double-sided PVC print PDF…');
+  status('cardStatus','Creating exact-size portrait ID card PDF (front and back)…');
   const pdf=await createIdCardPdf([card],{layout:'pvc',settings:formSettings()});
   pdf.save('ALIA_'+safeCardFilename(card.displayId)+'_ID_Card.pdf');
-  status('cardStatus','✓ Exact-size double-sided PVC PDF prepared. Print at 100% scale (85.6 × 54 mm).');
+  status('cardStatus','✓ Card-only portrait PDF prepared: 54 × 85.6 mm, two pages (front and back), no A4 margins. Print at 100% scale.');
  }catch(error){status('cardStatus','PDF download failed: '+error.message)}
  finally{$('downloadPvc').disabled=false}
 }
@@ -264,11 +264,11 @@ async function bulkPrint(){
   .sort((a,b)=>String(a.displayId||'').localeCompare(String(b.displayId||'')))
   .slice((page-1)*80,page*80);
   if(!list.length)throw Error('No active cards on this batch page. Choose a lower page number or issue cards first.');
-  if(!confirm('Prepare '+list.length+' active '+kind+' ID cards in front/back A4 sheets for duplex printing?'))return;
-  const pdf=await createIdCardPdf(list,{layout:'a4',settings:formSettings(),
+  if(!confirm('Prepare '+list.length+' active '+kind+' cards as their own front/back portrait PDF pages? No A4 sheets or white outer margins.'))return;
+  const pdf=await createIdCardPdf(list,{layout:'pvc',settings:formSettings(),
    onProgress:pct=>status('bulkStatus','Rendering '+list.length+' cards: '+pct+'%')});
-  pdf.save('ALIA_'+kind+'_Bulk_ID_Cards_A4.pdf');
-  status('bulkStatus','✓ '+list.length+' '+kind+' ID cards included. Print A4 at 100% scale, DOUBLE-SIDED, flip on LONG edge. Review a paper proof first.');
+  pdf.save('ALIA_'+kind+'_Bulk_Portrait_ID_Cards.pdf');
+  status('bulkStatus','✓ '+list.length+' '+kind+' ID cards included as exact-size portrait PDF pages (54 × 85.6 mm, front/back, no A4 whitespace). Print at 100% actual size.');
  }catch(error){status('bulkStatus','Bulk PDF failed: '+error.message)}
  finally{btn.disabled=false}
 }
