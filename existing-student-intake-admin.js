@@ -5,6 +5,7 @@
  */
 import {collection,doc,getDocs,query,limit,setDoc,updateDoc,serverTimestamp,Timestamp,writeBatch} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {isProfilePhoto} from './profile-photo.js';
+import {academyCourseLabel} from './academy-course-catalog-core.js';
 
 export function initExistingStudentIntakeAdmin({db,auth,onReview}){
  const $=id=>document.getElementById(id);
@@ -111,7 +112,13 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
   if(!currentAdmin())return;
   requests.textContent='Loading submitted existing-student forms…';
   try{
-   const snap=await getDocs(query(collection(db,'existingStudentRequests'),limit(500)));
+   const [snap,courseSnap]=await Promise.all([
+    getDocs(query(collection(db,'existingStudentRequests'),limit(500))),
+    getDocs(collection(db,'courses'))
+   ]);
+   const courseNames=new Map(courseSnap.docs.filter(c=>c.data()?.name).map(c=>[
+    c.id,academyCourseLabel(c.data().name)
+   ]));
    const rows=snap.docs.sort((a,b)=>
     (b.data().submittedAt?.toMillis?.()||0)-(a.data().submittedAt?.toMillis?.()||0));
    requests.replaceChildren();
@@ -133,7 +140,7 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
     card.append(
      label('Request reference','ESR-'+row.id.slice(0,12).toUpperCase()),
      label('Original Academy joining date',data.joiningDate),
-     label('Claimed current class',String(data.course||'')+
+     label('Claimed current class',String(courseNames.get(data.course)||data.course||'')+
        (data.courseYear?' · Year '+data.courseYear:'')+(data.batch?' · '+data.batch:'')),
      label('Parent / Guardian',data.guardian),
      label('DOB',data.dob),
