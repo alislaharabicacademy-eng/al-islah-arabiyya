@@ -501,11 +501,13 @@ service cloud.firestore {
         && request.resource.data.keys().hasAll([
           'name','guardian','dob','phone','email','joiningDate','course',
           'courseYear','batch','address','notes','photoData','linkToken',
+          'educationLevel','schoolStandard','collegeCourse','collegeYear','institutionName',
           'source','status','submittedAt'
         ])
         && request.resource.data.keys().hasOnly([
           'name','guardian','dob','phone','email','joiningDate','course',
           'courseYear','batch','address','notes','photoData','linkToken',
+          'educationLevel','schoolStandard','collegeCourse','collegeYear','institutionName',
           'source','status','submittedAt'
         ])
         && request.resource.data.linkToken is string
@@ -530,21 +532,51 @@ service cloud.firestore {
         && (request.resource.data.email == ''
           || request.resource.data.email.matches('^[^/@ ]+@[^/@ ]+\\.[^/@ ]+$'))
         && request.resource.data.course is string
-        && request.resource.data.course in [
-          'muallama','muballigha','alima','boys-hifz','maktab'
-        ]
+        // A submitted course must exist in the canonical, Admin-controlled
+        // Academy registry and be published for existing registration.
+        && request.resource.data.course.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && request.resource.data.course != 'admission-form-config'
+        && exists(/databases/$(database)/documents/courses/$(request.resource.data.course))
+        && get(/databases/$(database)/documents/courses/$(request.resource.data.course)).data.published == true
+        && get(/databases/$(database)/documents/courses/$(request.resource.data.course)).data.name is string
         && request.resource.data.courseYear is int
         && (
           (request.resource.data.course == 'muballigha'
             && request.resource.data.courseYear in [1,2])
           || (request.resource.data.course == 'alima'
             && request.resource.data.courseYear == 3)
-          || (request.resource.data.course in ['muallama','boys-hifz','maktab']
+          || (request.resource.data.course != 'muballigha'
+            && request.resource.data.course != 'alima'
             && request.resource.data.courseYear == 0)
         )
         && request.resource.data.batch is string
         && request.resource.data.batch.size() <= 60
-        && (request.resource.data.course != 'maktab' || request.resource.data.batch.size() > 0)
+        && (!(request.resource.data.course in ['maktab','childrens-quran-maktab'])
+          || request.resource.data.batch.size() > 0)
+        && request.resource.data.educationLevel is string
+        && request.resource.data.educationLevel in ['school','college','not-studying']
+        && request.resource.data.schoolStandard is string
+        && request.resource.data.schoolStandard.size() <= 6
+        && request.resource.data.collegeCourse is string
+        && request.resource.data.collegeCourse.size() <= 120
+        && request.resource.data.collegeYear is string
+        && request.resource.data.collegeYear.matches('^([1-6])?$')
+        && request.resource.data.institutionName is string
+        && request.resource.data.institutionName.size() <= 150
+        && (
+          (request.resource.data.educationLevel == 'school'
+            && request.resource.data.schoolStandard.matches('^(Pre-KG|LKG|UKG|[1-9]|1[0-2])$')
+            && request.resource.data.collegeCourse == ''
+            && request.resource.data.collegeYear == '')
+          || (request.resource.data.educationLevel == 'college'
+            && request.resource.data.schoolStandard == ''
+            && request.resource.data.collegeCourse.size() >= 2)
+          || (request.resource.data.educationLevel == 'not-studying'
+            && request.resource.data.schoolStandard == ''
+            && request.resource.data.collegeCourse == ''
+            && request.resource.data.collegeYear == ''
+            && request.resource.data.institutionName == '')
+        )
         && request.resource.data.address is string
         && request.resource.data.address.size() >= 5
         && request.resource.data.address.size() <= 700
