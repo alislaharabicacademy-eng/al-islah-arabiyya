@@ -1168,8 +1168,10 @@ const schemas={teachers:['Name','Subject','Phone','Email','Notes'],students:['Na
 let studentEditorMode='new';
 let selectedExistingSubmissionId=null;
 const isHistoricEnrollment=()=>studentEditorMode==='existing'&&!$('studentId').value;
-for(let year=1;year<=12;year++)
- $('studentSchoolStandard').add(new Option(year+'th Standard',String(year)));
+for(let year=1;year<=12;year++){
+ const suffix=year===1?'st':year===2?'nd':year===3?'rd':'th';
+ $('studentSchoolStandard').add(new Option(year+suffix+' Standard',String(year)));
+}
 function updateStudentEducationVisibility(){
  const level=$('studentEducationLevel').value;
  const school=level==='school',college=level==='college';
