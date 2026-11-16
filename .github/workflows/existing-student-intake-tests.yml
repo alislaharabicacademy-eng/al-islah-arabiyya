@@ -66,8 +66,8 @@ jobs:
           admin=Path('admin.html').read_text()
           queue=Path('existing-student-intake-admin.js').read_text()
           rules=Path('firestore.rules').read_text()
-          for needle in ['fetchPublishedAcademyCourses(db)',
-                         'schoolStandard','collegeCourse','collegeYear',
+          assert 'fetchPublishedAcademyCourses(db)' in form, 'public form does not fetch live course registry'
+          for needle in ['schoolStandard','collegeCourse','collegeYear',
                          'educationLevel','institutionName']:
             assert needle in form,('public form',needle)
             assert needle in rules,('rules',needle)
