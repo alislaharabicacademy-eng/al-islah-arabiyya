@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'existing-student-registration.html'
+      - 'academy-course-catalog.js'
+      - 'academy-course-catalog-core.js'
+      - 'tests/academy-course-catalog.test.mjs'
       - 'existing-student-intake-admin.js'
       - 'existing-student-enrollment.js'
       - 'admin.html'
@@ -53,7 +56,29 @@ jobs:
           node --check /tmp/existing-student-registration.html.mjs
           node --check /tmp/admin.html.mjs
           node --check existing-student-intake-admin.js
+          node --check academy-course-catalog.js
+          node --check academy-course-catalog-core.js
           node --check tests/existing-student-intake-rules.test.mjs
+          node --test tests/academy-course-catalog.test.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          form=Path('existing-student-registration.html').read_text()
+          admin=Path('admin.html').read_text()
+          queue=Path('existing-student-intake-admin.js').read_text()
+          rules=Path('firestore.rules').read_text()
+          assert 'fetchPublishedAcademyCourses(db)' in form, 'public form does not fetch live course registry'
+          for needle in ['schoolStandard','collegeCourse','collegeYear',
+                         'educationLevel','institutionName']:
+            assert needle in form,('public form',needle)
+            assert needle in rules,('rules',needle)
+          for needle in ['studentSchoolStandard','studentCollegeCourse',
+                         'studentCollegeYear','studentEducationLevel',
+                         'studentInstitutionName','academyCourseLabel']:
+            assert needle in admin,('Admin Student Details',needle)
+          assert 'Outside Academy Education' in queue
+          assert "option value=\"muballigha\"" not in form, 'hardcoded course list must not be restored'
+          assert 'id="email" type="email" maxlength="200" autocomplete="email" required' in form, 'email ID must be mandatory for existing student self-registration'
+          PY
       - name: Install Firebase emulator dependencies
         run: npm install --no-save firebase@13 @firebase/rules-unit-testing@6
       - name: Assert applicant isolation and admin-only approval

@@ -57,6 +57,7 @@ footer{text-align:center;padding:19px;color:#748377;font-size:12px}
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import {getFirestore,doc,getDoc,collection,getDocs,query,where,writeBatch,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import {academyCourseLabel} from './academy-course-catalog-core.js';
 const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search),token=params.get('token');
 const err=message=>{$('loading').hidden=false;$('loadingMessage').textContent=message;$('loginBox').hidden=true;$('formBox').hidden=true};
@@ -103,7 +104,7 @@ if(params.get('preview')==='1'&&!token){
     if(String(invite.email||'').toLowerCase()!==String(account.email||'').toLowerCase())throw Error('The signed-in Google email does not match the invited email.');
     const courses=await getDocs(query(collection(db,'courses'),where('published','==',true)));
     const selector=$('updateCourse');selector.replaceChildren(new Option('Choose course / class',''));
-    courses.forEach(course=>{if(course.data().name)selector.add(new Option(course.data().name,course.id))});
+    courses.forEach(course=>{const name=academyCourseLabel(course.data().name);if(name)selector.add(new Option(name,course.id))});
     if(selector.options.length<2)throw Error('Published course list unavailable. Contact the Admin.');
     const form=$('studentUpdateForm');
     form.elements.email.value=String(account.email).toLowerCase();

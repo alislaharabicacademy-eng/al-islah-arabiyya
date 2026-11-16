@@ -622,6 +622,20 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <label>Parent / Student Contact Number *<input id="studentPhone" type="tel" required minlength="7" maxlength="25" pattern="[0-9+() .-]{7,25}"></label>
 <label>Contact Email (not automatically approved for login)<input id="studentEmail" type="email" maxlength="200" placeholder="guardian@example.com"></label>
 <label class="wide">Complete Address *<textarea id="studentAddress" required minlength="5" maxlength="700" rows="2"></textarea></label>
+<div class="wide" style="padding:16px;background:#eef6ee;border:1px solid #cadfcf;border-radius:13px;margin:17px 0">
+<h3>🏫 Outside Academy Education — School / College</h3>
+<p class="section-note">Record the school standard or college course, separate from the Academy course.</p>
+<div class="fields">
+<label>Outside Academy Education Status<select id="studentEducationLevel">
+<option value="">Not recorded</option><option value="school">Studying at School</option>
+<option value="college">Studying at College / University</option>
+<option value="not-studying">Not currently studying outside Madrasa</option>
+</select></label>
+<label id="studentSchoolStandardWrap" class="hidden">Current School Standard *<select id="studentSchoolStandard"><option value="">Select Standard</option><option value="Pre-KG">Pre-KG</option><option value="LKG">LKG</option><option value="UKG">UKG</option></select></label>
+<label id="studentCollegeCourseWrap" class="hidden">Current College Course / Degree *<input id="studentCollegeCourse" maxlength="120" placeholder="B.Com, B.Sc, B.A. Arabic, Diploma, etc."></label>
+<label id="studentCollegeYearWrap" class="hidden">College Study Year (optional)<select id="studentCollegeYear"><option value="">Year (optional)</option><option value="1">1st Year</option><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option><option value="5">5th Year</option><option value="6">6th Year</option></select></label>
+<label id="studentInstitutionNameWrap" class="hidden">School / College Name (optional)<input id="studentInstitutionName" maxlength="150"></label>
+</div></div>
 <label class="wide">Student Profile Photo (JPG / PNG / WebP, optional)
  <input id="studentPhotoFile" type="file" accept="image/jpeg,image/png,image/webp">
  <small>Stored privately with the enrolled student record. Admin can update/remove it later.</small>
@@ -730,6 +744,7 @@ import{stampPrincipalOnPdf}from'./site-settings.js';
 import{compressProfilePhoto,photoAvatar,isProfilePhoto}from'./profile-photo.js';
 import{ensureOfficialStudentId,validOfficialStudentId}from'./student-numbering.js';
 import{existingAcademyStudentDetails,findDuplicateAcademyStudent}from'./existing-student-enrollment.js';
+import{academyCourseLabel}from'./academy-course-catalog.js';
 import{initExistingStudentIntakeAdmin}from'./existing-student-intake-admin.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
 const $=id=>document.getElementById(id),email='alislaharabicacademy@gmail.com';
@@ -812,7 +827,7 @@ function registerCourseOption(id,details={}){
  if(!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)||!name)return;
  if(!defaults[id])defaults[id]={name,duration:'',description:'',eligibility:'',kitabs:[],syllabus:'',fees:'',timings:''};
  else defaults[id].name=name;
- const courseLabel=name.replace(/\s*[—–-]\s*\d+\s*years?\s*$/i,'').trim();
+ const courseLabel=academyCourseLabel(name);
  for(const selectId of ['course','studentCourse','studentFilter','applicationFilter','catalogClass','monthlyAttendanceCourse']){
   const dropdown=$(selectId);
   const existing=[...dropdown.options].find(o=>o.value===id);
@@ -1153,6 +1168,25 @@ const schemas={teachers:['Name','Subject','Phone','Email','Notes'],students:['Na
 let studentEditorMode='new';
 let selectedExistingSubmissionId=null;
 const isHistoricEnrollment=()=>studentEditorMode==='existing'&&!$('studentId').value;
+for(let year=1;year<=12;year++){
+ const suffix=year===1?'st':year===2?'nd':year===3?'rd':'th';
+ $('studentSchoolStandard').add(new Option(year+suffix+' Standard',String(year)));
+}
+function updateStudentEducationVisibility(){
+ const level=$('studentEducationLevel').value;
+ const school=level==='school',college=level==='college';
+ $('studentSchoolStandardWrap').classList.toggle('hidden',!school);
+ $('studentCollegeCourseWrap').classList.toggle('hidden',!college);
+ $('studentCollegeYearWrap').classList.toggle('hidden',!college);
+ $('studentInstitutionNameWrap').classList.toggle('hidden',!(school||college));
+ $('studentSchoolStandard').required=school;
+ $('studentCollegeCourse').required=college;
+ if(!school)$('studentSchoolStandard').value='';
+ if(!college){$('studentCollegeCourse').value='';$('studentCollegeYear').value=''}
+ if(!school&&!college)$('studentInstitutionName').value='';
+}
+$('studentEducationLevel').addEventListener('change',updateStudentEducationVisibility);
+updateStudentEducationVisibility();
 function updateHistoricIntakeVisibility(){
  const historic=isHistoricEnrollment(),course=$('studentCourse').value;
  $('studentHistoricIntake').hidden=!historic;
@@ -1202,7 +1236,8 @@ function resetRecord(kind){
  if(kind==='student'){
   selectedExistingSubmissionId=null;
   delete $('studentId').dataset.course;delete $('studentId').dataset.year;
-  updateStudentBatchVisibility();$('studentOfficialId').value='';
+  updateStudentBatchVisibility();updateStudentEducationVisibility();
+  $('studentOfficialId').value='';
   photoLoad('student');
  }
 }
@@ -1213,7 +1248,26 @@ for(const kind of ['teacher','student']){
   const plural=kind+'s',id=$(kind+'Id').value||crypto.randomUUID(),data={};
   const reviewedRequestId=kind==='student'&&isHistoricEnrollment()?selectedExistingSubmissionId:null;
   for(const field of schemas[plural])data[field.toLowerCase()]=$(kind+field).value.trim();
-  if(kind==='student'){data.batch=isMaktabCourse(data.course)?data.batch:'';if(!data.examid)data.examid=crypto.randomUUID();}
+  if(kind==='student'){
+   data.batch=isMaktabCourse(data.course)?data.batch:'';
+   if(!data.examid)data.examid=crypto.randomUUID();
+   const level=$('studentEducationLevel').value;
+   if(level&&!['school','college','not-studying'].includes(level)){
+    $('studentStatus').textContent='Choose a valid School / College Education Status.';return;
+   }
+   if(level==='school'&&!$('studentSchoolStandard').value){
+    $('studentStatus').textContent='Choose the student’s current school standard.';return;
+   }
+   if(level==='college'&&!$('studentCollegeCourse').value.trim()){
+    $('studentStatus').textContent='Enter the student’s current college course or degree.';return;
+   }
+   data.educationLevel=level;
+   data.schoolStandard=level==='school'?$('studentSchoolStandard').value:'';
+   data.collegeCourse=level==='college'?$('studentCollegeCourse').value.trim().slice(0,120):'';
+   data.collegeYear=level==='college'?$('studentCollegeYear').value:'';
+   data.institutionName=['school','college'].includes(level)?
+    $('studentInstitutionName').value.trim().slice(0,150):'';
+  }
   $(kind+'Status').textContent='Saving…';
   try{
    if(kind==='student'){
@@ -1369,6 +1423,14 @@ function openExistingSubmission(requestId,data){
  if(data.course==='muballigha')$('existingMuballighaYear').value=String(data.courseYear||'');
  $('existingStudentEnrollmentDate').value=String(data.joiningDate||'');
  $('studentReference').value='ESR-'+requestId.slice(0,12).toUpperCase();
+ $('studentEducationLevel').value=String(data.educationLevel||'');
+ updateStudentEducationVisibility();
+ if(data.educationLevel==='school')$('studentSchoolStandard').value=String(data.schoolStandard||'');
+ if(data.educationLevel==='college'){
+  $('studentCollegeCourse').value=String(data.collegeCourse||'');
+  $('studentCollegeYear').value=String(data.collegeYear||'');
+ }
+ $('studentInstitutionName').value=String(data.institutionName||'');
  $('studentState').value='Active';
  $('existingStudentRecordsVerified').checked=false;
  $('existingAalimaEligibilityVerified').checked=false;
@@ -1391,6 +1453,14 @@ function openStudentEdit(id,data,proposed=null){
  $('studentId').value=id;
  for(const field of schemas.students)$(('student'+field)).value=String(data[field.toLowerCase()]??'');
  $('studentOfficialId').value=data.studentCode||'';
+ $('studentEducationLevel').value=String(data.educationLevel||'');
+ updateStudentEducationVisibility();
+ if(data.educationLevel==='school')$('studentSchoolStandard').value=String(data.schoolStandard||'');
+ if(data.educationLevel==='college'){
+  $('studentCollegeCourse').value=String(data.collegeCourse||'');
+  $('studentCollegeYear').value=String(data.collegeYear||'');
+ }
+ $('studentInstitutionName').value=String(data.institutionName||'');
  $('studentId').dataset.course=data.course||'';$('studentId').dataset.year=[1,2].includes(Number(data.courseYear))?String(data.courseYear):'0';
  updateStudentBatchVisibility();photoLoad('student',data.photoData);
  if(proposed){
@@ -1456,6 +1526,17 @@ if(kind==='students'){
 }
 if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students';const counts={};for(const d of snap.docs){const s=d.data(),key=(s.course||'Unassigned')+(isMaktabCourse(s.course)?' · '+(s.batch||'Unassigned Batch'):'');counts[key]=(counts[key]||0)+1}$('studentBatchSummary').textContent='Batch-wise student totals: '+(Object.entries(counts).map(([key,n])=>key+': '+n).join(' | ')||'No students yet')}
 if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'ALIA ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');if(kind==='students'){
+ if(data.educationLevel){
+  const edu=document.createElement('p'),label=document.createElement('small');
+  label.textContent='School / College Studies: ';
+  const details=data.educationLevel==='school'?'School · '+String(data.schoolStandard||'Standard not recorded'):
+   data.educationLevel==='college'?'College · '+String(data.collegeCourse||'Course not recorded')+
+     (data.collegeYear?' · Year '+data.collegeYear:''):
+   'Not currently studying outside Madrasa';
+  edu.append(label,document.createTextNode(details+
+   (data.institutionName?' · '+String(data.institutionName):'')));
+  el.append(edu);
+ }
  el.prepend(photoAvatar(data.photoData,'Photo of '+String(data.name||'student')));
  const grant=accessByStudent.get(d.id);
  const accessBadge=document.createElement('p');accessBadge.className='section-note';
