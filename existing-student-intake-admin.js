@@ -139,7 +139,13 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
      label('DOB',data.dob),
      label('Contact',data.phone),
      label('Email (optional)',data.email||'Not provided'),
-     label('Address',data.address)
+     label('Address',data.address),
+     label('Outside Academy Education',
+      data.educationLevel==='school'?'School · '+String(data.schoolStandard||'Standard not submitted'):
+      data.educationLevel==='college'?'College · '+String(data.collegeCourse||'Degree not submitted')+
+       (data.collegeYear?' · Year '+data.collegeYear:''):
+      data.educationLevel==='not-studying'?'Not currently studying outside Madrasa':'Not provided'),
+     label('School / College Name',data.institutionName||'Not provided')
     );
     if(data.notes)card.append(label('Notes',data.notes));
     if(data.submittedAt?.toDate)card.append(label('Submitted at',data.submittedAt.toDate().toLocaleString('en-IN')));
