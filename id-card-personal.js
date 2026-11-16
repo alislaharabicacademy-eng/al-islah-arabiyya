@@ -60,7 +60,7 @@ export async function attachPersonalIdCard({db,kind,holderId,container,isCurrent
   try{
    const pdf=await createIdCardPdf([card],{layout:'pvc',settings:card.printSettings||{}});
    pdf.save('ALIA_'+safeCardFilename(card.displayId)+'_ID_Card.pdf');
-   msg.textContent='✓ Official front/back ID card PDF ready. Print at 100% actual size (85.6 × 54 mm).';
+   msg.textContent='✓ Official portrait front/back ID card PDF ready. Each PDF page is exactly 54 × 85.6 mm — no large surrounding page. Print at 100% actual size.';
   }catch(error){msg.textContent='Unable to download card: '+error.message}
   finally{download.disabled=false}
  };
