@@ -28,10 +28,12 @@ function selected(){
 function formSettings(){
  const data={};
  for(const [key,input] of pairs)data[key]=['showDob','showGuardian','showEmergencyPhone','showBloodGroup','showAddress'].includes(key)?$(input).checked:$(input).value.trim();
+ data.defaultValidUntil=$('defaultValidity').value;
  return normalizedCardSettings(data);
 }
 function writeSettings(value){
  for(const [key,input] of pairs)$(input).type==='checkbox'?$(input).checked=!!value[key]:$(input).value=String(value[key]||'');
+ $('defaultValidity').value=value.defaultValidUntil||plusOneYear();
 }
 async function approved(user){
  if(!user?.email||!user.emailVerified)return false;
@@ -228,8 +230,9 @@ async function downloadSingle(){
 async function bulkIssue(){
  if(!ready)return;
  const kind=$('cardKind').value;
- const selectedPeople=people[kind].slice(0,80);
- if(!selectedPeople.length)return status('bulkStatus','No profiles to process.');
+ const page=Math.max(1,Math.floor(Number($('bulkPage').value)||1));
+ const selectedPeople=people[kind].slice((page-1)*80,page*80);
+ if(!selectedPeople.length)return status('bulkStatus','No profiles on this batch page. Choose a lower page number.');
  if(!confirm('Issue missing '+kind+' ID cards for up to '+selectedPeople.length+
     ' people? This will publish verifiable IDs. Review the records and expiry first.'))return;
  const btn=$('issueBulk');btn.disabled=true;
@@ -244,9 +247,9 @@ async function bulkIssue(){
     if(result.status==='issued')issued++;else skipped++;
    }catch(error){errors.push(person.name+': '+error.message)}
   }
-  status('bulkStatus','✅ Batch complete. Published '+issued+', already issued '+skipped+
+  status('bulkStatus','✅ Page '+page+' complete. Published '+issued+', already issued '+skipped+
     ', failed '+errors.length+(errors.length?'\n'+errors.slice(0,8).join('\n'):'')+
-    (people[kind].length>80?'\nFirst 80 processed. Filter and issue remaining cards individually.':''));
+    (people[kind].length>page*80?'\nMore records remain — increase Batch Page and run again.':''));
  }finally{btn.disabled=false}
 }
 async function bulkPrint(){
@@ -256,8 +259,11 @@ async function bulkPrint(){
   const kind=$('cardKind').value;
   status('bulkStatus','Loading active issued cards…');
   const snap=await getDocs(collection(db,'idCards'));
-  const list=snap.docs.map(d=>d.data()).filter(card=>card.kind===kind&&isCurrentCard(card)).slice(0,80);
-  if(!list.length)throw Error('No active cards in this category. Issue cards first.');
+  const page=Math.max(1,Math.floor(Number($('bulkPage').value)||1));
+ const list=snap.docs.map(d=>d.data()).filter(card=>card.kind===kind&&isCurrentCard(card))
+  .sort((a,b)=>String(a.displayId||'').localeCompare(String(b.displayId||'')))
+  .slice((page-1)*80,page*80);
+  if(!list.length)throw Error('No active cards on this batch page. Choose a lower page number or issue cards first.');
   if(!confirm('Prepare '+list.length+' active '+kind+' ID cards in front/back A4 sheets for duplex printing?'))return;
   const pdf=await createIdCardPdf(list,{layout:'a4',settings:formSettings(),
    onProgress:pct=>status('bulkStatus','Rendering '+list.length+' cards: '+pct+'%')});
