@@ -77,6 +77,7 @@ jobs:
             assert needle in admin,('Admin Student Details',needle)
           assert 'Outside Academy Education' in queue
           assert "option value=\"muballigha\"" not in form, 'hardcoded course list must not be restored'
+          assert 'id="email" type="email" maxlength="200" autocomplete="email" required' in form, 'email ID must be mandatory for existing student self-registration'
           PY
       - name: Install Firebase emulator dependencies
         run: npm install --no-save firebase@13 @firebase/rules-unit-testing@6
