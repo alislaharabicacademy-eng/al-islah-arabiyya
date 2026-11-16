@@ -265,24 +265,24 @@ export async function renderCardCanvas(card,side='front',{settings={},draft=fals
   });
   const token=validVerificationCode(card.verificationCode)?card.verificationCode:'';
   // White QR quiet zone avoids patterns/watermarks interfering with scanning.
-  ctx.fillStyle='#ffffff';rounded(ctx,181,540,178,187,15);ctx.fill();
+  ctx.fillStyle='#ffffff';rounded(ctx,151,539,238,232,15);ctx.fill();
   ctx.strokeStyle=palette.mid;ctx.lineWidth=3;
-  rounded(ctx,181,540,178,187,15);ctx.stroke();
+  rounded(ctx,151,539,238,232,15);ctx.stroke();
   if(token&&!draft){
    const qr=await getQrCanvas(verificationUrl(token));
-   ctx.fillStyle='#fff';ctx.fillRect(194,554,152,152);
-   if(qr)ctx.drawImage(qr,197,557,146,146);
+   ctx.fillStyle='#fff';ctx.fillRect(163,551,214,208);
+   if(qr)ctx.drawImage(qr,166,552,208,208);
   }else{
-   centered(ctx,'NOT ISSUED',629,{size:21,minSize:16,color:'#8d9187',weight:800,width:160});
+   centered(ctx,'NOT ISSUED',653,{size:21,minSize:16,color:'#8d9187',weight:800,width:160});
   }
-  centered(ctx,token&&!draft?'SCAN TO VERIFY':'ACTIVATE AFTER ISSUANCE',751,{
+  centered(ctx,token&&!draft?'SCAN TO VERIFY':'ACTIVATE AFTER ISSUANCE',791,{
    size:16,minSize:11,color:palette.dark,weight:800
   });
-  centered(ctx,'KEEP YOUR ID CARD SAFE',783,{
+  centered(ctx,'KEEP YOUR ID CARD SAFE',810,{
    size:16,minSize:12,color:'#8b3f2d',weight:750
   });
-  centered(ctx,'VALID UNTIL  '+String(card.validUntil||'—'),810,{
-   size:14,minSize:11,color:'#526a59',weight:750
+  centered(ctx,'VALID UNTIL  '+String(card.validUntil||'—'),841,{
+   size:12,minSize:10,color:'#fff4d4',weight:750
   });
  }
  if(draft){
