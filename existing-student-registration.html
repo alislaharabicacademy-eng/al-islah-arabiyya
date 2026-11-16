@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123b2b">
+<meta name="robots" content="noindex,nofollow">
+<title>Existing Student Registration | Madrasa Al Islahul Arabiya</title>
+<style>
+:root{--forest:#123b2b;--gold:#c9aa6b;--muted:#5d7463}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:radial-gradient(circle at 88% 5%,#ddece1,transparent 45%),#f5f7f1;color:#1c3b2a;font:15px/1.65 system-ui,-apple-system,Arial,sans-serif}
+header{background:linear-gradient(110deg,#08291d,#24563a);color:#fff;border-bottom:4px solid var(--gold);padding:17px}
+.brand{max-width:840px;margin:auto;display:flex;align-items:center;gap:14px}
+.brand img{width:65px;height:65px;object-fit:contain;clip-path:circle(46% at 50% 50%)}
+.brand strong{font:700 clamp(18px,3.5vw,27px) Georgia,serif}
+.brand small{display:block;color:#f1dbaf;font-size:10px;letter-spacing:.13em}
+main{max-width:840px;padding:22px;margin:36px auto 80px}
+.card{background:white;border:1px solid #d9e4da;border-radius:18px;padding:clamp(20px,5vw,37px);box-shadow:0 16px 42px #18382411;margin:16px 0}
+h1,h2{font-family:Georgia,serif;line-height:1.25;margin:5px 0 17px}h1{font-size:clamp(27px,5vw,40px)}
+p{color:var(--muted)}
+.notice{padding:13px 17px;background:#f3f8ed;border-left:4px solid #2d7951;border-radius:8px}
+.note{padding:13px 17px;background:#fff8e8;border:1px solid #e9d6a8;border-radius:9px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+label{display:block;font-size:13px;font-weight:750;color:#254a35;margin-top:12px}
+input,select,textarea{font:inherit;display:block;width:100%;padding:12px 14px;background:#fbfdfb;border:1px solid #b9cebf;border-radius:10px;color:#183c28;margin-top:7px}
+input:focus,select:focus,textarea:focus{outline:3px solid #dfc593}
+textarea{min-height:90px;resize:vertical}
+.full{grid-column:1/-1}
+button{font:inherit;font-weight:800;color:white;background:#176344;border:0;border-radius:10px;padding:13px 21px;cursor:pointer}
+button:disabled{opacity:.55;cursor:wait}
+.status{white-space:pre-wrap;padding:12px 15px;background:#edf6ec;border:1px solid #cae3cf;border-radius:9px;margin:17px 0}
+.status.bad{background:#fff0ec;color:#8f322b;border-color:#ecc3b9}
+.photo{font-size:12px;color:#567060}
+#photoPreview{width:88px;height:88px;object-fit:cover;border-radius:10px;border:1px solid #b5ceb8;display:block;margin-top:10px}
+footer{text-align:center;color:#667b6b;font-size:12px;padding:30px}
+@media(max-width:570px){.grid{grid-template-columns:1fr}main{margin:20px auto}.card{padding:19px}.brand img{width:52px;height:52px}}
+</style>
+</head><body>
+<header><div class="brand"><img src="1_20261112_080707_0000.png" alt="Academy Logo"><span><strong>Madrasa Al Islahul Arabiya</strong><small>EXISTING ACADEMY STUDENT · SELF-REGISTRATION</small></span></div></header>
+<main>
+<section class="card" id="loading">
+<h1>🎓 Existing Student Registration</h1>
+<p id="loadingText" class="status" role="status">Checking the private Academy registration invitation…</p>
+</section>
+<section class="card" id="registration" hidden>
+<h1>📚 Register Your Existing Academy Record</h1>
+<p class="notice">This form is <strong>only for students already studying at the Academy</strong> who have not yet been entered on the new website. The student or their parent/guardian can fill it in. <strong>This is NOT a new admission application.</strong></p>
+<p>Fill the details from your old Academy records. Submitting the form does not create a Student ID immediately. The Academy Admin will verify and approve the details first.</p>
+<form id="existingStudentForm">
+<div class="grid">
+<label>Student's Full Name *<input name="name" id="name" required minlength="2" maxlength="120" autocomplete="name"></label>
+<label>Parent / Guardian Name *<input name="guardian" id="guardian" required minlength="2" maxlength="120"></label>
+<label>Date of Birth *<input name="dob" id="dob" type="date" required></label>
+<label>Contact / WhatsApp Number *<input name="phone" id="phone" type="tel" required minlength="7" maxlength="25" pattern="[0-9+() .-]{7,25}"></label>
+<label>Parent / Student Email (optional)<input name="email" id="email" type="email" maxlength="200" autocomplete="email"></label>
+<label>Original Academy Joining Date *<input name="joiningDate" id="joiningDate" type="date" required></label>
+<label>Current Course / Class *<select name="course" id="course" required>
+<option value="">Choose current course</option>
+<option value="muallama">Muallama</option>
+<option value="muballigha">Muballiga</option>
+<option value="alima">Aalima</option>
+<option value="boys-hifz">Boys Hifz</option>
+<option value="maktab">Maktab</option>
+</select></label>
+<label id="yearField" hidden>Current Muballiga Year *<select name="courseYear" id="courseYear">
+<option value="">Choose your current year</option><option value="1">1st Year</option><option value="2">2nd Year</option>
+</select></label>
+<label id="batchField" hidden>Maktab Batch *<select name="batch" id="batch"><option value="">Choose batch</option></select></label>
+<label class="full">Complete Home Address *<textarea name="address" id="address" rows="3" required minlength="5" maxlength="700"></textarea></label>
+<label class="full">Student Photo (optional)<input name="photo" id="photo" type="file" accept="image/jpeg,image/png,image/webp"><small class="photo">A compact ID-card photo will be saved privately for Admin review. Upload only with the student's or guardian's permission.</small><img id="photoPreview" alt="Selected profile photo preview" hidden></label>
+<label class="full">Notes for Admin (optional)<textarea id="notes" name="notes" maxlength="500" placeholder="Earlier register number, class timing, or any correction. Do not include Aadhaar or passwords."></textarea></label>
+</div>
+<p class="note">⚠️ Select your <strong>actual current year</strong>. The Academy Admin will verify the old admission register, current class, and any historical fees before accepting the entry. Do not submit again if your record is already present in the new website.</p>
+<button type="submit" id="submit">📩 Submit Existing Student Details for Admin Review</button>
+<p class="status" id="formStatus" role="status" aria-live="polite">Required fields are marked *. No Google login is required to submit this review request.</p>
+</form>
+</section>
+<section class="card" id="complete" hidden>
+<h1>✅ Submitted for Academy Review</h1>
+<p>Your existing-student details were sent to the Academy administrator. This <strong>is not yet an admission confirmation or issued Student ID</strong>.</p>
+<p class="status" id="receipt" role="status"></p>
+<p>Admin will check the earlier Academy register, prevent duplicate entries, and issue your official ALIA Student ID only after approval. Contact the Academy using your submission reference if needed.</p>
+<button type="button" id="another">Register Another Existing Student</button>
+</section>
+</main><footer>© Madrasa Al Islahul Arabiya · Existing Students Only · Private Academy Registration</footer>
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
+import{getFirestore,doc,getDoc,setDoc,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import{compressProfilePhoto,isProfilePhoto}from'./profile-photo.js';
+const $=id=>document.getElementById(id);
+const key=new URLSearchParams(location.search).get('key');
+let db=null,photoData='',ready=false;
+const nowIndia=()=>new Date(Date.now()+330*60000).toISOString().slice(0,10);
+function error(message){
+ $('loading').hidden=false;
+ $('registration').hidden=true;
+ $('loadingText').textContent=message;
+ $('loadingText').classList.add('bad');
+}
+function syncCourse(){
+ const course=$('course').value;
+ $('yearField').hidden=course!=='muballigha';$('courseYear').required=course==='muballigha';
+ $('batchField').hidden=course!=='maktab';$('batch').required=course==='maktab';
+ if(course!=='muballigha')$('courseYear').value='';
+ if(course!=='maktab')$('batch').value='';
+}
+$('course').addEventListener('change',syncCourse);
+for(let i=1;i<=30;i++)$('batch').add(new Option('Batch '+i,'Batch '+i));
+$('dob').max=nowIndia();$('joiningDate').max=nowIndia();
+$('photo').onchange=async()=>{
+ const file=$('photo').files?.[0];
+ photoData='';
+ const img=$('photoPreview');img.hidden=true;img.removeAttribute('src');
+ if(!file){$('formStatus').textContent='Photo is optional.';return}
+ $('formStatus').textContent='Compressing photo securely on your device…';
+ try{
+  photoData=await compressProfilePhoto(file);
+  if(!isProfilePhoto(photoData))throw Error('Photo encoding was not accepted.');
+  img.src=photoData;img.hidden=false;
+  $('formStatus').textContent='✓ Optional photo ready. Press Submit when all required details are complete.';
+ }catch(e){
+  $('photo').value='';$('formStatus').textContent='Photo was not added: '+(e.message||'Try a smaller photo.');
+ }
+};
+async function verifyLink(){
+ if(!/^[a-f0-9]{64}$/.test(String(key||''))){
+  error('This registration link is incomplete. Ask the Academy Admin for the official Existing Student Registration link.');
+  return;
+ }
+ try{
+  const res=await fetch('./firebase-config.json',{cache:'no-store'});
+  if(!res.ok)throw Error('Academy connection is unavailable.');
+  db=getFirestore(initializeApp(await res.json()));
+  const link=await getDoc(doc(db,'existingStudentIntakeLinks',key));
+  if(!link.exists()||link.data().enabled!==true)
+   throw Error('The registration invitation is closed.');
+  const exp=link.data().expiresAt?.toMillis?.();
+  if(!exp||exp<=Date.now())throw Error('This registration invitation has expired.');
+  $('loading').hidden=true;$('registration').hidden=false;ready=true;
+ }catch(e){error('Existing Student Registration is closed or unavailable. Ask your Academy Admin for an active link. '+(e.code==='permission-denied'?'':(e.message||'')));}
+}
+$('existingStudentForm').onsubmit=async event=>{
+ event.preventDefault();
+ const form=event.currentTarget,status=$('formStatus'),button=$('submit');
+ if(!ready||!db||!form.reportValidity())return;
+ const get=name=>String(form.elements[name]?.value||'').trim();
+ const course=get('course'),dob=get('dob'),joiningDate=get('joiningDate');
+ const year=course==='muballigha'?Number(get('courseYear')):course==='alima'?3:0;
+ const batch=course==='maktab'?get('batch'):'';
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(dob)||dob>nowIndia()||
+    !/^\d{4}-\d{2}-\d{2}$/.test(joiningDate)||joiningDate>nowIndia()){
+  status.textContent='Enter valid past dates for DOB and original joining date.';return;
+ }
+ if(course==='muballigha'&&![1,2].includes(year)){
+  status.textContent='Select the current Muballiga year.';return;
+ }
+ if(course==='maktab'&&!batch){status.textContent='Select the Maktab batch.';return}
+ const payload={
+  name:get('name').slice(0,120),guardian:get('guardian').slice(0,120),
+  dob,phone:get('phone').slice(0,25),email:get('email').toLowerCase().slice(0,200),
+  joiningDate,course,courseYear:year,batch,address:get('address').slice(0,700),
+  notes:get('notes').slice(0,500),photoData:photoData||'',
+  linkToken:key,source:'existing-academy-student-form',status:'Pending Review',
+  submittedAt:serverTimestamp()
+ };
+ if(!confirm('Send these details for Academy Admin verification? A Student ID will be issued only after review.'))return;
+ button.disabled=true;status.classList.remove('bad');
+ status.textContent='Submitting securely to Academy Admin…';
+ try{
+  const id=crypto.randomUUID().replace(/-/g,'');
+  await setDoc(doc(db,'existingStudentRequests',id),payload);
+  $('registration').hidden=true;$('complete').hidden=false;
+  $('receipt').textContent='Request reference: ESR-'+id.slice(0,12).toUpperCase();
+ }catch(e){
+  status.classList.add('bad');
+  status.textContent='Unable to submit. The link may have expired or closed. Please contact the Academy Admin or try an active link. '+(e.code==='permission-denied'?'':String(e.message||''));
+ }finally{button.disabled=false}
+};
+$('another').onclick=()=>{
+ $('complete').hidden=true;$('registration').hidden=false;
+ $('existingStudentForm').reset();photoData='';
+ $('photoPreview').hidden=true;$('photoPreview').removeAttribute('src');
+ $('formStatus').textContent='Enter details for a different already-enrolled student.';
+ syncCourse();
+};
+verifyLink();
+</script>
+</body></html>
