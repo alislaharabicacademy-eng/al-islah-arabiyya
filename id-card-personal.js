@@ -6,7 +6,7 @@ import {doc,getDoc} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-fir
 import {
  cardDocumentId,isCurrentCard,renderCardCanvas,createIdCardPdf,safeCardFilename
 } from './id-card-utils.js';
-export async function attachPersonalIdCard({db,kind,holderId,container}){
+export async function attachPersonalIdCard({db,kind,holderId,container,isCurrent=()=>true}){
  if(!db||!container||!holderId||!['student','teacher'].includes(kind))return;
  const section=document.createElement('section');
  section.className='exam-card';
@@ -23,6 +23,7 @@ export async function attachPersonalIdCard({db,kind,holderId,container}){
   // A missing, disabled, revoked or unapproved card may be denied by
   // Firestore; never leak its existence or any other person's account.
  }
+ if(!isCurrent()){section.remove();return;}
  if(!card||!isCurrentCard(card)||card.kind!==kind||card.holderId!==holderId){
   msg.textContent='Your official ID card is not issued or is no longer active. Contact the Academy administrator.';
   return;
