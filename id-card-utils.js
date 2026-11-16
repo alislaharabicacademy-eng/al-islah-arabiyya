@@ -1,6 +1,7 @@
-/* Academy ID card renderer: print-sharp PORTRAIT 54 x 85.6 mm, two-sided cards.
- * No student/teacher personal data is sent to a third-party renderer.
- * QRCode and jsPDF are vendored locally under /vendor with their licenses.
+/* Academy ID card renderer: portrait 54 x 85.6 mm, two-sided.
+ * PDF typography is drawn as native vector text, not blurry JPEG text.
+ * The QR, original photo and academy logo are rendered losslessly in PNG.
+ * No personal data is sent to a third-party renderer; PDF/QR tools are local.
  */
 export const CARD_WIDTH_MM=54;
 export const CARD_HEIGHT_MM=85.6;
@@ -63,6 +64,16 @@ function rgba(hex,alpha){
  return 'rgba('+r+','+g+','+b+','+alpha+')';
 }
 const font=(size,weight=600)=>weight+' '+size+'px Arial, sans-serif';
+// Built-in PDF fonts render Western text crisply. Arabic, Tamil and other
+// writing systems stay in the high-DPI artwork rather than losing glyphs.
+function pdfCompatibleText(value){
+ const safe=String(value).replace(/[\u2018\u2019]/g,"'")
+  .replace(/[\u201c\u201d]/g,'"')
+  .replace(/[\u2010-\u2015]/g,'-')
+  .replace(/\u2026/g,'...')
+  .replace(/\u2022/g,'|');
+ return /^[\x20-\x7e]*$/.test(safe)?safe:null;
+}
 function fitted(ctx,text,x,y,maxWidth,{size=30,minSize=15,color='#142f25',weight=700,align='left'}={}){
  const raw=String(text||'—').replace(/\s+/g,' ').trim()||'—';
  ctx.save();ctx.fillStyle=color;ctx.textAlign=align;
@@ -71,7 +82,11 @@ function fitted(ctx,text,x,y,maxWidth,{size=30,minSize=15,color='#142f25',weight
  ctx.font=font(s,weight);
  let value=raw;
  while(ctx.measureText(value).width>maxWidth&&value.length>1)value=value.slice(0,-2)+'…';
- ctx.fillText(value,x,y);ctx.restore();
+ const vector=Array.isArray(ctx.__vectorTextRuns)?pdfCompatibleText(value):null;
+ if(vector!==null&&Array.isArray(ctx.__vectorTextRuns)){
+  ctx.__vectorTextRuns.push({text:vector,x,y,maxWidth,size:s,minSize,color,weight,align});
+ }else ctx.fillText(value,x,y);
+ ctx.restore();
 }
 function rounded(ctx,x,y,w,h,r){
  const radius=Math.min(r,h/2,w/2);ctx.beginPath();
@@ -176,6 +191,16 @@ function textRows(card,options){
  // Five lines fit above the motivational quotation and verification QR.
  return rows.slice(0,5);
 }
+function academyTitleLines(value){
+ const words=String(value||'').toUpperCase().replace(/\s+/g,' ').trim().split(' ');
+ if(words.join(' ').length<=22)return [words.join(' '),''];
+ let a='',b='';
+ for(const word of words){
+  if(!b&&(a?a.length+1+word.length:word.length)<=21)a+=(a?' ':'')+word;
+  else b+=(b?' ':'')+word;
+ }
+ return [a||words[0],b];
+}
 function drawTextRows(ctx,card,options){
  const rows=textRows(card,options);
  const rowHeight=48;
@@ -189,7 +214,7 @@ function drawTextRows(ctx,card,options){
  }
  return y;
 }
-export async function renderCardCanvas(card,side='front',{settings={},draft=false}={}){
+export async function renderCardCanvas(card,side='front',{settings={},draft=false,vectorText=false}={}){
  if(!['front','back'].includes(side))throw Error('Invalid card side.');
  const options=normalizedCardSettings(settings);
  const palette=PALETTES[card.kind==='teacher'?options.teacherTheme:options.studentTheme];
@@ -197,6 +222,10 @@ export async function renderCardCanvas(card,side='front',{settings={},draft=fals
  canvas.width=750;canvas.height=1190;
  const ctx=canvas.getContext('2d');
  if(!ctx)throw Error('Canvas print processing unavailable.');
+ if(vectorText){
+  canvas.pdfTextRuns=[];
+  ctx.__vectorTextRuns=canvas.pdfTextRuns;
+ }
  ctx.scale(canvas.width/540,canvas.height/856);
  const logo=await imgReady(new URL('./1_20261112_080707_0000.png',import.meta.url).href);
  const institution=String(card.instituteName||card.institution||'Madrasa Al Islahul Arabiya');
@@ -207,7 +236,7 @@ export async function renderCardCanvas(card,side='front',{settings={},draft=fals
  ctx.fillStyle=background;ctx.fillRect(0,0,540,856);
  // Deliberately faint transparent academy seal, never a photo of the holder.
  if(logo?.naturalWidth){
-  ctx.save();ctx.globalAlpha=.07;
+  ctx.save();ctx.globalAlpha=.035;
   ctx.drawImage(logo,63,267,414,414);
   ctx.restore();
  }
@@ -218,13 +247,18 @@ export async function renderCardCanvas(card,side='front',{settings={},draft=fals
   else{
    ctx.fillStyle='#eff5eb';rounded(ctx,29,148,98,98,17);ctx.fill();
   }
-  fitted(ctx,institution.toUpperCase(),136,179,374,{
-   size:29,minSize:17,color:palette.dark,weight:850
+  // Two balanced lines prevent long Academy names touching the edge.
+  const title=academyTitleLines(institution);
+  fitted(ctx,title[0],141,176,366,{
+   size:25,minSize:17,color:palette.dark,weight:850
   });
-  fitted(ctx,"WOMEN'S ONLINE MADRASA",138,208,371,{
-   size:16,minSize:12,color:'#637764',weight:750
+  if(title[1])fitted(ctx,title[1],141,205,366,{
+   size:24,minSize:16,color:palette.dark,weight:850
   });
-  ctx.fillStyle=palette.accent;ctx.fillRect(138,222,341,3);
+  fitted(ctx,"WOMEN'S ONLINE MADRASA",141,229,365,{
+   size:16,minSize:12,color:'#496951',weight:750
+  });
+  ctx.fillStyle=palette.accent;ctx.fillRect(141,240,341,3);
   centered(ctx,card.kind==='student'?'STUDENT ID CARD':'STAFF ID CARD',278,{
    size:29,minSize:21,color:palette.dark,width:485,weight:800
   });
@@ -235,6 +269,13 @@ export async function renderCardCanvas(card,side='front',{settings={},draft=fals
   ctx.fillStyle=palette.accent;
   rounded(ctx,146,306,248,269,22);ctx.fill();
   cover(ctx,photo,152,312,236,257);
+  if(!photo?.naturalWidth){
+   // Do not fake a student's photograph. Make missing source data explicit.
+   ctx.fillStyle='#eef5ed';rounded(ctx,159,517,222,39,10);ctx.fill();
+   fitted(ctx,'PHOTO NOT UPLOADED',270,541,195,{
+    size:15,minSize:12,color:'#28533b',weight:800,align:'center'
+   });
+  }
   centered(ctx,card.name,624,{size:30,minSize:16,color:palette.dark,weight:800,width:495});
   ctx.strokeStyle=palette.accent;ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(112,638);ctx.lineTo(428,638);ctx.stroke();
@@ -292,6 +333,34 @@ export async function renderCardCanvas(card,side='front',{settings={},draft=fals
  }
  return canvas;
 }
+// Native vector typography overlays high-resolution, lossless card artwork.
+// This keeps text sharp at zoom and in print, while preserving the Arabic
+// quotation and all non-Latin names in the photo-quality raster layer.
+function addVectorTextToPdf(pdf,runs=[]){
+ for(const run of runs){
+  pdf.setFont('helvetica',run.weight>=700?'bold':'normal');
+  const match=/^#([0-9a-f]{6})$/i.exec(run.color);
+  if(match){
+   const hex=match[1];
+   pdf.setTextColor(parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16));
+  }else pdf.setTextColor(25,55,40);
+  const width=run.maxWidth/10;
+  let value=run.text,size=run.size;
+  const min=Math.max(9,run.minSize);
+  const measure=()=>{
+   pdf.setFontSize(size*72/254); // logical artboard unit = 0.1 mm
+   return pdf.getTextWidth(value);
+  };
+  while(size>min&&measure()>width)size-=.5;
+  measure();
+  while(pdf.getTextWidth(value)>width&&value.length>2)
+   value=value.slice(0,-2)+'...';
+  if(!value)return;
+  const align=run.align==='center'?'center':run.align==='right'?'right':'left';
+  pdf.text(value,run.x/10,run.y/10,{align,baseline:'alphabetic'});
+ }
+}
+
 export async function createIdCardPdf(cards,{layout='pvc',settings={},onProgress}={}){
  if(!Array.isArray(cards)||!cards.length)throw Error('Select issued ID cards first.');
  // Only true card-sized, margin-free portrait pages are produced.
@@ -307,11 +376,13 @@ export async function createIdCardPdf(cards,{layout='pvc',settings={},onProgress
   for(const side of ['front','back']){
    if(page++)pdf.addPage([CARD_WIDTH_MM,CARD_HEIGHT_MM],'portrait');
    const art=await renderCardCanvas(card,side,{
-    settings:card.printSettings||settings
+    settings:card.printSettings||settings,vectorText:true
    });
-   // Fill the complete ID card page, with no A4 canvas or white page margins.
-   pdf.addImage(art.toDataURL('image/jpeg',.95),'JPEG',
+   // Lossless artwork keeps the logo, photo and QR sharp without JPEG halos.
+   // Searchable vector text is painted over a background without duplicate text.
+   pdf.addImage(art.toDataURL('image/png'),'PNG',
     0,0,CARD_WIDTH_MM,CARD_HEIGHT_MM);
+   addVectorTextToPdf(pdf,art.pdfTextRuns);
   }
   onProgress?.(Math.round(100*page/(cards.length*2)));
  }

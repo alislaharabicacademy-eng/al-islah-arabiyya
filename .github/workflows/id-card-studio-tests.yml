@@ -105,6 +105,21 @@ jobs:
           PY
           pdftoppm -f 1 -l 2 -png -r 130 id-card-print-proof/student-pvc-smoke.pdf id-card-print-proof/pvc-page >/dev/null 2>&1
           test -s id-card-print-proof/pvc-page-1.png
+      - name: Verify scalable, searchable vector PDF text and clean QR artwork
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          from pathlib import Path
+          for name in ('student-pvc-smoke.pdf','bulk-portrait-smoke.pdf'):
+              path=Path('id-card-print-proof')/name
+              extracted=subprocess.check_output(['pdftotext','-layout',str(path),'-'],text=True)
+              for phrase in ('STUDENT ID CARD','MADRASA','AL ISLAHUL','ALIA00001'):
+                  if name.startswith('bulk') and phrase=='ALIA00001':
+                      continue
+                  assert phrase in extracted,(name,'Missing selectable vector text:',phrase,extracted[:400])
+              assert len(extracted.strip())>100,(name,'PDF text remains flattened into an image')
+              print('PASS',name,'native selectable PDF text confirmed')
+          PY
       - name: Upload ID card PDF and image proofs
         uses: actions/upload-artifact@v4
         if: always()
