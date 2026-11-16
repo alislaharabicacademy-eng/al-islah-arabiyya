@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertFails,assertSucceeds} from '@firebase/rules-unit-testing';
-import {collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,serverTimestamp,Timestamp} from 'firebase/firestore';
+import {collection,doc,getDoc,getDocs,setDoc,updateDoc,deleteDoc,serverTimestamp,Timestamp,writeBatch} from 'firebase/firestore';
 
 const env=await initializeTestEnvironment({
  projectId:'demo-existing-students-self-registration',
@@ -41,6 +41,12 @@ test('students can self-submit only to a valid opened link, without viewing anyo
   await assertSucceeds(setDoc(doc(master,'existingStudentIntakeLinks',expiredKey),{
    enabled:true,expiresAt:past(),createdBy:'master',createdAt:serverTimestamp()
   }));
+  // Regression: the Admin console calls collection.list() BEFORE issuing a
+  // shared link. A token-regex on list previously blocked both admin roles.
+  const ownerLinks=await assertSucceeds(getDocs(collection(owner,'existingStudentIntakeLinks')));
+  assert.equal(ownerLinks.size,2);
+  const masterLinks=await assertSucceeds(getDocs(collection(master,'existingStudentIntakeLinks')));
+  assert.equal(masterLinks.size,2);
   await assertSucceeds(getDoc(doc(visitor,'existingStudentIntakeLinks',validKey)));
   await assertFails(getDoc(doc(visitor,'existingStudentIntakeLinks',expiredKey)));
   await assertFails(getDocs(collection(visitor,'existingStudentIntakeLinks')));
@@ -84,12 +90,27 @@ test('students can self-submit only to a valid opened link, without viewing anyo
    ...base(),admin:true
   }));
 
+  // Exercise the real Admin Create/Rotate implementation: list old links,
+  // close active links and write a fresh invitation in one atomic batch.
+  const rotatedKey='d'.repeat(64);
+  const rotation=writeBatch(master);
+  rotation.update(doc(master,'existingStudentIntakeLinks',validKey),{
+   enabled:false,closedAt:serverTimestamp()
+  });
+  rotation.set(doc(master,'existingStudentIntakeLinks',rotatedKey),{
+   enabled:true,expiresAt:future(),createdBy:'master',createdAt:serverTimestamp()
+  });
+  await assertSucceeds(rotation.commit());
+  await assertFails(getDoc(doc(visitor,'existingStudentIntakeLinks',validKey)));
+  await assertSucceeds(getDoc(doc(visitor,'existingStudentIntakeLinks',rotatedKey)));
+  assert.equal((await assertSucceeds(getDocs(collection(owner,'existingStudentIntakeLinks')))).size,3);
+
   // Closing intake denies new submissions immediately, without deleting
   // private already-submitted forms or overriding approved student records.
-  await assertSucceeds(updateDoc(doc(owner,'existingStudentIntakeLinks',validKey),{
+  await assertSucceeds(updateDoc(doc(owner,'existingStudentIntakeLinks',rotatedKey),{
    enabled:false,closedAt:serverTimestamp()
   }));
-  await assertFails(getDoc(doc(visitor,'existingStudentIntakeLinks',validKey)));
+  await assertFails(getDoc(doc(visitor,'existingStudentIntakeLinks',rotatedKey)));
   await assertFails(setDoc(doc(visitor,'existingStudentRequests','6'.repeat(32)),base()));
   await assertSucceeds(getDoc(doc(owner,'existingStudentRequests',requestId)));
  }finally{await env.cleanup()}
