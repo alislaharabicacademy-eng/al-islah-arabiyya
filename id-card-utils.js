@@ -1,9 +1,9 @@
-/* Academy ID card renderer: print-sharp 85.6 x 54 mm, two-sided cards.
+/* Academy ID card renderer: print-sharp PORTRAIT 54 x 85.6 mm, two-sided cards.
  * No student/teacher personal data is sent to a third-party renderer.
  * QRCode and jsPDF are vendored locally under /vendor with their licenses.
  */
-export const CARD_WIDTH_MM=85.6;
-export const CARD_HEIGHT_MM=54;
+export const CARD_WIDTH_MM=54;
+export const CARD_HEIGHT_MM=85.6;
 export const CARD_SETTINGS_DEFAULTS=Object.freeze({
  studentTheme:'emerald',
  teacherTheme:'plum',
@@ -130,122 +130,194 @@ async function getQrCanvas(url){
   throw Error('QR code could not be generated.');
  }finally{holder.remove()}
 }
-function labelLine(ctx,label,value,y,opts){
- if(!value)return y;
- fitted(ctx,label.toUpperCase(),65,y,280,{size:14,minSize:13,weight:800,color:'#658171'});
- fitted(ctx,value,65,y+27,opts.maxWidth||570,{size:25,minSize:16,weight:650,color:'#173f31'});
- return y+62;
+
+/* The ID card is intentionally VERTICAL, matching the Academy's staff-ID
+ * references. A downloaded PDF page is the card itself — never an A4 sheet
+ * containing a small card with surrounding whitespace.
+ *
+ * Logical artboard: 540 x 856. Pixel artboard: 750 x 1190 (≈353 DPI).
+ * Both sides use the same artboard, orientation, bleed and corner treatment.
+ */
+function centered(ctx,value,y,{size=24,minSize=14,color='#173d2c',weight=700,width=470}={}){
+ fitted(ctx,value,270,y,width,{size,minSize,color,weight,align:'center'});
+}
+function curvedTrim(ctx,palette){
+ // Deep-green and metallic-gold waves inspired by the supplied ID reference.
+ ctx.fillStyle=palette.dark;
+ ctx.fillRect(0,0,540,87);
+ ctx.beginPath();ctx.moveTo(0,78);
+ ctx.bezierCurveTo(146,133,303,28,540,89);
+ ctx.lineTo(540,0);ctx.lineTo(0,0);ctx.closePath();ctx.fill();
+ ctx.strokeStyle=palette.accent;ctx.lineWidth=5;
+ ctx.beginPath();ctx.moveTo(-4,111);
+ ctx.bezierCurveTo(154,140,322,56,544,107);ctx.stroke();
+ ctx.fillStyle=palette.dark;
+ ctx.beginPath();ctx.moveTo(0,822);
+ ctx.bezierCurveTo(134,803,341,859,540,819);
+ ctx.lineTo(540,856);ctx.lineTo(0,856);ctx.closePath();ctx.fill();
+ ctx.strokeStyle=palette.accent;ctx.lineWidth=3;
+ ctx.beginPath();ctx.moveTo(0,820);
+ ctx.bezierCurveTo(137,797,333,852,540,817);ctx.stroke();
+}
+function textRows(card,options){
+ const rows=[];
+ const value=(label,entry)=>{
+  const text=String(entry||'').replace(/\\s+/g,' ').trim();
+  if(text)rows.push([label,text]);
+ };
+ if(card.kind==='student'&&options.showGuardian)
+  value('PARENT / GUARDIAN',card.guardian);
+ if(options.showDob)value('DATE OF BIRTH',card.dob);
+ if(options.showEmergencyPhone)value('EMERGENCY CONTACT',card.emergencyPhone);
+ if(options.showBloodGroup)value('BLOOD GROUP',card.bloodGroup);
+ if(options.showAddress)value('ADDRESS',card.address);
+ if(card.kind==='teacher')value('SPECIALIZATION',card.subject);
+ if(!rows.length)value('ACADEMY',card.institution||card.instituteName||'Madrasa Al Islahul Arabiya');
+ // Five lines fit above the motivational quotation and verification QR.
+ return rows.slice(0,5);
+}
+function drawTextRows(ctx,card,options){
+ const rows=textRows(card,options);
+ const rowHeight=48;
+ let y=202;
+ for(const [label,value] of rows){
+  ctx.fillStyle='rgba(16,58,38,.035)';
+  rounded(ctx,31,y-28,478,42,8);ctx.fill();
+  fitted(ctx,label,43,y-6,161,{size:13,minSize:10,weight:800,color:'#647e67'});
+  fitted(ctx,value,214,y-5,277,{size:17,minSize:11,weight:700,color:'#183a29'});
+  y+=rowHeight;
+ }
+ return y;
 }
 export async function renderCardCanvas(card,side='front',{settings={},draft=false}={}){
  if(!['front','back'].includes(side))throw Error('Invalid card side.');
  const options=normalizedCardSettings(settings);
  const palette=PALETTES[card.kind==='teacher'?options.teacherTheme:options.studentTheme];
- const canvas=document.createElement('canvas');canvas.width=1190;canvas.height=750;
- const ctx=canvas.getContext('2d');if(!ctx)throw Error('Canvas print processing unavailable.');
- ctx.scale(1190/856,750/540);
- const isFront=side==='front';
- const logoPromise=imgReady(new URL('./1_20261112_080707_0000.png',import.meta.url).href);
- const photoPromise=imgReady(card.photoData||'');
- if(isFront){
-  const g=ctx.createLinearGradient(0,0,856,540);g.addColorStop(0,palette.dark);g.addColorStop(1,palette.mid);
-  ctx.fillStyle=g;ctx.fillRect(0,0,856,540);
-  ctx.strokeStyle=rgba(palette.accent,.28);ctx.lineWidth=2;
-  for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(830,-20,90+i*74,0,2*Math.PI);ctx.stroke()}
-  ctx.fillStyle=palette.accent;ctx.fillRect(0,0,856,12);ctx.fillRect(0,529,856,11);
-  const logo=await logoPromise;
-  cover(ctx,logo,52,35,80,80);
-  fitted(ctx,'MADRASA AL ISLAHUL ARABIYA',148,72,653,{size:30,minSize:19,color:'#fff9e9',weight:800});
-  fitted(ctx,'OFFICIAL '+(card.kind==='student'?'STUDENT':'TEACHER')+' IDENTITY CARD',150,103,635,{size:17,minSize:13,color:palette.accent,weight:800});
-  ctx.fillStyle=rgba('#ffffff',.17);rounded(ctx,46,142,764,345,20);ctx.fill();
-  ctx.fillStyle=palette.accent;rounded(ctx,67,167,201,247,16);ctx.fill();
-  const photo=await photoPromise;cover(ctx,photo,74,174,187,233);
-  fitted(ctx,card.kind==='student'?'STUDENT NAME':'TEACHER NAME',306,219,460,{size:20,minSize:16,color:palette.accent,weight:800});
-  fitted(ctx,card.name,305,268,485,{size:36,minSize:19,color:'#ffffff',weight:800});
-  fitted(ctx,card.kind==='student'?'STUDENT ID':'TEACHER ID',306,325,460,{size:18,minSize:14,color:palette.accent,weight:800});
-  fitted(ctx,card.displayId,305,364,480,{size:31,minSize:18,color:'#ffffff',weight:800});
-  fitted(ctx,card.kind==='student'?'CLASS / COURSE':'SUBJECT / DEPARTMENT',306,414,450,{size:16,minSize:13,color:palette.accent,weight:800});
-  fitted(ctx,card.course||'Islamic Studies',305,451,472,{size:26,minSize:17,color:'#ffffff',weight:650});
-  fitted(ctx,'ACADEMIC YEAR  '+(options.academicYear||'—'),52,511,560,{size:17,minSize:13,color:'#f2e4be',weight:700});
-  fitted(ctx,'VALID TO  '+String(card.validUntil||'—'),806,511,248,{size:18,minSize:13,color:'#f2e4be',weight:700,align:'right'});
- }else{
-  ctx.fillStyle='#f9f8ef';ctx.fillRect(0,0,856,540);
-  ctx.fillStyle=palette.dark;ctx.fillRect(0,0,856,81);
-  ctx.fillStyle=palette.accent;ctx.fillRect(0,81,856,6);ctx.fillRect(0,530,856,10);
-  fitted(ctx,'OFFICIAL ACADEMY ID  •  BACK',35,52,695,{size:24,minSize:17,color:'#fff8e4',weight:800});
-  ctx.strokeStyle=rgba(palette.mid,.24);ctx.lineWidth=2;
-  rounded(ctx,25,108,806,397,17);ctx.stroke();
-  let y=155;
-  const kind=card.kind==='student';
-  if(kind&&options.showGuardian)y=labelLine(ctx,'FATHER / GUARDIAN',card.guardian||'',y,{maxWidth:400});
-  if(options.showEmergencyPhone)y=labelLine(ctx,'EMERGENCY CONTACT',card.emergencyPhone||'',y,{maxWidth:400});
-  if(options.showBloodGroup)y=labelLine(ctx,'BLOOD GROUP',card.bloodGroup||'',y,{maxWidth:300});
-  if(options.showDob&&kind)y=labelLine(ctx,'DATE OF BIRTH',card.dob||'',y,{maxWidth:300});
-  if(options.showAddress&&card.address)y=labelLine(ctx,'ADDRESS',card.address,y,{maxWidth:400});
-  if(!kind&&card.subject)y=labelLine(ctx,'SPECIALIZATION',card.subject,y,{maxWidth:400});
-  if(y===155)y=labelLine(ctx,'ACADEMY',card.institution||'Madrasa Al Islahul Arabiya',y,{maxWidth:400});
-  fitted(ctx,'CARD VERIFICATION',600,154,225,{size:17,minSize:14,color:palette.dark,weight:800,align:'center'});
-  const code=validVerificationCode(card.verificationCode)?card.verificationCode:'';
-  if(code&&!draft){
-   const qr=await getQrCanvas(verificationUrl(code));
-   ctx.fillStyle='#ffffff';rounded(ctx,500,163,208,215,10);ctx.fill();
-   if(qr)ctx.drawImage(qr,511,174,186,186);
-  }else{
-   ctx.strokeStyle='#a5b7ab';rounded(ctx,500,167,208,205,9);ctx.stroke();
-   fitted(ctx,'NOT ISSUED',606,269,190,{size:21,minSize:17,color:'#8b8b85',align:'center'});
+ const canvas=document.createElement('canvas');
+ canvas.width=750;canvas.height=1190;
+ const ctx=canvas.getContext('2d');
+ if(!ctx)throw Error('Canvas print processing unavailable.');
+ ctx.scale(canvas.width/540,canvas.height/856);
+ const logo=await imgReady(new URL('./1_20261112_080707_0000.png',import.meta.url).href);
+ const institution=String(card.instituteName||card.institution||'Madrasa Al Islahul Arabiya');
+ const background=ctx.createLinearGradient(0,0,300,856);
+ background.addColorStop(0,'#ffffff');
+ background.addColorStop(.65,'#fdfdf9');
+ background.addColorStop(1,'#eaf3f3');
+ ctx.fillStyle=background;ctx.fillRect(0,0,540,856);
+ // Deliberately faint transparent academy seal, never a photo of the holder.
+ if(logo?.naturalWidth){
+  ctx.save();ctx.globalAlpha=.07;
+  ctx.drawImage(logo,63,267,414,414);
+  ctx.restore();
+ }
+ curvedTrim(ctx,palette);
+ if(side==='front'){
+  // Academy heading and logo are ABOVE the centered portrait photograph.
+  if(logo?.naturalWidth)cover(ctx,logo,29,148,98,98);
+  else{
+   ctx.fillStyle='#eff5eb';rounded(ctx,29,148,98,98,17);ctx.fill();
   }
-  fitted(ctx,code&&!draft?'SCAN TO VERIFY':'ISSUE CARD TO ACTIVATE',606,400,220,{size:15,minSize:11,color:'#596a5c',align:'center'});
-  fitted(ctx,'VALID UNTIL  '+String(card.validUntil||'—'),600,430,225,{size:16,minSize:12,color:palette.dark,weight:800,align:'center'});
-  ctx.strokeStyle='#526c59';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(60,466);ctx.lineTo(330,466);ctx.stroke();
-  fitted(ctx,'AUTHORIZED SIGNATURE',195,484,290,{size:15,minSize:12,color:palette.dark,align:'center'});
-  fitted(ctx,'Property of '+(card.institution||'Madrasa Al Islahul Arabiya'),37,522,770,{size:14,minSize:11,color:'#67816f'});
+  fitted(ctx,institution.toUpperCase(),136,179,374,{
+   size:29,minSize:17,color:palette.dark,weight:850
+  });
+  fitted(ctx,"WOMEN'S ONLINE MADRASA",138,208,371,{
+   size:16,minSize:12,color:'#637764',weight:750
+  });
+  ctx.fillStyle=palette.accent;ctx.fillRect(138,222,341,3);
+  centered(ctx,card.kind==='student'?'STUDENT ID CARD':'STAFF ID CARD',278,{
+   size:29,minSize:21,color:palette.dark,width:485,weight:800
+  });
+  const photo=await imgReady(card.photoData||'');
+  // Rounded portrait frame: no wide/sideways student photo card.
+  ctx.fillStyle=palette.mid;
+  rounded(ctx,141,301,258,279,25);ctx.fill();
+  ctx.fillStyle=palette.accent;
+  rounded(ctx,146,306,248,269,22);ctx.fill();
+  cover(ctx,photo,152,312,236,257);
+  centered(ctx,card.name,624,{size:30,minSize:16,color:palette.dark,weight:800,width:495});
+  ctx.strokeStyle=palette.accent;ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(112,638);ctx.lineTo(428,638);ctx.stroke();
+  centered(ctx,card.kind==='student'?'STUDENT ID':'STAFF ID',664,{
+   size:14,minSize:12,color:'#667f71',weight:800
+  });
+  centered(ctx,card.displayId,695,{size:26,minSize:17,color:palette.mid,weight:850});
+  centered(ctx,card.course||'Islamic Studies',733,{size:20,minSize:14,color:palette.dark,weight:750});
+  centered(ctx,'ACADEMIC YEAR  '+(options.academicYear||'—'),771,{
+   size:17,minSize:12,color:'#516d5d',width:480
+  });
+  centered(ctx,'VALID UNTIL  '+String(card.validUntil||'—'),804,{
+   size:16,minSize:12,color:'#506e5d',width:480
+  });
+ }else{
+  // Back: private information remains on the card only, not in QR output.
+  centered(ctx,'ACADEMY ID CARD',173,{size:29,minSize:19,color:palette.dark,weight:850});
+  const lastRowY=drawTextRows(ctx,card,options);
+  const dividerY=Math.max(456,lastRowY+3);
+  ctx.strokeStyle=palette.accent;ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(58,dividerY);ctx.lineTo(482,dividerY);ctx.stroke();
+  // Reference's educational Hadith. Arabic is followed by English fallback.
+  centered(ctx,'خيركم من تعلم القرآن وعلمه',492,{
+   size:29,minSize:22,color:palette.dark,weight:750,width:482
+  });
+  centered(ctx,'The best of you learn the Qur’an and teach it.',519,{
+   size:14,minSize:10,color:palette.mid,weight:700,width:485
+  });
+  const token=validVerificationCode(card.verificationCode)?card.verificationCode:'';
+  // White QR quiet zone avoids patterns/watermarks interfering with scanning.
+  ctx.fillStyle='#ffffff';rounded(ctx,181,540,178,187,15);ctx.fill();
+  ctx.strokeStyle=palette.mid;ctx.lineWidth=3;
+  rounded(ctx,181,540,178,187,15);ctx.stroke();
+  if(token&&!draft){
+   const qr=await getQrCanvas(verificationUrl(token));
+   ctx.fillStyle='#fff';ctx.fillRect(194,554,152,152);
+   if(qr)ctx.drawImage(qr,197,557,146,146);
+  }else{
+   centered(ctx,'NOT ISSUED',629,{size:21,minSize:16,color:'#8d9187',weight:800,width:160});
+  }
+  centered(ctx,token&&!draft?'SCAN TO VERIFY':'ACTIVATE AFTER ISSUANCE',751,{
+   size:16,minSize:11,color:palette.dark,weight:800
+  });
+  centered(ctx,'KEEP YOUR ID CARD SAFE',783,{
+   size:16,minSize:12,color:'#8b3f2d',weight:750
+  });
+  centered(ctx,'VALID UNTIL  '+String(card.validUntil||'—'),810,{
+   size:14,minSize:11,color:'#526a59',weight:750
+  });
  }
  if(draft){
-  ctx.save();ctx.translate(428,270);ctx.rotate(-Math.PI/7);
-  ctx.fillStyle='rgba(180,65,65,0.20)';ctx.font=font(125,900);ctx.textAlign='center';ctx.fillText('PREVIEW',0,0);ctx.restore();
+  ctx.save();ctx.translate(270,460);ctx.rotate(-Math.PI/6);
+  ctx.fillStyle='rgba(158,54,54,.18)';ctx.font=font(81,900);
+  ctx.textAlign='center';ctx.fillText('PREVIEW',0,0);ctx.restore();
  }
  return canvas;
 }
 export async function createIdCardPdf(cards,{layout='pvc',settings={},onProgress}={}){
  if(!Array.isArray(cards)||!cards.length)throw Error('Select issued ID cards first.');
- if(!['pvc','a4'].includes(layout))throw Error('Invalid printing layout.');
- if(!window.jspdf?.jsPDF)await addScript(new URL('./vendor/jspdf.umd.min.js',import.meta.url));
+ // Only true card-sized, margin-free portrait pages are produced.
+ if(layout!=='pvc')throw Error('Only exact-size portrait ID Card PDFs are supported.');
+ if(!window.jspdf?.jsPDF)
+  await addScript(new URL('./vendor/jspdf.umd.min.js',import.meta.url));
  if(!window.jspdf?.jsPDF)throw Error('Local PDF library unavailable.');
  const {jsPDF}=window.jspdf;
- if(layout==='pvc'){
-  const pdf=new jsPDF({orientation:'landscape',unit:'mm',format:[CARD_WIDTH_MM,CARD_HEIGHT_MM],compress:true});
-  let page=0;
-  for(const card of cards){
-   for(const side of ['front','back']){
-    if(page++)pdf.addPage([CARD_WIDTH_MM,CARD_HEIGHT_MM],'landscape');
-    const image=await renderCardCanvas(card,side,{settings:card.printSettings||settings});
-    pdf.addImage(image.toDataURL('image/jpeg',.93),'JPEG',0,0,CARD_WIDTH_MM,CARD_HEIGHT_MM);
-   }
-   onProgress?.(Math.round(100*page/(cards.length*2)));
-  }
-  return pdf;
- }
- const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
- const cols=[12,112.4],rows=[15,78,141,204];
- const groups=Math.ceil(cards.length/8);
- let first=true;
- for(let group=0;group<groups;group++){
-  const members=cards.slice(group*8,group*8+8);
+ const pdf=new jsPDF({orientation:'portrait',unit:'mm',
+  format:[CARD_WIDTH_MM,CARD_HEIGHT_MM],compress:true});
+ let page=0;
+ for(const card of cards){
   for(const side of ['front','back']){
-   if(!first)pdf.addPage('a4','portrait');first=false;
-   for(let i=0;i<members.length;i++){
-    const row=Math.floor(i/2),col=i%2;
-    // Mirror back columns when printing double-sided, flipping on long edge.
-    const drawnCol=side==='back'?1-col:col;
-    const image=await renderCardCanvas(members[i],side,{settings});
-    pdf.addImage(image.toDataURL('image/jpeg',.92),'JPEG',cols[drawnCol],rows[row],CARD_WIDTH_MM,CARD_HEIGHT_MM);
-    pdf.setDrawColor(195,197,178);pdf.setLineWidth(.2);
-    pdf.rect(cols[drawnCol],rows[row],CARD_WIDTH_MM,CARD_HEIGHT_MM);
-   }
+   if(page++)pdf.addPage([CARD_WIDTH_MM,CARD_HEIGHT_MM],'portrait');
+   const art=await renderCardCanvas(card,side,{
+    settings:card.printSettings||settings
+   });
+   // Fill the complete ID card page, with no A4 canvas or white page margins.
+   pdf.addImage(art.toDataURL('image/jpeg',.95),'JPEG',
+    0,0,CARD_WIDTH_MM,CARD_HEIGHT_MM);
   }
-  onProgress?.(Math.round(100*(group+1)/groups));
+  onProgress?.(Math.round(100*page/(cards.length*2)));
  }
  return pdf;
 }
+
 export function safeCardFilename(text){
  return String(text||'Card').replace(/[^A-Za-z0-9_-]+/g,'_').slice(0,54);
 }
