@@ -528,9 +528,9 @@ service cloud.firestore {
         && request.resource.data.phone is string
         && request.resource.data.phone.matches('^[0-9+() .-]{7,25}$')
         && request.resource.data.email is string
+        && request.resource.data.email.size() >= 5
         && request.resource.data.email.size() <= 200
-        && (request.resource.data.email == ''
-          || request.resource.data.email.matches('^[^/@ ]+@[^/@ ]+\\.[^/@ ]+$'))
+        && request.resource.data.email.matches('^[^/@ ]+@[^/@ ]+\\.[^/@ ]+$')
         && request.resource.data.course is string
         // A submitted course must exist in the canonical, Admin-controlled
         // Academy registry and be published for existing registration.
