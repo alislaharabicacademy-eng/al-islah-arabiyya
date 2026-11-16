@@ -214,7 +214,7 @@ export async function createIdCardPdf(cards,{layout='pvc',settings={},onProgress
   for(const card of cards){
    for(const side of ['front','back']){
     if(page++)pdf.addPage([CARD_WIDTH_MM,CARD_HEIGHT_MM],'landscape');
-    const image=await renderCardCanvas(card,side,{settings});
+    const image=await renderCardCanvas(card,side,{settings:card.printSettings||settings});
     pdf.addImage(image.toDataURL('image/jpeg',.93),'JPEG',0,0,CARD_WIDTH_MM,CARD_HEIGHT_MM);
    }
    onProgress?.(Math.round(100*page/(cards.length*2)));
