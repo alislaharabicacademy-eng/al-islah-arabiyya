@@ -269,6 +269,13 @@ export async function renderCardCanvas(card,side='front',{settings={},draft=fals
   ctx.fillStyle=palette.accent;
   rounded(ctx,146,306,248,269,22);ctx.fill();
   cover(ctx,photo,152,312,236,257);
+  if(!photo?.naturalWidth){
+   // Do not fake a student's photograph. Make missing source data explicit.
+   ctx.fillStyle='#eef5ed';rounded(ctx,159,517,222,39,10);ctx.fill();
+   fitted(ctx,'PHOTO NOT UPLOADED',270,541,195,{
+    size:15,minSize:12,color:'#28533b',weight:800,align:'center'
+   });
+  }
   centered(ctx,card.name,624,{size:30,minSize:16,color:palette.dark,weight:800,width:495});
   ctx.strokeStyle=palette.accent;ctx.lineWidth=2;
   ctx.beginPath();ctx.moveTo(112,638);ctx.lineTo(428,638);ctx.stroke();
