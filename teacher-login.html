@@ -119,7 +119,7 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 <p class="hint">Your own teacher attendance works only through My Teacher Dashboard. Administrator previews are read-only and recorded in the security audit.</p>
 </section>
 <section class="card" id="adminPreview" hidden>
-<span class="eyebrow">Academy administration</span>
+<span class="eyebrow" id="teacherAdminPreviewRole">Academy administration</span>
 <h2>Teacher Dashboard Preview</h2>
 <p class="preview-warning">Administrator preview · Read-only. You are not signed in as the teacher. Viewing a teacher's dashboard is recorded in the Academy security audit.</p>
 <label for="previewTeacher">Select teacher to preview</label>
@@ -144,6 +144,7 @@ import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signOut,on
 import {getFirestore,doc,getDoc,getDocs,collection,addDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {attachPersonalIdCard} from './id-card-personal.js';
 import {teacherPortalLanding} from './teacher-role-routing.js';
+import {isVerifiedMasterAdmin} from './admin-role-status.js';
 
 const $ = id => document.getElementById(id);
 const login=$('loginCard'),dashboard=$('dashboard'),info=$('loginInfo');
@@ -167,6 +168,7 @@ async function isAcademyAdmin(user){
  const email=normalizeEmail(user?.email);
  if(!email||!user.emailVerified)return false;
  if(email===academyOwner)return true;
+ if(await isVerifiedMasterAdmin(db,user))return true;
  try{
    const grant=await getDoc(doc(db,'adminAccess',email));
    return grant.exists() && grant.data().enabled===true;
@@ -262,9 +264,15 @@ async function verifiedLinkedTeacher(email){
  return {id,profile};
 }
 
-function showDualRoleChoice(user,linked){
+function showDualRoleChoice(user,linked,master=false){
  if(auth.currentUser?.uid!==user.uid)return;
- dualAccount={user,linked};
+ dualAccount={user,linked,master};
+ const label=master?'Master Admin':'Normal Admin';
+ $('openMasterAdminRole').querySelector('strong').textContent=
+   (master?'👑 ':'🛡️ ')+label+' — All Teachers';
+ $('myTeacherSwitchMode').textContent='⇄ Teacher / '+label;
+ $('adminPreviewSwitchMode').textContent='⇄ My Teacher / '+label;
+ $('teacherAdminPreviewRole').textContent=label+' · Audited preview';
  ++previewVersion;
  login.hidden=true;info.hidden=true;dashboard.hidden=true;
  $('adminPreview').hidden=true;$('dualRolePanel').hidden=false;
@@ -342,23 +350,24 @@ async function openAdminDualRole(){
  const version=++checkVersion;++previewVersion;
  $('dualRolePanel').hidden=true;dashboard.hidden=true;
  try{
+  $('teacherAdminPreviewRole').textContent=(dualAccount.master?'Master Admin':'Normal Admin')+' · Audited preview';
   await showAdminTeacherPreview(user,version);
  }catch(error){
   if(version!==checkVersion)return;
-  showDualRoleChoice(user,linked);
-  $('dualRoleTeacherInfo').textContent='Could not open Master Admin preview: '+friendlyError(error);
+  showDualRoleChoice(user,linked,dualAccount.master);
+  $('dualRoleTeacherInfo').textContent='Could not open Admin preview: '+friendlyError(error);
  }
 }
 $('openMyTeacherRole').onclick=openPersonalDualRole;
 $('openMasterAdminRole').onclick=openAdminDualRole;
 $('myTeacherSwitchMode').onclick=()=>{
  if(dualAccount&&auth.currentUser?.uid===dualAccount.user.uid){
-  ++checkVersion;showDualRoleChoice(dualAccount.user,dualAccount.linked);
+  ++checkVersion;showDualRoleChoice(dualAccount.user,dualAccount.linked,dualAccount.master);
  }
 };
 $('adminPreviewSwitchMode').onclick=()=>{
  if(dualAccount&&auth.currentUser?.uid===dualAccount.user.uid){
-  ++checkVersion;showDualRoleChoice(dualAccount.user,dualAccount.linked);
+  ++checkVersion;showDualRoleChoice(dualAccount.user,dualAccount.linked,dualAccount.master);
  }
 };
 
@@ -379,6 +388,7 @@ async function loadDashboard(user){
   const email=normalizeEmail(user.email);
   if(!email)throw Error('Google account email is missing.');
   const admin=await isAcademyAdmin(user);
+  const master=admin&&await isVerifiedMasterAdmin(db,user);
   if(version!==checkVersion)return;
   let linked=null,teacherError=null;
   try{linked=await verifiedLinkedTeacher(email)}
@@ -388,11 +398,12 @@ async function loadDashboard(user){
   // preview silently override their personal teacher attendance dashboard.
   const landing=teacherPortalLanding(admin,Boolean(linked));
   if(landing==='choose-role'){
-   showDualRoleChoice(user,linked);
+   showDualRoleChoice(user,linked,master);
    return;
   }
   if(landing==='admin-preview'){
-   // Administrator without a valid linked teacher keeps current admin preview.
+   // Admin without linked teacher keeps audited preview.
+   $('teacherAdminPreviewRole').textContent=(master?'Master Admin':'Normal Admin')+' · Audited preview';
    await showAdminTeacherPreview(user,version);
    return;
   }

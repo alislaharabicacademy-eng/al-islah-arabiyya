@@ -30,12 +30,20 @@ test('students can self-submit only to a valid opened link, without viewing anyo
   const master=env.authenticatedContext('master',{
    email:'secondary@example.com',email_verified:true
   }).firestore();
+  const superAdmin=env.authenticatedContext('verified-master',{
+   email:'syedatheil40@gmail.com',email_verified:true
+  }).firestore();
   const outsider=env.authenticatedContext('stranger',{
    email:'stranger@example.com',email_verified:true
   }).firestore();
   const visitor=env.unauthenticatedContext().firestore();
-  await assertSucceeds(setDoc(doc(owner,'adminAccess','secondary@example.com'),{
+  // The official Academy Gmail is now a NORMAL Admin and cannot issue
+  // private admin grants. The distinct verified Master grants access here.
+  await assertFails(setDoc(doc(owner,'adminAccess','secondary@example.com'),{
    enabled:true,grantedBy:'owner',updatedAt:serverTimestamp()
+  }));
+  await assertSucceeds(setDoc(doc(superAdmin,'adminAccess','secondary@example.com'),{
+   enabled:true,grantedBy:'verified-master',updatedAt:serverTimestamp()
   }));
   await assertSucceeds(setDoc(doc(owner,'existingStudentIntakeLinks',validKey),{
    enabled:true,expiresAt:future(),createdBy:'owner',createdAt:serverTimestamp()
