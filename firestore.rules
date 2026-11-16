@@ -3,11 +3,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // The original Academy owner remains authorized. Additional admin grants
-    // are private Firestore documents rather than email addresses in public code.
-    function isPrimaryAdmin() {
+    // Two independent levels: official Academy email is a NORMAL Admin;
+    // the separately authorized operator has the only Master Admin role.
+    // All sensitive privileges are enforced on the server, not just UI labels.
+    function isNormalAdmin() {
       return request.auth != null
         && request.auth.token.email == 'alislaharabicacademy@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    function isMasterAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'syedatheil40@gmail.com'
         && request.auth.token.email_verified == true;
     }
 
@@ -20,7 +27,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isPrimaryAdmin() || hasPrivateAdminGrant();
+      return isNormalAdmin() || isMasterAdmin() || hasPrivateAdminGrant();
     }
 
     function signedInTeacher(teacherId) {
@@ -30,22 +37,35 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/teacherAccess/$(teacherId)).data.email == request.auth.token.email;
     }
 
-    // The grant collection has no list access, including for secondary admins.
+    // Only Master Admin can add or revoke normal administrator access.
+    // The public Academy contact email has NORMAL rights and cannot change
+    // role grants or promote itself. No account can self-assign Master.
     match /adminAccess/{grantEmail} {
-      allow get: if isPrimaryAdmin()
+      allow get: if isMasterAdmin()
         || (request.auth != null
           && request.auth.token.email_verified == true
           && request.auth.token.email == grantEmail);
       allow list: if false;
-      allow create, update: if isPrimaryAdmin()
+      allow create, update: if isMasterAdmin()
         && grantEmail.matches('^[^/@ ]+@[^/@ ]+\\.[^/@ ]+$')
         && grantEmail != 'alislaharabicacademy@gmail.com'
+        && grantEmail != 'syedatheil40@gmail.com'
         && request.resource.data.keys().hasOnly(['enabled','updatedAt','grantedBy'])
         && request.resource.data.keys().hasAll(['enabled','updatedAt','grantedBy'])
         && request.resource.data.enabled is bool
         && request.resource.data.updatedAt == request.time
         && request.resource.data.grantedBy == request.auth.uid;
-      allow delete: if isPrimaryAdmin();
+      allow delete: if isMasterAdmin()
+        && grantEmail != 'alislaharabicacademy@gmail.com'
+        && grantEmail != 'syedatheil40@gmail.com';
+    }
+
+    // Role probe: no role emails are exposed to normal Admins in browser
+    // code. Master gets a successful GET even when this sentinel is absent;
+    // a normal Admin gets permission-denied. No reads of other roles/writes.
+    match /adminRoleChecks/{role} {
+      allow get: if role == 'master' && isMasterAdmin();
+      allow list, create, update, delete: if false;
     }
 
     // Auditable, read-only administrator preview of teacher dashboards.
@@ -63,7 +83,7 @@ service cloud.firestore {
         && request.resource.data.purpose == 'teacher_dashboard_preview'
         && exists(/databases/$(database)/documents/teachers/$(request.resource.data.teacherId));
       // The owner can inspect a permanent audit trail in Firebase.
-      allow get, list: if isPrimaryAdmin();
+      allow get, list: if isMasterAdmin();
       allow update, delete: if false;
     }
 
@@ -87,7 +107,7 @@ service cloud.firestore {
         && request.resource.data.purpose == 'student_dashboard_preview'
         && exists(/databases/$(database)/documents/students/$(request.resource.data.studentId));
       // Owner can inspect the permanent audit trail in Firebase.
-      allow get, list: if isPrimaryAdmin();
+      allow get, list: if isMasterAdmin();
       allow update, delete: if false;
     }
 
