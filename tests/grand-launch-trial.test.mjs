@@ -30,6 +30,22 @@ test('principal login is discoverable, admin-controlled, and account-switchable'
   assert.ok(!js.includes(masterAddress[1]),'Master address must not be copied to ceremony JavaScript');
 });
 
+test('Main Ceremony Preview is resettable, keeps real launch locked, and reveals only homepage',()=>{
+  assert.match(html,/id="previewLaunchOverlay"/);
+  assert.match(html,/id="previewLaunchFrame"/);
+  assert.match(html,/id="previewReset"/);
+  assert.match(html,/MAIN CEREMONY PREVIEW · NOT OFFICIAL/);
+  assert.match(html,/grand-launch\.html\?role=host&amp;mode=main-preview/);
+  assert.match(js,/params\.get\('mode'\)==='main-preview'/);
+  assert.match(js,/role=principal'\+\(isMainPreview\?'&mode=main-preview'/);
+  assert.match(js,/show\('previewLaunchOverlay',true\)/);
+  assert.match(js,/previewLaunchFrame'\)\.src='\.\/index\.html'/);
+  assert.match(js,/await writeTrial\('idle'\)/);
+  assert.match(js,/resetVisual\(\)/);
+  assert.doesNotMatch(js,/setDoc\(doc\(db,'grandLaunch','official'/);
+  assert.doesNotMatch(html,/id="startOfficial"/);
+});
+
 test('rehearsal is isolated from real one-time launch',()=>{
   assert.match(html,/TRIAL MODE/);
   assert.match(html,/id="scissorsTrigger"/);
