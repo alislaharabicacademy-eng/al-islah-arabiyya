@@ -100,12 +100,12 @@ function playCutAnimation(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     $('ribbonWrap').classList.add('is-cut');confetti();
   }));
-  message(isMainPreview?'✂️ Preview ribbon cut confirmed. Revealing the homepage without recording any official launch…':'✂️ Trial ribbon cut confirmed! Showing the rehearsal website…');
+  message(isOfficial?'🎉 The official ribbon cut is permanently recorded! Presenting the inaugurated website…':isMainPreview?'✂️ Preview ribbon cut confirmed. Revealing the homepage without recording any official launch…':'✂️ Trial ribbon cut confirmed! Showing the rehearsal website…');
   successTimer=setTimeout(()=>{show('ribbonArea',false);show('success',true)},1250);
   // On the Host MAIN PREVIEW show the actual homepage in a full-size frame
   // with a persistent preview banner and reset button, without navigating away.
   if(role==='host'&&experiencedCountdown){
-    if(isMainPreview){
+    if(isMainPreview||isOfficial){
       redirectTimer=setTimeout(()=>{
         $('previewLaunchFrame').src='./index.html';
         show('previewLaunchOverlay',true);
@@ -115,7 +115,89 @@ function playCutAnimation(){
     }
   }
 }
+function officialIndiaDate(){
+  const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));
+  return p.year+'-'+p.month+'-'+p.day;
+}
+function officialTimeString(ts){
+  return ts?.toDate?.().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})||'21 November 2026';
+}
+function renderOfficial(){
+  if(!authorized||!officialControlLoaded||!officialRecordLoaded)return;
+  const launched=officialRecord?.phase==='launched';
+  if(role==='host'){
+    const state=officialControl?.state||'not-prepared';
+    $('officialStatus').textContent=launched
+      ?'✅ Officially inaugurated: '+officialTimeString(officialRecord.launchedAt)+' (India time). Permanent record; no reset.'
+      :state==='countdown'
+      ?'⏳ Final countdown started. Waiting for the Principal to cut the ribbon.'
+      :state==='armed'
+      ?'🔒 Ceremony armed. Start is permitted ONLY on Saturday 21 November 2026 (India time).'
+      :'🔐 Not yet armed. A verified Master Admin can prepare the ceremony now without launching it.';
+    const canManage=masterVerified&&!launched;
+    show('officialArm',canManage&&!officialControl);
+    show('officialStart',canManage&&state==='armed');
+    show('officialCancel',canManage&&state==='countdown');
+    $('officialStart').disabled=officialIndiaDate()!=='2026-11-21';
+    $('officialPhrase').closest('label').hidden=!canManage||!!officialControl;
+  }
+  if(launched){
+    if(!cutPlayed){
+      if(officialSeenCountdown){
+        playCutAnimation();
+      }else{
+        cutPlayed=true;show('ribbonArea',false);show('countdown',false);show('success',true);
+        message('✅ Website officially inaugurated on '+officialTimeString(officialRecord.launchedAt)+' (India time). This cannot be reset.');
+      }
+    }
+    previousPhase='launched';
+    return;
+  }
+  const phase=officialControl?.state||'not-prepared';
+  if(phase==='not-prepared'||phase==='armed'){
+    if(previousPhase!==phase)resetVisual();
+    message(phase==='armed'
+      ?(role==='principal'?'Official opening is prepared. Wait for the Master Admin to start the countdown on 21 November.':'Ready for the final event. Master Admin starts the countdown on 21 November.')
+      :(role==='principal'?'Official ceremony is not armed. The Master Admin prepares it first.':'The official ceremony has not been armed yet. No launch has happened.'));
+  }else if(phase==='countdown'){
+    officialSeenCountdown=true;experiencedCountdown=true;
+    if(previousPhase!=='countdown'){
+      cutPlayed=false;cutPending=false;clearTimeout(redirectTimer);clearTimeout(successTimer);
+      show('success',false);$('ribbonWrap').classList.remove('is-cut');
+      $('confetti').replaceChildren();
+    }
+    const start=officialControl.startedAt?.toMillis?.();
+    if(!start){
+      show('countdown',false);show('ribbonArea',false);
+      message('Synchronising the official countdown between Host and Principal…');
+    }else{
+      const remaining=Math.max(0,COUNTDOWN_MS-(Date.now()-start));
+      const digit=Math.ceil(remaining/1000);
+      if(digit>=1){
+        if(lastDigit!==digit){
+          $('countdown').textContent=digit;
+          $('countdown').style.animation='none';void $('countdown').offsetWidth;
+          $('countdown').style.animation='';lastDigit=digit;
+        }
+        show('countdown',true);show('ribbonArea',false);
+        message('👑 OFFICIAL OPENING COUNTDOWN · '+digit);
+      }else{
+        show('countdown',false);show('ribbonArea',true);
+        show('scissorsTrigger',true);
+        show('cutRibbon',role==='principal');
+        $('cutRibbon').textContent='✂️ CUT THE OFFICIAL RIBBON · ONE TIME';
+        $('cutRibbon').disabled=cutPending;
+        $('scissorsTrigger').disabled=role!=='principal'||cutPending;
+        show('waitingForPrincipal',role==='host');
+        message(role==='principal'?'Principal: this is the REAL one-time opening. Tap scissors only when you are ready.':'Countdown complete. Waiting for Principal to cut the OFFICIAL ribbon live.');
+      }
+    }
+  }else message('Unknown official status. Contact the Master Admin.',true);
+  previousPhase=phase;
+}
 function render(){
+  if(isOfficial){renderOfficial();return}
   if(!authorized||!trial)return;
   const phase=trial.phase;
   if(phase==='idle'){
