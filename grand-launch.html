@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#08281c">
+<title>Grand Website Launch · Trial | Women's Online Madrasa</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#f8f2df;background:#061c15}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0%,#276346 0,#103b2a 35%,#061c15 85%);overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;background-image:url('./4_20261112_132613_0003.png');background-size:550px auto;mix-blend-mode:screen}
+main{position:relative;isolation:isolate;max-width:1080px;min-height:100vh;margin:auto;padding:28px 22px 55px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.topline{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;color:#e3cc91;font-size:12px;font-weight:750;letter-spacing:.11em}
+.topline a{color:#f3e3b5}.trial-badge{margin:29px auto 17px;border:1px solid #e7bd68;border-radius:100px;background:#3b2c16;color:#fff4d5;padding:9px 19px;letter-spacing:.14em;font-size:12px;font-weight:900;box-shadow:0 0 0 5px #d9a94614}
+.brand-logo{width:98px;height:98px;object-fit:contain;filter:drop-shadow(0 5px 15px #0006)}
+.arabic{font-family:"Amiri","Traditional Arabic",serif;font-size:clamp(22px,4vw,37px);line-height:1.75;color:#e9d098;margin:4px 0 2px}
+.kicker{color:#e9c986;letter-spacing:.23em;font-size:12px;font-weight:800;margin:10px 0 0}
+h1{font-family:Georgia,serif;font-weight:600;font-size:clamp(35px,7.7vw,77px);line-height:1.05;letter-spacing:-.035em;margin:14px 0;color:#fff6e6}
+.subtitle{font:600 clamp(15px,2.8vw,23px) Georgia,serif;letter-spacing:.10em;color:#e2c080;margin:0 0 9px}
+.status{font-size:15px;line-height:1.6;color:#e6ebdb;min-height:24px;margin:14px auto;max-width:740px}
+.panel{margin-top:12px;border:1px solid #c9ab714a;border-radius:20px;background:#071f19d9;box-shadow:0 24px 70px #0004;padding:22px;max-width:700px;width:100%}
+h2{font-family:Georgia,serif;font-size:25px;font-weight:600;color:#f4d99c;margin:0 0 12px}
+label{display:block;text-align:left;font-size:13px;font-weight:700;color:#f4e7c9;margin:10px 0}
+input{width:100%;font-size:16px;min-height:45px;padding:11px;border-radius:9px;border:1px solid #bca36c;background:#fffdf6;color:#183629;margin-top:7px}
+button,.button-link{border:1px solid #dbb368;border-radius:10px;padding:12px 18px;min-height:44px;background:linear-gradient(135deg,#efcf84,#b98c3c);color:#1a291f;font-size:15px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block;margin:7px;transition:transform .18s,box-shadow .18s}
+button:enabled:hover,.button-link:hover{transform:translateY(-2px);box-shadow:0 9px 23px #0004}
+button:disabled{opacity:.48;cursor:not-allowed}button.secondary{background:transparent;color:#ffe4ac}.actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:5px}
+.muted{color:#c3d0c5;font-size:13px;line-height:1.6}.danger{color:#ffcfbd}
+.countdown{font-family:Georgia,serif;font-size:clamp(145px,30vw,330px);font-weight:800;line-height:1.1;color:#f6d387;text-shadow:0 10px 2px #221709,0 0 70px #ffdd6a55;animation:pop .6s ease-out}
+@keyframes pop{from{opacity:.4;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+.stage{margin:10px auto 14px;width:100%;max-width:820px;min-height:200px}
+.ribbon-wrap{height:175px;margin:12px 0 0;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.ribbon-left,.ribbon-right{height:65px;width:50%;background:linear-gradient(180deg,#ff5f63 0,#be1425 42%,#7b0718 100%);box-shadow:0 9px 25px #0005;border-top:2px solid #ffb9aa;border-bottom:2px solid #64001a;transition:transform 1s cubic-bezier(.2,.75,.25,1),opacity 1s}
+.ribbon-left:after,.ribbon-right:before{content:"";position:absolute;top:55px;width:16px;height:62px;background:#ffdda9;opacity:.7}
+.ribbon-left:after{left:calc(50% - 30px)}.ribbon-right:before{right:calc(50% - 30px)}
+.scissors{position:absolute;left:50%;top:50%;font-size:clamp(42px,8vw,70px);z-index:2;transform:translate(-50%,-50%) rotate(-26deg);text-shadow:0 3px 18px #000a;transition:transform .7s;pointer-events:none}
+.is-cut .ribbon-left{transform:translateX(-125%) rotate(-8deg);opacity:0}.is-cut .ribbon-right{transform:translateX(125%) rotate(8deg);opacity:0}.is-cut .scissors{transform:translate(-50%,-50%) rotate(65deg) scale(1.15)}
+.success{color:#fce8a9;font:600 clamp(35px,6vw,62px) Georgia,serif;text-shadow:0 0 35px #d9b96f55}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+.confetti i{position:absolute;top:-20px;width:10px;height:15px;background:var(--c);left:var(--x);animation:fall var(--t) linear forwards;transform:rotate(var(--r))}
+@keyframes fall{to{transform:translateY(110vh) rotate(1080deg);opacity:0}}
+footer{margin-top:auto;color:#a6bbaa;font-size:12px;line-height:1.7;padding-top:26px}
+@media(max-width:520px){main{padding:18px 12px 35px}.panel{padding:15px}.topline{font-size:10px}.ribbon-wrap{height:120px}.ribbon-left,.ribbon-right{height:48px}.ribbon-left:after,.ribbon-right:before{display:none}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body><main>
+<div class="topline"><span>21 NOVEMBER 2026 · WEBSITE LAUNCH REHEARSAL</span><a href="./index.html">↗ Website Home</a></div>
+<div class="trial-badge">🧪 TRIAL MODE · NOT THE OFFICIAL LAUNCH</div>
+<img class="brand-logo" src="./1_20261112_080707_0000.png" alt="Madrasa logo">
+<div class="arabic" dir="rtl" lang="ar">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+<div class="kicker">MADRASA AL ISLAHUL ARABIYA</div>
+<h1>Women's Online Madrasa</h1>
+<p class="subtitle">Grand Website Inauguration</p>
+<p id="message" class="status" role="status" aria-live="polite">Secure rehearsal loading…</p>
+<section id="loginPanel" class="panel" hidden>
+<h2 id="loginHeading">Secure Rehearsal Login</h2>
+<p class="muted">Only an authorised Academy administrator or the approved Principal can access the rehearsal.</p>
+<button id="googleLogin" type="button">Continue with Google</button>
+<form id="passwordForm" hidden><label>Administrator email<input type="email" id="adminEmail" autocomplete="username" required></label><label>Administrator password<input type="password" id="adminPassword" autocomplete="current-password" required></label><button type="submit">Sign in as Admin</button></form>
+</section>
+<div class="stage">
+<div id="countdown" class="countdown" aria-live="off" hidden>5</div>
+<div id="ribbonArea" hidden>
+<p id="ribbonMessage" class="subtitle">A NEW CHAPTER BEGINS</p>
+<div id="ribbonWrap" class="ribbon-wrap"><span class="ribbon-left"></span><span class="ribbon-right"></span><span class="scissors" aria-hidden="true">✂️</span></div>
+<button id="cutRibbon" type="button" hidden>✂️ CUT THE RIBBON</button>
+<p id="waitingForPrincipal" class="status" hidden>Countdown finished. Waiting for the Principal to cut the ribbon live…</p>
+</div>
+<div id="success" hidden><div class="success">✨ WEBSITE REVEALED ✨</div><p class="subtitle">Trial completed successfully</p><p class="muted">This is only a rehearsal. The official launch has NOT happened.</p><a href="index.html" class="button-link">Open Website Homepage ↗</a></div>
+</div>
+<section id="hostControls" class="panel" hidden>
+<h2>🎬 Host Control · Trial Only</h2>
+<p class="muted">Share THIS screen on Google Meet or Zoom. The Principal opens the private link on their own mobile and signs in with the authorised Google account.</p>
+<label>Principal's verified Google email<input id="principalEmail" type="email" maxlength="254" autocomplete="off" placeholder="principal@example.com"></label>
+<div class="actions"><button id="savePrincipal" type="button" class="secondary">Save Principal Access</button><button id="startTrial" type="button">▶ Start 5-second Trial</button><button id="resetTrial" type="button" class="secondary">↻ Reset &amp; Try Again</button></div>
+<p class="muted"><a id="principalLink" href="./grand-launch.html?role=principal" target="_blank" rel="noopener" style="color:#e8c77d">Open / share Principal control page ↗</a></p>
+<p class="muted">Practice can be repeated. There is intentionally NO Official Launch button on this page.</p>
+</section>
+<section id="principalInfo" class="panel" hidden><h2>👑 Principal's Control</h2><p class="muted">Keep this screen open. After the host's 5–4–3–2–1 countdown, your digital ribbon-cut button will appear here.</p></section>
+<div class="confetti" id="confetti" aria-hidden="true"></div>
+<footer>Protected rehearsal · No real website publication or one-time launch record occurs in Trial Mode.<br>Madrasa Al Islahul Arabiya · Women's Online Madrasa</footer>
+</main><script type="module" src="./grand-launch.js"></script></body></html>
