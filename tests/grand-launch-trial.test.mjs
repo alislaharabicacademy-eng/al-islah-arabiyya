@@ -21,6 +21,13 @@ test('principal login is discoverable, admin-controlled, and account-switchable'
   assert.match(html,/id="switchGoogleAccount"/);
   assert.match(js,/prompt:'select_account'/);
   assert.match(js,/signOut\(auth\)/);
+  // Backup ceremony access is verified using protected Firestore role probe,
+  // not by writing a second Gmail to browser code or public configuration.
+  assert.match(js,/import \{isVerifiedMasterAdmin\} from '\.\/admin-role-status\.js'/);
+  assert.match(js,/await isVerifiedMasterAdmin\(db,user\)/);
+  const masterAddress=rules.match(/function isMasterAdmin\(\)[\s\S]*?request\.auth\.token\.email == '([^']+)'/);
+  assert.ok(masterAddress, 'Existing Firestore master role must remain defined');
+  assert.ok(!js.includes(masterAddress[1]),'Master address must not be copied to ceremony JavaScript');
 });
 
 test('rehearsal is isolated from real one-time launch',()=>{
@@ -49,6 +56,11 @@ test('secure, repeatable rehearsal: Admin starts and Principal or host cuts afte
     const principal=env.authenticatedContext('principal-test',{
       email:'principal@example.com',email_verified:true
     }).firestore();
+    const existingMasterAddress=rules.match(/function isMasterAdmin\(\)[\s\S]*?request\.auth\.token\.email == '([^']+)'/);
+    assert.ok(existingMasterAddress, 'Master role must exist in Firestore rules');
+    const master=env.authenticatedContext('master-test',{
+      email:existingMasterAddress[1],email_verified:true
+    }).firestore();
     const wrong=env.authenticatedContext('wrong-test',{
       email:'wrong@example.com',email_verified:true
     }).firestore();
@@ -67,6 +79,12 @@ test('secure, repeatable rehearsal: Admin starts and Principal or host cuts afte
     await assertSucceeds(setDoc(doc(admin,config),{principalEmail:'principal@example.com',
       updatedAt:serverTimestamp(),updatedBy:'admin-test'}));
     await assertSucceeds(getDoc(doc(principal,config)));
+    // The Master Admin is permitted to access the same Principal ceremony
+    // screen via a private server-side role check; no visible second account.
+    await assertSucceeds(getDoc(doc(master,config)));
+    await assertSucceeds(getDoc(doc(master,'adminRoleChecks','master')));
+    await assertFails(getDoc(doc(admin,'adminRoleChecks','master')));
+    await assertFails(getDoc(doc(principal,'adminRoleChecks','master')));
     await assertFails(getDoc(doc(wrong,config)));
     await assertFails(getDoc(doc(unverified,config)));
     await assertFails(getDocs(collection(principal,'grandLaunch')));
