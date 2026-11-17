@@ -46,3 +46,10 @@ This is the **repeatable rehearsal only** for the Women's Online Madrasa website
 - The website hamburger menu also includes **Principal Login** for the Principal to open on their device. Authentication and Firestore still protect access; merely having the URL provides no permissions.
 - If access is denied, the email has not been saved or a different Google account was selected. Use **Use a Different Google Account** on the Principal Login page.
 - The Principal Gmail is never written to public website settings. Principal access does not grant access to the Admin dashboard, student data or other Academy records.
+
+## Quiet Master Admin backup for the ceremony
+- The registered Principal’s verified Google account stays as the single account shown in Admin → Principal Login. It is not replaced or changed.
+- The existing verified Master Admin can also sign in on the **Principal Login** ceremony page as a backup. The page confirms this via the existing server-protected role check rather than a second published email field.
+- No additional Master Admin email is stored in public site settings or written into the ceremony page or scripts. This change does not alter the Academy’s existing privileged Admin authentication configuration or Firestore role rules.
+- A normal Admin (who is not the registered Principal) still cannot enter the Principal screen. The Principal does not receive Admin permissions.
+- This hides the backup email **from the ceremony user interface**; it does not retroactively erase any address already present in the repository's existing Firestore rules or other administrator records.
