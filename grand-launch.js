@@ -10,7 +10,7 @@ const role=params.get('role')==='principal'?'principal':'host';
 // "main-preview" is only a theatrical, RESETTABLE rehearsal. It is not an official launch.
 const isMainPreview=params.get('mode')==='main-preview';
 const COUNTDOWN_MS=5000;
-let auth,db,me,trial=null,unsubscribe=null,authorized=false,principalEmail='',experiencedCountdown=false,cutPlayed=false,cutPending=false,previousPhase='',lastDigit=0,redirectTimer=null;
+let auth,db,me,trial=null,unsubscribe=null,authorized=false,principalEmail='',experiencedCountdown=false,cutPlayed=false,cutPending=false,previousPhase='',lastDigit=0,redirectTimer=null,successTimer=null;
 const message=(text,isError=false)=>{$('message').textContent=text;$('message').classList.toggle('danger',isError)};
 const show=(id,visible)=>$(id).hidden=!visible;
 const isEmail=value=>/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(value);
@@ -36,6 +36,7 @@ show('switchGoogleAccount',role==='principal');
 
 function resetVisual(){
   clearTimeout(redirectTimer);
+  clearTimeout(successTimer);
   show('previewLaunchOverlay',false);
   $('previewLaunchFrame').removeAttribute('src');
   cutPlayed=false;
@@ -79,7 +80,7 @@ function playCutAnimation(){
     $('ribbonWrap').classList.add('is-cut');confetti();
   }));
   message(isMainPreview?'✂️ Preview ribbon cut confirmed. Revealing the homepage without recording any official launch…':'✂️ Trial ribbon cut confirmed! Showing the rehearsal website…');
-  setTimeout(()=>{show('ribbonArea',false);show('success',true)},1250);
+  successTimer=setTimeout(()=>{show('ribbonArea',false);show('success',true)},1250);
   // On the Host MAIN PREVIEW show the actual homepage in a full-size frame
   // with a persistent preview banner and reset button, without navigating away.
   if(role==='host'&&experiencedCountdown){
@@ -102,7 +103,7 @@ function render(){
   }else if(phase==='countdown'){
     experiencedCountdown=true;
     if(previousPhase!=='countdown'){
-      cutPlayed=false;cutPending=false;clearTimeout(redirectTimer);show('success',false);show('ribbonArea',false);
+      cutPlayed=false;cutPending=false;clearTimeout(redirectTimer);clearTimeout(successTimer);show('success',false);show('ribbonArea',false);
       $('ribbonWrap').classList.remove('is-cut');$('confetti').replaceChildren();
     }
     const start=trial.startedAt?.toMillis?.();
