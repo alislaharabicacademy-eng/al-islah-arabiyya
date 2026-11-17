@@ -165,7 +165,7 @@ async function loginWithGoogle(){
   if(!auth)return;
   const provider=new GoogleAuthProvider();
   provider.setCustomParameters({prompt:'select_account'});
-  try{await signInWithPopup(auth,provider)
+  try{await signInWithPopup(auth,provider)}
   catch(error){
     if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(error.code)){
       await signInWithRedirect(auth,provider).catch(e=>message('Google sign-in failed: '+e.message,true));
