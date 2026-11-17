@@ -245,7 +245,11 @@ function render(){
   previousPhase=phase;
 }
 async function showSignedIn(user,version){
-  unsubscribe?.();unsubscribe=null;authorized=false;me=user;trial=null;resetVisual();
+  unsubscribe?.();unsubscribe=null;
+  officialUnsubscribes.forEach(stop=>stop());officialUnsubscribes=[];
+  officialControl=null;officialRecord=null;officialControlLoaded=false;officialRecordLoaded=false;
+  officialSeenCountdown=false;masterVerified=false;
+  authorized=false;me=user;trial=null;resetVisual();
   show('hostControls',false);show('principalInfo',false);
   show('loginPanel',!user);
   if(!user){message('Sign in securely to access the '+(role==='host'?'Host':'Principal')+' rehearsal screen.');return}
@@ -262,6 +266,10 @@ async function showSignedIn(user,version){
       if(version!==authVersion)return;
       principalEmail=snap.exists()?String(snap.data().principalEmail||''):'';
       $('principalEmail').value=principalEmail;
+      if(isOfficial){
+        masterVerified=await isVerifiedMasterAdmin(db,user);
+        if(version!==authVersion)return;
+      }
       show('hostControls',true);
     }else{
       const snap=await getDoc(doc(db,'grandLaunch','config'));
@@ -280,13 +288,27 @@ async function showSignedIn(user,version){
       show('principalInfo',true);
     }
     authorized=true;show('loginPanel',false);
-    message('Connected to secure rehearsal. Official Launch remains locked.');
-    unsubscribe=onSnapshot(doc(db,'grandLaunch','trial'),{includeMetadataChanges:true},snapshot=>{
-      // Never celebrate an optimistic write: wait for the server to accept the ribbon cut.
-      if(snapshot.metadata.hasPendingWrites)return;
-      trial=snapshot.exists()?snapshot.data():{phase:'idle'};
-      render();
-    },error=>{trial=null;message('Cannot read rehearsal status: '+error.message,true)});
+    if(isOfficial){
+      message('🔐 Official inauguration status connected. The final cut has not been triggered from this page.');
+      officialUnsubscribes.push(onSnapshot(doc(db,'grandLaunch','officialControl'),{includeMetadataChanges:true},snapshot=>{
+        if(snapshot.metadata.hasPendingWrites)return;
+        officialControl=snapshot.exists()?snapshot.data():null;
+        officialControlLoaded=true;render();
+      },error=>message('Cannot read official countdown control: '+error.message,true)));
+      officialUnsubscribes.push(onSnapshot(doc(db,'grandLaunch','official'),{includeMetadataChanges:true},snapshot=>{
+        if(snapshot.metadata.hasPendingWrites)return;
+        officialRecord=snapshot.exists()?snapshot.data():null;
+        officialRecordLoaded=true;render();
+      },error=>message('Cannot read official inauguration record: '+error.message,true)));
+    }else{
+      message('Connected to secure rehearsal. Official Launch remains locked.');
+      unsubscribe=onSnapshot(doc(db,'grandLaunch','trial'),{includeMetadataChanges:true},snapshot=>{
+        // Never celebrate an optimistic write: wait for the server to accept the ribbon cut.
+        if(snapshot.metadata.hasPendingWrites)return;
+        trial=snapshot.exists()?snapshot.data():{phase:'idle'};
+        render();
+      },error=>{trial=null;message('Cannot read rehearsal status: '+error.message,true)});
+    }
   }catch(error){
     message('Access denied: '+error.message,true);
     show('loginPanel',true);
