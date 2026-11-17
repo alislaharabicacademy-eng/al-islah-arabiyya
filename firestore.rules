@@ -254,8 +254,9 @@ service cloud.firestore {
           || (request.resource.data.phase == 'countdown' && request.resource.data.startedAt == request.time)
         );
 
-      // The authorised Principal alone may cut after the full 5 seconds.
-      allow update: if documentId == 'trial' && isLaunchPrincipal()
+      // Principal or Admin can cut the TRIAL only after the full 5 seconds.
+      // Admin access allows solo rehearsal; official launch remains unavailable.
+      allow update: if documentId == 'trial' && (isLaunchPrincipal() || isAdmin())
         && resource.data.kind == 'trial'
         && resource.data.phase == 'countdown'
         && resource.data.startedAt is timestamp

@@ -6,7 +6,7 @@ import {getFirestore,doc,collection,query,limit,getDocs,getDoc,setDoc,updateDoc,
 const $=id=>document.getElementById(id);
 const role=new URLSearchParams(location.search).get('role')==='principal'?'principal':'host';
 const COUNTDOWN_MS=5000;
-let auth,db,me,trial=null,unsubscribe=null,authorized=false,principalEmail='',experiencedCountdown=false,cutPlayed=false,previousPhase='',lastDigit=0,redirectTimer=null;
+let auth,db,me,trial=null,unsubscribe=null,authorized=false,principalEmail='',experiencedCountdown=false,cutPlayed=false,cutPending=false,previousPhase='',lastDigit=0,redirectTimer=null;
 const message=(text,isError=false)=>{$('message').textContent=text;$('message').classList.toggle('danger',isError)};
 const show=(id,visible)=>$(id).hidden=!visible;
 const isEmail=value=>/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(value);
@@ -18,6 +18,7 @@ show('passwordForm',role==='host');
 function resetVisual(){
   clearTimeout(redirectTimer);
   cutPlayed=false;
+  cutPending=false;
   experiencedCountdown=false;
   previousPhase='';
   lastDigit=0;
@@ -27,6 +28,7 @@ function resetVisual(){
   show('ribbonArea',false);
   show('countdown',false);
   show('cutRibbon',false);
+  show('scissorsTrigger',false);
   show('waitingForPrincipal',false);
 }
 function confetti(){
@@ -48,12 +50,14 @@ function playCutAnimation(){
   show('countdown',false);
   show('ribbonArea',true);
   show('cutRibbon',false);
+  show('scissorsTrigger',true);
+  $('scissorsTrigger').disabled=true;
   show('waitingForPrincipal',false);
   $('ribbonWrap').classList.remove('is-cut');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     $('ribbonWrap').classList.add('is-cut');confetti();
   }));
-  message('✂️ The Principal has cut the digital ribbon! Showing the rehearsal website…');
+  message('✂️ Trial ribbon cut confirmed! Showing the rehearsal website…');
   setTimeout(()=>{show('ribbonArea',false);show('success',true)},1250);
   // Only the Meet/Zoom HOST screen automatically reveals the website.
   // The principal's phone remains on the successful rehearsal confirmation.
@@ -70,7 +74,7 @@ function render(){
   }else if(phase==='countdown'){
     experiencedCountdown=true;
     if(previousPhase!=='countdown'){
-      cutPlayed=false;clearTimeout(redirectTimer);show('success',false);show('ribbonArea',false);
+      cutPlayed=false;cutPending=false;clearTimeout(redirectTimer);show('success',false);show('ribbonArea',false);
       $('ribbonWrap').classList.remove('is-cut');$('confetti').replaceChildren();
     }
     const start=trial.startedAt?.toMillis?.();
@@ -88,14 +92,17 @@ function render(){
           $('countdown').style.animation='';
           lastDigit=digit;
         }
-        show('countdown',true);show('ribbonArea',false);
+        show('countdown',true);show('ribbonArea',false);show('scissorsTrigger',false);
         message('LIVE REHEARSAL COUNTDOWN · '+digit);
       }else{
         show('countdown',false);show('ribbonArea',true);
-        show('cutRibbon',role==='principal');
-        $('cutRibbon').disabled=false;
-        show('waitingForPrincipal',role==='host');
-        message(role==='principal'?'Principal, the ribbon is ready. Tap CUT THE RIBBON.':'Countdown finished. Waiting for the Principal to click on their mobile.');
+        show('cutRibbon',true);
+        show('scissorsTrigger',true);
+        $('cutRibbon').textContent=role==='principal'?'✂️ CUT THE RIBBON · TRIAL':'✂️ TEST CUT HERE · HOST TRIAL';
+        $('cutRibbon').disabled=cutPending;
+        $('scissorsTrigger').disabled=cutPending;
+        show('waitingForPrincipal',role==='host'&&Boolean(principalEmail));
+        message(role==='principal'?'Principal, tap the scissors or CUT THE RIBBON button.':'Countdown complete: tap the scissors or HOST TEST CUT to try it on this screen.');
       }
     }
   }else if(phase==='cut'){
@@ -133,7 +140,9 @@ async function showSignedIn(user,version){
     }
     authorized=true;show('loginPanel',false);
     message('Connected to secure rehearsal. Official Launch remains locked.');
-    unsubscribe=onSnapshot(doc(db,'grandLaunch','trial'),snapshot=>{
+    unsubscribe=onSnapshot(doc(db,'grandLaunch','trial'),{includeMetadataChanges:true},snapshot=>{
+      // Never celebrate an optimistic write: wait for the server to accept the ribbon cut.
+      if(snapshot.metadata.hasPendingWrites)return;
       trial=snapshot.exists()?snapshot.data():{phase:'idle'};
       render();
     },error=>{trial=null;message('Cannot read rehearsal status: '+error.message,true)});
@@ -179,7 +188,6 @@ $('savePrincipal').addEventListener('click',async()=>{
 });
 async function writeTrial(phase){
   if(!authorized||role!=='host')return;
-  if(phase==='countdown'&&!principalEmail){message('Save the Principal’s verified Gmail before starting.',true);return}
   try{
     await setDoc(doc(db,'grandLaunch','trial'),{
       kind:'trial',phase,startedAt:phase==='countdown'?serverTimestamp():null,
@@ -190,15 +198,35 @@ async function writeTrial(phase){
 }
 $('startTrial').addEventListener('click',()=>writeTrial('countdown'));
 $('resetTrial').addEventListener('click',()=>writeTrial('idle'));
-$('cutRibbon').addEventListener('click',async()=>{
-  if(!authorized||role!=='principal'||trial?.phase!=='countdown'||!trial.startedAt?.toMillis)return;
-  if(Date.now()-trial.startedAt.toMillis()<COUNTDOWN_MS){message('Wait for the full 5-second countdown.',true);return}
+async function requestTrialCut(){
+  // On the shared Host screen this is strictly a rehearsal; the Principal
+  // can still perform the full two-device ceremony from their own account.
+  if(!authorized||!(role==='host'||role==='principal')||cutPending||
+     trial?.phase!=='countdown'||!trial.startedAt?.toMillis)return;
+  if(Date.now()-trial.startedAt.toMillis()<COUNTDOWN_MS){
+    message('Finish the 5–4–3–2–1 countdown before cutting.',true);return;
+  }
+  cutPending=true;
   $('cutRibbon').disabled=true;
+  $('scissorsTrigger').disabled=true;
+  message('✂️ Confirming rehearsal ribbon cut securely…');
   try{
     await updateDoc(doc(db,'grandLaunch','trial'),{
-      phase:'cut',cutAt:serverTimestamp(),cutBy:me.uid,updatedAt:serverTimestamp(),updatedBy:me.uid
+      phase:'cut',cutAt:serverTimestamp(),cutBy:me.uid,
+      updatedAt:serverTimestamp(),updatedBy:me.uid
     });
-  }catch(error){message('Ribbon click not accepted: '+error.message,true);$('cutRibbon').disabled=false}
-});
+  }catch(error){
+    cutPending=false;
+    if(trial?.phase==='countdown'){
+      $('cutRibbon').disabled=false;
+      $('scissorsTrigger').disabled=false;
+    }
+    message('Ribbon cutting was not accepted: '+error.message+
+      ' · Make sure you are signed in and the trial is still active.',true);
+  }
+}
+$('cutRibbon').addEventListener('click',requestTrialCut);
+$('scissorsTrigger').addEventListener('click',requestTrialCut);
+
 setInterval(render,130);
 initialise();
