@@ -276,7 +276,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
  background:#17513a;color:#fff;border-radius:50%;display:grid;place-items:center;font-weight:750}
 .admin-eligibility-preview strong{display:block;color:#135237;margin-bottom:3px}
 .admin-eligibility-preview span{display:block;color:#315340}
-</style></head><body><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button><div class="menu-shade hidden" id="menuShade"></div><aside class="side-menu" id="sideMenu" aria-label="Admin navigation">
+</style><link rel="stylesheet" href="./royal-academy-theme.css"></head><body class="academy-royal royal-admin"><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button><div class="menu-shade hidden" id="menuShade"></div><aside class="side-menu" id="sideMenu" aria-label="Admin navigation">
 <div class="academy-menu-brand"><span class="academy-menu-kicker">AL ISLAHUL ARABIYA</span><h2>Academy Menu</h2><p>Management Control Center</p></div>
 <div class="academy-menu-groups">
 <section class="academy-menu-group" data-menu-group="dashboard"><button class="academy-menu-group-toggle" type="button" aria-expanded="true" aria-controls="menuDashboard"><span>🏠 Dashboard</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuDashboard"><button type="button" data-tab="overview">Dashboard Overview</button></div></section>
@@ -3533,4 +3533,4 @@ $('save').onclick=async()=>{if(!active)return;const id=$('course').value,data={}
 
 registerCourseOption(id,data);courseRegistry.set(id,{...(courseRegistry.get(id)||{}),...data});renderCourseList();$('status').textContent='✓ Saved successfully. Course selectors are updated throughout the admin panel.'}catch(e){$('status').textContent='Save failed: '+e.message}finally{$('save').disabled=false}};
 }catch(e){$('setup').classList.remove('hidden');$('setup').textContent='Firebase setup error: '+e.message}}
-</script></body></html>
+</script><script src="./royal-academy-motion.js" defer></script></body></html>
