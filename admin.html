@@ -2659,7 +2659,7 @@ async function loadTeacherSubmissions(){
   const approve=document.createElement('button');approve.type='button';approve.textContent='✓ Approve';
   const reject=document.createElement('button');reject.type='button';reject.className='secondary';reject.textContent='✕ Reject';
   const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='🗑 Delete Permanently';remove.style.color='#a12828';remove.style.borderColor='#e8b2b2';remove.style.background='#fff1f1';
-  if(t.reviewStatus==='approved'){approve.disabled=true;approve.textContent='✓ Already Approved';approve.title='This teacher is already approved';}if(t.reviewStatus==='archived'){badge.textContent='Archived';approve.disabled=true;approve.textContent='Archived teacher';reject.disabled=true;}if(t.reviewStatus==='rejected'){reject.disabled=true;reject.textContent='✕ Already Rejected';reject.title='This submission is already rejected';}buttons.append(view,edit,print,approve,reject);if(t.reviewStatus==='rejected')buttons.append(remove);card.append(buttons);
+  if(t.reviewStatus==='approved'){approve.disabled=true;approve.textContent='✓ Already Approved';approve.title='This teacher is already approved';}if(t.reviewStatus==='archived'){badge.textContent='Archived';approve.disabled=true;approve.textContent='Archived teacher';reject.disabled=true;}if(t.reviewStatus==='rejected'){reject.disabled=true;reject.textContent='✕ Already Rejected';reject.title='This submission is already rejected';}buttons.append(view,edit,print,approve,reject);if(['rejected','archived'].includes(t.reviewStatus))buttons.append(remove);card.append(buttons);
   const detail=document.createElement('div');detail.className='teacher-profile-details';detail.hidden=true;for(const [title,fields] of teacherProfileGroups)detail.append(teacherProfileSection(title,fields,t));card.append(detail);
   view.onclick=()=>{detail.hidden=!detail.hidden;view.textContent=detail.hidden?'👁 View Full Profile':'▴ Hide Full Profile'};
   edit.onclick=()=>{
@@ -2673,12 +2673,14 @@ async function loadTeacherSubmissions(){
   approve.onclick=async()=>{if(t.reviewStatus==='approved')return;if(!confirm('Approve this teacher and add to the private teacher directory?'))return;approve.disabled=true;try{await setDoc(doc(db,'teachers','registered_'+d.id),{name:t.fullName,subject:t.subjects||'',phone:t.phone||'',email:t.email||'',photoData:isProfilePhoto(t.photoData)?t.photoData:'',notes:'Approved teacher registration. Submission ID: '+d.id,registrationId:d.id},{merge:true});await setDoc(doc(db,'teacherSubmissions',d.id),{reviewStatus:'approved',reviewedAt:new Date().toISOString()},{merge:true});await loadTeacherDirectory()}catch(error){alert('Approval failed: '+error.message);approve.disabled=false}};
   reject.onclick=async()=>{if(t.reviewStatus==='rejected')return;if(!confirm('Mark this teacher submission as rejected? The original record will be retained.'))return;reject.disabled=true;try{await setDoc(doc(db,'teacherSubmissions',d.id),{reviewStatus:'rejected',reviewedAt:new Date().toISOString()},{merge:true});await loadTeacherSubmissions()}catch(error){alert('Rejection failed: '+error.message);reject.disabled=false}};
   remove.onclick=async()=>{
-   if(t.reviewStatus!=='rejected')return;
-   if(prompt('Permanently delete the REJECTED teacher submission for "'+(t.fullName||'Teacher')+'"?\n\nThis cannot be undone. Type DELETE to confirm:')!=='DELETE')return;
+   if(!['rejected','archived'].includes(t.reviewStatus))return;
+   if(prompt('Permanently delete the '+t.reviewStatus.toUpperCase()+' teacher registration for "'+(t.fullName||'Teacher')+'"?\n\nThis removes the registration data, not attendance or salary history. It cannot be undone. Type DELETE to confirm:')!=='DELETE')return;
    remove.disabled=true;
    try{
     const ref=doc(db,'teacherSubmissions',d.id),latest=await getDoc(ref);
-    if(!latest.exists()||latest.data().reviewStatus!=='rejected')throw Error('Submission is no longer rejected. Refresh the list before trying again.');
+    if(!latest.exists()||!['rejected','archived'].includes(latest.data().reviewStatus))throw Error('Registration is no longer rejected or archived. Refresh before trying again.');
+    const registered=await getDoc(doc(db,'teachers','registered_'+d.id));
+    if(registered.exists()&&registered.data().recordStatus!=='archived')throw Error('This teacher is still active in Teacher Directory. Remove the teacher there first.');
     await deleteDoc(ref);
     await loadTeacherSubmissions();
    }catch(error){alert('Could not delete teacher submission: '+error.message);remove.disabled=false}
