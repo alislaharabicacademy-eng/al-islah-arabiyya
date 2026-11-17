@@ -9,6 +9,10 @@ const html=readFileSync(new URL('../grand-launch.html',import.meta.url),'utf8');
 const js=readFileSync(new URL('../grand-launch.js',import.meta.url),'utf8');
 test('rehearsal is isolated from real one-time launch',()=>{
   assert.match(html,/TRIAL MODE/);
+  assert.match(html,/id="scissorsTrigger"/);
+  assert.match(html,/TEST CUT HERE|Host Test Cut/);
+  assert.match(js,/addEventListener\('click',requestTrialCut\)/);
+  assert.match(js,/hasPendingWrites/);
   assert.match(js,/role==='principal'/);
   assert.match(js,/COUNTDOWN_MS=5000/);
   assert.match(js,/updateDoc\(doc\(db,'grandLaunch','trial'\)/);
@@ -16,7 +20,7 @@ test('rehearsal is isolated from real one-time launch',()=>{
   assert.doesNotMatch(html,/id="startOfficial"/);
   assert.match(rules,/request\.time >= resource\.data\.startedAt \+ duration\.value\(5, 's'\)/);
 });
-test('secure, repeatable rehearsal: Admin starts and Principal alone cuts after 5 seconds',async()=>{
+test('secure, repeatable rehearsal: Admin starts and Principal or host cuts after 5 seconds',async()=>{
   const env=await initializeTestEnvironment({
     projectId:'demo-grand-launch-trial',
     firestore:{rules}
@@ -68,5 +72,13 @@ test('secure, repeatable rehearsal: Admin starts and Principal alone cuts after 
     await assertSucceeds(setDoc(doc(admin,trial),base)); // host may replay
     await assertSucceeds(setDoc(doc(admin,trial),{...base,phase:'countdown',
       startedAt:serverTimestamp()}));
+    const hostCut={phase:'cut',cutAt:serverTimestamp(),cutBy:'admin-test',
+      updatedAt:serverTimestamp(),updatedBy:'admin-test'};
+    await assertFails(updateDoc(doc(admin,trial),hostCut)); // host also waits for countdown
+    await new Promise(resolve=>setTimeout(resolve,5350));
+    await assertSucceeds(updateDoc(doc(admin,trial),hostCut)); // solo host trial
+    await assertFails(updateDoc(doc(admin,trial),hostCut)); // no second cut this round
+    await assertSucceeds(setDoc(doc(admin,trial),base)); // repeatable trial
+    await assertFails(setDoc(doc(admin,official),{state:'launched'}));
   } finally {await env.cleanup()}
 });
