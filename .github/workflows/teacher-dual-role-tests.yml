@@ -4,8 +4,11 @@ on:
   pull_request:
     paths:
       - 'teacher-login.html'
+      - 'admin.html'
       - 'teacher-role-routing.js'
+      - 'teacher-admin-sync.js'
       - 'tests/teacher-role-routing.test.mjs'
+      - 'tests/teacher-admin-sync.test.mjs'
       - '.github/workflows/teacher-dual-role-tests.yml'
   workflow_dispatch:
 
@@ -40,4 +43,15 @@ jobs:
           PY
           node --check /tmp/academy-teacher-dual-role.mjs
           node --check teacher-role-routing.js
-          node --test tests/teacher-role-routing.test.mjs
+          node --check teacher-admin-sync.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          src=Path('admin.html').read_text()
+          modules=re.findall(r'<script type="module">([\\s\\S]*?)</script>',src)
+          assert modules
+          assert 'directoryPatchFromApprovedRegistration' in src
+          Path('/tmp/academy-teacher-admin-sync.mjs').write_text('\\n'.join(modules))
+          PY
+          node --check /tmp/academy-teacher-admin-sync.mjs
+          node --test tests/teacher-role-routing.test.mjs tests/teacher-admin-sync.test.mjs
