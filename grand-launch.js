@@ -1,6 +1,6 @@
 /* Isolated, reversible multi-device ceremony rehearsal. NO official launch API or state. */
 import {initializeApp,getApps} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
-import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
+import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import {getFirestore,doc,collection,query,limit,getDocs,getDoc,setDoc,updateDoc,onSnapshot,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 
 const $=id=>document.getElementById(id);
@@ -14,6 +14,7 @@ const principalUrl=new URL('./grand-launch.html?role=principal',location.href).h
 $('principalLink').href=principalUrl;
 $('loginHeading').textContent=role==='principal'?'Principal · Verified Google Login':'Host · Secure Admin Login';
 show('passwordForm',role==='host');
+show('switchGoogleAccount',role==='principal');
 
 function resetVisual(){
   clearTimeout(redirectTimer);
@@ -135,7 +136,7 @@ async function showSignedIn(user,version){
       const snap=await getDoc(doc(db,'grandLaunch','config'));
       if(version!==authVersion)return;
       principalEmail=snap.exists()?String(snap.data().principalEmail||''):'';
-      if(!principalEmail||principalEmail!==user.email.toLowerCase())throw Error('Your Google account is not the registered Principal. Ask an Admin to save your verified Gmail in Host Control.');
+      if(!principalEmail||principalEmail!==user.email.toLowerCase())throw Error('Your Google account is not yet registered as Principal. Ask your Academy Admin to open Settings → Principal Login, save your exact verified Google email, then use “Use a Different Google Account” if needed.');
       show('principalInfo',true);
     }
     authorized=true;show('loginPanel',false);
@@ -160,14 +161,22 @@ async function initialise(){
     onAuthStateChanged(auth,user=>{const version=++authVersion;showSignedIn(user,version)});
   }catch(error){message('Cannot connect to Firebase: '+error.message,true)}
 }
-$('googleLogin').addEventListener('click',async()=>{
+async function loginWithGoogle(){
   if(!auth)return;
-  try{await signInWithPopup(auth,new GoogleAuthProvider())}
+  const provider=new GoogleAuthProvider();
+  provider.setCustomParameters({prompt:'select_account'});
+  try{await signInWithPopup(auth,provider)
   catch(error){
     if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment'].includes(error.code)){
-      await signInWithRedirect(auth,new GoogleAuthProvider()).catch(e=>message('Google sign-in failed: '+e.message,true));
+      await signInWithRedirect(auth,provider).catch(e=>message('Google sign-in failed: '+e.message,true));
     }else message('Google sign-in failed: '+error.message,true);
   }
+}
+$('googleLogin').addEventListener('click',loginWithGoogle);
+$('switchGoogleAccount').addEventListener('click',async()=>{
+  if(!auth||role!=='principal')return;
+  try{await signOut(auth);await loginWithGoogle()}
+  catch(error){message('Cannot switch account: '+error.message,true)}
 });
 $('passwordForm').addEventListener('submit',async event=>{
   event.preventDefault();
