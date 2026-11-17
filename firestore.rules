@@ -30,6 +30,16 @@ service cloud.firestore {
       return isNormalAdmin() || isMasterAdmin() || hasPrivateAdminGrant();
     }
 
+
+    // Authorised Principal can cut a rehearsal ribbon, but cannot manage academy data.
+    function isLaunchPrincipal() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && exists(/databases/$(database)/documents/grandLaunch/config)
+        && get(/databases/$(database)/documents/grandLaunch/config).data.principalEmail == request.auth.token.email;
+    }
+
     function signedInTeacher(teacherId) {
       return request.auth != null
         && request.auth.token.email_verified == true
@@ -214,6 +224,608 @@ service cloud.firestore {
     }
     match /hiringBoardAdmin/{docId} {
       allow read, write: if isAdmin() && docId == 'current';
+    }
+
+
+    // Launch practice is deliberately separated from any one-time official record.
+    // The Principal cannot change configuration or reset the session.
+    match /grandLaunch/{documentId} {
+      allow get: if (documentId == 'config' || documentId == 'trial')
+        && (isAdmin() || isLaunchPrincipal());
+      allow list, delete: if false;
+
+      allow create, update: if documentId == 'config' && isAdmin()
+        && request.resource.data.keys().hasOnly(['principalEmail','updatedAt','updatedBy'])
+        && request.resource.data.keys().hasAll(['principalEmail','updatedAt','updatedBy'])
+        && request.resource.data.principalEmail is string
+        && request.resource.data.principalEmail.matches('^[^/@ ]+@[^/@ ]+\\.[^/@ ]+
+      allow get: if settingId == 'public' || isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin() && settingId == 'public';
+    }
+
+    match /courses/{courseId} {
+      allow read: if resource.data.published == true || isAdmin();
+      allow create, update, delete: if isAdmin()
+        && courseId.matches('^[a-z0-9]+(-[a-z0-9]+)*$');
+    }
+
+    match /classSubjects/{courseId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /students/{studentId} {
+      // Full student and guardian information remains admin only.
+      allow read, write: if isAdmin();
+    }
+    // One atomic counter and permanent reservation per ALIA00001–ALIA99999.
+    // Student IDs are never used as passwords or authentication secrets.
+    match /academyCounters/{counterId} {
+      allow read, write: if isAdmin();
+    }
+    match /studentIdRegistry/{officialId} {
+      // Once an ID is issued, no web client can edit, delete or reuse it.
+      allow read, create: if isAdmin()
+        && officialId.matches('^ALIA[0-9]{5}$');
+      allow update, delete: if false;
+    }
+
+    // Admin-approved student/guardian Firebase Authentication accounts.
+    // Students can only query their own verified, enabled account grants.
+    // No password, DOB or private student profile stored here.
+    match /studentAccess/{studentId} {
+      allow get, list: if isAdmin()
+        || (request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+          && resource.data.enabled == true);
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Published exam result only through an unguessable 96-bit document code.
+    // Public visitors cannot list or search student records or drafts.
+    match /examResults/{resultId} {
+      allow get: if isAdmin()
+        || (resultId.matches('^RESULT-[a-f0-9]{24}$')
+          && resource.data.published == true);
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Opaque key = SHA-256(student UUID + DOB + application-specific domain).
+    // No student names or birthdates are stored here. Anyone who knows both
+    // confidential values can locate published result references; lists denied.
+    match /examResultLookups/{lookupHash} {
+      allow get: if isAdmin()
+        || (lookupHash.matches('^[a-f0-9]{64}$')
+          && resource.data.enabled == true);
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /teachers/{teacherId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Immutable salary audit trail: admin can add and read historical changes,
+    // but no client is permitted to rewrite or delete a recorded event.
+    match /teacherSalaryEvents/{eventId} {
+      allow read, create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /teacherAccess/{teacherId} {
+      allow get: if isAdmin()
+        || (request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email);
+      allow list, create, update, delete: if isAdmin();
+    }
+
+    match /teacherRosters/{teacherId} {
+      allow get: if isAdmin() || signedInTeacher(teacherId);
+      allow list, create, update, delete: if isAdmin();
+    }
+
+    // Class postponement is teacher-requested, but cannot be approved by teachers.
+    match /classRescheduleRequests/{teacherId}/requests/{requestId} {
+      allow get, list: if isAdmin() || signedInTeacher(teacherId);
+      allow create: if signedInTeacher(teacherId)
+        && request.resource.data.keys().hasOnly([
+          'teacherId','teacherName','teacherEmail','course','courseName',
+          'batch','subject','timing','originalDate','proposedDate','proposedTime',
+          'reason','status','createdAt','updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'teacherId','teacherName','teacherEmail','course','courseName',
+          'batch','subject','timing','originalDate','proposedDate','proposedTime',
+          'reason','status','createdAt','updatedAt'
+        ])
+        && request.resource.data.teacherId == teacherId
+        && request.resource.data.teacherEmail == request.auth.token.email
+        && request.resource.data.teacherName is string
+        && request.resource.data.teacherName.size() <= 120
+        && request.resource.data.course is string
+        && request.resource.data.course.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && request.resource.data.courseName is string
+        && request.resource.data.courseName.size() <= 150
+        && request.resource.data.batch is string
+        && request.resource.data.batch.size() <= 100
+        && request.resource.data.subject is string
+        && request.resource.data.subject.size() >= 1
+        && request.resource.data.subject.size() <= 150
+        && request.resource.data.timing is string
+        && request.resource.data.timing.size() <= 150
+        && request.resource.data.originalDate is string
+        && request.resource.data.originalDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.proposedDate is string
+        && (request.resource.data.proposedDate == ''
+          || (request.resource.data.proposedDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+            && request.resource.data.proposedDate > request.resource.data.originalDate))
+        && request.resource.data.proposedTime is string
+        && (request.resource.data.proposedTime == ''
+          || request.resource.data.proposedTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$'))
+        && ((request.resource.data.proposedDate == '') == (request.resource.data.proposedTime == ''))
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() >= 5
+        && request.resource.data.reason.size() <= 500
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+
+      // Teacher can only propose a different date after Admin specifically asks.
+      allow update: if isAdmin() || (
+        signedInTeacher(teacherId)
+        && resource.data.status == 'date_change_requested'
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status','proposedDate','proposedTime','updatedAt'])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.proposedDate is string
+        && request.resource.data.proposedDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.proposedDate > resource.data.originalDate
+        && request.resource.data.proposedTime is string
+        && request.resource.data.proposedTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && request.resource.data.updatedAt == request.time
+      );
+      allow delete: if isAdmin();
+    }
+
+    // A claimed makeup must match an Admin-approved request for this exact date,
+    // teacher, course, subject, original date and unique request key.
+    function validSubmittedClass(teacherId, day, key, record) {
+      return record is map && (
+        (
+          !key.matches('.*__makeup__.*')
+          && !record.keys().hasAny(['classType', 'rescheduleRequestId'])
+        ) || (
+          record.classType == 'makeup'
+          && record.rescheduleRequestId is string
+          && record.rescheduleRequestId.size() <= 100
+          && record.course is string
+          && record.batch is string
+          && record.subject is string
+          && record.originalDate is string
+          && key == record.course + '__'
+            + ((record.course == 'maktab' || record.course == 'childrens-quran-maktab')
+              ? record.batch + '__' : '')
+            + record.subject + '__makeup__' + record.rescheduleRequestId
+          && exists(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId))
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.status == 'approved'
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.confirmedDate == day
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.originalDate == record.originalDate
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.course == record.course
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.batch == record.batch
+          && get(/databases/$(database)/documents/classRescheduleRequests/$(teacherId)/requests/$(record.rescheduleRequestId)).data.subject == record.subject
+        )
+      );
+    }
+
+    match /teacherAttendance/{teacherId}/days/{day} {
+      allow get: if isAdmin() || signedInTeacher(teacherId);
+      allow list: if isAdmin();
+
+      allow create: if signedInTeacher(teacherId)
+        && day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.keys().hasOnly([
+          'date', 'teacherId', 'email', 'markedAt', 'subjects'
+        ])
+        && request.resource.data.keys().hasAll([
+          'date', 'teacherId', 'email', 'markedAt', 'subjects'
+        ])
+        && request.resource.data.date == day
+        && request.resource.data.teacherId == teacherId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.markedAt == request.time
+        && request.resource.data.subjects is map
+        && request.resource.data.subjects.size() == 1
+        && validSubmittedClass(teacherId, day,
+          request.resource.data.subjects.keys()[0],
+          request.resource.data.subjects[request.resource.data.subjects.keys()[0]]);
+
+      allow update: if isAdmin()
+        || (
+          signedInTeacher(teacherId)
+          && request.resource.data.diff(resource.data)
+               .affectedKeys().hasOnly(['subjects', 'markedAt'])
+          && request.resource.data.date == resource.data.date
+          && request.resource.data.teacherId == resource.data.teacherId
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.markedAt == request.time
+          && resource.data.subjects is map
+          && request.resource.data.subjects is map
+          && request.resource.data.subjects.size() == resource.data.subjects.size() + 1
+          && request.resource.data.subjects.diff(resource.data.subjects).removedKeys().size() == 0
+          && request.resource.data.subjects.diff(resource.data.subjects).changedKeys().size() == 0
+           && validSubmittedClass(teacherId, day,
+             request.resource.data.subjects.keys().removeAll(resource.data.subjects.keys())[0],
+             request.resource.data.subjects[request.resource.data.subjects.keys().removeAll(resource.data.subjects.keys())[0]])
+        );
+
+      allow delete: if isAdmin();
+    }
+
+    match /applications/{applicationId} {
+      // Applicants may create new records only. Only admins can read or edit.
+      allow read, update, delete: if isAdmin();
+      allow create: if isAdmin() || (
+        applicationId.matches('^MIA-[0-9]{8}-[A-Z0-9]{8}$')
+        && request.resource.data.keys().hasAll([
+          'reference', 'studentName', 'guardianName', 'age', 'phone',
+          'email', 'course', 'address', 'dob', 'additionalFields',
+          'message', 'submittedAt', 'status'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'reference', 'studentName', 'guardianName', 'age', 'phone',
+          'email', 'course', 'address', 'dob', 'additionalFields',
+          'message', 'submittedAt', 'status'
+        ])
+        && request.resource.data.reference is string
+        && request.resource.data.reference == applicationId
+        && request.resource.data.studentName is string
+        && request.resource.data.studentName.size() >= 2
+        && request.resource.data.studentName.size() <= 120
+        && request.resource.data.guardianName is string
+        && request.resource.data.guardianName.size() <= 120
+        && request.resource.data.age is string
+        && request.resource.data.age.matches('^[0-9]{1,3}$')
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches('^[0-9+ ()-]{7,20}$')
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 160
+        && (
+          request.resource.data.email == ''
+          || request.resource.data.email.matches('^[^@ ]+@[^@ ]+\\.[^@ ]+$')
+        )
+        && request.resource.data.course is string
+        && request.resource.data.course.size() >= 2
+        && request.resource.data.course.size() <= 120
+        && request.resource.data.address is string
+        && request.resource.data.address.size() >= 4
+        && request.resource.data.address.size() <= 500
+        && request.resource.data.dob is string
+        && request.resource.data.dob.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.additionalFields is string
+        && request.resource.data.additionalFields.size() <= 8192
+        && request.resource.data.message is string
+        && request.resource.data.message.size() <= 1000
+        && request.resource.data.submittedAt is timestamp
+        && request.resource.data.submittedAt == request.time
+        && request.resource.data.status == 'New'
+      );
+    }
+
+    // Shared, unguessable Academy-generated intake link for students who
+    // joined before the website existed. Closed by default; staff enable it
+    // explicitly, and the link expires automatically after a limited window.
+    // No student/guardian data is stored in an invitation.
+    match /existingStudentIntakeLinks/{token} {
+      allow get: if isAdmin() || (
+        token.matches('^[a-f0-9]{64}$')
+        && resource.data.enabled == true
+        && resource.data.expiresAt is timestamp
+        && resource.data.expiresAt > request.time
+      );
+      // List queries have no concrete token document ID. Applying a regex
+      // guard to that unbound wildcard blocks even approved administrators
+      // from listing links, so Create/Rotate fails before it writes anything.
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin()
+        && token.matches('^[a-f0-9]{64}$');
+    }
+
+    // Self-submitted registration details are private and only create an
+    // ADMIN REVIEW REQUEST. Applicants cannot list, read, edit, approve,
+    // create official ALIA numbers or change existing student records.
+    match /existingStudentRequests/{requestId} {
+      allow get, list, update, delete: if isAdmin();
+      allow create: if isAdmin() || (
+        requestId.matches('^[a-f0-9]{32}$')
+        && request.resource.data.keys().hasAll([
+          'name','guardian','dob','phone','email','joiningDate','course',
+          'courseYear','batch','address','notes','photoData','linkToken',
+          'educationLevel','schoolStandard','collegeCourse','collegeYear','institutionName',
+          'source','status','submittedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'name','guardian','dob','phone','email','joiningDate','course',
+          'courseYear','batch','address','notes','photoData','linkToken',
+          'educationLevel','schoolStandard','collegeCourse','collegeYear','institutionName',
+          'source','status','submittedAt'
+        ])
+        && request.resource.data.linkToken is string
+        && request.resource.data.linkToken.matches('^[a-f0-9]{64}$')
+        && exists(/databases/$(database)/documents/existingStudentIntakeLinks/$(request.resource.data.linkToken))
+        && get(/databases/$(database)/documents/existingStudentIntakeLinks/$(request.resource.data.linkToken)).data.enabled == true
+        && get(/databases/$(database)/documents/existingStudentIntakeLinks/$(request.resource.data.linkToken)).data.expiresAt > request.time
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.guardian is string
+        && request.resource.data.guardian.size() >= 2
+        && request.resource.data.guardian.size() <= 120
+        && request.resource.data.dob is string
+        && request.resource.data.dob.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.joiningDate is string
+        && request.resource.data.joiningDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.phone is string
+        && request.resource.data.phone.matches('^[0-9+() .-]{7,25}$')
+        && request.resource.data.email is string
+        && request.resource.data.email.size() >= 5
+        && request.resource.data.email.size() <= 200
+        && request.resource.data.email.matches('^[^/@ ]+@[^/@ ]+\\.[^/@ ]+$')
+        && request.resource.data.course is string
+        // A submitted course must exist in the canonical, Admin-controlled
+        // Academy registry and be published for existing registration.
+        && request.resource.data.course.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && request.resource.data.course != 'admission-form-config'
+        && exists(/databases/$(database)/documents/courses/$(request.resource.data.course))
+        && get(/databases/$(database)/documents/courses/$(request.resource.data.course)).data.published == true
+        && get(/databases/$(database)/documents/courses/$(request.resource.data.course)).data.name is string
+        && request.resource.data.courseYear is int
+        && (
+          (request.resource.data.course == 'muballigha'
+            && request.resource.data.courseYear in [1,2])
+          || (request.resource.data.course == 'alima'
+            && request.resource.data.courseYear == 3)
+          || (request.resource.data.course != 'muballigha'
+            && request.resource.data.course != 'alima'
+            && request.resource.data.courseYear == 0)
+        )
+        && request.resource.data.batch is string
+        && request.resource.data.batch.size() <= 60
+        && (!(request.resource.data.course in ['maktab','childrens-quran-maktab'])
+          || request.resource.data.batch.size() > 0)
+        && request.resource.data.educationLevel is string
+        && request.resource.data.educationLevel in ['school','college','not-studying']
+        && request.resource.data.schoolStandard is string
+        && request.resource.data.schoolStandard.size() <= 6
+        && request.resource.data.collegeCourse is string
+        && request.resource.data.collegeCourse.size() <= 120
+        && request.resource.data.collegeYear is string
+        && request.resource.data.collegeYear.matches('^([1-6])?$')
+        && request.resource.data.institutionName is string
+        && request.resource.data.institutionName.size() <= 150
+        && (
+          (request.resource.data.educationLevel == 'school'
+            && request.resource.data.schoolStandard.matches('^(Pre-KG|LKG|UKG|[1-9]|1[0-2])$')
+            && request.resource.data.collegeCourse == ''
+            && request.resource.data.collegeYear == '')
+          || (request.resource.data.educationLevel == 'college'
+            && request.resource.data.schoolStandard == ''
+            && request.resource.data.collegeCourse.size() >= 2)
+          || (request.resource.data.educationLevel == 'not-studying'
+            && request.resource.data.schoolStandard == ''
+            && request.resource.data.collegeCourse == ''
+            && request.resource.data.collegeYear == ''
+            && request.resource.data.institutionName == '')
+        )
+        && request.resource.data.address is string
+        && request.resource.data.address.size() >= 5
+        && request.resource.data.address.size() <= 700
+        && request.resource.data.notes is string
+        && request.resource.data.notes.size() <= 500
+        && request.resource.data.photoData is string
+        && request.resource.data.photoData.size() <= 105000
+        && (
+          request.resource.data.photoData == ''
+          || request.resource.data.photoData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+        )
+        && request.resource.data.source == 'existing-academy-student-form'
+        && request.resource.data.status == 'Pending Review'
+        && request.resource.data.submittedAt == request.time
+      );
+    }
+
+    // One-time existing-student update invitations.
+    // Parents submit to a private review queue, never directly to students/.
+    match /studentUpdateInvites/{token} {
+      allow get: if isAdmin() || (
+        token.matches('^[a-f0-9]{64}$')
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && resource.data.email == request.auth.token.email
+      );
+      allow list, create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        token.matches('^[a-f0-9]{64}$')
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && resource.data.email == request.auth.token.email
+        && resource.data.used == false
+        && resource.data.revoked == false
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedAt'])
+        && request.resource.data.used == true
+        && request.resource.data.usedAt == request.time
+        && existsAfter(/databases/$(database)/documents/studentUpdateSubmissions/$(token))
+      );
+    }
+    match /studentUpdateSubmissions/{token} {
+      allow read, update, delete: if isAdmin();
+      allow create: if isAdmin() || (
+        token.matches('^[a-f0-9]{64}$')
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/studentUpdateInvites/$(token))
+        && get(/databases/$(database)/documents/studentUpdateInvites/$(token)).data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/studentUpdateInvites/$(token)).data.revoked == false
+        && get(/databases/$(database)/documents/studentUpdateInvites/$(token)).data.used == false
+        && getAfter(/databases/$(database)/documents/studentUpdateInvites/$(token)).data.used == true
+        && getAfter(/databases/$(database)/documents/studentUpdateInvites/$(token)).data.usedAt == request.time
+        && request.resource.data.keys().hasAll([
+          'name','dob','guardian','phone','course','email','address','notes','submittedAt'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'name','dob','guardian','phone','course','email','address','notes','submittedAt'
+        ])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.guardian is string
+        && request.resource.data.guardian.size() >= 2
+        && request.resource.data.guardian.size() <= 120
+        && request.resource.data.dob is string
+        && request.resource.data.dob.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() >= 7
+        && request.resource.data.phone.size() <= 25
+        && request.resource.data.course is string
+        && request.resource.data.course.matches('^[a-z0-9]+(-[a-z0-9]+)*$')
+        && request.resource.data.course.size() <= 80
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 200
+        && request.resource.data.address is string
+        && request.resource.data.address.size() >= 5
+        && request.resource.data.address.size() <= 700
+        && request.resource.data.notes is string
+        && request.resource.data.notes.size() <= 1000
+        && request.resource.data.submittedAt is timestamp
+        && request.resource.data.submittedAt == request.time
+      );
+    }
+
+    match /teacherInvites/{token} {
+      allow get: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+        );
+
+      allow list, create, delete: if isAdmin();
+
+      allow update: if isAdmin()
+        || (
+          token.matches('^[a-f0-9]{64}$')
+          && request.auth != null
+          && request.auth.token.email_verified == true
+          && resource.data.email == request.auth.token.email
+          && resource.data.used == false
+          && resource.data.revoked == false
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedAt'])
+          && request.resource.data.used == true
+          && existsAfter(/databases/$(database)/documents/teacherSubmissions/$(token))
+        );
+    }
+
+    match /teacherSubmissions/{token} {
+      allow read, update, delete: if isAdmin();
+
+      allow create: if token.matches('^[a-f0-9]{64}$')
+        && request.auth != null
+        && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/teacherInvites/$(token))
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.email == request.auth.token.email
+        && request.resource.data.email == request.auth.token.email
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.used == false
+        && get(/databases/$(database)/documents/teacherInvites/$(token)).data.revoked == false
+        && getAfter(/databases/$(database)/documents/teacherInvites/$(token)).data.used == true
+        && request.resource.data.keys().hasOnly([
+          'fullName', 'dob', 'phone', 'email', 'address', 'academicEducation',
+          'academicInstitution', 'academicYear', 'madrasaName',
+          'madrasaLocation', 'sanad', 'sanadInstitution', 'sanadYear',
+          'experience', 'previousInstitution', 'subjects', 'languages',
+          'notes', 'photoPath', 'photoData', 'academicPath', 'sanadPath', 'submittedAt'
+        ])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.fullName.size() <= 120
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() > 0
+        && request.resource.data.phone.size() <= 25
+        && request.resource.data.address is string
+        && request.resource.data.address.size() > 0
+        && request.resource.data.address.size() <= 700
+        && request.resource.data.madrasaName is string
+        && request.resource.data.madrasaName.size() > 0
+        && request.resource.data.madrasaName.size() <= 200
+        && request.resource.data.sanad is string
+        && request.resource.data.sanad.size() > 0
+        && request.resource.data.sanad.size() <= 200
+        && (
+          !('photoPath' in request.resource.data)
+          || request.resource.data.photoPath.matches(
+            '^teacher-registration/' + token + '/photo\\.(jpg|png)$'
+          )
+        )
+        && (
+          !('photoData' in request.resource.data)
+          || (
+            request.resource.data.photoData is string
+            && request.resource.data.photoData.size() <= 105000
+            && request.resource.data.photoData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+          )
+        )
+        && (
+          !('academicPath' in request.resource.data)
+          || request.resource.data.academicPath.matches(
+            '^teacher-registration/' + token + '/academic\\.(jpg|png|pdf)$'
+          )
+        )
+        && (
+          !('sanadPath' in request.resource.data)
+          || request.resource.data.sanadPath.matches(
+            '^teacher-registration/' + token + '/sanadFile\\.(jpg|png|pdf)$'
+          )
+        );
+    }
+  }
+}
+)
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid;
+
+      // Host: only create/reset/start TRIAL. Never declare a successful cut.
+      allow create, update: if documentId == 'trial' && isAdmin()
+        && request.resource.data.keys().hasOnly(['kind','phase','startedAt','cutAt','cutBy','updatedAt','updatedBy'])
+        && request.resource.data.keys().hasAll(['kind','phase','startedAt','cutAt','cutBy','updatedAt','updatedBy'])
+        && request.resource.data.kind == 'trial'
+        && request.resource.data.phase in ['idle','countdown']
+        && request.resource.data.cutAt == null
+        && request.resource.data.cutBy == null
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid
+        && (
+          (request.resource.data.phase == 'idle' && request.resource.data.startedAt == null)
+          || (request.resource.data.phase == 'countdown' && request.resource.data.startedAt == request.time)
+        );
+
+      // Principal: once, and only after the whole countdown, cut the ribbon.
+      allow update: if documentId == 'trial' && isLaunchPrincipal()
+        && resource.data.kind == 'trial'
+        && resource.data.phase == 'countdown'
+        && resource.data.startedAt is timestamp
+        && request.time >= resource.data.startedAt + duration.value(5, 's')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'phase','cutAt','cutBy','updatedAt','updatedBy'
+        ])
+        && request.resource.data.kind == 'trial'
+        && request.resource.data.phase == 'cut'
+        && request.resource.data.cutAt == request.time
+        && request.resource.data.cutBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid;
     }
 
     match /siteSettings/{settingId} {
