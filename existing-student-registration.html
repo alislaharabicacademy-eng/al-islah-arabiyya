@@ -185,8 +185,6 @@ async function verifyLink(){
   const link=await getDoc(doc(db,'existingStudentIntakeLinks',key));
   if(!link.exists()||link.data().enabled!==true)
    throw Error('The registration invitation is closed.');
-  const exp=link.data().expiresAt?.toMillis?.();
-  if(!exp||exp<=Date.now())throw Error('This registration invitation has expired.');
   await loadAcademyCourses();
   $('loading').hidden=true;$('registration').hidden=false;ready=true;
  }catch(e){error('Existing Student Registration is closed or unavailable. Ask your Academy Admin for an active link. '+(e.code==='permission-denied'?'':(e.message||'')));}
