@@ -5,6 +5,9 @@ on:
     paths:
       - 'grand-launch.html'
       - 'grand-launch.js'
+      - 'principal-access-admin.js'
+      - 'admin.html'
+      - 'index.html'
       - 'firestore.rules'
       - 'tests/grand-launch-trial.test.mjs'
       - '.github/workflows/grand-launch-trial-tests.yml'
@@ -28,6 +31,7 @@ jobs:
       - name: Validate JavaScript syntax
         run: |
           node --check grand-launch.js
+          node --check principal-access-admin.js
           node --check tests/grand-launch-trial.test.mjs
       - name: Install test dependencies
         run: npm install --no-save firebase@13 @firebase/rules-unit-testing@6
