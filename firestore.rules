@@ -30,6 +30,15 @@ service cloud.firestore {
       return isNormalAdmin() || isMasterAdmin() || hasPrivateAdminGrant();
     }
 
+    // Authorised Principal can cut a rehearsal ribbon, but cannot manage academy data.
+    function isLaunchPrincipal() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && exists(/databases/$(database)/documents/grandLaunch/config)
+        && get(/databases/$(database)/documents/grandLaunch/config).data.principalEmail == request.auth.token.email;
+    }
+
     function signedInTeacher(teacherId) {
       return request.auth != null
         && request.auth.token.email_verified == true
@@ -214,6 +223,52 @@ service cloud.firestore {
     }
     match /hiringBoardAdmin/{docId} {
       allow read, write: if isAdmin() && docId == 'current';
+    }
+
+    // Launch practice is separate from any one-time official launch record.
+    match /grandLaunch/{documentId} {
+      allow get: if (documentId == 'config' || documentId == 'trial')
+        && (isAdmin() || isLaunchPrincipal());
+      allow list, delete: if false;
+
+      allow create, update: if documentId == 'config' && isAdmin()
+        && request.resource.data.keys().hasOnly(['principalEmail','updatedAt','updatedBy'])
+        && request.resource.data.keys().hasAll(['principalEmail','updatedAt','updatedBy'])
+        && request.resource.data.principalEmail is string
+        && request.resource.data.principalEmail.matches('^[^/@ ]+@[^/@ ]+\\.[^/@ ]+$')
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid;
+
+      // Host can only start or reset a reversible trial.
+      allow create, update: if documentId == 'trial' && isAdmin()
+        && request.resource.data.keys().hasOnly(['kind','phase','startedAt','cutAt','cutBy','updatedAt','updatedBy'])
+        && request.resource.data.keys().hasAll(['kind','phase','startedAt','cutAt','cutBy','updatedAt','updatedBy'])
+        && request.resource.data.kind == 'trial'
+        && request.resource.data.phase in ['idle','countdown']
+        && request.resource.data.cutAt == null
+        && request.resource.data.cutBy == null
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid
+        && (
+          (request.resource.data.phase == 'idle' && request.resource.data.startedAt == null)
+          || (request.resource.data.phase == 'countdown' && request.resource.data.startedAt == request.time)
+        );
+
+      // The authorised Principal alone may cut after the full 5 seconds.
+      allow update: if documentId == 'trial' && isLaunchPrincipal()
+        && resource.data.kind == 'trial'
+        && resource.data.phase == 'countdown'
+        && resource.data.startedAt is timestamp
+        && request.time >= resource.data.startedAt + duration.value(5, 's')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'phase','cutAt','cutBy','updatedAt','updatedBy'
+        ])
+        && request.resource.data.kind == 'trial'
+        && request.resource.data.phase == 'cut'
+        && request.resource.data.cutAt == request.time
+        && request.resource.data.cutBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid;
     }
 
     match /siteSettings/{settingId} {
