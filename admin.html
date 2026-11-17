@@ -2660,6 +2660,7 @@ async function loadTeacherSubmissions(){
   const reject=document.createElement('button');reject.type='button';reject.className='secondary';reject.textContent='✕ Reject';
   const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='🗑 Delete Permanently';remove.style.color='#a12828';remove.style.borderColor='#e8b2b2';remove.style.background='#fff1f1';
   if(t.reviewStatus==='approved'){approve.disabled=true;approve.textContent='✓ Already Approved';approve.title='This teacher is already approved';}if(t.reviewStatus==='archived'){badge.textContent='Archived';approve.disabled=true;approve.textContent='Archived teacher';reject.disabled=true;}if(t.reviewStatus==='rejected'){reject.disabled=true;reject.textContent='✕ Already Rejected';reject.title='This submission is already rejected';}buttons.append(view,edit,print,approve,reject);if(['rejected','archived'].includes(t.reviewStatus))buttons.append(remove);card.append(buttons);
+  const deleteStatus=document.createElement('p');deleteStatus.setAttribute('role','status');deleteStatus.setAttribute('aria-live','polite');deleteStatus.style.cssText='margin:8px 0;color:#a12828;font-weight:600';card.append(deleteStatus);
   const detail=document.createElement('div');detail.className='teacher-profile-details';detail.hidden=true;for(const [title,fields] of teacherProfileGroups)detail.append(teacherProfileSection(title,fields,t));card.append(detail);
   view.onclick=()=>{detail.hidden=!detail.hidden;view.textContent=detail.hidden?'👁 View Full Profile':'▴ Hide Full Profile'};
   edit.onclick=()=>{
@@ -2674,16 +2675,29 @@ async function loadTeacherSubmissions(){
   reject.onclick=async()=>{if(t.reviewStatus==='rejected')return;if(!confirm('Mark this teacher submission as rejected? The original record will be retained.'))return;reject.disabled=true;try{await setDoc(doc(db,'teacherSubmissions',d.id),{reviewStatus:'rejected',reviewedAt:new Date().toISOString()},{merge:true});await loadTeacherSubmissions()}catch(error){alert('Rejection failed: '+error.message);reject.disabled=false}};
   remove.onclick=async()=>{
    if(!['rejected','archived'].includes(t.reviewStatus))return;
-   if(prompt('Permanently delete the '+t.reviewStatus.toUpperCase()+' teacher registration for "'+(t.fullName||'Teacher')+'"?\n\nThis removes the registration data, not attendance or salary history. It cannot be undone. Type DELETE to confirm:')!=='DELETE')return;
-   remove.disabled=true;
+   const teacherName=t.fullName||'Teacher';
+   // Native confirm works on mobile browsers without requiring a case-sensitive prompt input.
+   if(!window.confirm('Permanently delete '+teacherName+' from Teacher Registration?\n\nThe registration will be removed from Firestore. This cannot be undone. Historical salary and attendance will be kept.'))return;
+   remove.disabled=true;remove.textContent='Deleting…';deleteStatus.style.color='#8a4816';deleteStatus.textContent='Checking and deleting registration…';
    try{
     const ref=doc(db,'teacherSubmissions',d.id),latest=await getDoc(ref);
-    if(!latest.exists()||!['rejected','archived'].includes(latest.data().reviewStatus))throw Error('Registration is no longer rejected or archived. Refresh before trying again.');
+    if(!latest.exists())throw Error('This registration has already been deleted. Refresh the list.');
+    if(!['rejected','archived'].includes(latest.data().reviewStatus))throw Error('Only rejected or archived registrations can be deleted. Refresh the list.');
     const registered=await getDoc(doc(db,'teachers','registered_'+d.id));
-    if(registered.exists()&&registered.data().recordStatus!=='archived')throw Error('This teacher is still active in Teacher Directory. Remove the teacher there first.');
+    if(registered.exists()&&registered.data().recordStatus!=='archived')throw Error('Teacher is still active in Teacher Directory. Delete from Directory first.');
     await deleteDoc(ref);
+    // Confirm success immediately; a refresh error must not be mistaken for deletion failure.
+    card.remove();
     await loadTeacherSubmissions();
-   }catch(error){alert('Could not delete teacher submission: '+error.message);remove.disabled=false}
+    const success=document.createElement('p');success.setAttribute('role','status');success.style.cssText='padding:10px;border:1px solid #92c6a0;background:#edf8ef;border-radius:10px;color:#145b35;font-weight:700';
+    success.textContent='✓ '+teacherName+' registration deleted successfully.';
+    root.prepend(success);
+   }catch(error){
+    const code=error?.code?' ('+error.code+')':'';
+    deleteStatus.style.color='#a12828';
+    deleteStatus.textContent='Delete failed'+code+': '+(error?.message||'Unknown error');
+    remove.disabled=false;remove.textContent='🗑 Delete Permanently';
+   }
   };
   root.append(card);
  }
