@@ -186,10 +186,18 @@ function renderPrivateFeeLedger(access,card){
    enrolledAt:access.feeEnrollmentDate,state:access.state,asOf:clock});
   summary.replaceChildren();table.replaceChildren();history.replaceChildren();
   const facts=document.createElement('p');facts.style.cssText='font-weight:700;line-height:1.85;color:#153e30;';
-  facts.textContent='✅ Paid: '+report.paid+' month(s)   •   ⏳ Pending: '+report.pending+' month(s)   •   💰 Received: '+rupee(report.collected)+
-   (report.pendingAmount===null?'   •   Monthly fee not configured':'   •   Pending amount: '+rupee(report.pendingAmount));
+  facts.textContent='📅 12-month fee register ('+report.year+'): ✅ Paid '+report.paid+'/'+report.totalMonths+
+   '  •  ⏳ Due/Pending '+report.pending+'  •  🗓 Upcoming '+report.notDue+
+   '  •  Unpaid in year '+report.remaining+
+   (report.beforeEnrollment?'  •  Before enrollment '+report.beforeEnrollment:'')+
+   '  •  💰 Received '+rupee(report.collected)+
+   (report.pendingAmount===null?'  •  Monthly fee not configured':'  •  Amount due now '+rupee(report.pendingAmount));
   summary.append(facts);
-  if(report.monthlyRate>0)line('Monthly fee (current published rate): '+rupee(report.monthlyRate));
+  if(report.monthlyRate>0){
+   line('Monthly fee (current published rate): '+rupee(report.monthlyRate));
+   line('12-month reference total (12 × monthly fee): '+rupee(report.fullYearReferenceAmount)+
+    '. This is a reference amount, not the payment due now. Months before enrollment are excluded from dues.');
+  }
   else line('Monthly fee is not configured in your Academy account. Ask Admin for the correct fee.');
   const sub=document.createElement('h5');sub.textContent='Month-wise Payment Status — '+report.year;
   sub.style.cssText='margin:17px 0 8px;font-size:15px;';table.append(sub);
