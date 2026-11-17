@@ -2280,7 +2280,7 @@ function indiaPaymentDate(){
 function renderFeeMonths(){
  const year=feeYear.value,records=feeLedger[year]||{};
  const clock=indiaFeeClock(),today=indiaPaymentDate();
- let paid=0,pending=0,collected=0;
+ let paid=0,pending=0,upcoming=0,collected=0;
  const root=$('feeMonths');root.replaceChildren();
  const table=document.createElement('div');table.className='fields';
  for(let i=0;i<12;i++){
@@ -2288,6 +2288,7 @@ function renderFeeMonths(){
   const due=(Number(year)<clock.year)||(Number(year)===clock.year&&i<clock.month);
   if(isPaid){paid++;collected+=Number(entry.amount)||0}
   else if(due)pending++;
+  else upcoming++;
   const box=document.createElement('div');box.className='record';
   const label=document.createElement('strong');label.textContent=monthNames[i]+' '+year;box.append(label);
   const basic=document.createElement('p');basic.textContent='Monthly fee: ₹'+feeRate.toLocaleString('en-IN')+
@@ -2316,11 +2317,16 @@ function renderFeeMonths(){
   table.append(box);
  }
  root.append(table);
- $('feeSummary').innerHTML='<span class="stat">Paid: '+paid+'/12 months</span><span class="stat">Pending: '+pending+
- ' months</span><span class="stat">Collected: ₹'+collected.toLocaleString('en-IN')+
- '</span><span class="stat">Pending amount: ₹'+(pending*feeRate).toLocaleString('en-IN')+'</span>';
+ const remaining=12-paid;
+ $('feeSummary').innerHTML='<span class="stat">12-Month Fee Register: '+paid+'/12 Paid</span>'+
+ '<span class="stat">Due / Pending: '+pending+' months</span>'+
+ '<span class="stat">Upcoming: '+upcoming+' months</span>'+
+ '<span class="stat">Unpaid in 12-month year: '+remaining+' months</span>'+
+ '<span class="stat">Collected: ₹'+collected.toLocaleString('en-IN')+'</span>'+
+ '<span class="stat">Amount due now: ₹'+(pending*feeRate).toLocaleString('en-IN')+'</span>'+
+ '<span class="stat">12-month reference total: ₹'+(feeRate*12).toLocaleString('en-IN')+'</span>';
  $('feeStatus').textContent=feeRate>0?
-  'Payment dates are entered by Admin. Paid records sync privately with Student Login.':
+  'All 12 months (January–December) are shown. Upcoming months remain Not due until their month. Paid records sync privately with Student Login.':
   '⚠ Monthly fee is not set for this course. Set it in Course Details first.';
 }
 async function setFeeMonth(month,paid,details={}){
