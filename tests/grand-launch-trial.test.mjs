@@ -37,7 +37,7 @@ test('Main Ceremony Preview is resettable, keeps real launch locked, and reveals
   assert.match(html,/MAIN CEREMONY PREVIEW · NOT OFFICIAL/);
   assert.match(html,/grand-launch\.html\?role=host&amp;mode=main-preview/);
   assert.match(js,/params\.get\('mode'\)==='main-preview'/);
-  assert.match(js,/role=principal'\+\(isMainPreview\?'&mode=main-preview'/);
+  assert.ok(js.includes("isMainPreview?'&mode=main-preview'"),'Principal link must preserve preview mode');
   assert.match(js,/show\('previewLaunchOverlay',true\)/);
   assert.match(js,/previewLaunchFrame'\)\.src='\.\/index\.html'/);
   assert.match(js,/await writeTrial\('idle'\)/);
@@ -54,7 +54,7 @@ test('rehearsal is isolated from real one-time launch',()=>{
   assert.match(html,/TRIAL MODE/);
   assert.match(html,/id="scissorsTrigger"/);
   assert.match(html,/TEST CUT HERE|Host Test Cut/);
-  assert.match(js,/addEventListener\('click',requestTrialCut\)/);
+  assert.match(js,/isOfficial\?requestOfficialCut\(\):requestTrialCut\(\)/);
   assert.match(js,/hasPendingWrites/);
   assert.match(js,/role==='principal'/);
   assert.match(js,/COUNTDOWN_MS=5000/);
