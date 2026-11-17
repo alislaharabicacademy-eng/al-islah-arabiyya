@@ -34,7 +34,8 @@ button:disabled{opacity:.48;cursor:not-allowed}button.secondary{background:trans
 .ribbon-left,.ribbon-right{height:65px;width:50%;background:linear-gradient(180deg,#ff5f63 0,#be1425 42%,#7b0718 100%);box-shadow:0 9px 25px #0005;border-top:2px solid #ffb9aa;border-bottom:2px solid #64001a;transition:transform 1s cubic-bezier(.2,.75,.25,1),opacity 1s}
 .ribbon-left:after,.ribbon-right:before{content:"";position:absolute;top:55px;width:16px;height:62px;background:#ffdda9;opacity:.7}
 .ribbon-left:after{left:calc(50% - 30px)}.ribbon-right:before{right:calc(50% - 30px)}
-.scissors{position:absolute;left:50%;top:50%;font-size:clamp(42px,8vw,70px);z-index:2;transform:translate(-50%,-50%) rotate(-26deg);text-shadow:0 3px 18px #000a;transition:transform .7s;pointer-events:none}
+.scissors{position:absolute;left:50%;top:50%;font-size:clamp(42px,8vw,70px);z-index:2;transform:translate(-50%,-50%) rotate(-26deg);text-shadow:0 3px 18px #000a;transition:transform .7s;pointer-events:auto;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:7px;margin:0;min-height:78px;min-width:90px;border:0;background:transparent;color:#fff;text-align:center}
+.scissors:disabled{opacity:1;cursor:default}.scissors:focus-visible{outline:3px solid #f1d58e;outline-offset:2px}
 .is-cut .ribbon-left{transform:translateX(-125%) rotate(-8deg);opacity:0}.is-cut .ribbon-right{transform:translateX(125%) rotate(8deg);opacity:0}.is-cut .scissors{transform:translate(-50%,-50%) rotate(65deg) scale(1.15)}
 .success{color:#fce8a9;font:600 clamp(35px,6vw,62px) Georgia,serif;text-shadow:0 0 35px #d9b96f55}
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:5}
@@ -64,19 +65,19 @@ footer{margin-top:auto;color:#a6bbaa;font-size:12px;line-height:1.7;padding-top:
 <div id="countdown" class="countdown" aria-live="off" hidden>5</div>
 <div id="ribbonArea" hidden>
 <p id="ribbonMessage" class="subtitle">A NEW CHAPTER BEGINS</p>
-<div id="ribbonWrap" class="ribbon-wrap"><span class="ribbon-left"></span><span class="ribbon-right"></span><span class="scissors" aria-hidden="true">✂️</span></div>
-<button id="cutRibbon" type="button" hidden>✂️ CUT THE RIBBON</button>
-<p id="waitingForPrincipal" class="status" hidden>Countdown finished. Waiting for the Principal to cut the ribbon live…</p>
+<div id="ribbonWrap" class="ribbon-wrap"><span class="ribbon-left"></span><span class="ribbon-right"></span><button id="scissorsTrigger" class="scissors" type="button" aria-label="Cut the rehearsal ribbon" title="Cut the rehearsal ribbon" hidden>✂️</button></div>
+<button id="cutRibbon" type="button" hidden>✂️ CUT THE RIBBON · TRIAL</button>
+<p id="waitingForPrincipal" class="status" hidden>Countdown complete. Waiting for the Principal on their phone, or use Host Test Cut to practise here.</p>
 </div>
 <div id="success" hidden><div class="success">✨ WEBSITE REVEALED ✨</div><p class="subtitle">Trial completed successfully</p><p class="muted">This is only a rehearsal. The official launch has NOT happened.</p><a href="index.html" class="button-link">Open Website Homepage ↗</a></div>
 </div>
 <section id="hostControls" class="panel" hidden>
 <h2>🎬 Host Control · Trial Only</h2>
-<p class="muted">Share THIS screen on Google Meet or Zoom. The Principal opens the private link on their own mobile and signs in with the authorised Google account.</p>
+<p class="muted">Share THIS screen on Google Meet or Zoom. For the full trial, the Principal opens the private link on their own mobile and signs in with the authorised Google account. For a one-device practice, use the Host Test Cut button or tap the scissors after the countdown.</p>
 <label>Principal's verified Google email<input id="principalEmail" type="email" maxlength="254" autocomplete="off" placeholder="principal@example.com"></label>
 <div class="actions"><button id="savePrincipal" type="button" class="secondary">Save Principal Access</button><button id="startTrial" type="button">▶ Start 5-second Trial</button><button id="resetTrial" type="button" class="secondary">↻ Reset &amp; Try Again</button></div>
 <p class="muted"><a id="principalLink" href="./grand-launch.html?role=principal" target="_blank" rel="noopener" style="color:#e8c77d">Open / share Principal control page ↗</a></p>
-<p class="muted">Practice can be repeated. There is intentionally NO Official Launch button on this page.</p>
+<p class="muted">To practise alone: Start Trial → 5–4–3–2–1 → tap ✂️ scissors or Host Test Cut → homepage opens. To practise with the Principal: share the private Principal link. There is intentionally NO Official Launch button.</p>
 </section>
 <section id="principalInfo" class="panel" hidden><h2>👑 Principal's Control</h2><p class="muted">Keep this screen open. After the host's 5–4–3–2–1 countdown, your digital ribbon-cut button will appear here.</p></section>
 <div class="confetti" id="confetti" aria-hidden="true"></div>
