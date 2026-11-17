@@ -2,6 +2,7 @@
 import {initializeApp,getApps} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import {getFirestore,doc,collection,query,limit,getDocs,getDoc,setDoc,updateDoc,onSnapshot,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import {isVerifiedMasterAdmin} from './admin-role-status.js';
 
 const $=id=>document.getElementById(id);
 const role=new URLSearchParams(location.search).get('role')==='principal'?'principal':'host';
@@ -135,8 +136,17 @@ async function showSignedIn(user,version){
     }else{
       const snap=await getDoc(doc(db,'grandLaunch','config'));
       if(version!==authVersion)return;
-      principalEmail=snap.exists()?String(snap.data().principalEmail||''):'';
-      if(!principalEmail||principalEmail!==user.email.toLowerCase())throw Error('Your Google account is not yet registered as Principal. Ask your Academy Admin to open Settings → Principal Login, save your exact verified Google email, then use “Use a Different Google Account” if needed.');
+      // The registered Principal remains the only configured ceremony email.
+      // A verified Master Admin has quiet backup access via a server-enforced
+      // role probe. Never add a second email to the Principal configuration,
+      // HTML, JavaScript, or any public website setting.
+      principalEmail=snap.exists()?String(snap.data().principalEmail||'').toLowerCase():'';
+      const registeredPrincipal=!!principalEmail && principalEmail===user.email.toLowerCase();
+      if(!registeredPrincipal){
+        const verifiedMaster=await isVerifiedMasterAdmin(db,user);
+        if(version!==authVersion)return;
+        if(!verifiedMaster)throw Error('Your Google account is not registered for Principal Login. Ask the Academy Admin to verify the Principal account in Settings → Principal Login, or choose a different Google account.');
+      }
       show('principalInfo',true);
     }
     authorized=true;show('loginPanel',false);
