@@ -141,7 +141,7 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 <script type="module">
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import {getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
-import {getFirestore,doc,getDoc,getDocs,collection,addDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import {getFirestore,doc,getDoc,collection,addDoc,onSnapshot,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {attachPersonalIdCard} from './id-card-personal.js';
 import {teacherPortalLanding,isTeacherVisibleInDirectory} from './teacher-role-routing.js';
 import {isVerifiedMasterAdmin} from './admin-role-status.js';
@@ -149,10 +149,13 @@ import {isVerifiedMasterAdmin} from './admin-role-status.js';
 const $ = id => document.getElementById(id);
 const login=$('loginCard'),dashboard=$('dashboard'),info=$('loginInfo');
 let auth=null,db=null,checkVersion=0;
+const liveViewSubscriptions=[];
+function stopLiveView(){for(const unsubscribe of liveViewSubscriptions.splice(0)){try{unsubscribe()}catch(error){console.warn('Live teacher view cleanup:',error)}}}
 const normalizeEmail=email=>String(email||'').trim().toLowerCase();
 const teacherGoogleLookupId=email=>'google-email-'+encodeURIComponent(normalizeEmail(email));
 function status(message,error=false){const el=$('loginStatus');el.textContent=message;el.className='status'+(error?' error':'')}
 function showLogin(){
+ stopLiveView();
  login.hidden=false;info.hidden=false;dashboard.hidden=true;
  $('adminPreview').hidden=true;$('dualRolePanel').hidden=true;
 }
@@ -197,52 +200,76 @@ function renderPreviewAssignments(assignments){
  }
 }
 async function showAdminTeacherPreview(user,version){
+ stopLiveView();
  $('adminPreview').hidden=false;
  login.hidden=true;info.hidden=true;dashboard.hidden=true;
  const picker=$('previewTeacher');
  picker.replaceChildren(new Option('Choose a teacher',''));
  $('previewDetails').hidden=true;
- $('previewStatus').textContent='Loading teacher directory…';
- const snapshot=await getDocs(collection(db,'teachers'));
- if(version!==checkVersion)return;
- const teachers=snapshot.docs.filter(d=>isTeacherVisibleInDirectory(d.data())).map(d=>({id:d.id,name:String(d.data().name||'Teacher')}));
- teachers.sort((a,b)=>a.name.localeCompare(b.name));
- teachers.forEach(t=>picker.add(new Option(t.name,t.id)));
- $('previewStatus').textContent=teachers.length?'Select a teacher to open a read-only, audited preview.':'No teacher profiles are available yet.';
- const currentVersion=++previewVersion;
+ $('previewStatus').textContent='Loading active teachers…';
+ let selectedSubscriptions=[];
+ function clearSelection(){
+  ++previewVersion;
+  for(const unsubscribe of selectedSubscriptions.splice(0))unsubscribe();
+  $('previewDetails').hidden=true;
+ }
+ liveViewSubscriptions.push(clearSelection);
  picker.onchange=async()=>{
-   const selected=picker.value;
-   const viewVersion=++previewVersion;
-   $('previewDetails').hidden=true;
-   if(!selected){$('previewStatus').textContent='Choose a teacher to preview.';return}
-   $('previewStatus').textContent='Recording administrator preview…';
-   try{
-     // The privileged access record must be committed before any teacher data
-     // is rendered. The server validates the acting admin and destination.
-     await addDoc(collection(db,'adminTeacherPreviews'),{
-       teacherId:selected,actorUid:user.uid,actorEmail:user.email,
-       createdAt:serverTimestamp(),purpose:'teacher_dashboard_preview'
-     });
-     const [teacher,roster]=await Promise.all([
-       getDoc(doc(db,'teachers',selected)),
-       getDoc(doc(db,'teacherRosters',selected))
-     ]);
-     if(viewVersion!==previewVersion||version!==checkVersion)return;
-     if(!teacher.exists()||!isTeacherVisibleInDirectory(teacher.data()))throw Error('Teacher is no longer in the active directory. Refresh the teacher list.');
-     const fields=roster.exists()?roster.data():{};
-     const assignments=Array.isArray(fields.assignments)?fields.assignments:
-       (Array.isArray(teacher.data().assignments)?teacher.data().assignments:[]);
-     $('previewName').textContent=teacher.data().name||'Teacher';
-     renderPreviewAssignments(assignments);
-     $('previewDetails').hidden=false;
-     $('previewStatus').textContent='Read-only view opened. Access recorded in the security audit.';
-   }catch(error){
-     if(viewVersion===previewVersion)
-       $('previewStatus').textContent='Could not open this preview. Check administrator permission and retry.';
-   }
+  clearSelection();
+  const selected=picker.value,viewVersion=previewVersion;
+  if(!selected){$('previewStatus').textContent='Choose an active teacher to preview.';return}
+  $('previewStatus').textContent='Recording administrator preview…';
+  try{
+   // Every selection has one append-only audit record before live data is shown.
+   await addDoc(collection(db,'adminTeacherPreviews'),{
+    teacherId:selected,actorUid:user.uid,actorEmail:user.email,
+    createdAt:serverTimestamp(),purpose:'teacher_dashboard_preview'
+   });
+   if(viewVersion!==previewVersion||version!==checkVersion||picker.value!==selected)return;
+   let teacherDoc=null,rosterDoc=null;
+   const updateSelected=()=>{
+    if(viewVersion!==previewVersion||version!==checkVersion)return;
+    if(!teacherDoc||!rosterDoc)return;
+    if(!teacherDoc.exists()||!isTeacherVisibleInDirectory(teacherDoc.data())){
+     clearSelection();picker.value='';$('previewStatus').textContent='This teacher is no longer active.';
+     return;
+    }
+    const teacher=teacherDoc.data(),roster=rosterDoc.exists()?rosterDoc.data():{};
+    const assignments=Array.isArray(roster.assignments)?roster.assignments:
+     (Array.isArray(teacher.assignments)?teacher.assignments:[]);
+    $('previewName').textContent=teacher.name||'Teacher';
+    renderPreviewAssignments(assignments);
+    $('previewDetails').hidden=false;
+    $('previewStatus').textContent='Read-only live preview. Access recorded in the security audit.';
+   };
+   const fail=error=>{
+    if(viewVersion!==previewVersion||version!==checkVersion)return;
+    $('previewDetails').hidden=true;
+    $('previewStatus').textContent='Could not load the live teacher preview: '+friendlyError(error);
+   };
+   selectedSubscriptions.push(onSnapshot(doc(db,'teachers',selected),snapshot=>{teacherDoc=snapshot;updateSelected()},fail));
+   selectedSubscriptions.push(onSnapshot(doc(db,'teacherRosters',selected),snapshot=>{rosterDoc=snapshot;updateSelected()},fail));
+  }catch(error){
+   if(viewVersion===previewVersion&&version===checkVersion)
+    $('previewStatus').textContent='Could not open teacher preview: '+friendlyError(error);
+  }
  };
+ const unsub=onSnapshot(collection(db,'teachers'),snapshot=>{
+  if(version!==checkVersion)return;
+  const selected=picker.value;
+  const teachers=snapshot.docs.filter(d=>isTeacherVisibleInDirectory(d.data()))
+   .map(d=>({id:d.id,name:String(d.data().name||'Teacher')}));
+  teachers.sort((a,b)=>a.name.localeCompare(b.name));
+  picker.replaceChildren(new Option('Choose a teacher',''));
+  teachers.forEach(t=>picker.add(new Option(t.name,t.id)));
+  if(selected&&teachers.some(t=>t.id===selected)){picker.value=selected;return}
+  if(selected){clearSelection();$('previewStatus').textContent='Teacher removed from active directory.';}
+  else $('previewStatus').textContent=teachers.length?'Select a teacher to open a read-only, audited preview.':'No active teachers are available.';
+ },error=>{
+  if(version===checkVersion)$('previewStatus').textContent='Teacher directory could not refresh: '+friendlyError(error);
+ });
+ liveViewSubscriptions.push(unsub);
 }
-
 
 let dualAccount=null;
 
@@ -266,6 +293,7 @@ async function verifiedLinkedTeacher(email){
 
 function showDualRoleChoice(user,linked,master=false){
  if(auth.currentUser?.uid!==user.uid)return;
+ stopLiveView();
  dualAccount={user,linked,master};
  const label=master?'Master Admin':'Normal Admin';
  $('openMasterAdminRole').querySelector('strong').textContent=
@@ -283,23 +311,7 @@ function showDualRoleChoice(user,linked,master=false){
  $('adminPreviewSwitchMode').hidden=false;
 }
 
-async function showPersonalTeacherDashboard(user,version,linked,{dual=false}={}){
- if(!linked||!user?.emailVerified)throw Error('Approved teacher profile required.');
- const {id,profile}=linked;
- // Even a full admin's real teacher role is bound to the exact email mapping.
- if(normalizeEmail(profile.email)!==normalizeEmail(user.email))
-   throw Error('Teacher account email does not match the signed-in Google account.');
- const roster=await getDoc(doc(db,'teacherRosters',id));
- if(version!==checkVersion||auth.currentUser?.uid!==user.uid)return;
- const assignments=Array.isArray(roster.exists()?roster.data().assignments:null)?
-  roster.data().assignments:[];
- $('teacherName').textContent=profile.name||user.displayName||'Teacher';
- $('teacherEmail').textContent=dual?'My approved Teacher Profile · Administrator access available':user.email||'';
- const avatar=$('teacherAvatar');avatar.replaceChildren();
- if(user.photoURL){
-  const img=document.createElement('img');img.src=user.photoURL;img.alt='';
-  img.referrerPolicy='no-referrer';avatar.append(img);
- }else avatar.textContent='👩‍🏫';
+function renderPersonalAssignments(assignments){
  const classes=new Set(assignments.filter(a=>a.course).map(a=>[a.course,a.batch||''].join('|')));
  const subjects=new Set(assignments.map(a=>a.subject).filter(Boolean));
  $('classCount').textContent=String(classes.size);
@@ -318,6 +330,22 @@ async function showPersonalTeacherDashboard(user,version,linked,{dual=false}={})
    Array.isArray(a.students)?a.students.length+' students':''].filter(Boolean).join(' · ');
   row.append(title,details);root.append(row);
  }
+}
+async function showPersonalTeacherDashboard(user,version,linked,{dual=false}={}){
+ if(!linked||!user?.emailVerified)throw Error('Approved teacher profile required.');
+ const {id,profile}=linked;
+ if(normalizeEmail(profile.email)!==normalizeEmail(user.email))
+  throw Error('Teacher account email does not match the signed-in Google account.');
+ stopLiveView();
+ if(version!==checkVersion||auth.currentUser?.uid!==user.uid)return;
+ $('teacherName').textContent=profile.name||user.displayName||'Teacher';
+ $('teacherEmail').textContent=dual?'My approved Teacher Profile · Administrator access available':user.email||'';
+ const avatar=$('teacherAvatar');avatar.replaceChildren();
+ if(user.photoURL){
+  const img=document.createElement('img');img.src=user.photoURL;img.alt='';
+  img.referrerPolicy='no-referrer';avatar.append(img);
+ }else avatar.textContent='👩‍🏫';
+ renderPersonalAssignments([]);
  const link=new URL('teacher-attendance.html',location.href);
  link.searchParams.set('id',id);
  $('attendanceLink').href=link.href;
@@ -327,8 +355,28 @@ async function showPersonalTeacherDashboard(user,version,linked,{dual=false}={})
  const idMount=$('myTeacherIdCard');idMount.replaceChildren();
  attachPersonalIdCard({db,kind:'teacher',holderId:id,container:idMount,
   isCurrent:()=>version===checkVersion&&auth.currentUser?.uid===user.uid});
+ const stillCurrent=()=>version===checkVersion&&auth.currentUser?.uid===user.uid;
+ const accessEnded=()=>{
+  if(!stillCurrent())return;
+  ++checkVersion;stopLiveView();showLogin();
+  status('Your teacher account is no longer active or its approved Gmail has changed. Contact Academy Admin.',true);
+ };
+ liveViewSubscriptions.push(onSnapshot(doc(db,'teacherAccess',id),snapshot=>{
+  if(!stillCurrent())return;
+  if(!snapshot.exists()||normalizeEmail(snapshot.data().email)!==normalizeEmail(user.email)){
+   accessEnded();return;
+  }
+  $('teacherName').textContent=snapshot.data().name||'Teacher';
+ },accessEnded));
+ liveViewSubscriptions.push(onSnapshot(doc(db,'teacherRosters',id),snapshot=>{
+  if(!stillCurrent())return;
+  const roster=snapshot.exists()?snapshot.data():{};
+  renderPersonalAssignments(Array.isArray(roster.assignments)?roster.assignments:[]);
+ },error=>{
+  if(!stillCurrent())return;
+  $('teacherAssignments').textContent='Could not refresh your classes: '+friendlyError(error);
+ }));
 }
-
 async function openPersonalDualRole(){
  if(!dualAccount)return;
  const {user,linked}=dualAccount;
@@ -429,7 +477,7 @@ $('googleLogin').onclick=async()=>{
  }finally{button.disabled=false}
 };
 async function logoutPortal(){
- ++checkVersion;++previewVersion;dualAccount=null;
+ ++checkVersion;++previewVersion;dualAccount=null;stopLiveView();
  try{await signOut(auth)}
  catch(e){status(friendlyError(e),true)}
  showLogin();
