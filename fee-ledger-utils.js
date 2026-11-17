@@ -45,7 +45,12 @@ export function summarizeFees({ledger={},year,rate=0,asOf=indiaFeeClock(),enroll
   else notDue++;
   return {month:m,name:monthName,year:yy,status,amount:isPaid?e.amount:0,paidAt:e?.paidAt||'',receiptId:e?.receiptId||''};
  });
- return {year:yy,monthlyRate,months,paid,pending,notDue,beforeEnrollment,
+ // The calendar-year register always contains twelve slots. "Pending"
+ // covers months already due; upcoming months must not be shown as overdue.
+ const totalMonths=months.length;
+ const remaining=totalMonths-paid-beforeEnrollment;
+ return {year:yy,monthlyRate,months,totalMonths,remaining,paid,pending,notDue,beforeEnrollment,
+  fullYearReferenceAmount:monthlyRate?monthlyRate*totalMonths:null,
   collected:received,pendingAmount:monthlyRate?pending*monthlyRate:null,
   enrolledDate:enrolledAt||'',startDateKnown:!!start,
   note:!start?'Pending months are counted from January of the selected year because an enrollment date is not recorded.':'Pending months begin from the recorded enrollment month.',
