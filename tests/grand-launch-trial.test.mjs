@@ -7,6 +7,22 @@ import {doc,getDoc,getDocs,collection,setDoc,updateDoc,serverTimestamp} from 'fi
 const rules=readFileSync(new URL('../firestore.rules',import.meta.url),'utf8');
 const html=readFileSync(new URL('../grand-launch.html',import.meta.url),'utf8');
 const js=readFileSync(new URL('../grand-launch.js',import.meta.url),'utf8');
+const adminHtml=readFileSync(new URL('../admin.html',import.meta.url),'utf8');
+const homepageHtml=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const principalAdminJs=readFileSync(new URL('../principal-access-admin.js',import.meta.url),'utf8');
+test('principal login is discoverable, admin-controlled, and account-switchable',()=>{
+  assert.match(homepageHtml,/Principal Login<\/strong>/);
+  assert.match(homepageHtml,/grand-launch\.html\?role=principal/);
+  assert.match(adminHtml,/id="principalCeremonyAccess"/);
+  assert.match(adminHtml,/id="ceremonyPrincipalSave"/);
+  assert.match(adminHtml,/initPrincipalCeremonyAccess/);
+  assert.match(principalAdminJs,/doc\(db,'grandLaunch','config'\)/);
+  assert.doesNotMatch(principalAdminJs,/siteSettings','public'/);
+  assert.match(html,/id="switchGoogleAccount"/);
+  assert.match(js,/prompt:'select_account'/);
+  assert.match(js,/signOut\(auth\)/);
+});
+
 test('rehearsal is isolated from real one-time launch',()=>{
   assert.match(html,/TRIAL MODE/);
   assert.match(html,/id="scissorsTrigger"/);

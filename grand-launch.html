@@ -57,8 +57,8 @@ footer{margin-top:auto;color:#a6bbaa;font-size:12px;line-height:1.7;padding-top:
 <p id="message" class="status" role="status" aria-live="polite">Secure rehearsal loading…</p>
 <section id="loginPanel" class="panel" hidden>
 <h2 id="loginHeading">Secure Rehearsal Login</h2>
-<p class="muted">Only an authorised Academy administrator or the approved Principal can access the rehearsal.</p>
-<button id="googleLogin" type="button">Continue with Google</button>
+<p class="muted" id="loginHelp">Only an authorised Academy administrator or the registered Principal can access the rehearsal. If you see “Access denied”, the Admin needs to save your exact verified Google email in Admin → Settings → Principal Login.</p>
+<button id="googleLogin" type="button">Continue with Google</button><button id="switchGoogleAccount" type="button" class="secondary">↻ Use a Different Google Account</button>
 <form id="passwordForm" hidden><label>Administrator email<input type="email" id="adminEmail" autocomplete="username" required></label><label>Administrator password<input type="password" id="adminPassword" autocomplete="current-password" required></label><button type="submit">Sign in as Admin</button></form>
 </section>
 <div class="stage">
