@@ -40,3 +40,33 @@ test('Student page calculates payment history from private authorized studentAcc
  assert.match(student,/allRecordedPayments\(ledger\)/);
  assert.doesNotMatch(student,/collection\(db,'students'\)/);
 });
+
+test('Full twelve-month fee year includes December even when only eleven months are due in November',()=>{
+ const report=summarizeFees({ledger:{},year:2026,rate:500,asOf:{year:2026,month:11},enrolledAt:'2026-01-01'});
+ assert.equal(report.totalMonths,12);
+ assert.equal(report.months.length,12);
+ assert.equal(report.months[11].name,'December');
+ assert.equal(report.months[11].status,'Not due');
+ assert.equal(report.pending,11);
+ assert.equal(report.notDue,1);
+ assert.equal(report.remaining,12);
+ assert.equal(report.fullYearReferenceAmount,6000);
+ assert.equal(report.pendingAmount,5500);
+});
+test('Twelve-month remaining count does not bill months before enrollment',()=>{
+ const report=summarizeFees({ledger:{},year:2026,rate:500,asOf:{year:2026,month:11},enrolledAt:'2026-04-01'});
+ assert.equal(report.totalMonths,12);
+ assert.equal(report.beforeEnrollment,3);
+ assert.equal(report.pending,8);
+ assert.equal(report.notDue,1);
+ assert.equal(report.remaining,9);
+});
+test('Admin and Student fee panels show twelve-month total separately from months due',()=>{
+ const admin=readFileSync(new URL('../admin.html',import.meta.url),'utf8');
+ const student=readFileSync(new URL('../student-login.html',import.meta.url),'utf8');
+ assert.match(admin,/for\(let i=0;i<12;i\+\+\)/);
+ assert.match(admin,/Unpaid in 12-month year/);
+ assert.match(admin,/12-month reference total/);
+ assert.match(student,/12-month fee register/);
+ assert.match(student,/12-month reference total/);
+});
