@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#08281c">
-<title>Grand Website Launch · Trial | Women's Online Madrasa</title>
+<title>Grand Website Inauguration · Ceremony Preview | Women's Online Madrasa</title>
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:#f8f2df;background:#061c15}
 *{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0%,#276346 0,#103b2a 35%,#061c15 85%);overflow-x:hidden}
@@ -44,11 +44,21 @@ button:disabled{opacity:.48;cursor:not-allowed}button.secondary{background:trans
 footer{margin-top:auto;color:#a6bbaa;font-size:12px;line-height:1.7;padding-top:26px}
 @media(max-width:520px){main{padding:18px 12px 35px}.panel{padding:15px}.topline{font-size:10px}.ribbon-wrap{height:120px}.ribbon-left,.ribbon-right{height:48px}.ribbon-left:after,.ribbon-right:before{display:none}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.main-preview-badge{border-color:#f0d594!important;background:linear-gradient(135deg,#4c391e,#1a311d)!important}
+body[data-mode="main-preview"] main{background:radial-gradient(ellipse at 50% 30%,#194d38aa,transparent 70%)}
+body[data-mode="main-preview"] .kicker{letter-spacing:.25em}
+.preview-launch-overlay{position:fixed;inset:0;z-index:8;background:#071e17;display:flex;flex-direction:column;align-items:stretch}
+.preview-launch-bar{flex:0 0 auto;padding:10px 16px;background:#071e17;color:#f4d8a1;display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap;border-bottom:2px solid #d1aa60}
+.preview-launch-bar strong{letter-spacing:.09em;font-size:12px}
+.preview-launch-bar button{min-height:37px;font-size:13px;margin:0}
+.preview-launch-frame{height:100%;width:100%;border:0;flex:1 1 auto;background:#fff}
+.preview-launch-footer{flex:0 0 auto;padding:6px 14px;color:#d0d3c9;font-size:11px;background:#11271e;text-align:center}
+@media(max-width:520px){.preview-launch-bar{padding:9px 11px}.preview-launch-bar strong{font-size:10px}.preview-launch-footer{font-size:10px}}
 </style>
 </head>
 <body><main>
-<div class="topline"><span>21 NOVEMBER 2026 · WEBSITE LAUNCH REHEARSAL</span><a href="./index.html">↗ Website Home</a></div>
-<div class="trial-badge">🧪 TRIAL MODE · NOT THE OFFICIAL LAUNCH</div>
+<div class="topline"><span id="ceremonyTopline">21 NOVEMBER 2026 · WEBSITE LAUNCH REHEARSAL</span><a href="./index.html">↗ Website Home</a></div>
+<div id="ceremonyModeBadge" class="trial-badge">🧪 TRIAL MODE · NOT THE OFFICIAL LAUNCH</div>
 <img class="brand-logo" src="./1_20261112_080707_0000.png" alt="Madrasa logo">
 <div class="arabic" dir="rtl" lang="ar">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
 <div class="kicker">MADRASA AL ISLAHUL ARABIYA</div>
@@ -69,17 +79,23 @@ footer{margin-top:auto;color:#a6bbaa;font-size:12px;line-height:1.7;padding-top:
 <button id="cutRibbon" type="button" hidden>✂️ CUT THE RIBBON · TRIAL</button>
 <p id="waitingForPrincipal" class="status" hidden>Countdown complete. Waiting for the Principal on their phone, or use Host Test Cut to practise here.</p>
 </div>
-<div id="success" hidden><div class="success">✨ WEBSITE REVEALED ✨</div><p class="subtitle">Trial completed successfully</p><p class="muted">This is only a rehearsal. The official launch has NOT happened.</p><a href="index.html" class="button-link">Open Website Homepage ↗</a></div>
+<div id="success" hidden><div id="successHeadline" class="success">✨ WEBSITE REVEALED ✨</div><p id="successSubtitle" class="subtitle">Trial completed successfully</p><p class="muted">This is only a rehearsal. The official launch has NOT happened.</p><a href="index.html" class="button-link">Open Website Homepage ↗</a></div>
 </div>
 <section id="hostControls" class="panel" hidden>
-<h2>🎬 Host Control · Trial Only</h2>
+<h2 id="hostControlHeading">🎬 Host Control · Trial Only</h2>
 <p class="muted">Share THIS screen on Google Meet or Zoom. For the full trial, the Principal opens the private link on their own mobile and signs in with the authorised Google account. For a one-device practice, use the Host Test Cut button or tap the scissors after the countdown.</p>
 <label>Principal's verified Google email<input id="principalEmail" type="email" maxlength="254" autocomplete="off" placeholder="principal@example.com"></label>
 <div class="actions"><button id="savePrincipal" type="button" class="secondary">Save Principal Access</button><button id="startTrial" type="button">▶ Start 5-second Trial</button><button id="resetTrial" type="button" class="secondary">↻ Reset &amp; Try Again</button></div>
+<p class="muted"><a id="switchCeremonyMode" class="button-link" href="./grand-launch.html?role=host&amp;mode=main-preview">✨ See Main Ceremony Preview</a></p>
 <p class="muted"><a id="principalLink" href="./grand-launch.html?role=principal" target="_blank" rel="noopener" style="color:#e8c77d">Open / share Principal control page ↗</a></p>
 <p class="muted">To practise alone: Start Trial → 5–4–3–2–1 → tap ✂️ scissors or Host Test Cut → homepage opens. To practise with the Principal: share the private Principal link. There is intentionally NO Official Launch button.</p>
 </section>
 <section id="principalInfo" class="panel" hidden><h2>👑 Principal's Control</h2><p class="muted">Keep this screen open. After the host's 5–4–3–2–1 countdown, your digital ribbon-cut button will appear here.</p></section>
 <div class="confetti" id="confetti" aria-hidden="true"></div>
+<section id="previewLaunchOverlay" class="preview-launch-overlay" hidden aria-label="Main ceremony preview homepage">
+<div class="preview-launch-bar"><strong>🎀 MAIN CEREMONY PREVIEW · NOT OFFICIAL</strong><button id="previewReset" type="button">↻ Reset &amp; Rehearse</button></div>
+<iframe id="previewLaunchFrame" class="preview-launch-frame" title="Academy homepage reveal during launch rehearsal" loading="lazy"></iframe>
+<div class="preview-launch-footer">Preview only · No official launch record created · 21 November 2026</div>
+</section>
 <footer>Protected rehearsal · No real website publication or one-time launch record occurs in Trial Mode.<br>Madrasa Al Islahul Arabiya · Women's Online Madrasa</footer>
 </main><script type="module" src="./grand-launch.js"></script></body></html>

@@ -5,13 +5,30 @@ import {getFirestore,doc,collection,query,limit,getDocs,getDoc,setDoc,updateDoc,
 import {isVerifiedMasterAdmin} from './admin-role-status.js';
 
 const $=id=>document.getElementById(id);
-const role=new URLSearchParams(location.search).get('role')==='principal'?'principal':'host';
+const params=new URLSearchParams(location.search);
+const role=params.get('role')==='principal'?'principal':'host';
+// "main-preview" is only a theatrical, RESETTABLE rehearsal. It is not an official launch.
+const isMainPreview=params.get('mode')==='main-preview';
 const COUNTDOWN_MS=5000;
-let auth,db,me,trial=null,unsubscribe=null,authorized=false,principalEmail='',experiencedCountdown=false,cutPlayed=false,cutPending=false,previousPhase='',lastDigit=0,redirectTimer=null;
+let auth,db,me,trial=null,unsubscribe=null,authorized=false,principalEmail='',experiencedCountdown=false,cutPlayed=false,cutPending=false,previousPhase='',lastDigit=0,redirectTimer=null,successTimer=null;
 const message=(text,isError=false)=>{$('message').textContent=text;$('message').classList.toggle('danger',isError)};
 const show=(id,visible)=>$(id).hidden=!visible;
 const isEmail=value=>/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(value);
-const principalUrl=new URL('./grand-launch.html?role=principal',location.href).href;
+const principalUrl=new URL('./grand-launch.html?role=principal'+(isMainPreview?'&mode=main-preview':''),location.href).href;
+document.body.dataset.mode=isMainPreview?'main-preview':'trial';
+$('switchCeremonyMode').href=isMainPreview?'./grand-launch.html?role=host':'./grand-launch.html?role=host&mode=main-preview';
+$('switchCeremonyMode').textContent=isMainPreview?'↩ Return to Regular Trial':'✨ See Main Ceremony Preview';
+if(isMainPreview){
+  document.title='Main Ceremony Preview · NOT OFFICIAL | Women\'s Online Madrasa';
+  $('ceremonyModeBadge').classList.add('main-preview-badge');
+  $('ceremonyModeBadge').textContent='🎀 MAIN CEREMONY PREVIEW · NOT OFFICIAL';
+  $('ceremonyTopline').textContent='21 NOVEMBER 2026 · FULL LAUNCH DRESS REHEARSAL';
+  $('hostControlHeading').textContent='🎬 Main Ceremony Preview · Resettable';
+  $('startTrial').textContent='▶ Start Main Ceremony Preview';
+  $('resetTrial').textContent='↻ Reset Main Preview';
+  $('successHeadline').textContent='✨ GRAND WEBSITE REVEAL ✨';
+  $('successSubtitle').textContent='Main Ceremony Preview · Not Official';
+}
 $('principalLink').href=principalUrl;
 $('loginHeading').textContent=role==='principal'?'Principal · Verified Google Login':'Host · Secure Admin Login';
 show('passwordForm',role==='host');
@@ -19,6 +36,9 @@ show('switchGoogleAccount',role==='principal');
 
 function resetVisual(){
   clearTimeout(redirectTimer);
+  clearTimeout(successTimer);
+  show('previewLaunchOverlay',false);
+  $('previewLaunchFrame').removeAttribute('src');
   cutPlayed=false;
   cutPending=false;
   experiencedCountdown=false;
@@ -59,12 +79,19 @@ function playCutAnimation(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     $('ribbonWrap').classList.add('is-cut');confetti();
   }));
-  message('✂️ Trial ribbon cut confirmed! Showing the rehearsal website…');
-  setTimeout(()=>{show('ribbonArea',false);show('success',true)},1250);
-  // Only the Meet/Zoom HOST screen automatically reveals the website.
-  // The principal's phone remains on the successful rehearsal confirmation.
+  message(isMainPreview?'✂️ Preview ribbon cut confirmed. Revealing the homepage without recording any official launch…':'✂️ Trial ribbon cut confirmed! Showing the rehearsal website…');
+  successTimer=setTimeout(()=>{show('ribbonArea',false);show('success',true)},1250);
+  // On the Host MAIN PREVIEW show the actual homepage in a full-size frame
+  // with a persistent preview banner and reset button, without navigating away.
   if(role==='host'&&experiencedCountdown){
-    redirectTimer=setTimeout(()=>location.assign('./index.html'),3400);
+    if(isMainPreview){
+      redirectTimer=setTimeout(()=>{
+        $('previewLaunchFrame').src='./index.html';
+        show('previewLaunchOverlay',true);
+      },3400);
+    }else{
+      redirectTimer=setTimeout(()=>location.assign('./index.html'),3400);
+    }
   }
 }
 function render(){
@@ -72,11 +99,11 @@ function render(){
   const phase=trial.phase;
   if(phase==='idle'){
     if(previousPhase!=='idle')resetVisual();
-    message(role==='host'?'Ready to rehearse. Save Principal access, then start the 5-second countdown.':'Waiting for the Host to start the trial countdown.');
+    message(role==='host'?(isMainPreview?'Main ceremony preview ready. Start 5 → 1 and practise the complete ribbon-cut reveal; Reset remains available.':'Ready to rehearse. Save Principal access, then start the 5-second countdown.'):'Waiting for the Host to start the rehearsal countdown.');
   }else if(phase==='countdown'){
     experiencedCountdown=true;
     if(previousPhase!=='countdown'){
-      cutPlayed=false;cutPending=false;clearTimeout(redirectTimer);show('success',false);show('ribbonArea',false);
+      cutPlayed=false;cutPending=false;clearTimeout(redirectTimer);clearTimeout(successTimer);show('success',false);show('ribbonArea',false);
       $('ribbonWrap').classList.remove('is-cut');$('confetti').replaceChildren();
     }
     const start=trial.startedAt?.toMillis?.();
@@ -95,12 +122,12 @@ function render(){
           lastDigit=digit;
         }
         show('countdown',true);show('ribbonArea',false);show('scissorsTrigger',false);
-        message('LIVE REHEARSAL COUNTDOWN · '+digit);
+        message((isMainPreview?'MAIN CEREMONY PREVIEW':'LIVE REHEARSAL COUNTDOWN')+' · '+digit);
       }else{
         show('countdown',false);show('ribbonArea',true);
         show('cutRibbon',true);
         show('scissorsTrigger',true);
-        $('cutRibbon').textContent=role==='principal'?'✂️ CUT THE RIBBON · TRIAL':'✂️ TEST CUT HERE · HOST TRIAL';
+        $('cutRibbon').textContent=role==='principal'?(isMainPreview?'✂️ CUT THE RIBBON · PREVIEW':'✂️ CUT THE RIBBON · TRIAL'):(isMainPreview?'✂️ CUT THE RIBBON · MAIN PREVIEW':'✂️ TEST CUT HERE · HOST TRIAL');
         $('cutRibbon').disabled=cutPending;
         $('scissorsTrigger').disabled=cutPending;
         show('waitingForPrincipal',role==='host'&&Boolean(principalEmail));
@@ -212,11 +239,19 @@ async function writeTrial(phase){
       kind:'trial',phase,startedAt:phase==='countdown'?serverTimestamp():null,
       cutAt:null,cutBy:null,updatedAt:serverTimestamp(),updatedBy:me.uid
     });
-    message(phase==='countdown'?'Countdown started on Host and Principal screens.':'Trial reset. Start another rehearsal whenever ready.');
-  }catch(error){message('Could not '+(phase==='countdown'?'start':'reset')+' trial: '+error.message,true)}
+    message(phase==='countdown'?'Countdown started on Host and Principal screens.':'Rehearsal reset. No official launch has happened.');
+    return true;
+  }catch(error){message('Could not '+(phase==='countdown'?'start':'reset')+' trial: '+error.message,true);return false}
 }
 $('startTrial').addEventListener('click',()=>writeTrial('countdown'));
 $('resetTrial').addEventListener('click',()=>writeTrial('idle'));
+$('previewReset').addEventListener('click',async()=>{
+  if(role!=='host'||!authorized||!isMainPreview)return;
+  const button=$('previewReset');button.disabled=true;
+  try{
+    if(await writeTrial('idle'))resetVisual();
+  }finally{button.disabled=false}
+});
 async function requestTrialCut(){
   // On the shared Host screen this is strictly a rehearsal; the Principal
   // can still perform the full two-device ceremony from their own account.

@@ -53,3 +53,16 @@ This is the **repeatable rehearsal only** for the Women's Online Madrasa website
 - No additional Master Admin email is stored in public site settings or written into the ceremony page or scripts. This change does not alter the Academy’s existing privileged Admin authentication configuration or Firestore role rules.
 - A normal Admin (who is not the registered Principal) still cannot enter the Principal screen. The Principal does not receive Admin permissions.
 - This hides the backup email **from the ceremony user interface**; it does not retroactively erase any address already present in the repository's existing Firestore rules or other administrator records.
+
+## Main Ceremony Preview — full dress rehearsal that can be reset
+This is intentionally **NOT** the one-time official ceremony. It looks and behaves like the final reveal, while continuing to write ONLY the existing resettable `grandLaunch/trial` document. No official launch date or public launch record is ever created by this page.
+
+1. Host (authorised Academy Admin) opens `grand-launch.html?role=host&mode=main-preview` in a desktop browser; a **MAIN CEREMONY PREVIEW · NOT OFFICIAL** banner remains visible.
+2. Host privately shares the `Open / share Principal control page` link from the preview screen; it automatically preserves `mode=main-preview`.
+3. Principal signs in with the approved Principal Google account; verified Master Admin may act as authorised backup. Normal Admin can rehearse from Host, but cannot impersonate the Principal.
+4. On Google Meet / Zoom, Host shares the preview browser tab. Click **Start Main Ceremony Preview**. Both screens show 5 → 4 → 3 → 2 → 1.
+5. Principal clicks the ribbon on her own screen. After the Firestore server confirms a valid cut, the Host shows the scissors, split ribbon, confetti, and a **full-size live homepage preview** inside a framed browser view.
+6. The Host sees a permanent **MAIN CEREMONY PREVIEW · NOT OFFICIAL** strip above the homepage and a **Reset & Rehearse** button. Clicking it resets rehearsal in Firestore and closes the preview, ready for another test. The Principal cannot reset or change the Principal access settings.
+7. You can switch back to the normal Trial mode using **Return to Regular Trial** on the Host page. The two rehearsal styles share the same trial state and should not be run simultaneously on different hosts.
+
+**Approval gate:** After the user confirms that the dress rehearsal looks correct, implement a separately authorised final one-time ceremony. Never call a resettable preview a final launch. Once the real launch is officially confirmed/recorded it must not be reset by the trial controls.
