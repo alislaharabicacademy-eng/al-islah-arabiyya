@@ -30,7 +30,6 @@ service cloud.firestore {
       return isNormalAdmin() || isMasterAdmin() || hasPrivateAdminGrant();
     }
 
-
     // Authorised Principal can cut a rehearsal ribbon, but cannot manage academy data.
     function isLaunchPrincipal() {
       return request.auth != null
@@ -225,7 +224,6 @@ service cloud.firestore {
     match /hiringBoardAdmin/{docId} {
       allow read, write: if isAdmin() && docId == 'current';
     }
-
 
     // Launch practice is deliberately separated from any one-time official record.
     // The Principal cannot change configuration or reset the session.
