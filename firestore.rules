@@ -39,6 +39,14 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/grandLaunch/config).data.principalEmail == request.auth.token.email;
     }
 
+    // Saturday 21 November 2026 in Asia/Kolkata (UTC+05:30).
+    function isOfficialOpeningDay() {
+      return request.time >= timestamp.date(2026, 11, 20)
+          + duration.value(18, 'h') + duration.value(30, 'm')
+        && request.time < timestamp.date(2026, 11, 21)
+          + duration.value(18, 'h') + duration.value(30, 'm');
+    }
+
     function signedInTeacher(teacherId) {
       return request.auth != null
         && request.auth.token.email_verified == true
@@ -227,7 +235,7 @@ service cloud.firestore {
 
     // Launch practice is separate from any one-time official launch record.
     match /grandLaunch/{documentId} {
-      allow get: if (documentId == 'config' || documentId == 'trial')
+      allow get: if documentId in ['config', 'trial', 'officialControl', 'official']
         && (isAdmin() || isLaunchPrincipal());
       allow list, delete: if false;
 
@@ -270,6 +278,59 @@ service cloud.firestore {
         && request.resource.data.cutBy == request.auth.uid
         && request.resource.data.updatedAt == request.time
         && request.resource.data.updatedBy == request.auth.uid;
+
+      // Master Admin alone prepares and starts the one-time ceremony.
+      // Official launch recording permanently blocks changes to this control.
+      allow create: if documentId == 'officialControl' && isMasterAdmin()
+        && !exists(/databases/$(database)/documents/grandLaunch/official)
+        && request.resource.data.keys().hasOnly(['kind','state','startedAt','startedBy','updatedAt','updatedBy'])
+        && request.resource.data.keys().hasAll(['kind','state','startedAt','startedBy','updatedAt','updatedBy'])
+        && request.resource.data.kind == 'officialControl'
+        && request.resource.data.state == 'armed'
+        && request.resource.data.startedAt == null
+        && request.resource.data.startedBy == null
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid;
+
+      allow update: if documentId == 'officialControl' && isMasterAdmin()
+        && !exists(/databases/$(database)/documents/grandLaunch/official)
+        && resource.data.kind == 'officialControl'
+        && request.resource.data.keys().hasOnly(['kind','state','startedAt','startedBy','updatedAt','updatedBy'])
+        && request.resource.data.keys().hasAll(['kind','state','startedAt','startedBy','updatedAt','updatedBy'])
+        && request.resource.data.kind == 'officialControl'
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid
+        && (
+          // Final countdown is allowed ONLY on the event day (India time).
+          (resource.data.state == 'armed' && request.resource.data.state == 'countdown'
+            && isOfficialOpeningDay()
+            && request.resource.data.startedAt == request.time
+            && request.resource.data.startedBy == request.auth.uid)
+          ||
+          // Master can cancel the countdown while the official record is absent.
+          (resource.data.state == 'countdown' && request.resource.data.state == 'armed'
+            && request.resource.data.startedAt == null
+            && request.resource.data.startedBy == null)
+        );
+
+      // One immutable record is the genuine launch; no update/delete allowed.
+      allow create: if documentId == 'official'
+        && (isLaunchPrincipal() || isMasterAdmin())
+        && isOfficialOpeningDay()
+        && exists(/databases/$(database)/documents/grandLaunch/officialControl)
+        && get(/databases/$(database)/documents/grandLaunch/officialControl).data.state == 'countdown'
+        && get(/databases/$(database)/documents/grandLaunch/officialControl).data.startedAt is timestamp
+        && request.time >= get(/databases/$(database)/documents/grandLaunch/officialControl).data.startedAt
+          + duration.value(5, 's')
+        && request.resource.data.keys().hasOnly(['kind','phase','dateLocal','startedAt','launchedAt','launchedBy'])
+        && request.resource.data.keys().hasAll(['kind','phase','dateLocal','startedAt','launchedAt','launchedBy'])
+        && request.resource.data.kind == 'official'
+        && request.resource.data.phase == 'launched'
+        && request.resource.data.dateLocal == '2026-11-21'
+        && request.resource.data.startedAt
+          == get(/databases/$(database)/documents/grandLaunch/officialControl).data.startedAt
+        && request.resource.data.launchedAt == request.time
+        && request.resource.data.launchedBy == request.auth.uid;
     }
 
     match /siteSettings/{settingId} {
