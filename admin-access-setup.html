@@ -16,8 +16,8 @@ button.secondary{background:#53675c}button:disabled{opacity:.5;cursor:wait}
 .muted{color:#50665b;font-size:14px}#notice{margin-top:17px;min-height:24px;font-weight:650}
 [hidden]{display:none!important}
 </style>
-</head>
-<body><main><section class="card">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="./royal-academy-theme.css"></head>
+<body class="academy-royal royal-private"><main><section class="card">
 <h1>Master Admin · Administrator Access</h1>
 <p class="muted">Only the verified Master Admin account can manage administrator grants. The Academy's official contact Gmail has Normal Admin access and cannot alter these grants.</p>
 <div id="authPanel"><p>Sign in with the authorized Master Admin Google account to manage private access.</p><button id="googleSignIn" type="button">Sign in as Master Admin</button></div>
@@ -84,4 +84,4 @@ try{
  $('disable').onclick=()=>updateGrant(false);
 }catch(error){notice('Firebase could not initialize. Check the Academy configuration.')}
 </script>
-</body></html>
+<script src="./royal-academy-motion.js" defer></script></body></html>
