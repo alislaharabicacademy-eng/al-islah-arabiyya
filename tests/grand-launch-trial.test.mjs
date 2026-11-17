@@ -37,12 +37,16 @@ test('Main Ceremony Preview is resettable, keeps real launch locked, and reveals
   assert.match(html,/MAIN CEREMONY PREVIEW · NOT OFFICIAL/);
   assert.match(html,/grand-launch\.html\?role=host&amp;mode=main-preview/);
   assert.match(js,/params\.get\('mode'\)==='main-preview'/);
-  assert.match(js,/role=principal'\+\(isMainPreview\?'&mode=main-preview'/);
+  assert.ok(js.includes("isMainPreview?'&mode=main-preview'"),'Principal link must preserve preview mode');
   assert.match(js,/show\('previewLaunchOverlay',true\)/);
   assert.match(js,/previewLaunchFrame'\)\.src='\.\/index\.html'/);
   assert.match(js,/await writeTrial\('idle'\)/);
   assert.match(js,/resetVisual\(\)/);
-  assert.doesNotMatch(js,/setDoc\(doc\(db,'grandLaunch','official'/);
+  // Official state is written only by the separate, explicitly selected
+  // Principal official-cut handler; the default preview remains reversible.
+  assert.match(js,/async function requestOfficialCut\(\)/);
+  assert.match(js,/if\(!isOfficial\|\|role!=='principal'/);
+  assert.match(js,/if\(isOfficial\)return; \/\/ Official mode can never use the resettable cut path/);
   assert.doesNotMatch(html,/id="startOfficial"/);
 });
 
@@ -50,12 +54,13 @@ test('rehearsal is isolated from real one-time launch',()=>{
   assert.match(html,/TRIAL MODE/);
   assert.match(html,/id="scissorsTrigger"/);
   assert.match(html,/TEST CUT HERE|Host Test Cut/);
-  assert.match(js,/addEventListener\('click',requestTrialCut\)/);
+  assert.match(js,/isOfficial\?requestOfficialCut\(\):requestTrialCut\(\)/);
   assert.match(js,/hasPendingWrites/);
   assert.match(js,/role==='principal'/);
   assert.match(js,/COUNTDOWN_MS=5000/);
   assert.match(js,/updateDoc\(doc\(db,'grandLaunch','trial'\)/);
-  assert.doesNotMatch(js,/grandLaunch['"],['"]official/);
+  assert.match(js,/if\(isOfficial\)\{renderOfficial\(\);return\}/);
+  assert.match(js,/if\(!isOfficial\|\|role!=='principal'/);
   assert.doesNotMatch(html,/id="startOfficial"/);
   assert.match(rules,/request\.time >= resource\.data\.startedAt \+ duration\.value\(5, 's'\)/);
 });

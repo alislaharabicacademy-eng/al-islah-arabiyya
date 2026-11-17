@@ -54,6 +54,12 @@ body[data-mode="main-preview"] .kicker{letter-spacing:.25em}
 .preview-launch-frame{height:100%;width:100%;border:0;flex:1 1 auto;background:#fff}
 .preview-launch-footer{flex:0 0 auto;padding:6px 14px;color:#d0d3c9;font-size:11px;background:#11271e;text-align:center}
 @media(max-width:520px){.preview-launch-bar{padding:9px 11px}.preview-launch-bar strong{font-size:10px}.preview-launch-footer{font-size:10px}}
+.official-panel{border-color:#e4c27e!important;background:#09271de8!important}
+.official-warning{margin:12px auto;padding:12px;border:1px solid #e7bd68;border-radius:12px;background:#57401970;color:#fff1c7;font-size:13px;line-height:1.6}
+.official-controls button{min-width:170px}
+.official-state{font-weight:750;color:#f4dca0;line-height:1.7}
+.official-armed{background:#132c22;padding:12px;border:1px solid #b68c4b;border-radius:12px}
+#officialControls[hidden]{display:none!important}
 </style>
 </head>
 <body><main>
@@ -79,23 +85,36 @@ body[data-mode="main-preview"] .kicker{letter-spacing:.25em}
 <button id="cutRibbon" type="button" hidden>✂️ CUT THE RIBBON · TRIAL</button>
 <p id="waitingForPrincipal" class="status" hidden>Countdown complete. Waiting for the Principal on their phone, or use Host Test Cut to practise here.</p>
 </div>
-<div id="success" hidden><div id="successHeadline" class="success">✨ WEBSITE REVEALED ✨</div><p id="successSubtitle" class="subtitle">Trial completed successfully</p><p class="muted">This is only a rehearsal. The official launch has NOT happened.</p><a href="index.html" class="button-link">Open Website Homepage ↗</a></div>
+<div id="success" hidden><div id="successHeadline" class="success">✨ WEBSITE REVEALED ✨</div><p id="successSubtitle" class="subtitle">Trial completed successfully</p><p id="successExplanation" class="muted">This is only a rehearsal. The official launch has NOT happened.</p><a href="index.html" class="button-link">Open Website Homepage ↗</a></div>
 </div>
 <section id="hostControls" class="panel" hidden>
 <h2 id="hostControlHeading">🎬 Host Control · Trial Only</h2>
+<div id="rehearsalControls">
 <p class="muted">Share THIS screen on Google Meet or Zoom. For the full trial, the Principal opens the private link on their own mobile and signs in with the authorised Google account. For a one-device practice, use the Host Test Cut button or tap the scissors after the countdown.</p>
 <label>Principal's verified Google email<input id="principalEmail" type="email" maxlength="254" autocomplete="off" placeholder="principal@example.com"></label>
 <div class="actions"><button id="savePrincipal" type="button" class="secondary">Save Principal Access</button><button id="startTrial" type="button">▶ Start 5-second Trial</button><button id="resetTrial" type="button" class="secondary">↻ Reset &amp; Try Again</button></div>
 <p class="muted"><a id="switchCeremonyMode" class="button-link" href="./grand-launch.html?role=host&amp;mode=main-preview">✨ See Main Ceremony Preview</a></p>
 <p class="muted"><a id="principalLink" href="./grand-launch.html?role=principal" target="_blank" rel="noopener" style="color:#e8c77d">Open / share Principal control page ↗</a></p>
-<p class="muted">To practise alone: Start Trial → 5–4–3–2–1 → tap ✂️ scissors or Host Test Cut → homepage opens. To practise with the Principal: share the private Principal link. There is intentionally NO Official Launch button.</p>
+<p class="muted">To practise alone: Start Trial → 5–4–3–2–1 → tap ✂️ scissors or Host Test Cut → homepage opens. To practise with the Principal: share the private Principal link.</p>
+</div>
+<div id="officialControls" class="official-controls" hidden>
+<p class="official-warning"><strong>ONE-TIME OFFICIAL INAUGURATION · SATURDAY, 21 NOVEMBER 2026</strong><br>The Master Admin prepares the ceremony first. The countdown can only start on 21 Nov (India time). Only the Principal or verified Master backup can make the final cut. Once cut, it is recorded permanently and cannot be reset.</p>
+<p id="officialStatus" class="official-state" role="status" aria-live="polite">Reading locked official inauguration status…</p>
+<label>Confirmation phrase to prepare the event<input id="officialPhrase" type="text" maxlength="40" autocomplete="off" placeholder="LAUNCH 21 NOV 2026" aria-label="Type LAUNCH 21 NOV 2026"></label>
+<div class="actions">
+<button id="officialArm" type="button">🔒 ARM OFFICIAL CEREMONY</button>
+<button id="officialStart" type="button" hidden>▶ START FINAL COUNTDOWN</button>
+<button id="officialCancel" class="secondary" type="button" hidden>↩ Cancel Countdown (Before Cut)</button>
+</div>
+<p class="muted">Only the registered Principal or hidden Master backup can cut from the <a id="officialPrincipalLink" href="./grand-launch.html?role=principal&amp;mode=official" target="_blank" rel="noopener" style="color:#f4d594">Principal Official Ceremony page ↗</a>. Do not share this Admin control screen with parents; screen-share only the ceremony display.</p>
+</div>
 </section>
-<section id="principalInfo" class="panel" hidden><h2>👑 Principal's Control</h2><p class="muted">Keep this screen open. After the host's 5–4–3–2–1 countdown, your digital ribbon-cut button will appear here.</p></section>
+<section id="principalInfo" class="panel" hidden><h2>👑 Principal's Control</h2><p id="principalInstruction" class="muted">Keep this screen open. After the host's 5–4–3–2–1 countdown, your digital ribbon-cut button will appear here.</p></section>
 <div class="confetti" id="confetti" aria-hidden="true"></div>
 <section id="previewLaunchOverlay" class="preview-launch-overlay" hidden aria-label="Main ceremony preview homepage">
-<div class="preview-launch-bar"><strong>🎀 MAIN CEREMONY PREVIEW · NOT OFFICIAL</strong><button id="previewReset" type="button">↻ Reset &amp; Rehearse</button></div>
+<div class="preview-launch-bar"><strong id="previewLaunchHeader">🎀 MAIN CEREMONY PREVIEW · NOT OFFICIAL</strong><button id="previewReset" type="button">↻ Reset &amp; Rehearse</button></div>
 <iframe id="previewLaunchFrame" class="preview-launch-frame" title="Academy homepage reveal during launch rehearsal" loading="lazy"></iframe>
-<div class="preview-launch-footer">Preview only · No official launch record created · 21 November 2026</div>
+<div class="preview-launch-footer" id="previewLaunchFooter">Preview only · No official launch record created · 21 November 2026</div>
 </section>
-<footer>Protected rehearsal · No real website publication or one-time launch record occurs in Trial Mode.<br>Madrasa Al Islahul Arabiya · Women's Online Madrasa</footer>
+<footer id="ceremonyFooter">Protected rehearsal · No real website publication or one-time launch record occurs in Trial Mode.<br>Madrasa Al Islahul Arabiya · Women's Online Madrasa</footer>
 </main><script type="module" src="./grand-launch.js"></script></body></html>

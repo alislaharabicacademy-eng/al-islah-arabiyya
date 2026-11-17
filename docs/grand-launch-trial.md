@@ -66,3 +66,34 @@ This is intentionally **NOT** the one-time official ceremony. It looks and behav
 7. You can switch back to the normal Trial mode using **Return to Regular Trial** on the Host page. The two rehearsal styles share the same trial state and should not be run simultaneously on different hosts.
 
 **Approval gate:** After the user confirms that the dress rehearsal looks correct, implement a separately authorised final one-time ceremony. Never call a resettable preview a final launch. Once the real launch is officially confirmed/recorded it must not be reset by the trial controls.
+
+## Official Opening — Saturday, 21 November 2026 (Asia/Kolkata)
+
+**Preparation can happen now; the official countdown and one-time ribbon cut are locked until Saturday, 21 November 2026, India time.** No official record is created by deploying code, opening the page or pressing ARM.
+
+### Before the parents' Google Meet / Zoom
+1. Open Academy Admin → Management → **Official Inauguration · 21 Nov**, or use `grand-launch.html?role=host&mode=official`.
+2. Sign in with the **existing verified Master Admin account**. Other verified Admins can see the Host screen to share it, but cannot ARM, START or CANCEL the real ceremony.
+3. Enter the confirmation text **LAUNCH 21 NOV 2026** and select **ARM OFFICIAL CEREMONY**. Confirm the prompt. This only records readiness; it **does not** start the countdown or launch the website.
+4. Keep the current Principal login registered in Admin Settings. Do **not** replace it with a second email. The already-authorised Master Admin is a private backup for Principal access.
+5. Test the complete animation with `grand-launch.html?role=host&mode=main-preview`. It is fully resettable. **Never rehearse through the actual Official mode.**
+6. Arrange two devices: Host/Admin laptop shares the Official Host screen; Principal mobile opens the private link from the Official Host panel, `grand-launch.html?role=principal&mode=official`, with her own verified Google sign-in.
+7. Open an additional browser tab with `index.html` as a fallback if the meeting connection fails.
+
+### On Saturday, 21 November 2026 — actual event
+1. Once the parents are watching the shared Host screen and the Principal is signed in, Master Admin clicks **START FINAL COUNTDOWN** and confirms.
+2. Both displays show **5 → 4 → 3 → 2 → 1**. Only the Principal/Master-backup screen can execute the real cut. The Host screen scissors are **not clickable** in Official mode.
+3. The Principal clicks **CUT THE OFFICIAL RIBBON · ONE TIME**, confirms the *irreversible* action and waits for the secure server response. The single `grandLaunch/official` document records `launchedAt` (server timestamp), `launchedBy`, and the ceremony date.
+4. Only after successful server confirmation, the Host displays the scissors splitting the ribbon, golden confetti, **WEBSITE OFFICIALLY LAUNCHED**, then reveals the real homepage inside the presentation screen.
+5. Once the official record exists, **no client account can edit, delete or reset it**. Reloading the Host screen shows the saved official inauguration status without replaying the ceremony.
+
+### Safety and recovery
+- Official mode uses `grandLaunch/officialControl` plus an immutable `grandLaunch/official` record; Trial and Main Preview use only `grandLaunch/trial`. The two never share launch status.
+- Before the Principal clicks the final ribbon, Master Admin may select **Cancel Countdown (Before Cut)**. This returns the ceremony to Armed status so the Master can restart on the event day. Once the ribbon is officially cut, this control is disabled server-side.
+- The server rejects an early cut, an unverified/unregistered Principal, a normal Admin trying to arm, repeated official cuts, attempts outside 21 Nov India time, and every deletion/update of the official record.
+- Security rules verify **India time**, not the device clock. Local device time is used only for friendly button status messages.
+- The website homepage is **already publicly accessible** before the ceremony. The ribbon-cutting is a symbolic grand inauguration and creates the official audit record; it does not magically publish or hide the website domain.
+- The Master identity remains absent from the new ceremony UI. Existing repository permissions and earlier rule source remain as they were; do not interpret hiding the label as secrecy of a public GitHub repo.
+- If the Principal's phone loses internet or the authenticated cut fails, do **not** claim a launch. Check Host status first, restore the connection, and retry only if the server still reports no official record.
+
+**Acceptance gate:** This feature must pass CI, merged-site deployment, and a *non-destructive* browser check before event day. Only the real action on 21 November can be the one-time inauguration.
