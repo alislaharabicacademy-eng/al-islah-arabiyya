@@ -48,10 +48,10 @@ jobs:
           from pathlib import Path
           import re
           src=Path('admin.html').read_text()
-          modules=re.findall(r'<script type="module">([\\s\\S]*?)</script>',src)
+          modules=re.findall(r'<script type="module">([\s\S]*?)</script>',src)
           assert modules
           assert 'directoryPatchFromApprovedRegistration' in src
-          Path('/tmp/academy-teacher-admin-sync.mjs').write_text('\\n'.join(modules))
+          Path('/tmp/academy-teacher-admin-sync.mjs').write_text('\n'.join(modules))
           PY
           node --check /tmp/academy-teacher-admin-sync.mjs
           node --test tests/teacher-role-routing.test.mjs tests/teacher-admin-sync.test.mjs
