@@ -4,7 +4,7 @@ This is the **repeatable rehearsal only** for the Women's Online Madrasa website
 
 ## Host / screen share (Academy Admin)
 1. Sign in as an authorised Admin at `grand-launch.html?role=host` (Google or existing Admin email/password).
-2. **For a two-device rehearsal:** Enter the Principal's own **verified Google Gmail address** and press **Save Principal Access**. Do not use another person's account. **For one-device trial:** you can skip this step.
+2. **For a two-device rehearsal:** In the Academy Admin Panel, open **Management → Principal Login · Ceremony**. Enter the Principal's own verified Google email and click **Save Principal Login Access**. The Host page also has a Save Principal Access field. Never use another person's account. **For one-device trial:** you can skip Principal registration.
 3. Privately send the Principal this page: `grand-launch.html?role=principal`.
 4. Share the **Host Browser Tab** on Google Meet or Zoom, ideally full-screen. If you play a separate intro video, enable sharing its audio. No audio is required for the countdown itself.
 5. Press **Start 5-second Trial**. Both browsers synchronise to the Firestore timestamp and show **5 → 4 → 3 → 2 → 1**.
@@ -40,3 +40,9 @@ This is the **repeatable rehearsal only** for the Women's Online Madrasa website
 - If a message says **permission denied**, check that the full countdown finished, the account is authorised and Firebase security rules are deployed.
 - A browser may cache an old script. Refresh the Host and Principal pages before repeating the trial.
 - A cut animation appears only after the server accepts the request. This avoids celebrating a denied optimistic Firebase write.
+
+## Principal Login setup
+- The Academy Admin may register a Principal's Google email in **Admin → Management → Principal Login · Ceremony**, then copy the private Principal link.
+- The website hamburger menu also includes **Principal Login** for the Principal to open on their device. Authentication and Firestore still protect access; merely having the URL provides no permissions.
+- If access is denied, the email has not been saved or a different Google account was selected. Use **Use a Different Google Account** on the Principal Login page.
+- The Principal Gmail is never written to public website settings. Principal access does not grant access to the Admin dashboard, student data or other Academy records.
