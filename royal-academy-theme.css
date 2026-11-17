@@ -1,0 +1,144 @@
+/* Al Islah Arabic Academy — shared royal presentation layer.
+   Design-only: opt-in via body.academy-royal, so pages remain functional if this file is unavailable.
+   Never alter the content of generated PDFs, certificates, access controls or form data. */
+@media screen {
+  body.academy-royal {
+    --royal-forest:#103c2b;
+    --royal-ink:#173e2d;
+    --royal-champagne:#c9aa6b;
+    --royal-champagne-light:#f4e4bf;
+    --royal-ivory:#fffcf5;
+    --royal-line:rgba(184,145,73,.34);
+    font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* Preserve the existing light navigation and cinematic layout of the homepage. */
+  body.academy-royal:not(.royal-home):not(.royal-launch) {
+    background-color:#f5f5ef;
+    background-image:
+      radial-gradient(ellipse at 92% -5%,rgba(209,229,205,.35),transparent 43%),
+      radial-gradient(ellipse at 4% 97%,rgba(229,208,153,.13),transparent 42%);
+    background-attachment:scroll;
+  }
+  body.academy-royal:not(.royal-home):not(.royal-launch) header {
+    position:relative;
+    background:radial-gradient(circle at 86% 4%,rgba(218,177,100,.15),transparent 34%),
+               linear-gradient(118deg,#071f18,#13462f 68%,#0d3326);
+    color:#fff7e7;
+    border-bottom:3px solid var(--royal-champagne);
+    box-shadow:0 12px 40px rgba(10,39,26,.13);
+  }
+  body.academy-royal:not(.royal-home):not(.royal-launch) header::after {
+    content:"";
+    position:absolute;
+    bottom:0;
+    left:8%;
+    right:8%;
+    height:1px;
+    pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(255,241,197,.65),transparent);
+  }
+  body.academy-royal:not(.royal-home):not(.royal-launch) header h1,
+  body.academy-royal:not(.royal-home) .intro h1,
+  body.academy-royal:not(.royal-home) .intro h2,
+  body.academy-royal:not(.royal-home) .card>h2,
+  body.academy-royal:not(.royal-home) header .brand strong,
+  body.academy-royal:not(.royal-home) header .brand-title {
+    font-family:'Playfair Display','Cormorant Garamond',Georgia,serif;
+    letter-spacing:-.025em;
+    text-wrap:balance;
+  }
+  body.academy-royal:not(.royal-home):not(.royal-launch) header nav a,
+  body.academy-royal:not(.royal-home):not(.royal-launch) header a.back {
+    transition:background .28s ease,border-color .28s ease,color .28s ease,box-shadow .28s ease;
+  }
+  body.academy-royal:not(.royal-home):not(.royal-launch) header nav a:focus-visible,
+  body.academy-royal:not(.royal-home):not(.royal-launch) header a.back:focus-visible {
+    outline:3px solid var(--royal-champagne-light);
+    outline-offset:4px;
+  }
+  body.academy-royal:not(.royal-home):not(.royal-launch) header nav a:hover,
+  body.academy-royal:not(.royal-home):not(.royal-launch) header a.back:hover {
+    color:#fff0bf;
+    text-decoration:underline;
+    text-underline-offset:4px;
+  }
+  body.academy-royal:not(.royal-home) .eyebrow,
+  body.academy-royal:not(.royal-home) .kicker {
+    color:#9c7437;
+    letter-spacing:.19em;
+  }
+  body.academy-royal:not(.royal-home) main .card,
+  body.academy-royal:not(.royal-home) main .toolbar,
+  body.academy-royal:not(.royal-home) main .formbox {
+    border-color:var(--royal-line);
+    box-shadow:0 16px 44px rgba(17,53,34,.08),inset 0 1px 0 rgba(255,255,255,.85);
+  }
+  body.academy-royal:not(.royal-home) main .card>h2,
+  body.academy-royal:not(.royal-home) main .card>h3 {
+    text-wrap:balance;
+  }
+  body.academy-royal input:not([type=checkbox]):not([type=radio]):not([type=hidden]):focus-visible,
+  body.academy-royal select:focus-visible,
+  body.academy-royal textarea:focus-visible,
+  body.academy-royal button:focus-visible,
+  body.academy-royal a:focus-visible {
+    outline:3px solid rgba(212,166,78,.8);
+    outline-offset:3px;
+  }
+  body.academy-royal input:not([type=checkbox]):not([type=radio]):focus,
+  body.academy-royal select:focus,
+  body.academy-royal textarea:focus {
+    border-color:#b99051;
+    box-shadow:0 0 0 3px rgba(194,157,87,.12);
+  }
+  body.academy-royal button,
+  body.academy-royal a.btn,
+  body.academy-royal .links a,
+  body.academy-royal nav a {
+    transition:box-shadow .28s ease,background-color .28s ease,border-color .28s ease,color .28s ease,filter .28s ease;
+  }
+  /* Do not recolor role-specific danger, attendance, submit or payment buttons. */
+  @media (hover:hover) and (pointer:fine) {
+    body.academy-royal:not(.royal-admin) main .grid>.card:not(:has(form)),
+    body.academy-royal:not(.royal-admin) main>.card:not(:has(form)) {
+      transition:box-shadow .42s ease,border-color .42s ease;
+    }
+    body.academy-royal:not(.royal-admin) main .grid>.card:hover,
+    body.academy-royal:not(.royal-admin) main>.card:hover {
+      border-color:rgba(179,141,65,.58);
+      box-shadow:0 23px 50px rgba(21,58,37,.14);
+    }
+    body.academy-royal button:not(:disabled):not([aria-disabled=true]):hover,
+    body.academy-royal a.btn:hover {filter:brightness(1.045)}
+  }
+  /* Subtle animation is triggered only for visible content by royal-academy-motion.js.
+     No element starts hidden; site remains usable with disabled JavaScript. */
+  body.academy-royal .royal-motion-inview {
+    animation:royal-surface-enter .72s cubic-bezier(.18,.74,.25,1) both;
+  }
+  @keyframes royal-surface-enter {
+    from{opacity:.45;transform:translate3d(0,14px,0)}
+    to{opacity:1;transform:translate3d(0,0,0)}
+  }
+  body.academy-royal.royal-admin .side-menu {
+    border-right:1px solid rgba(205,169,97,.3);
+  }
+  body.academy-royal.royal-admin .brand-title {
+    color:#fff5d8;
+  }
+  body.academy-royal.royal-admin .side-menu .academy-menu-kicker,
+  body.academy-royal.royal-admin .side-menu .menu-chevron {
+    color:#e7cc91;
+  }
+  @media(max-width:600px) {
+    body.academy-royal:not(.royal-home) main .card {box-shadow:0 10px 32px rgba(18,52,34,.09)}
+    body.academy-royal:not(.royal-home) header {box-shadow:0 5px 20px rgba(10,37,26,.12)}
+  }
+  @media(prefers-reduced-motion:reduce) {
+    body.academy-royal .royal-motion-inview {animation:none!important;opacity:1!important;transform:none!important}
+    body.academy-royal button,body.academy-royal a,body.academy-royal main .card,
+    body.academy-royal main .toolbar {transition:none!important}
+  }
+}

@@ -292,7 +292,38 @@ header{z-index:30}header .nav{position:relative}header .links{gap:clamp(8px,1vw,
 .hiring-apply{display:inline-flex;align-items:center;justify-content:center;background:#14553c;color:#fff!important;font-weight:800;border-radius:11px;padding:13px 19px;margin-top:13px;border:1px solid #bc9d61}
 .hiring-apply:hover{background:#0d3d29;color:#fff}
 @media(max-width:750px){#careers{padding:50px 0}.hiring-public-grid{grid-template-columns:1fr}.hiring-public-card{padding:21px}}
-</style></head><body><div class="lux-scroll-progress" aria-hidden="true"></div><header><div class="wrap nav"><a class="brand" href="#home"><img alt="Madrasa Al Islahul Arabiya original logo" src="1_20261112_080707_0000.png"/><span class="academy-wordmark">Madrasa Al Islahul<br>Arabiya<small>WOMEN’S ONLINE MADRASA</small></span></a><nav class="links" aria-label="Main navigation"><a href="#home">Home</a><a href="#about">About</a><a href="#courses">Learning</a><a href="admission.html">Admissions</a><a href="exam-results.html">Exam Results</a><a href="#careers" data-careers-nav hidden>Careers</a><a href="teacher-login.html">Teacher Login</a><a href="student-login.html">Student Login</a><a href="#contact">Contact</a><a href="admin.html" aria-label="Admin login">Admin Login</a></nav>
+</style><style id="royal-finish-motion-v4">
+/* A restrained, accessible cinema-finish layer. No external animation library. */
+:root{--royal-gold:#c5a566;--royal-gold-light:#f2dfb2}
+.hero-grid>div:first-child{position:relative}
+.hero-bismillah::after{content:"";display:block;position:absolute;bottom:-1px;left:0;width:36%;height:1px;background:linear-gradient(90deg,transparent,var(--royal-gold-light),transparent);animation:royal-line-in 1.5s 0.5s both}
+@keyframes royal-line-in{from{opacity:0;transform:translateX(-20px) scaleX(.2)}to{opacity:1;transform:translateX(0) scaleX(1)}}
+.hero .intro-video{position:relative;isolation:isolate;border:1px solid rgba(242,215,156,.66);border-radius:20px;box-shadow:0 24px 54px rgba(0,0,0,.26),0 0 0 5px rgba(224,192,116,.07);transition:box-shadow .6s ease,transform .6s cubic-bezier(.2,.7,.2,1)}
+.hero .intro-video::after{content:"";position:absolute;inset:9px;border:1px solid rgba(245,218,155,.31);border-radius:11px;pointer-events:none;z-index:1}
+@media(hover:hover) and (pointer:fine){.hero .intro-video:hover{transform:translateY(-4px);box-shadow:0 30px 62px rgba(0,0,0,.31),0 0 0 6px rgba(224,192,116,.12)}}
+#courses>.wrap>h2,#about .about-copy h2,.vm-intro h2,#contact h2{letter-spacing:-.025em;text-wrap:balance}
+#courses>.wrap>h2::after,.vm-intro h2::after{content:"";display:block;width:72px;height:2px;margin:19px 0 0;background:linear-gradient(90deg,#ae8845,#f0d9a4,#ae8845);border-radius:8px;transform-origin:left;transform:scaleX(.35);opacity:.65;transition:transform .9s ease,opacity .9s ease}
+#courses>.wrap>h2.royal-inview::after,.vm-intro h2.royal-inview::after{transform:scaleX(1);opacity:1}
+#homepageCourseGrid .course-card{position:relative;overflow:hidden;transition:transform .55s cubic-bezier(.2,.72,.2,1),box-shadow .55s ease,border-color .4s ease}
+#homepageCourseGrid .course-card::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,transparent,#ba914c 45%,#f6e6b8 55%,transparent);transform:scaleX(.28);opacity:.3;transition:transform .6s ease,opacity .6s ease;pointer-events:none}
+#homepageCourseGrid .course-card:hover::before,#homepageCourseGrid .course-card:focus-within::before{transform:scaleX(1);opacity:1}
+#homepageCourseGrid .course-card:focus-within{border-color:#b58c49;box-shadow:0 20px 50px rgba(17,56,34,.17)}
+#homepageCourseGrid .course-card a:focus-visible,.hero .btn:focus-visible,.home-menu-toggle:focus-visible{outline:3px solid #e8be64;outline-offset:4px}
+.royal-motion-ready #homepageCourseGrid .course-card.royal-enter{opacity:0;transform:translate3d(0,18px,0);transition:opacity .7s ease,transform .85s cubic-bezier(.2,.72,.2,1),box-shadow .4s ease}
+.royal-motion-ready #homepageCourseGrid .course-card.royal-enter.royal-inview{opacity:1;transform:translate3d(0,0,0)}
+@media(hover:hover) and (pointer:fine){.royal-motion-ready #homepageCourseGrid .course-card.royal-enter.royal-inview:hover{transform:translateY(-8px)}}
+@media(max-width:650px){
+ .hero .intro-video{border-radius:13px;box-shadow:0 14px 33px rgba(0,0,0,.22)}
+ .hero .intro-video::after{inset:6px;border-radius:8px}
+ #courses>.wrap>h2::after{margin-top:14px}
+}
+@media(prefers-reduced-motion:reduce){
+ .hero-bismillah::after{animation:none!important}
+ .hero .intro-video{transition:none!important}
+ .royal-motion-ready #homepageCourseGrid .course-card.royal-enter{opacity:1!important;transform:none!important;transition:none!important}
+ #courses>.wrap>h2::after,.vm-intro h2::after{transform:none;opacity:1;transition:none!important}
+}
+</style><link rel="stylesheet" href="./royal-academy-theme.css"></head><body class="academy-royal royal-home"><div class="lux-scroll-progress" aria-hidden="true"></div><header><div class="wrap nav"><a class="brand" href="#home"><img alt="Madrasa Al Islahul Arabiya original logo" src="1_20261112_080707_0000.png"/><span class="academy-wordmark">Madrasa Al Islahul<br>Arabiya<small>WOMEN’S ONLINE MADRASA</small></span></a><nav class="links" aria-label="Main navigation"><a href="#home">Home</a><a href="#about">About</a><a href="#courses">Learning</a><a href="admission.html">Admissions</a><a href="exam-results.html">Exam Results</a><a href="#careers" data-careers-nav hidden>Careers</a><a href="teacher-login.html">Teacher Login</a><a href="student-login.html">Student Login</a><a href="#contact">Contact</a><a href="admin.html" aria-label="Admin login">Admin Login</a></nav>
 <button class="home-menu-toggle" id="homeMenuToggle" type="button" aria-expanded="false" aria-controls="homeMenuPanel" aria-label="Open website menu"><span class="menu-symbol" aria-hidden="true">☰</span><span class="menu-title">Menu</span></button><a class="btn mobile" href="admission.html">Apply Now</a></div>
 <nav class="home-menu-panel" id="homeMenuPanel" aria-label="Website menu" hidden>
 <div class="home-menu-heading"><div><small>MADRASA AL ISLAHUL ARABIYA</small><strong>Academy Menu</strong></div><button id="homeMenuClose" type="button" aria-label="Close menu">✕</button></div>
@@ -430,4 +461,43 @@ try{
  });
  window.addEventListener('resize',()=>{if(window.innerWidth>1160&&!panel.hidden)setOpen(false,false)},{passive:true});
 })();
-</script><script type="module" src="./academic-year.js"></script><script type="module" src="./site-settings-public.js"></script><script type="module" src="./homepage-winners-public.js"></script><script type="module" src="./hiring-board-public.js"></script></body></html>
+</script><script type="module" src="./academic-year.js"></script><script type="module" src="./site-settings-public.js"></script><script type="module" src="./homepage-winners-public.js"></script><script type="module" src="./hiring-board-public.js"></script><script id="royal-finish-motion-script">
+(function(){
+  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const video=document.querySelector('#madrasa-intro-video video');
+  // Avoid spending battery and data decoding an off-screen looping hero video.
+  if(video&&'IntersectionObserver'in window){
+    const watchVideo=new IntersectionObserver(entries=>{
+      for(const entry of entries){
+        if(entry.isIntersecting&&entry.intersectionRatio>.06){
+          if(!reduce){const playing=video.play();if(playing&&typeof playing.catch==='function')playing.catch(()=>{});}
+        }else video.pause();
+      }
+    },{threshold:[0,.06,.25]});
+    watchVideo.observe(video);
+    if(reduce){video.pause();video.removeAttribute('autoplay');}
+  }else if(video&&reduce){video.pause();video.removeAttribute('autoplay');}
+  if(reduce||!('IntersectionObserver'in window))return;
+  const grid=document.getElementById('homepageCourseGrid');
+  const observer=new IntersectionObserver(entries=>{
+    for(const entry of entries)if(entry.isIntersecting){
+      entry.target.classList.add('royal-inview');
+      observer.unobserve(entry.target);
+    }
+  },{threshold:.06,rootMargin:'0px 0px -14px 0px'});
+  function reveal(el,animate){
+    if(el.dataset.royalObserved==='1')return;
+    el.dataset.royalObserved='1';
+    if(animate)el.classList.add('royal-enter');
+    observer.observe(el);
+  }
+  if(grid){
+    // Course cards are replaced dynamically when Firestore courses arrive.
+    const scan=()=>grid.querySelectorAll('.course-card').forEach(el=>reveal(el,true));
+    document.body.classList.add('royal-motion-ready');
+    scan();
+    new MutationObserver(scan).observe(grid,{childList:true});
+  }
+  document.querySelectorAll('#courses>.wrap>h2,.vm-intro h2').forEach(el=>reveal(el,false));
+})();
+</script><script src="./royal-academy-motion.js" defer></script></body></html>

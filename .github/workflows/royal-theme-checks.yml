@@ -1,0 +1,24 @@
+name: Royal Academy UI Theme Checks
+on:
+  pull_request:
+    paths:
+      - 'royal-academy-theme.css'
+      - 'royal-academy-motion.js'
+      - '*.html'
+      - 'tests/royal-theme.test.mjs'
+      - '.github/workflows/royal-theme-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'royal-academy-theme.css'
+      - 'royal-academy-motion.js'
+      - '*.html'
+      - 'tests/royal-theme.test.mjs'
+      - '.github/workflows/royal-theme-checks.yml'
+jobs:
+  static-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check royal Academy presentation and feature preservation
+        run: node --test tests/royal-theme.test.mjs

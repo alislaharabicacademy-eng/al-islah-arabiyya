@@ -80,8 +80,8 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 @media(max-width:750px){.grid{grid-template-columns:1fr}.card{padding:24px}main{margin-top:30px}.head{gap:10px}.brand img{width:52px;height:52px}.brand strong{font-size:19px}}
 @media(prefers-reduced-motion:no-preference){.card{animation:arrive .5s ease-out both}@keyframes arrive{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}}
 </style>
-</head>
-<body>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="./royal-academy-theme.css"></head>
+<body class="academy-royal royal-teacher">
 <header><div class="head"><div class="brand"><img src="1_20261112_080707_0000.png" alt="Academy logo"><span><strong>Madrasa Al Islahul Arabiya</strong><small>PRIVATE TEACHER PORTAL</small></span></div><a class="back" href="index.html">⌂ Homepage</a></div></header>
 <main>
 <section class="intro"><span class="eyebrow">Faith · Learning · Excellence</span><h1>Teacher Login</h1><p>Assalamu Alaikum. Sign in securely with your <strong>Academy-approved Google account</strong> to view your assigned classes and access attendance.</p></section>
@@ -492,5 +492,5 @@ try{
  onAuthStateChanged(auth,user=>loadDashboard(user));
 }catch(e){status('Teacher login unavailable: '+friendlyError(e),true)}
 </script>
-<script type="module" src="./site-settings-public.js"></script></body>
+<script type="module" src="./site-settings-public.js"></script><script src="./royal-academy-motion.js" defer></script></body>
 </html>
