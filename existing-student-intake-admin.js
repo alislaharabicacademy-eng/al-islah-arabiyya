@@ -1,9 +1,9 @@
 /* Existing Academy student self-registration - ADMIN ONLY.
- * Create/close a time-limited shared link; queue applicant-proposed data.
+ * Open/close a persistent, private shared link; queue applicant-proposed data.
  * Requests NEVER become official students until an administrator verifies
  * the prior register and saves the historical enrollment in Student Details.
  */
-import {collection,doc,getDocs,query,limit,setDoc,updateDoc,serverTimestamp,Timestamp,writeBatch} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import {collection,doc,getDocs,query,limit,updateDoc,serverTimestamp,deleteField,writeBatch} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {isProfilePhoto} from './profile-photo.js';
 import {academyCourseLabel} from './academy-course-catalog-core.js';
 
@@ -44,9 +44,8 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
   if(!currentAdmin())return;
   info.textContent='Checking existing-student registration links…';
   try{
-   const links=await getAllLinks(),now=Date.now();
-   const valid=links.filter(x=>x.data().enabled===true &&
-    x.data().expiresAt?.toMillis?.()>now).sort((a,b)=>
+   const links=await getAllLinks();
+   const valid=links.filter(x=>x.data().enabled===true).sort((a,b)=>
     (b.data().createdAt?.toMillis?.()||0)-(a.data().createdAt?.toMillis?.()||0));
    activeToken=valid[0]?.id||null;
    copy.disabled=close.disabled=!activeToken;
@@ -70,26 +69,37 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
  }
  create.onclick=async()=>{
   if(!currentAdmin())return;
-  if(activeToken&&!confirm('Rotate the current existing-student link? The previous link will be closed for new submissions.'))return;
-  create.disabled=true;info.textContent='Creating a new secure 30-day link…';
+  create.disabled=true;info.textContent='Opening the permanent existing-student registration link…';
   try{
    const links=await getAllLinks();
-   const token=randomToken();
+   // Keep the same token for all future open/close cycles. Prefer the
+   // currently open link, otherwise reopen the newest previously created link.
+   const newest=items=>items.sort((a,b)=>
+    (b.data().createdAt?.toMillis?.()||0)-(a.data().createdAt?.toMillis?.()||0))[0];
+   const selected=newest(links.filter(x=>x.data().enabled===true))||newest([...links]);
+   const token=selected?.id||randomToken();
    const batch=writeBatch(db);
-   // Old links are closed rather than deleted; previous submissions remain.
-   for(const item of links.filter(x=>x.data().enabled===true).slice(0,350))
+   // Avoid multiple public links. Keep prior submissions and token history.
+   for(const item of links.filter(x=>x.data().enabled===true && x.id!==token).slice(0,350))
     batch.update(item.ref,{enabled:false,closedAt:serverTimestamp()});
-   batch.set(doc(db,'existingStudentIntakeLinks',token),{
-    enabled:true,createdAt:serverTimestamp(),
-    expiresAt:Timestamp.fromDate(new Date(Date.now()+30*86400000)),
-    createdBy:auth.currentUser.uid
-   });
+   if(selected){
+    // Upgrade old 30-day invitations without changing the WhatsApp URL.
+    batch.update(selected.ref,{
+     enabled:true,openedAt:serverTimestamp(),
+     expiresAt:deleteField(),closedAt:deleteField()
+    });
+   }else{
+    batch.set(doc(db,'existingStudentIntakeLinks',token),{
+     enabled:true,createdAt:serverTimestamp(),openedAt:serverTimestamp(),
+     createdBy:auth.currentUser.uid
+    });
+   }
    await batch.commit();
    activeToken=token;
    copy.disabled=close.disabled=false;
-   info.textContent='✅ Secure 30-day registration link created. Copy it and share it only with already-studying students/parents.';
+   info.textContent='✅ Permanent registration link is OPEN. It stays the same when you close and reopen it. Admin review is required for every submission.';
    await copyActive();
-  }catch(e){info.textContent='Unable to create link: '+(e.message||e)}
+  }catch(e){info.textContent='Unable to open link: '+(e.message||e)}
   finally{create.disabled=false}
  };
  copy.onclick=copyActive;
