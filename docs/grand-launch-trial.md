@@ -1,0 +1,36 @@
+# Grand Website Launch — Online Trial (21 November 2026)
+
+This is the **repeatable rehearsal only** for the Women's Online Madrasa website grand inauguration. The real one-time official ceremony will only be implemented/enabled after the Academy approves the trial.
+
+## Host / screen share (Academy Admin)
+1. Sign in as an authorised Admin at `grand-launch.html?role=host` (Google or existing Admin email/password).
+2. Enter the Principal's own **verified Google Gmail address** and press **Save Principal Access**. Do not use another person's account.
+3. Privately send the Principal this page: `grand-launch.html?role=principal`.
+4. Share the **Host Browser Tab** on Google Meet or Zoom, ideally full-screen. If you play a separate intro video, enable sharing its audio. No audio is required for the countdown itself.
+5. Press **Start 5-second Trial**. Both browsers synchronise to the Firestore timestamp and show **5 → 4 → 3 → 2 → 1**.
+6. After the countdown finishes, the Principal's phone displays **CUT THE RIBBON**. Only that registered Principal Google account can press it.
+7. The Host screen shows the scissors, splitting ribbon, and confetti, then opens the existing homepage automatically. This is a *trial homepage reveal*, not a website publication or official launch.
+8. To rehearse again, return to `grand-launch.html?role=host` and press **Reset & Try Again**, then **Start 5-second Trial**.
+
+## Principal (mobile)
+1. Open `grand-launch.html?role=principal`.
+2. Sign in with the exact verified Google account that the Host saved; remain on the page.
+3. Wait for 5 → 1 and the appearance of the ribbon.
+4. Tap **CUT THE RIBBON** when enabled. The Host's shared screen will animate. If the button fails, report the message shown on the page to the Admin.
+
+## Safety / verification
+- Trial and Official Launch are **not** the same data. This change contains no official launch button and cannot mark the Academy officially inaugurated.
+- Admin can reset a trial; Principal cannot reset, edit permissions, or change any Academy data.
+- Only the verified Principal can change the trial state from `countdown` to `cut`, and Firestore security rules enforce a 5-second wait and prevent a second cut in the same round.
+- The Host/Admin can repeat a new round by resetting or starting the countdown again.
+- The principal's Gmail must already be an eligible Google account and Firebase Google Authentication must be enabled for the project.
+- Google Meet / Zoom screen share, browser audio/video, and real smartphone operation still need human validation. Test Chrome desktop and Android mobile, including loss of network and a second tab.
+- For live use, ensure updated Firestore rules have been deployed. GitHub workflow `Deploy Firebase Firestore Rules` is configured to run when `firestore.rules` changes on `main`. Verify workflow success before running trial.
+
+## Acceptance tests
+1. Host/Principal sign in from separate devices and the correct authorised account; wrong and unverified accounts cannot enter.
+2. 5, 4, 3, 2, 1 is correctly visible to viewers, and the ribbon is not cut prematurely.
+3. Principal taps once. Host sees cut animation, confetti, and homepage; phone shows completion.
+4. Double-click, unauthorised accounts, and repeated cut attempts do not make a second cut in the same trial.
+5. Host resets and starts another practice successfully.
+6. There is **no Official Launch control** until the Academy explicitly approves and tests a separate one-time launch feature.
