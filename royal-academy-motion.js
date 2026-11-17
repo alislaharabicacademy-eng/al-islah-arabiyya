@@ -15,13 +15,13 @@
       observer.unobserve(entry.target);
     });
   },{threshold:0.07,rootMargin:'0px 0px -10px 0px'});
-  const selector='main>.intro,main>.hero,main>.card,main>.toolbar,main>.grid>.card,main>.wrap>.section-head';
+  const selector=':scope > .intro,:scope > .hero,:scope > .card,:scope > .toolbar,:scope > .grid > .card,:scope > .wrap > .section-head';
   let queued=false;
   function register(){
     queued=false;
     const root=document.querySelector('main');
     if(!root)return;
-    root.querySelectorAll(selector.replaceAll('main>','')).forEach(function(el){
+    root.querySelectorAll(selector).forEach(function(el){
       if(el.dataset.royalMotionObserved==='1')return;
       el.dataset.royalMotionObserved='1';
       observer.observe(el);
