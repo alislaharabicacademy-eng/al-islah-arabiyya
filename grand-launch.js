@@ -7,15 +7,18 @@ import {isVerifiedMasterAdmin} from './admin-role-status.js';
 const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const role=params.get('role')==='principal'?'principal':'host';
-// "main-preview" is only a theatrical, RESETTABLE rehearsal. It is not an official launch.
-const isMainPreview=params.get('mode')==='main-preview';
+// Rehearsals are reversible. Only mode=official records the actual one-time event.
+const isOfficial=params.get('mode')==='official';
+const isMainPreview=!isOfficial && params.get('mode')==='main-preview';
 const COUNTDOWN_MS=5000;
 let auth,db,me,trial=null,unsubscribe=null,authorized=false,principalEmail='',experiencedCountdown=false,cutPlayed=false,cutPending=false,previousPhase='',lastDigit=0,redirectTimer=null,successTimer=null;
+let officialControl=null,officialRecord=null,officialControlLoaded=false,officialRecordLoaded=false;
+let officialUnsubscribes=[],officialSeenCountdown=false,masterVerified=false;
 const message=(text,isError=false)=>{$('message').textContent=text;$('message').classList.toggle('danger',isError)};
 const show=(id,visible)=>$(id).hidden=!visible;
 const isEmail=value=>/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(value);
-const principalUrl=new URL('./grand-launch.html?role=principal'+(isMainPreview?'&mode=main-preview':''),location.href).href;
-document.body.dataset.mode=isMainPreview?'main-preview':'trial';
+const principalUrl=new URL('./grand-launch.html?role=principal'+(isOfficial?'&mode=official':isMainPreview?'&mode=main-preview':''),location.href).href;
+document.body.dataset.mode=isOfficial?'official':isMainPreview?'main-preview':'trial';
 $('switchCeremonyMode').href=isMainPreview?'./grand-launch.html?role=host':'./grand-launch.html?role=host&mode=main-preview';
 $('switchCeremonyMode').textContent=isMainPreview?'↩ Return to Regular Trial':'✨ See Main Ceremony Preview';
 if(isMainPreview){
@@ -29,7 +32,25 @@ if(isMainPreview){
   $('successHeadline').textContent='✨ GRAND WEBSITE REVEAL ✨';
   $('successSubtitle').textContent='Main Ceremony Preview · Not Official';
 }
+if(isOfficial){
+  document.title='Official Inauguration · 21 November 2026 | Women\'s Online Madrasa';
+  $('ceremonyModeBadge').classList.add('main-preview-badge');
+  $('ceremonyModeBadge').textContent='👑 OFFICIAL INAUGURATION · ONE TIME ONLY';
+  $('ceremonyTopline').textContent='SATURDAY, 21 NOVEMBER 2026 · OFFICIAL INAUGURATION';
+  $('hostControlHeading').textContent='🔐 One-Time Official Opening · Master Control';
+  $('principalInstruction').textContent='When the Master Admin starts the official countdown on 21 November, you may cut the ribbon exactly once. This is NOT a trial; once cut, it cannot be reset.';
+  $('ceremonyFooter').innerHTML='Official inauguration · Saturday, 21 November 2026 · The confirmed ceremony is permanently recorded.<br>Madrasa Al Islahul Arabiya · Women\'s Online Madrasa';
+  $('successHeadline').textContent='🎉 WEBSITE OFFICIALLY LAUNCHED 🎉';
+  $('successSubtitle').textContent='21 November 2026 · Official Inauguration';
+  $('successExplanation').textContent='The official launch is permanently recorded and cannot be reset.';
+  $('previewLaunchHeader').textContent='🎉 OFFICIALLY INAUGURATED · 21 NOVEMBER 2026';
+  $('previewLaunchFooter').textContent='Official inauguration successfully recorded · 21 November 2026';
+  $('previewReset').hidden=true;
+  show('rehearsalControls',false);
+  show('officialControls',true);
+}
 $('principalLink').href=principalUrl;
+$('officialPrincipalLink').href=principalUrl;
 $('loginHeading').textContent=role==='principal'?'Principal · Verified Google Login':'Host · Secure Admin Login';
 show('passwordForm',role==='host');
 show('switchGoogleAccount',role==='principal');
