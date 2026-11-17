@@ -10,6 +10,7 @@ on:
       - 'index.html'
       - 'firestore.rules'
       - 'tests/grand-launch-trial.test.mjs'
+      - 'tests/grand-launch-official.test.mjs'
       - '.github/workflows/grand-launch-trial-tests.yml'
   workflow_dispatch:
 
@@ -33,7 +34,8 @@ jobs:
           node --check grand-launch.js
           node --check principal-access-admin.js
           node --check tests/grand-launch-trial.test.mjs
+          node --check tests/grand-launch-official.test.mjs
       - name: Install test dependencies
         run: npm install --no-save firebase@13 @firebase/rules-unit-testing@6
       - name: Firestore emulator verifies administrator and principal permissions
-        run: npx --yes firebase-tools@latest emulators:exec --only firestore --project demo-grand-launch-trial 'node --test tests/grand-launch-trial.test.mjs'
+        run: npx --yes firebase-tools@latest emulators:exec --only firestore --project demo-grand-launch-trial 'node --test --test-concurrency=1 tests/grand-launch-trial.test.mjs tests/grand-launch-official.test.mjs'
