@@ -731,6 +731,7 @@ import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,EmailAuthProvider,linkWithCredential,sendEmailVerification,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
+import{directoryPatchFromApprovedRegistration}from'./teacher-admin-sync.js';
 import{uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse,isAalimaContinuation,publicAdmissionCourses}from'./admission-course-utils.js';
 import{validFeeLedger,indiaFeeClock}from'./fee-ledger-utils.js';
 import{initStudentAccountAdmin}from'./student-account-admin.js';
@@ -2659,7 +2660,7 @@ async function loadTeacherSubmissions(){
   const approve=document.createElement('button');approve.type='button';approve.textContent='✓ Approve';
   const reject=document.createElement('button');reject.type='button';reject.className='secondary';reject.textContent='✕ Reject';
   const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='🗑 Delete Permanently';remove.style.color='#a12828';remove.style.borderColor='#e8b2b2';remove.style.background='#fff1f1';
-  if(t.reviewStatus==='approved'){approve.disabled=true;approve.textContent='✓ Already Approved';approve.title='This teacher is already approved';}if(t.reviewStatus==='archived'){badge.textContent='Archived';approve.disabled=true;approve.textContent='Archived teacher';reject.disabled=true;}if(t.reviewStatus==='rejected'){reject.disabled=true;reject.textContent='✕ Already Rejected';reject.title='This submission is already rejected';}buttons.append(view,edit,print,approve,reject);if(['rejected','archived'].includes(t.reviewStatus))buttons.append(remove);card.append(buttons);
+  if(t.reviewStatus==='approved'){approve.disabled=true;approve.textContent='✓ Already Approved';approve.title='This teacher is already approved';reject.disabled=true;reject.textContent='To remove: use Teacher Directory';}if(t.reviewStatus==='archived'){badge.textContent='Archived';approve.disabled=true;approve.textContent='Archived teacher';reject.disabled=true;}if(t.reviewStatus==='rejected'){reject.disabled=true;reject.textContent='✕ Already Rejected';reject.title='This submission is already rejected';}buttons.append(view,edit,print,approve,reject);if(['rejected','archived'].includes(t.reviewStatus))buttons.append(remove);card.append(buttons);
   const deleteStatus=document.createElement('p');deleteStatus.setAttribute('role','status');deleteStatus.setAttribute('aria-live','polite');deleteStatus.style.cssText='margin:8px 0;color:#a12828;font-weight:600';card.append(deleteStatus);
   const detail=document.createElement('div');detail.className='teacher-profile-details';detail.hidden=true;for(const [title,fields] of teacherProfileGroups)detail.append(teacherProfileSection(title,fields,t));card.append(detail);
   view.onclick=()=>{detail.hidden=!detail.hidden;view.textContent=detail.hidden?'👁 View Full Profile':'▴ Hide Full Profile'};
@@ -2668,7 +2669,59 @@ async function loadTeacherSubmissions(){
    detail.hidden=false;view.textContent='▴ Hide Full Profile';
    const save=document.createElement('button');save.type='button';save.textContent='💾 Save Admin Changes';
    const cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.textContent='Cancel';
-   save.onclick=async()=>{const changes={};for(const el of detail.querySelectorAll('[name]'))changes[el.name]=el.value.trim();if(!changes.fullName||!changes.phone||!changes.address||!changes.madrasaName||!changes.sanad){alert('Required fields: Name, Phone, Address, Madrasa Name and Sanad.');return}save.disabled=true;try{await setDoc(doc(db,'teacherSubmissions',d.id),{...changes,lastEditedAt:new Date().toISOString()},{merge:true});await loadTeacherSubmissions()}catch(error){alert('Could not save: '+error.message);save.disabled=false}};
+   save.onclick=async()=>{
+    const changes={};
+    for(const el of detail.querySelectorAll('[name]'))changes[el.name]=el.value.trim();
+    if(!changes.fullName||!changes.phone||!changes.address||!changes.madrasaName||!changes.sanad){
+     alert('Required fields: Name, Phone, Address, Madrasa Name and Sanad.');return;
+    }
+    save.disabled=true;
+    try{
+     const submissionRef=doc(db,'teacherSubmissions',d.id);
+     const current=await getDoc(submissionRef);
+     if(!current.exists())throw Error('Registration was deleted by another Admin. Refresh the list.');
+     const batch=writeBatch(db);
+     batch.set(submissionRef,{...changes,lastEditedAt:new Date().toISOString()},{merge:true});
+     // Only approved, active teachers are mirrored to the official directory.
+     // Archived and rejected registration changes must never re-enable a login.
+     if(current.data().reviewStatus==='approved'){
+      const teacherId='registered_'+d.id,directoryRef=doc(db,'teachers',teacherId);
+      const directory=await getDoc(directoryRef);
+      if(!directory.exists()||directory.data().recordStatus==='archived')
+       throw Error('This approved teacher is missing or archived in Teacher Directory. Reopen the teacher list.');
+      const patch=directoryPatchFromApprovedRegistration(current.data(),changes);
+      if(Object.keys(patch).length)batch.set(directoryRef,patch,{merge:true});
+      if('name' in patch||'email' in patch){
+       const oldEmail=String(directory.data().email||'').trim().toLowerCase();
+       const updatedName=patch.name||directory.data().name||'Teacher';
+       const updatedEmail=String(patch.email??oldEmail).trim().toLowerCase();
+       if(!updatedEmail)throw Error('An approved teacher requires an Email ID to update Google Login.');
+       teacherGoogleEmail(updatedEmail);
+       if(updatedEmail!==oldEmail){
+        const allTeachers=await getDocs(collection(db,'teachers'));
+        if(allTeachers.docs.some(row=>row.id!==teacherId&&row.data().recordStatus!=='archived'&&
+          String(row.data().email||'').trim().toLowerCase()===updatedEmail))
+         throw Error('This Gmail already belongs to another active teacher.');
+        const newAliasRef=doc(db,'teacherAccess',teacherGoogleLookupId(updatedEmail));
+        const alias=await getDoc(newAliasRef);
+        if(alias.exists()&&alias.data().teacherId!==teacherId)
+         throw Error('This Gmail is already linked to another teacher. Do not overwrite their account.');
+       }
+       batch.set(doc(db,'teacherAccess',teacherId),{name:updatedName,email:updatedEmail},{merge:true});
+       batch.set(doc(db,'teacherAccess',teacherGoogleLookupId(updatedEmail)),
+        {name:updatedName,email:updatedEmail,teacherId,googleLogin:true},{merge:true});
+       if(oldEmail&&oldEmail!==updatedEmail){
+        const oldAliasRef=doc(db,'teacherAccess',teacherGoogleLookupId(oldEmail));
+        const oldAlias=await getDoc(oldAliasRef);
+        if(oldAlias.exists()&&oldAlias.data().teacherId===teacherId)batch.delete(oldAliasRef);
+       }
+      }
+     }
+     await batch.commit();
+     await loadTeacherDirectory();
+     $('teacherInviteStatus').textContent='✓ Teacher profile changes saved. Approved directory and login details synchronized.';
+    }catch(error){alert('Could not save Teacher Details: '+error.message);save.disabled=false}
+   };
    cancel.onclick=()=>loadTeacherSubmissions();detail.append(save,cancel);
   };
   approve.onclick=async()=>{if(t.reviewStatus==='approved')return;if(!confirm('Approve this teacher and add to the private teacher directory?'))return;approve.disabled=true;try{await setDoc(doc(db,'teachers','registered_'+d.id),{name:t.fullName,subject:t.subjects||'',phone:t.phone||'',email:t.email||'',photoData:isProfilePhoto(t.photoData)?t.photoData:'',notes:'Approved teacher registration. Submission ID: '+d.id,registrationId:d.id},{merge:true});await setDoc(doc(db,'teacherSubmissions',d.id),{reviewStatus:'approved',reviewedAt:new Date().toISOString()},{merge:true});await loadTeacherDirectory()}catch(error){alert('Approval failed: '+error.message);approve.disabled=false}};
