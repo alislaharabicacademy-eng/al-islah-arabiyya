@@ -7,3 +7,11 @@ export function teacherPortalLanding(isAdmin,hasLinkedTeacher){
  if(hasLinkedTeacher)return 'my-teacher-dashboard';
  return 'unauthorized';
 }
+
+/** Archived teachers remain in Firestore for historical salary/attendance,
+ * but must not appear in the Admin teacher-login preview picker.
+ * Legacy active profiles may have no recordStatus.
+ */
+export function isTeacherVisibleInDirectory(profile){
+ return !!profile&&String(profile.recordStatus||'').trim().toLowerCase()!=='archived';
+}
