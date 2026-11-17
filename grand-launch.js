@@ -377,7 +377,83 @@ $('previewReset').addEventListener('click',async()=>{
     if(await writeTrial('idle'))resetVisual();
   }finally{button.disabled=false}
 });
+// These actions never touch the resettable Trial document. The only irreversible
+// operation is the Principal's server-validated one-time CREATE of official.
+async function armOfficial(){
+  if(!isOfficial||role!=='host'||!masterVerified||officialRecord||officialControl)return;
+  if($('officialPhrase').value.trim().toUpperCase()!=='LAUNCH 21 NOV 2026'){
+    message('Type exactly LAUNCH 21 NOV 2026 to PREPARE the ceremony. This does NOT launch it.',true);return;
+  }
+  if(!confirm('ARM the official ceremony for Saturday 21 November? This only prepares it. No website launch will occur yet.'))return;
+  const button=$('officialArm');button.disabled=true;
+  try{
+    await setDoc(doc(db,'grandLaunch','officialControl'),{
+      kind:'officialControl',state:'armed',startedAt:null,startedBy:null,
+      updatedAt:serverTimestamp(),updatedBy:me.uid
+    });
+    $('officialPhrase').value='';
+    message('✅ Official ceremony ARMED safely. Countdown is unavailable until Saturday 21 November (India time).');
+  }catch(error){message('Could not arm official ceremony: '+error.message,true)}
+  finally{button.disabled=false}
+}
+async function startOfficial(){
+  if(!isOfficial||role!=='host'||!masterVerified||officialRecord||officialControl?.state!=='armed')return;
+  if(officialIndiaDate()!=='2026-11-21'){
+    message('Final opening is locked to Saturday, 21 November 2026, India time.',true);return;
+  }
+  if(!confirm('START the REAL official countdown? This is NOT a trial. The Principal can permanently inaugurate the website after 5 seconds.'))return;
+  const button=$('officialStart');button.disabled=true;
+  try{
+    await updateDoc(doc(db,'grandLaunch','officialControl'),{
+      state:'countdown',startedAt:serverTimestamp(),startedBy:me.uid,
+      updatedAt:serverTimestamp(),updatedBy:me.uid
+    });
+  }catch(error){message('Final countdown could not start: '+error.message,true)}
+  finally{button.disabled=false}
+}
+async function cancelOfficialCountdown(){
+  if(!isOfficial||role!=='host'||!masterVerified||officialRecord||officialControl?.state!=='countdown')return;
+  if(!confirm('Cancel the final countdown BEFORE the Principal cuts the ribbon? This returns to Armed and does NOT undo an actual inauguration.'))return;
+  const button=$('officialCancel');button.disabled=true;
+  try{
+    await updateDoc(doc(db,'grandLaunch','officialControl'),{
+      state:'armed',startedAt:null,startedBy:null,
+      updatedAt:serverTimestamp(),updatedBy:me.uid
+    });
+    resetVisual();
+    message('Countdown cancelled before the official cut. The one-time launch record is still absent.');
+  }catch(error){message('Cannot cancel countdown. It may have been inaugurated: '+error.message,true)}
+  finally{button.disabled=false}
+}
+async function requestOfficialCut(){
+  if(!isOfficial||role!=='principal'||!authorized||cutPending||
+    officialRecord||officialControl?.state!=='countdown'||!officialControl.startedAt?.toMillis)return;
+  if(officialIndiaDate()!=='2026-11-21'){
+    message('Official inauguration is restricted to 21 November 2026 (India time).',true);return;
+  }
+  if(Date.now()-officialControl.startedAt.toMillis()<COUNTDOWN_MS){
+    message('Wait for the full official countdown to finish.',true);return;
+  }
+  if(!confirm('CONFIRM THE REAL OFFICIAL INAUGURATION? This cuts the ribbon and records the one-time opening permanently. IT CANNOT BE RESET.'))return;
+  cutPending=true;$('cutRibbon').disabled=true;$('scissorsTrigger').disabled=true;
+  message('✂️ Submitting the one-time official ribbon cut for secure server confirmation…');
+  try{
+    await setDoc(doc(db,'grandLaunch','official'),{
+      kind:'official',phase:'launched',dateLocal:'2026-11-21',
+      startedAt:officialControl.startedAt,
+      launchedAt:serverTimestamp(),launchedBy:me.uid
+    });
+  }catch(error){
+    cutPending=false;$('cutRibbon').disabled=false;$('scissorsTrigger').disabled=false;
+    message('Official cut NOT recorded: '+error.message+'. Ask Master Admin to check the status before retrying.',true);
+  }
+}
+$('officialArm').addEventListener('click',armOfficial);
+$('officialStart').addEventListener('click',startOfficial);
+$('officialCancel').addEventListener('click',cancelOfficialCountdown);
+
 async function requestTrialCut(){
+  if(isOfficial)return; // Official mode can never use the resettable cut path.
   // On the shared Host screen this is strictly a rehearsal; the Principal
   // can still perform the full two-device ceremony from their own account.
   if(!authorized||!(role==='host'||role==='principal')||cutPending||
@@ -404,8 +480,8 @@ async function requestTrialCut(){
       ' · Make sure you are signed in and the trial is still active.',true);
   }
 }
-$('cutRibbon').addEventListener('click',requestTrialCut);
-$('scissorsTrigger').addEventListener('click',requestTrialCut);
+$('cutRibbon').addEventListener('click',()=>isOfficial?requestOfficialCut():requestTrialCut());
+$('scissorsTrigger').addEventListener('click',()=>isOfficial?requestOfficialCut():requestTrialCut());
 
 setInterval(render,130);
 initialise();
