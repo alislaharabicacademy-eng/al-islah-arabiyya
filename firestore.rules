@@ -348,6 +348,11 @@ service cloud.firestore {
     match /classSubjects/{courseId} {
       allow read, write: if isAdmin();
     }
+    // Course-specific salary policies include private teacher IDs and amounts.
+    // Never expose these collections to students, teachers or public visitors.
+    match /salarySplitPolicies/{policyId} {
+      allow read, create, update, delete: if isAdmin();
+    }
 
     match /students/{studentId} {
       // Full student and guardian information remains admin only.
