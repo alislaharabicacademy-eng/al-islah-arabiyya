@@ -1,0 +1,20 @@
+name: Academy Fees and Salary Management Navigation
+on:
+  pull_request:
+    paths:
+      - 'admin.html'
+      - 'tests/fees-salary-admin-navigation.test.mjs'
+      - '.github/workflows/fees-salary-admin-navigation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  finance-hub-navigation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify finance hub routes to existing student fees and teacher salary
+        run: node --test tests/fees-salary-admin-navigation.test.mjs
