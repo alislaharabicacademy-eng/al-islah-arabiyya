@@ -276,6 +276,12 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
  background:#17513a;color:#fff;border-radius:50%;display:grid;place-items:center;font-weight:750}
 .admin-eligibility-preview strong{display:block;color:#135237;margin-bottom:3px}
 .admin-eligibility-preview span{display:block;color:#315340}
+.finance-hub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:20px 0}
+.finance-hub-card{border:1px solid #d6e5da;border-radius:16px;background:linear-gradient(145deg,#fff,#f1f8f3);padding:20px;text-align:left;box-shadow:0 7px 24px #123d2212}
+.finance-hub-card h3{color:#16452d;margin:0 0 10px;font-size:18px}
+.finance-hub-card p{color:#456454;line-height:1.65;font-size:13px;min-height:54px;margin:0 0 15px}
+.finance-hub-card button{width:100%;min-height:45px;margin:0}
+@media(max-width:690px){.finance-hub-grid{grid-template-columns:1fr}.finance-hub-card{padding:16px}.finance-hub-card p{min-height:0}}
 </style></head><body><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button><div class="menu-shade hidden" id="menuShade"></div><aside class="side-menu" id="sideMenu" aria-label="Admin navigation">
 <div class="academy-menu-brand"><span class="academy-menu-kicker">AL ISLAHUL ARABIYA</span><h2>Academy Menu</h2><p>Management Control Center</p></div>
 <div class="academy-menu-groups">
@@ -283,7 +289,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <section class="academy-menu-group" data-menu-group="academics"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuAcademics"><span>📚 Academics</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuAcademics" hidden><button type="button" data-tab="academic">Academic Year</button><button type="button" data-tab="courses">Course Details</button><button type="button" data-tab="newcourse">Add New Course</button><button type="button" data-tab="exams">🎓 Exam Results & Certificates</button><button type="button" id="openHomepageWinnersPanel">🏆 Homepage First / Second / Third</button><a href="certificate-studio.html" target="_blank" rel="noopener">✦ Premium Certificate Design Studio (Vector PDF)</a><a href="exam-results.html" target="_blank" rel="noopener">↗ View Published Results</a></div></section>
 <section class="academy-menu-group" data-menu-group="admissions"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuAdmissions"><span>📝 Admissions</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuAdmissions" hidden><button type="button" data-tab="applications">New Applications</button><button type="button" data-tab="admissionSettings">Admission Form Settings</button><a href="admission.html">↗ Open Admission Form</a></div></section>
 <section class="academy-menu-group" data-menu-group="people"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuPeople"><span>👩‍🏫 Teachers &amp; Students</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuPeople" hidden><button type="button" data-tab="teachers">Teacher Details</button><button type="button" data-tab="students">Student Details</button><a href="id-card-studio.html" target="_blank" rel="noopener">🪪 Student &amp; Teacher ID Card Studio</a><a href="verify-id.html" target="_blank" rel="noopener">🔳 ID Card QR Verification</a></div></section>
-<section class="academy-menu-group" data-menu-group="management"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuManagement"><span>⚙️ Management</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuManagement" hidden><button type="button" data-tab="fees">Fee Structure</button><button type="button" data-tab="settings">🎨 Website Settings &amp; Principal</button><button type="button" id="openPrincipalCeremonyAccess">🎀 Principal Login · Ceremony</button><a href="grand-launch.html?role=principal" target="_blank" rel="noopener">👑 Open Principal Login</a><button type="button" id="openHiringSettings">📣 Hiring &amp; Vacancies</button><a href="grand-launch.html?role=host" target="_blank" rel="noopener">🎀 Grand Launch · Trial Studio</a><a href="grand-launch.html?role=host&amp;mode=official" target="_blank" rel="noopener">🔒 Official Inauguration · 21 Nov</a><a href="index.html">↗ Website Home</a></div></section>
+<section class="academy-menu-group" data-menu-group="management"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuManagement"><span>⚙️ Management</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuManagement" hidden><button type="button" data-tab="finance">💳 Fees &amp; Salary Management</button><button type="button" data-tab="fees">Fee Structure</button><button type="button" data-tab="settings">🎨 Website Settings &amp; Principal</button><button type="button" id="openPrincipalCeremonyAccess">🎀 Principal Login · Ceremony</button><a href="grand-launch.html?role=principal" target="_blank" rel="noopener">👑 Open Principal Login</a><button type="button" id="openHiringSettings">📣 Hiring &amp; Vacancies</button><a href="grand-launch.html?role=host" target="_blank" rel="noopener">🎀 Grand Launch · Trial Studio</a><a href="grand-launch.html?role=host&amp;mode=official" target="_blank" rel="noopener">🔒 Official Inauguration · 21 Nov</a><a href="index.html">↗ Website Home</a></div></section>
 </div></aside><header><div class="top"><div><img src="1_20261112_080707_0000.png" alt="Academy logo" style="width:74px;height:74px;object-fit:contain;float:right;margin-left:12px"><div class="brand">Madrasa Al Islahul Arabiya</div><h1 class="brand-title">Academy Control Center</h1><p class="subtitle">Secure course management dashboard</p></div><nav><a href="index.html">⌂ Home</a><a id="previewTop" href="courses.html?course=muallama" target="_blank" rel="noopener">↗ Course Preview</a></nav></div></header>
 <main><div class="hero"><div><h2>Course Management</h2><p>Update course information and control what students can see.</p></div><span class="badge">● ADMIN DASHBOARD</span></div>
 <div id="setup" class="card notice">Loading secure admin login…</div>
@@ -409,7 +415,36 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <p id="curriculumAwardPreview" class="section-note"></p></div></div>
 <div class="section" id="feesSection"><h3>04 · Fees &amp; Schedule</h3><div class="fields"><label>Fees<input id="fees" maxlength="150" placeholder="Course fees"></label><label>Class Timings<input id="timings" maxlength="150" placeholder="Days and times"></label><label>Admission / Registration Fee (₹)<input id="admissionFee" type="number" min="0" step="1" placeholder="e.g. 500"></label><label>Monthly Tuition Fee (₹)<input id="monthlyFee" type="number" min="0" step="1" placeholder="e.g. 500"></label><label>Exam Fee (₹)<input id="examFee" type="number" min="0" step="1" placeholder="Optional"></label><label>Books / Kitab Fee (₹)<input id="booksFee" type="number" min="0" step="1" placeholder="Optional"></label><label>Payment Due Date<input id="paymentDue" maxlength="80" placeholder="e.g. Before 10th each month"></label><label>Payment Instructions<input id="paymentInstructions" maxlength="200" placeholder="How students should pay"></label></div></div>
 <div class="section"><h3>05 · Publication</h3><label class="publish"><input id="published" type="checkbox"><span><strong>Publish this course on the public website</strong><small>Turn on when the details are ready for students to view.</small></span></label></div>
-<div class="actions"><button id="save">✓ Save Changes</button><a class="btn secondary" id="previewBottom" href="courses.html?course=muallama" target="_blank" rel="noopener">↗ Preview</a></div><p id="status" class="status" role="status" aria-live="polite"></p></div><div id="tab-newcourse" class="tabpage hidden"><h2>➕ Add New Course</h2><p class="muted">Create a new programme and complete its details, syllabus, fees and timings.</p><label>New Course Name<input id="newCourseName" maxlength="100" placeholder="e.g. Girls Tajweed Class"></label><label>Course ID (generated automatically)<input id="newCourseId" maxlength="60" placeholder="Generated from course name" readonly></label><button type="button" id="createCourse">Create & Edit Course →</button> <button type="button" class="secondary" id="cancelNewCourse">← Back to Course List</button><p class="status" id="newCourseStatus"></p><p class="muted">New published courses appear automatically on the Explore All Courses page and in the Admission Form when those pages are opened or refreshed. The homepage always features only Muallama and Muballigha. You can unpublish courses later.</p></div><div id="tab-fees" class="tabpage hidden"><h2>💰 Fee Structure</h2><p class="muted">Choose a course to edit its complete fee structure.</p><button type="button" id="goFees">Open Course Fee Editor →</button></div><div id="tab-teachers" class="tabpage hidden"><h3>👩‍🏫 Teacher Management</h3><p class="section-note">Choose a section below. Profiles and salary records stay private to academy administration.</p><div class="teacher-mode-switch"><button type="button" id="showTeacherProfiles">👩‍🏫 Teacher Details</button><button type="button" id="showTeacherManagement" class="secondary">📋 Teacher Directory &amp; Management</button></div><div id="teacherProfileMode"><p class="section-note">Private teacher directory. Only the authorized administrator can access these records.</p><div class="record"><h3>🔗 Individual Teacher Registration Links</h3><p class="section-note">Generate a private one-time link for each teacher. Submitted details are locked and visible only to admin.</p><div class="fields"><label>Teacher Name *<input id="inviteTeacherName" maxlength="120" required placeholder="Teacher full name"></label><label>Teacher Email ID *<input id="inviteTeacherEmail" type="email" maxlength="160" required placeholder="teacher@gmail.com"></label></div><p class="section-note">Only the teacher signed in with this verified email can open and submit the form.</p><button type="button" id="generateTeacherInvite">Generate Secure Teacher Link</button><p id="teacherInviteStatus" role="status"></p><div id="teacherInvites"></div></div><div class="record"><h3>📥 New Teacher Submissions</h3><button type="button" id="refreshTeacherSubmissions">Refresh Submissions</button><p id="teacherSyncStatus" role="status" aria-live="polite"></p><div id="teacherSubmissions"></div></div></div><div id="teacherManagementMode" hidden><h3>📋 Teacher Directory &amp; Salary Management</h3><p class="section-note">Manage assigned subjects, salary, attendance, and leave decisions here.</p><p class="section-note">All approved teachers are listed below. Tap ✏ Edit on a teacher to open editing <strong>inside that teacher's own card</strong>. The form stays closed at other times.</p>
+<div class="actions"><button id="save">✓ Save Changes</button><a class="btn secondary" id="previewBottom" href="courses.html?course=muallama" target="_blank" rel="noopener">↗ Preview</a></div><p id="status" class="status" role="status" aria-live="polite"></p></div><div id="tab-newcourse" class="tabpage hidden"><h2>➕ Add New Course</h2><p class="muted">Create a new programme and complete its details, syllabus, fees and timings.</p><label>New Course Name<input id="newCourseName" maxlength="100" placeholder="e.g. Girls Tajweed Class"></label><label>Course ID (generated automatically)<input id="newCourseId" maxlength="60" placeholder="Generated from course name" readonly></label><button type="button" id="createCourse">Create & Edit Course →</button> <button type="button" class="secondary" id="cancelNewCourse">← Back to Course List</button><p class="status" id="newCourseStatus"></p><p class="muted">New published courses appear automatically on the Explore All Courses page and in the Admission Form when those pages are opened or refreshed. The homepage always features only Muallama and Muballigha. You can unpublish courses later.</p></div>
+<div id="tab-finance" class="tabpage hidden" aria-labelledby="financeHubHeading">
+ <section class="section">
+  <h2 id="financeHubHeading">💳 Fees &amp; Salary Management</h2>
+  <p class="section-note">A single private Admin workspace to open existing student fee records, teacher salary registers, attendance-linked payroll, and course fee structures. Existing saved records remain unchanged.</p>
+  <div class="finance-hub-grid">
+   <article class="finance-hub-card">
+    <h3>🎓 Student Fees · 12-Month Ledger</h3>
+    <p>View students by class, choose a student, mark received fees as Paid, review pending months, and prepare fee receipts.</p>
+    <button type="button" id="financeOpenStudentFees">Open Student Fee Management →</button>
+   </article>
+   <article class="finance-hub-card">
+    <h3>👩‍🏫 Teacher Salary Register</h3>
+    <p>Review teacher-wise salary records, monthly paid/pending status, and existing monthly or yearly PDF reports.</p>
+    <button type="button" id="financeOpenSalaryRegister">Open Salary Register →</button>
+   </article>
+   <article class="finance-hub-card">
+    <h3>📅 Teacher Attendance &amp; Payroll</h3>
+    <p>Access the existing teacher attendance and salary payment records and download individual salary receipts.</p>
+    <button type="button" id="financeOpenTeacherPayroll">Open Teacher Payroll →</button>
+   </article>
+   <article class="finance-hub-card">
+    <h3>📚 Course Fee Structure</h3>
+    <p>Manage admission, tuition, exam and books fees from the current Course Fee Editor.</p>
+    <button type="button" id="financeOpenFeeStructure">Open Fee Structure →</button>
+   </article>
+  </div>
+  <p class="section-note" id="financeHubStatus" role="status" aria-live="polite">Choose a section above to open its existing management tools.</p>
+ </section>
+</div><div id="tab-fees" class="tabpage hidden"><h2>💰 Fee Structure</h2><p class="muted">Choose a course to edit its complete fee structure.</p><button type="button" id="goFees">Open Course Fee Editor →</button></div><div id="tab-teachers" class="tabpage hidden"><h3>👩‍🏫 Teacher Management</h3><p class="section-note">Choose a section below. Profiles and salary records stay private to academy administration.</p><div class="teacher-mode-switch"><button type="button" id="showTeacherProfiles">👩‍🏫 Teacher Details</button><button type="button" id="showTeacherManagement" class="secondary">📋 Teacher Directory &amp; Management</button></div><div id="teacherProfileMode"><p class="section-note">Private teacher directory. Only the authorized administrator can access these records.</p><div class="record"><h3>🔗 Individual Teacher Registration Links</h3><p class="section-note">Generate a private one-time link for each teacher. Submitted details are locked and visible only to admin.</p><div class="fields"><label>Teacher Name *<input id="inviteTeacherName" maxlength="120" required placeholder="Teacher full name"></label><label>Teacher Email ID *<input id="inviteTeacherEmail" type="email" maxlength="160" required placeholder="teacher@gmail.com"></label></div><p class="section-note">Only the teacher signed in with this verified email can open and submit the form.</p><button type="button" id="generateTeacherInvite">Generate Secure Teacher Link</button><p id="teacherInviteStatus" role="status"></p><div id="teacherInvites"></div></div><div class="record"><h3>📥 New Teacher Submissions</h3><button type="button" id="refreshTeacherSubmissions">Refresh Submissions</button><p id="teacherSyncStatus" role="status" aria-live="polite"></p><div id="teacherSubmissions"></div></div></div><div id="teacherManagementMode" hidden><h3>📋 Teacher Directory &amp; Salary Management</h3><p class="section-note">Manage assigned subjects, salary, attendance, and leave decisions here.</p><p class="section-note">All approved teachers are listed below. Tap ✏ Edit on a teacher to open editing <strong>inside that teacher's own card</strong>. The form stays closed at other times.</p>
 <div class="teacher-catalog-tools">
   <button type="button" id="toggleTeacherCatalog" class="secondary" aria-controls="teacherCatalogPanel" aria-expanded="false">📚 Edit Class-wise Subjects</button>
   <p class="section-note">Open only when you need to add or change class subjects.</p>
@@ -927,7 +962,7 @@ async function load(){
 }
 
 const safe=(s)=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-const tabs=['overview','academic','admissionSettings','courses','courseeditor','newcourse','fees','teachers','students','exams','applications','settings'];
+const tabs=['overview','academic','admissionSettings','courses','courseeditor','newcourse','finance','fees','teachers','students','exams','applications','settings'];
 const menu=$('sideMenu'),shade=$('menuShade'),toggle=$('menuToggle');
 function setMenu(open){menu.classList.toggle('open',open);shade.classList.toggle('hidden',!open);toggle.setAttribute('aria-expanded',String(open));toggle.textContent=open?'✕':'☰'}
 toggle.onclick=()=>setMenu(!menu.classList.contains('open'));shade.onclick=()=>setMenu(false);
@@ -1079,6 +1114,35 @@ async function setCourseAdmissionVisibility(name,visible){
 $('openHiringSettings').onclick=()=>{if(!active)return;switchTab('settings');setTimeout(()=>$('hiringSettings').scrollIntoView({behavior:'smooth',block:'start'}),180)};
 $('openPrincipalCeremonyAccess').onclick=()=>{if(!active)return;switchTab('settings');setTimeout(()=>$('principalCeremonyAccess').scrollIntoView({behavior:'smooth',block:'start'}),180)};
 $('openHomepageWinnersPanel').onclick=()=>{switchTab('exams');setTimeout(()=>$('homepageWinnersPanel').scrollIntoView({behavior:'smooth',block:'start'}),200)};
+
+// Finance Hub is only a navigator: existing student fees and teacher salary
+// handlers remain the single source of truth. No duplicate payments are made.
+async function openFinanceSection(target){
+ if(!active)return;
+ const status=$('financeHubStatus');
+ status.textContent='Opening the selected Academy finance section…';
+ try{
+  if(target==='studentFees'){
+   switchTab('students');
+   await renderRecords('students');
+   $('studentFeesPanel').scrollIntoView({behavior:'smooth',block:'start'});
+  }else if(target==='salaryRegister'||target==='teacherPayroll'){
+   switchTab('teachers');
+   showTeacherMode('management');
+   await loadTeacherDirectory();
+   $(target==='salaryRegister'?'teacherSalaryRegister':'teacherPayroll').scrollIntoView({behavior:'smooth',block:'start'});
+  }else if(target==='feeStructure'){
+   switchTab('fees');
+  }
+ }catch(error){
+  switchTab('finance');
+  status.textContent='Unable to open the selected section: '+(error?.message||String(error));
+ }
+}
+$('financeOpenStudentFees').onclick=()=>openFinanceSection('studentFees');
+$('financeOpenSalaryRegister').onclick=()=>openFinanceSection('salaryRegister');
+$('financeOpenTeacherPayroll').onclick=()=>openFinanceSection('teacherPayroll');
+$('financeOpenFeeStructure').onclick=()=>openFinanceSection('feeStructure');
 function switchTab(tab){if(tab==='settings'&&active){siteSettingsAdmin.load();principalCeremonyAccess.load();hiringBoardAdmin.load();}if(tab==='exams'&&active){examAdmin.load().catch(e=>{$('examEditorStatus').textContent='Could not load exam system: '+e.message});examAdmin.winners.load().catch(e=>{$('homepageWinnersStatus').textContent='Could not load homepage winners: '+e.message});competitionAdmin.load().catch(e=>{$('competitionStatus').textContent='Could not load competitions: '+e.message})}if(tab!=='teachers'){if($('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();if($('teacherCatalogPanel'))closeTeacherCatalog();}tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
 $('openNewCourse').onclick=()=>{
  $('newCourseName').value='';$('newCourseId').value='';$('newCourseStatus').textContent='';
