@@ -262,13 +262,13 @@ service cloud.firestore {
           || (request.resource.data.phase == 'countdown' && request.resource.data.startedAt == request.time)
         );
 
-      // Principal or Admin can cut the TRIAL only after the full 5 seconds.
+      // Principal or Admin can cut the TRIAL only after the full 10 seconds.
       // Admin access allows solo rehearsal; official launch remains unavailable.
       allow update: if documentId == 'trial' && (isLaunchPrincipal() || isAdmin())
         && resource.data.kind == 'trial'
         && resource.data.phase == 'countdown'
         && resource.data.startedAt is timestamp
-        && request.time >= resource.data.startedAt + duration.value(5, 's')
+        && request.time >= resource.data.startedAt + duration.value(10, 's')
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'phase','cutAt','cutBy','updatedAt','updatedBy'
         ])
@@ -321,7 +321,7 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/grandLaunch/officialControl).data.state == 'countdown'
         && get(/databases/$(database)/documents/grandLaunch/officialControl).data.startedAt is timestamp
         && request.time >= get(/databases/$(database)/documents/grandLaunch/officialControl).data.startedAt
-          + duration.value(5, 's')
+          + duration.value(10, 's')
         && request.resource.data.keys().hasOnly(['kind','phase','dateLocal','startedAt','launchedAt','launchedBy'])
         && request.resource.data.keys().hasAll(['kind','phase','dateLocal','startedAt','launchedAt','launchedBy'])
         && request.resource.data.kind == 'official'

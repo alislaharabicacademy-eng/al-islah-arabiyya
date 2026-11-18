@@ -92,7 +92,7 @@ test('Master arms/starts and Principal cuts once after countdown; official recor
   const finalCountdown=(await getDoc(doc(master,control))).data().startedAt;
   const finalRecord={...record,startedAt:finalCountdown};
   await assertFails(setDoc(doc(principal,official),finalRecord));
-  await new Promise(resolve=>setTimeout(resolve,5450));
+  await new Promise(resolve=>setTimeout(resolve,10450));
   await assertSucceeds(setDoc(doc(principal,official),finalRecord));
   const published=await assertSucceeds(getDoc(doc(master,official)));
   assert.equal(published.data().kind,'official');

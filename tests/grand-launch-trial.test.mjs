@@ -57,14 +57,14 @@ test('rehearsal is isolated from real one-time launch',()=>{
   assert.match(js,/isOfficial\?requestOfficialCut\(\):requestTrialCut\(\)/);
   assert.match(js,/hasPendingWrites/);
   assert.match(js,/role==='principal'/);
-  assert.match(js,/COUNTDOWN_MS=5000/);
+  assert.match(js,/COUNTDOWN_MS=10000/);
   assert.match(js,/updateDoc\(doc\(db,'grandLaunch','trial'\)/);
   assert.match(js,/if\(isOfficial\)\{renderOfficial\(\);return\}/);
   assert.match(js,/if\(!isOfficial\|\|role!=='principal'/);
   assert.doesNotMatch(html,/id="startOfficial"/);
-  assert.match(rules,/request\.time >= resource\.data\.startedAt \+ duration\.value\(5, 's'\)/);
+  assert.match(rules,/request\.time >= resource\.data\.startedAt \+ duration\.value\(10, 's'\)/);
 });
-test('secure, repeatable rehearsal: Admin starts and Principal or host cuts after 5 seconds',async()=>{
+test('secure, repeatable rehearsal: Admin starts and Principal or host cuts after 10 seconds',async()=>{
   const env=await initializeTestEnvironment({
     projectId:'demo-grand-launch-trial',
     firestore:{rules}
@@ -120,7 +120,7 @@ test('secure, repeatable rehearsal: Admin starts and Principal or host cuts afte
     await assertFails(updateDoc(doc(unverified,trial),toCut));
     await assertFails(updateDoc(doc(principal,trial),toCut)); // too early
     await assertFails(updateDoc(doc(principal,trial),{...toCut,startedAt:null})); // tamper
-    await new Promise(resolve=>setTimeout(resolve,5350));
+    await new Promise(resolve=>setTimeout(resolve,10350));
     await assertSucceeds(updateDoc(doc(principal,trial),toCut));
     await assertFails(updateDoc(doc(principal,trial),toCut)); // cannot cut twice
     await assertFails(setDoc(doc(principal,trial),base)); // cannot reset
@@ -130,7 +130,7 @@ test('secure, repeatable rehearsal: Admin starts and Principal or host cuts afte
     const hostCut={phase:'cut',cutAt:serverTimestamp(),cutBy:'admin-test',
       updatedAt:serverTimestamp(),updatedBy:'admin-test'};
     await assertFails(updateDoc(doc(admin,trial),hostCut)); // host also waits for countdown
-    await new Promise(resolve=>setTimeout(resolve,5350));
+    await new Promise(resolve=>setTimeout(resolve,10350));
     await assertSucceeds(updateDoc(doc(admin,trial),hostCut)); // solo host trial
     await assertFails(updateDoc(doc(admin,trial),hostCut)); // no second cut this round
     await assertSucceeds(setDoc(doc(admin,trial),base)); // repeatable trial
