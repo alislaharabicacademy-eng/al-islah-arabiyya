@@ -15,7 +15,7 @@ This is the **repeatable rehearsal only** for the Women's Online Madrasa website
 ## Principal (mobile)
 1. Open `grand-launch.html?role=principal`.
 2. Sign in with the exact verified Google account that the Host saved; remain on the page.
-3. Wait for 5 → 1 and the appearance of the ribbon.
+3. Wait for 10 → 1 and the appearance of the ribbon.
 4. Tap **CUT THE RIBBON** **or the scissors icon** when enabled. The Host's shared screen will animate. If the button fails, report the message shown on the page to the Admin.
 
 ## Safety / verification
