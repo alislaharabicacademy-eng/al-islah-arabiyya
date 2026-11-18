@@ -442,16 +442,16 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
     <button type="button" id="financeOpenFeeStructure">Open Fee Structure →</button>
    </article>
    <article class="finance-hub-card">
-    <h3>🧮 Automatic Fee Split &amp; Teacher Salary</h3>
-    <p>Calculate Muallama (₹500 → ₹250 teacher), Muballigha (₹500 → ₹200 each for two teachers), and Maktab (₹400 → ₹200 teacher) from student fee records.</p>
+    <h3>🧮 Customizable Course Fees &amp; Teacher Salary</h3>
+    <p>Configure different salary methods for each course, combine the same teacher’s salary across courses, and preserve effective-dated history.</p>
     <button type="button" id="financeOpenSalarySplit">Open Salary Split Calculator →</button>
    </article>
   </div>
   <p class="section-note" id="financeHubStatus" role="status" aria-live="polite">Choose a section above to open its existing management tools.</p>
   <section class="section" id="salarySplitPanel" hidden style="margin-top:20px">
-   <h3>🧮 Monthly Teacher Salary &amp; Academy Fee Split</h3>
-   <p class="section-note">Auto-calculated from current teacher class/subject assignments and the student's saved 12-month fee ledger. This is a read-only salary estimate; the existing payroll remains the official record of actual salary payments.</p>
-   <p><strong>Per-student rules:</strong> Muallama ₹500 → 1 teacher ₹250 + academy ₹250 · Muballigha ₹500 → 2 teachers ₹200 each + academy ₹100 · Maktab ₹400 → 1 teacher ₹200 + academy ₹200. Course Fee Structure's monthly fee takes priority when set.</p>
+   <h3>🧮 Monthly Course-Wise Teacher Salary &amp; Academy Fee Split</h3>
+   <p class="section-note">Set each course’s own salary rules, effective months, teachers and shares below. The calculator uses the saved student fees and combines the same teacher’s courses. The existing salary payment ledger remains unchanged.</p>
+   <p>Default rules still work until customized: Muallama ₹500 → ₹250 teacher / ₹250 Academy; Muballigha ₹500 → ₹200 + ₹200 teachers / ₹100 Academy; Maktab ₹400 → ₹200 teacher / ₹200 Academy. Aalima and other new courses require their own approved salary rule.</p>
    <div class="fields">
     <label>Fee Month<input type="month" id="salarySplitMonth"></label>
     <div class="actions" style="align-items:end">
