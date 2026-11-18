@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - 'salary-split-*.js'
+      - 'salary-rules-utils.js'
+      - 'salary-rule-editor-admin.js'
+      - 'tests/salary-rules.test.mjs'
+      - 'firestore.rules'
       - 'admin.html'
       - 'tests/salary-split.test.mjs'
       - '.github/workflows/salary-split-tests.yml'
@@ -11,6 +15,10 @@ on:
     branches: [main]
     paths:
       - 'salary-split-*.js'
+      - 'salary-rules-utils.js'
+      - 'salary-rule-editor-admin.js'
+      - 'tests/salary-rules.test.mjs'
+      - 'firestore.rules'
       - 'admin.html'
       - 'tests/salary-split.test.mjs'
 
@@ -23,4 +31,4 @@ jobs:
         with:
           node-version: '22'
       - name: Verify fee split calculation and read-only admin dashboard
-        run: node --test tests/salary-split.test.mjs tests/fees-salary-admin-navigation.test.mjs
+        run: node --test tests/salary-split.test.mjs tests/salary-rules.test.mjs tests/fees-salary-admin-navigation.test.mjs
