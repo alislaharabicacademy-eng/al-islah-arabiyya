@@ -62,9 +62,9 @@ test('rehearsal is isolated from real one-time launch',()=>{
   assert.match(js,/if\(isOfficial\)\{renderOfficial\(\);return\}/);
   assert.match(js,/if\(!isOfficial\|\|role!=='principal'/);
   assert.doesNotMatch(html,/id="startOfficial"/);
-  assert.match(rules,/request\.time >= resource\.data\.startedAt \+ duration\.value\(5, 's'\)/);
+  assert.match(rules,/request\.time >= resource\.data\.startedAt \+ duration\.value\(10, 's'\)/);
 });
-test('secure, repeatable rehearsal: Admin starts and Principal or host cuts after 5 seconds',async()=>{
+test('secure, repeatable rehearsal: Admin starts and Principal or host cuts after 10 seconds',async()=>{
   const env=await initializeTestEnvironment({
     projectId:'demo-grand-launch-trial',
     firestore:{rules}
