@@ -10,7 +10,7 @@ const role=params.get('role')==='principal'?'principal':'host';
 // Rehearsals are reversible. Only mode=official records the actual one-time event.
 const isOfficial=params.get('mode')==='official';
 const isMainPreview=!isOfficial && params.get('mode')==='main-preview';
-const COUNTDOWN_MS=5000;
+const COUNTDOWN_MS=10000;
 let auth,db,me,trial=null,unsubscribe=null,authorized=false,principalEmail='',experiencedCountdown=false,cutPlayed=false,cutPending=false,previousPhase='',lastDigit=0,redirectTimer=null,successTimer=null;
 let officialControl=null,officialRecord=null,officialControlLoaded=false,officialRecordLoaded=false;
 let officialUnsubscribes=[],officialSeenCountdown=false,masterVerified=false;
@@ -202,7 +202,7 @@ function render(){
   const phase=trial.phase;
   if(phase==='idle'){
     if(previousPhase!=='idle')resetVisual();
-    message(role==='host'?(isMainPreview?'Main ceremony preview ready. Start 5 → 1 and practise the complete ribbon-cut reveal; Reset remains available.':'Ready to rehearse. Save Principal access, then start the 5-second countdown.'):'Waiting for the Host to start the rehearsal countdown.');
+    message(role==='host'?(isMainPreview?'Main ceremony preview ready. Start 10 → 1 and practise the complete ribbon-cut reveal; Reset remains available.':'Ready to rehearse. Save Principal access, then start the 10-second countdown.'):'Waiting for the Host to start the rehearsal countdown.');
   }else if(phase==='countdown'){
     experiencedCountdown=true;
     if(previousPhase!=='countdown'){
@@ -401,7 +401,7 @@ async function startOfficial(){
   if(officialIndiaDate()!=='2026-11-21'){
     message('Final opening is locked to Saturday, 21 November 2026, India time.',true);return;
   }
-  if(!confirm('START the REAL official countdown? This is NOT a trial. The Principal can permanently inaugurate the website after 5 seconds.'))return;
+  if(!confirm('START the REAL official countdown? This is NOT a trial. The Principal can permanently inaugurate the website after 10 seconds.'))return;
   const button=$('officialStart');button.disabled=true;
   try{
     await updateDoc(doc(db,'grandLaunch','officialControl'),{
@@ -459,7 +459,7 @@ async function requestTrialCut(){
   if(!authorized||!(role==='host'||role==='principal')||cutPending||
      trial?.phase!=='countdown'||!trial.startedAt?.toMillis)return;
   if(Date.now()-trial.startedAt.toMillis()<COUNTDOWN_MS){
-    message('Finish the 5–4–3–2–1 countdown before cutting.',true);return;
+    message('Finish the 10–9–8–7–6–5–4–3–2–1 countdown before cutting.',true);return;
   }
   cutPending=true;
   $('cutRibbon').disabled=true;
