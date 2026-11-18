@@ -7,10 +7,10 @@ This is the **repeatable rehearsal only** for the Women's Online Madrasa website
 2. **For a two-device rehearsal:** In the Academy Admin Panel, open **Management → Principal Login · Ceremony**. Enter the Principal's own verified Google email and click **Save Principal Login Access**. The Host page also has a Save Principal Access field. Never use another person's account. **For one-device trial:** you can skip Principal registration.
 3. Privately send the Principal this page: `grand-launch.html?role=principal`.
 4. Share the **Host Browser Tab** on Google Meet or Zoom, ideally full-screen. If you play a separate intro video, enable sharing its audio. No audio is required for the countdown itself.
-5. Press **Start 5-second Trial**. Both browsers synchronise to the Firestore timestamp and show **5 → 4 → 3 → 2 → 1**.
+5. Press **Start 10-second Trial**. Both browsers synchronise to the Firestore timestamp and show **10 → 9 → 8 → 7 → 6 → 5 → 4 → 3 → 2 → 1**.
 6. After countdown, the Principal's phone displays **CUT THE RIBBON**. The Host can also click **TEST CUT HERE · HOST TRIAL** or tap the scissors on the shared Host screen to practise alone. The Principal's verified login is required for the two-device ceremony, not for an Admin-only rehearsal.
 7. The Host screen shows the scissors, splitting ribbon, and confetti, then opens the existing homepage automatically. This is a *trial homepage reveal*, not a website publication or official launch.
-8. To rehearse again, return to `grand-launch.html?role=host` and press **Reset & Try Again**, then **Start 5-second Trial**.
+8. To rehearse again, return to `grand-launch.html?role=host` and press **Reset & Try Again**, then **Start 10-second Trial**.
 
 ## Principal (mobile)
 1. Open `grand-launch.html?role=principal`.
@@ -21,7 +21,7 @@ This is the **repeatable rehearsal only** for the Women's Online Madrasa website
 ## Safety / verification
 - Trial and Official Launch are **not** the same data. This change contains no official launch button and cannot mark the Academy officially inaugurated.
 - Admin can reset a trial; Principal cannot reset, edit permissions, or change any Academy data.
-- The verified Principal **or an authorised Admin running a solo trial** can change the trial state from `countdown` to `cut`. Firestore security rules enforce a 5-second wait and prevent a second cut in the same round. The Host's control is labelled **TEST CUT** and never performs an official inauguration.
+- The verified Principal **or an authorised Admin running a solo trial** can change the trial state from `countdown` to `cut`. Firestore security rules enforce a 10-second wait and prevent a second cut in the same round. The Host's control is labelled **TEST CUT** and never performs an official inauguration.
 - The Host/Admin can repeat a new round by resetting or starting the countdown again.
 - The principal's Gmail must already be an eligible Google account and Firebase Google Authentication must be enabled for the project.
 - Google Meet / Zoom screen share, browser audio/video, and real smartphone operation still need human validation. Test Chrome desktop and Android mobile, including loss of network and a second tab.
@@ -60,7 +60,7 @@ This is intentionally **NOT** the one-time official ceremony. It looks and behav
 1. Host (authorised Academy Admin) opens `grand-launch.html?role=host&mode=main-preview` in a desktop browser; a **MAIN CEREMONY PREVIEW · NOT OFFICIAL** banner remains visible.
 2. Host privately shares the `Open / share Principal control page` link from the preview screen; it automatically preserves `mode=main-preview`.
 3. Principal signs in with the approved Principal Google account; verified Master Admin may act as authorised backup. Normal Admin can rehearse from Host, but cannot impersonate the Principal.
-4. On Google Meet / Zoom, Host shares the preview browser tab. Click **Start Main Ceremony Preview**. Both screens show 5 → 4 → 3 → 2 → 1.
+4. On Google Meet / Zoom, Host shares the preview browser tab. Click **Start Main Ceremony Preview**. Both screens show 10 → 9 → 8 → 7 → 6 → 5 → 4 → 3 → 2 → 1.
 5. Principal clicks the ribbon on her own screen. After the Firestore server confirms a valid cut, the Host shows the scissors, split ribbon, confetti, and a **full-size live homepage preview** inside a framed browser view.
 6. The Host sees a permanent **MAIN CEREMONY PREVIEW · NOT OFFICIAL** strip above the homepage and a **Reset & Rehearse** button. Clicking it resets rehearsal in Firestore and closes the preview, ready for another test. The Principal cannot reset or change the Principal access settings.
 7. You can switch back to the normal Trial mode using **Return to Regular Trial** on the Host page. The two rehearsal styles share the same trial state and should not be run simultaneously on different hosts.
@@ -82,7 +82,7 @@ This is intentionally **NOT** the one-time official ceremony. It looks and behav
 
 ### On Saturday, 21 November 2026 — actual event
 1. Once the parents are watching the shared Host screen and the Principal is signed in, Master Admin clicks **START FINAL COUNTDOWN** and confirms.
-2. Both displays show **5 → 4 → 3 → 2 → 1**. Only the Principal/Master-backup screen can execute the real cut. The Host screen scissors are **not clickable** in Official mode.
+2. Both displays show **10 → 9 → 8 → 7 → 6 → 5 → 4 → 3 → 2 → 1**. Only the Principal/Master-backup screen can execute the real cut. The Host screen scissors are **not clickable** in Official mode.
 3. The Principal clicks **CUT THE OFFICIAL RIBBON · ONE TIME**, confirms the *irreversible* action and waits for the secure server response. The single `grandLaunch/official` document records `launchedAt` (server timestamp), `launchedBy`, and the ceremony date.
 4. Only after successful server confirmation, the Host displays the scissors splitting the ribbon, golden confetti, **WEBSITE OFFICIALLY LAUNCHED**, then reveals the real homepage inside the presentation screen.
 5. Once the official record exists, **no client account can edit, delete or reset it**. Reloading the Host screen shows the saved official inauguration status without replaying the ceremony.
