@@ -8,7 +8,7 @@ test('Admin menu contains a dedicated Fees & Salary Management hub',()=>{
   assert.match(admin,/data-tab="finance">💳 Fees &amp; Salary Management<\/button>/);
   assert.match(admin,/id="tab-finance" class="tabpage hidden"/);
   assert.match(admin,/id="financeHubHeading"/);
-  assert.match(admin,/\b'finance'\b/);
+  assert.ok(admin.includes("'finance'"), 'finance must be registered as an Admin tab');
 });
 
 test('Finance hub opens real existing ledgers and payroll without copying their state',()=>{
