@@ -44,7 +44,7 @@ export function initSalaryRuleEditor({db,allow,onSaved}){
   if(id&&![...select.options].some(o=>o.value===id))select.add(new Option('Archived / unavailable teacher',id));
   select.value=id;label.append(select);
   const amountLabel=document.createElement('label');amountLabel.style.cssText='flex:1;min-width:130px';
-  amountLabel.textContent='Share / Salary';
+  amountLabel.textContent=method.value==='percentage'?'Teacher (%)':method.value==='fixed_monthly'?'Monthly Salary (₹)':'Per Student (₹)';
   const amount=document.createElement('input');amount.type='number';amount.min='0.01';amount.step='0.01';
   amount.max=method.value==='percentage'?'100':'1000000';amount.value=value;amount.className='srValue';amountLabel.append(amount);
   const remove=document.createElement('button');remove.type='button';remove.className='secondary';remove.textContent='Remove';remove.onclick=()=>{box.remove();previewDraft()};
@@ -63,7 +63,7 @@ export function initSalaryRuleEditor({db,allow,onSaved}){
    :method.value==='fixed_monthly'
    ?'Contracted monthly salary, even if no students have paid. Does not mark a payment.'
    :'₹ for each student who pays full fees. Partial payments are divided proportionally.';
-  for(const number of rows.querySelectorAll('.srValue'))number.max=method.value==='percentage'?'100':'1000000';
+  for(const box of rows.querySelectorAll('.record')){const number=box.querySelector('.srValue');number.max=method.value==='percentage'?'100':'1000000';const label=box.querySelectorAll('label')[1];if(label?.firstChild)label.firstChild.textContent=method.value==='percentage'?'Teacher (%)':method.value==='fixed_monthly'?'Monthly Salary (₹)':'Per Student (₹)';}
   try{
    const d=draft(),summary=validateSalaryRule(d);
    for(const a of d.allocations){
@@ -103,7 +103,7 @@ export function initSalaryRuleEditor({db,allow,onSaved}){
  }
  function updateCourseOptions(){
   const old=course.value,options=new Map();
-  for(const c of courses)options.set(canonicalSalaryCourse(c.id,courses),String(c.name||c.id));
+  for(const c of courses){if(!String(c.name||'').trim()||c.id==='admission-form-config')continue;options.set(canonicalSalaryCourse(c.id,courses),String(c.name));}
   for(const [id,p] of Object.entries(DEFAULT_SALARY_SPLITS))if(!options.has(id))options.set(id,p.label);
   course.replaceChildren(new Option('Select course',''));
   for(const [id,title] of [...options].filter(([id])=>!!id).sort((a,b)=>a[1].localeCompare(b[1])))course.add(new Option(title,id));
