@@ -1,0 +1,26 @@
+name: Academy Fee Split & Salary Calculator Tests
+
+on:
+  pull_request:
+    paths:
+      - 'salary-split-*.js'
+      - 'admin.html'
+      - 'tests/salary-split.test.mjs'
+      - '.github/workflows/salary-split-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'salary-split-*.js'
+      - 'admin.html'
+      - 'tests/salary-split.test.mjs'
+
+jobs:
+  salary-split:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify fee split calculation and read-only admin dashboard
+        run: node --test tests/salary-split.test.mjs tests/fees-salary-admin-navigation.test.mjs
