@@ -202,7 +202,7 @@ function render(){
   const phase=trial.phase;
   if(phase==='idle'){
     if(previousPhase!=='idle')resetVisual();
-    message(role==='host'?(isMainPreview?'Main ceremony preview ready. Start 10 → 1 and practise the complete ribbon-cut reveal; Reset remains available.':'Ready to rehearse. Save Principal access, then start the 10-second countdown.'):'Waiting for the Host to start the rehearsal countdown.');
+    message(role==='host'?(isMainPreview?'Main ceremony preview ready. Start 10 → 9 → 8 → 7 → 6 → 5 → 4 → 3 → 2 → 1 and practise the complete ribbon-cut reveal; Reset remains available.':'Ready to rehearse. Save Principal access, then start the 10-second countdown.'):'Waiting for the Host to start the rehearsal countdown.');
   }else if(phase==='countdown'){
     experiencedCountdown=true;
     if(previousPhase!=='countdown'){
