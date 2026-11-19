@@ -150,7 +150,7 @@ footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,createUserWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
-import{getFirestore,collection,doc,getDoc,getDocs,query,where,limit}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import{getFirestore,collection,doc,getDoc,getDocs,query,where,onSnapshot}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{photoAvatar}from'./profile-photo.js';
 import{initAdminStudentPreview}from'./admin-student-preview.js';
 import{attachPersonalIdCard}from'./id-card-personal.js';
@@ -258,9 +258,41 @@ const identityCard=$('studentIdentityCard'),identityStatus=$('studentIdentitySta
 const authCard=$('studentAuthCard'),verification=$('emailVerifyNotice'),dashboard=$('studentPrivateDashboard');
 const authStatus=$('studentAuthStatus'),verifyStatus=$('studentVerifyStatus'),dashboardStatus=$('studentDashboardStatus');
 let auth=null,db=null,loadingToken=0,activeUser=null,identityGate=null,accountChosen=false;
-let adminStudentPreview=null;
+let adminStudentPreview=null,stopStudentGrantListener=null,watchedStudentGrantEmail='';
+function stopStudentGrantWatch(){
+ if(stopStudentGrantListener){stopStudentGrantListener();stopStudentGrantListener=null}
+ watchedStudentGrantEmail='';
+}
+/* A student who has already entered ALIA ID + DOB should not have to log out
+ * or ask the Admin to approve again. Listen only to this VERIFIED email's
+ * enabled grants; the server-side Firestore rule still protects access.
+ * No unverified student record is exposed and no DOB-only login is allowed. */
+function watchApprovedStudentGrants(user){
+ const email=safeEmail(user?.email);
+ if(!db||!user?.emailVerified||!email)return;
+ if(stopStudentGrantListener&&watchedStudentGrantEmail===email)return;
+ stopStudentGrantWatch();
+ watchedStudentGrantEmail=email;
+ let initial=true;
+ stopStudentGrantListener=onSnapshot(
+  query(collection(db,'studentAccess'),where('email','==',email),where('enabled','==',true)),
+  ()=>{
+   if(initial){initial=false;return} // Initial contents are loaded by loadPrivateDashboard.
+   if(!identityGate||auth?.currentUser?.uid!==user.uid)return;
+   // New approval, changes to fees/teachers, or revoked access:
+   // rebuild after clearing the previous private card.
+   void loadPrivateDashboard(user,++loadingToken);
+  },
+  error=>{
+   stopStudentGrantWatch();
+   if(auth?.currentUser?.uid===user.uid&&identityGate)
+    dashMessage('Live access updates are unavailable ('+(error.code||'network')+'). Tap Refresh Dashboard to check again.',true);
+  }
+ );
+}
 function identityMessage(value,error=false){identityStatus.className='status'+(error?' error':'');identityStatus.textContent=value}
 function showEmailStep(){
+ stopStudentGrantWatch();
  ++loadingToken;identityGate=null;accountChosen=false;adminStudentPreview?.hide();
  $('studentIdentityDOB').value='';
  identityCard.hidden=true;authCard.hidden=false;verification.hidden=true;dashboard.hidden=true;
@@ -273,6 +305,7 @@ function showEmailStep(){
  authCard.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function showIdentityStep(){
+ stopStudentGrantWatch();
  const user=auth?.currentUser;
  if(!user){showEmailStep();return}
  if(!user.emailVerified){openAuthenticatedState(user);return}
@@ -285,6 +318,7 @@ function showIdentityStep(){
  identityCard.scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function chooseAnotherGoogleAccount(){
+ stopStudentGrantWatch();
  ++loadingToken;identityGate=null;accountChosen=false;
  try{
   if(auth?.currentUser)await signOut(auth);
@@ -328,6 +362,7 @@ function showAuthTab(mode){
 $('authTabSignIn').onclick=()=>showAuthTab('signin');
 $('authTabCreate').onclick=()=>showAuthTab('create');
 function openAuthenticatedState(user){
+ stopStudentGrantWatch();
  identityCard.hidden=true;
  authCard.hidden=true;verification.hidden=!user||user.emailVerified;
  dashboard.hidden=true;adminStudentPreview?.hide();
@@ -354,7 +389,9 @@ async function loadPrivateDashboard(user,token){
   await user.getIdToken(true);
   const email=safeEmail(user.email);
   if(!user.emailVerified||!email)throw Error('Email verification is required.');
-  const snap=await getDocs(query(collection(db,'studentAccess'),where('email','==',email),where('enabled','==',true),limit(30)));
+  watchApprovedStudentGrants(user);
+  // Avoid a hidden 30-student cutoff for guardians who oversee many students.
+  const snap=await getDocs(query(collection(db,'studentAccess'),where('email','==',email),where('enabled','==',true)));
   if(token!==loadingToken)return;
   if(snap.empty){
    dashMessage('🚫 This Student ID is not approved for '+email+'. Tap Change Email to choose its approved account, or ask the Madrasa Admin to approve the selected email in Student Details → Student Account Login.',true);
@@ -511,6 +548,7 @@ $('studentSendVerification').onclick=async()=>{
 };
 $('studentVerificationRetry').onclick=refreshAuthState;
 async function logout(){
+ stopStudentGrantWatch();
  ++loadingToken;activeUser=null;identityGate=null;accountChosen=false;adminStudentPreview?.hide();
  try{await signOut(auth)}catch(err){dashMessage(authError(err),true)}
  $('studentLoginPassword').value='';$('studentAccountCards').replaceChildren();
@@ -529,6 +567,7 @@ try{
   if(!user.emailVerified){openAuthenticatedState(user);return}
   if(await adminStudentPreview.isAdmin(user)){
    if(token!==loadingToken||auth.currentUser?.uid!==user.uid)return;
+   stopStudentGrantWatch();
    authCard.hidden=true;identityCard.hidden=true;verification.hidden=true;dashboard.hidden=true;
    await adminStudentPreview.show(user);
    return;
