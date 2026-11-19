@@ -1,0 +1,39 @@
+name: Deploy Firebase Storage Rules
+
+# Storage authorization changes require deployment separately from Firestore.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'storage.rules'
+      - 'firebase.json'
+      - '.github/workflows/deploy-storage-rules.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: firebase-storage-rules
+  cancel-in-progress: false
+
+jobs:
+  deploy-storage-rules:
+    runs-on: ubuntu-latest
+    environment: firebase-rules
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate with Google Cloud using existing keyless identity
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: al-islah-arabic-academy
+          workload_identity_provider: projects/768903195557/locations/global/workloadIdentityPools/al-islah-github-deployment/providers/al-islah-github-actions
+          service_account: github-firebase-rules-deployer@al-islah-arabic-academy.iam.gserviceaccount.com
+          create_credentials_file: true
+          export_environment_variables: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Deploy verified Academy Storage Rules
+        run: npx --yes firebase-tools@latest deploy --only storage --project al-islah-arabic-academy --non-interactive
