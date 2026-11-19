@@ -4,6 +4,8 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#103d2d">
 <title>Official Letterhead Studio | Al Islah Arabic Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--forest:#113e2f;--deep:#0b251e;--gold:#be9a56;--ink:#1d342a;--muted:#64746a}
 *{box-sizing:border-box}
@@ -21,10 +23,22 @@ body{margin:0;background:#edf2ed;color:var(--ink);font:15px/1.6 system-ui,-apple
 .editor h2{font:700 24px Georgia,serif;color:var(--forest);margin:0 0 4px}
 .editor p{font-size:13px;color:#65756b;margin:0 0 12px}
 label{display:block;margin-top:13px;font-size:13px;font-weight:750;color:#2a4b3a}
-input,textarea{display:block;width:100%;padding:11px 12px;margin-top:5px;background:#fcfffd;border:1px solid #bfd2c4;border-radius:9px;color:#213c2b;font:inherit;outline-offset:2px}
-input:focus,textarea:focus{border-color:#237a58;outline:2px solid #237a5822}
+input,textarea,select{display:block;width:100%;padding:11px 12px;margin-top:5px;background:#fcfffd;border:1px solid #bfd2c4;border-radius:9px;color:#213c2b;font:inherit;outline-offset:2px}
+input:focus,textarea:focus,select:focus{border-color:#237a58;outline:2px solid #237a5822}
 textarea{resize:vertical;min-height:205px;line-height:1.65}
 label small{display:block;color:#718376;font-weight:400;margin-top:3px}
+.language-choice{background:#f2f7ef;border:1px solid #d2e1cf;border-radius:12px;padding:14px;margin:15px 0 8px}
+.language-choice label{margin:0}.language-choice select{font-size:16px;font-weight:750;background:#fff}
+.language-choice p{margin:8px 0 0;font-size:12px}
+.paper[data-language="ta"] .letter-content{font-family:'Noto Sans Tamil','Latha','Nirmala UI',sans-serif;line-height:1.85}
+.paper[data-language="ar"] .letter-content{font-family:'Noto Naskh Arabic','Noto Sans Arabic','Amiri',serif;direction:rtl;text-align:right}
+.paper[data-language="ar"] .letter-body{font-size:17px;line-height:2.05}
+.paper[data-language="ar"] .recipient,.paper[data-language="ar"] .subject,.paper[data-language="ar"] .salutation{font-size:17px}
+.paper[data-language="ar"] .signoff{margin-left:auto;margin-right:0}
+.paper[data-language="ar"] .meta{direction:rtl}
+.paper[data-language="ta"] .letter-body{line-height:1.95}
+#letterTo[dir="rtl"],#letterSubject[dir="rtl"],#letterGreeting[dir="rtl"],#letterBody[dir="rtl"],#letterClosing[dir="rtl"]{text-align:right;font-family:'Noto Naskh Arabic',serif;font-size:17px;line-height:1.9}
+#letterTo[lang="ta"],#letterSubject[lang="ta"],#letterGreeting[lang="ta"],#letterBody[lang="ta"],#letterClosing[lang="ta"]{font-family:'Noto Sans Tamil',sans-serif}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}
 button{border:0;background:var(--forest);color:#fff;padding:12px 17px;font:700 14px system-ui;border-radius:10px;cursor:pointer;min-height:44px}
@@ -74,41 +88,42 @@ button:disabled{opacity:.5;cursor:not-allowed}
 }
 </style></head>
 <body>
-<header class="app-header"><div><h1>✦ Official Letterhead Studio</h1><p>Al Islah Arabic Academy · Admin-only letters with principal signature</p></div><a href="admin.html">← Admin Dashboard</a></header>
+<header class="app-header"><div><h1>✦ Official Letterhead Studio</h1><p data-i18n="headerDesc">Al Islah Arabic Academy · Admin-only letters with principal signature</p></div><a href="admin.html">← Admin Dashboard</a></header>
 <div id="gate" role="status"><h2>Checking administrator access…</h2><p>Sign in to the Academy admin dashboard first, then open this page.</p><a href="admin.html">Open Admin Login →</a></div>
 <p class="notice" id="notice" hidden><strong>Official document:</strong> The Academy logo, institute contact details, principal name and exact uploaded signature are loaded from Website Settings. Letter content is only held on this page; it is not automatically saved to Firestore.</p>
 <main id="workspace" class="workspace" hidden>
 <section class="editor" aria-label="Compose official letter">
-<h2>Create a Letter</h2><p>Enter date, subject and your content. The A4 preview updates automatically.</p>
+<h2 data-i18n="createHeading">Create a Letter</h2><p data-i18n="editorDesc">Enter date, subject and your content. The A4 preview updates automatically.</p>
+<div class="language-choice"><label for="letterLanguage" data-i18n="languageLabel">Letter Language</label><select id="letterLanguage" aria-label="Letter Language"><option value="en">English</option><option value="ta">தமிழ் (Tamil)</option><option value="ar">العربية (Arabic)</option></select><p data-i18n="languageHint">Switching language updates the layout, default greeting and letter labels. It does not automatically translate your own writing.</p></div>
 <div class="two">
-<label>Date *<input id="letterDate" type="date" required></label>
-<label>Reference No. <input id="letterRef" maxlength="55" placeholder="Optional"></label>
+<label><span data-i18n="dateLabel">Date *</span><input id="letterDate" type="date" required></label>
+<label><span data-i18n="referenceLabel">Reference No.</span><input id="letterRef" maxlength="55" placeholder="Optional" data-i18n-placeholder="referencePlaceholder"></label>
 </div>
-<label>To / Recipient <input id="letterTo" maxlength="200" placeholder="Parents / Students / Staff"></label>
-<label>Subject / Topic *<input id="letterSubject" maxlength="240" placeholder="Enter letter topic"></label>
-<label>Greeting <input id="letterGreeting" maxlength="150" value="Assalamu Alaikum wa Rahmatullahi wa Barakatuh,"></label>
-<label>Letter Content *<textarea id="letterBody" maxlength="5000" placeholder="Type the full letter content here. Paragraphs and line breaks will be kept exactly as entered. Tamil and English are supported."></textarea><small>Content is not saved automatically. Copy it elsewhere if you need to keep a draft.</small></label>
-<label>Closing <input id="letterClosing" maxlength="160" value="JazakAllahu Khairan."></label>
-<div class="actions"><button id="printLetter" type="button">🖨 Print / Save Signed PDF</button><button id="sampleLetter" type="button" class="secondary">Fill Sample</button><button id="clearLetter" type="button" class="secondary">Clear</button></div>
+<label><span data-i18n="recipientLabel">To / Recipient</span><input id="letterTo" maxlength="200" placeholder="Parents / Students / Staff" data-i18n-placeholder="recipientPlaceholder"></label>
+<label><span data-i18n="subjectLabel">Subject / Topic *</span><input id="letterSubject" maxlength="240" placeholder="Enter letter topic" data-i18n-placeholder="subjectPlaceholder"></label>
+<label><span data-i18n="greetingLabel">Greeting</span><input id="letterGreeting" maxlength="150" value="Assalamu Alaikum wa Rahmatullahi wa Barakatuh,"></label>
+<label><span data-i18n="bodyLabel">Letter Content *</span><textarea id="letterBody" maxlength="5000" placeholder="Type the full letter content here. Paragraphs and line breaks are preserved." data-i18n-placeholder="bodyPlaceholder"></textarea><small data-i18n="draftHint">Content is not saved automatically. Copy it elsewhere if you need to keep a draft.</small></label>
+<label><span data-i18n="closingLabel">Closing</span><input id="letterClosing" maxlength="160" value="JazakAllahu Khairan."></label>
+<div class="actions"><button id="printLetter" type="button" data-i18n="printButton">🖨 Print / Save Signed PDF</button><button id="sampleLetter" type="button" class="secondary" data-i18n="sampleButton">Fill Sample</button><button id="clearLetter" type="button" class="secondary" data-i18n="clearButton">Clear</button></div>
 <div id="status" role="status"></div>
 </section>
 <section class="preview" aria-label="A4 letter preview">
-<div class="preview-header"><h2>Live A4 Preview</h2><span>Official letterhead · Portrait</span></div>
+<div class="preview-header"><h2 data-i18n="previewHeading">Live A4 Preview</h2><span data-i18n="previewHint">Official letterhead · Portrait</span></div>
 <div class="preview-surface">
-<article id="paper" class="paper" aria-label="Official Academy letter">
+<article id="paper" class="paper" data-language="en" lang="en" aria-label="Official Academy letter">
 <img src="logo-transparent.svg" alt="" class="paper-watermark" aria-hidden="true">
 <div class="masthead"><img src="logo-transparent.svg" alt="Academy logo"><div class="branding"><h2 id="brandName">Al Islah Arabic Academy</h2><div class="subtitle" id="brandSubtitle">Women's Online Madrasa</div><div class="contact" id="brandContact"></div></div></div>
 <div class="gold-rule"></div>
 <div class="letter-content">
-<div class="meta"><div id="refRow" hidden><strong>Ref: </strong><span id="pvRef"></span></div><div><strong>Date: </strong><span id="pvDate"></span></div></div>
+<div class="meta"><div id="refRow" hidden><strong data-i18n="refOnPaper">Ref: </strong><span id="pvRef"></span></div><div><strong data-i18n="dateOnPaper">Date: </strong><span id="pvDate"></span></div></div>
 <div id="pvTo" class="recipient" hidden></div>
-<p id="subjectRow" class="subject"><strong>Subject: </strong><span id="pvSubject">[Enter subject]</span></p>
+<p id="subjectRow" class="subject"><strong data-i18n="subjectOnPaper">Subject: </strong><span id="pvSubject">[Enter subject]</span></p>
 <div id="pvGreeting" class="salutation"></div>
 <div id="pvBody" class="letter-body empty">Your letter content will appear here.</div>
 <div id="pvClosing" class="letter-close"></div>
 <div class="signoff"><img id="pvSignature" class="signature-img" alt="Principal's uploaded signature" hidden><div id="signatureMissing" class="signature-missing">Principal signature not uploaded</div><div class="sign-rule"></div><div id="pvPrincipal" class="sign-name">Principal</div><div id="pvRole" class="sign-role">Principal</div></div>
 </div>
-<div class="paper-footer"><span>OFFICIAL ACADEMY COMMUNICATION</span><span id="footerName">Al Islah Arabic Academy</span></div>
+<div class="paper-footer"><span data-i18n="footerNotice">OFFICIAL ACADEMY COMMUNICATION</span><span id="footerName">Al Islah Arabic Academy</span></div>
 </article>
 </div>
 </section>
