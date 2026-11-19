@@ -1,4 +1,4 @@
-/* Isolated, reversible multi-device ceremony rehearsal. NO official launch API or state. */
+/* Host/Principal inauguration UX. Trial and Main Preview are reversible; only separately confirmed Official mode creates a permanent launch record. */
 import {initializeApp,getApps} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import {getFirestore,doc,collection,query,limit,getDocs,getDoc,setDoc,updateDoc,onSnapshot,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
@@ -11,7 +11,7 @@ const role=params.get('role')==='principal'?'principal':'host';
 const isOfficial=params.get('mode')==='official';
 const isMainPreview=!isOfficial && params.get('mode')==='main-preview';
 const COUNTDOWN_MS=10000;
-let auth,db,me,trial=null,unsubscribe=null,authorized=false,principalEmail='',experiencedCountdown=false,cutPlayed=false,cutPending=false,previousPhase='',lastDigit=0,redirectTimer=null,successTimer=null;
+let auth,db,me,trial=null,unsubscribe=null,authorized=false,principalEmail='',experiencedCountdown=false,cutPlayed=false,cutPending=false,previousPhase='',lastDigit=0,redirectTimer=null,successTimer=null,confettiTimer=null,sparkleTimer=null;
 let officialControl=null,officialRecord=null,officialControlLoaded=false,officialRecordLoaded=false;
 let officialUnsubscribes=[],officialSeenCountdown=false,masterVerified=false;
 const message=(text,isError=false)=>{$('message').textContent=text;$('message').classList.toggle('danger',isError)};
@@ -29,8 +29,8 @@ if(isMainPreview){
   $('hostControlHeading').textContent='🎬 Main Ceremony Preview · Resettable';
   $('startTrial').textContent='▶ Start Main Ceremony Preview';
   $('resetTrial').textContent='↻ Reset Main Preview';
-  $('successHeadline').textContent='✨ GRAND WEBSITE REVEAL ✨';
-  $('successSubtitle').textContent='Main Ceremony Preview · Not Official';
+  $('successHeadline').textContent='WEBSITE OFFICIALLY INAUGURATED';
+  $('successSubtitle').textContent='✨ GRAND CEREMONY PREVIEW · NOT OFFICIAL ✨';
 }
 if(isOfficial){
   document.title='Official Inauguration · 21 November 2026 | Women\'s Online Madrasa';
@@ -40,7 +40,7 @@ if(isOfficial){
   $('hostControlHeading').textContent='🔐 One-Time Official Opening · Master Control';
   $('principalInstruction').textContent='When the Master Admin starts the official countdown on 21 November, you may cut the ribbon exactly once. This is NOT a trial; once cut, it cannot be reset.';
   $('ceremonyFooter').innerHTML='Official inauguration · Saturday, 21 November 2026 · The confirmed ceremony is permanently recorded.<br>Madrasa Al Islahul Arabiya · Women\'s Online Madrasa';
-  $('successHeadline').textContent='🎉 WEBSITE OFFICIALLY LAUNCHED 🎉';
+  $('successHeadline').textContent='WEBSITE OFFICIALLY INAUGURATED';
   $('successSubtitle').textContent='21 November 2026 · Official Inauguration';
   $('successExplanation').textContent='The official launch is permanently recorded and cannot be reset.';
   $('previewLaunchHeader').textContent='🎉 OFFICIALLY INAUGURATED · 21 NOVEMBER 2026';
@@ -58,6 +58,10 @@ show('switchGoogleAccount',role==='principal');
 function resetVisual(){
   clearTimeout(redirectTimer);
   clearTimeout(successTimer);
+  clearTimeout(confettiTimer);
+  clearTimeout(sparkleTimer);
+  $('sparkles').replaceChildren();
+  $('celebrationFlash').classList.remove('play');
   show('previewLaunchOverlay',false);
   $('previewLaunchFrame').removeAttribute('src');
   cutPlayed=false;
@@ -74,6 +78,37 @@ function resetVisual(){
   show('scissorsTrigger',false);
   show('waitingForPrincipal',false);
 }
+
+function goldSparkles(){
+  const field=$('sparkles');field.replaceChildren();
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  // Deterministic radial fireworks from the ribbon, with no network or
+  // heavy canvas dependency. Fewer particles on Android/small screens.
+  const mobile=window.matchMedia('(max-width: 600px)').matches;
+  const count=mobile?38:72;
+  for(let i=0;i<count;i++){
+    const piece=document.createElement('i');
+    const angle=(i*137.508+18)*Math.PI/180;
+    const distance=(mobile?95:160)+(i%7)*(mobile?12:23);
+    const dx=Math.round(Math.cos(angle)*distance);
+    const dy=Math.round(Math.sin(angle)*distance);
+    piece.style.setProperty('--x',(48+(i%7)*.6)+'%');
+    piece.style.setProperty('--y',(39+(i%5)*2.3)+'%');
+    piece.style.setProperty('--dx',dx+'px');
+    piece.style.setProperty('--dy',dy+'px');
+    piece.style.setProperty('--dx-half',Math.round(dx*.6)+'px');
+    piece.style.setProperty('--dy-half',Math.round(dy*.6)+'px');
+    piece.style.setProperty('--s',((i%5)+4)+'px');
+    piece.style.setProperty('--d',(1.6+(i%5)*.4)+'s');
+    piece.style.setProperty('--delay',((i%9)*.14)+'s');
+    field.append(piece);
+  }
+  const flash=$('celebrationFlash');
+  flash.classList.remove('play');
+  void flash.offsetWidth;
+  flash.classList.add('play');
+  sparkleTimer=setTimeout(()=>{field.replaceChildren();flash.classList.remove('play')},4900);
+}
 function confetti(){
   const field=$('confetti');field.replaceChildren();
   for(let i=0;i<42;i++){
@@ -85,7 +120,8 @@ function confetti(){
     piece.style.animationDelay=((i%6)*.065)+'s';
     field.append(piece);
   }
-  setTimeout(()=>field.replaceChildren(),5200);
+  clearTimeout(confettiTimer);
+  confettiTimer=setTimeout(()=>field.replaceChildren(),5700);
 }
 function playCutAnimation(){
   if(cutPlayed)return;
@@ -98,10 +134,11 @@ function playCutAnimation(){
   show('waitingForPrincipal',false);
   $('ribbonWrap').classList.remove('is-cut');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    $('ribbonWrap').classList.add('is-cut');confetti();
+    $('ribbonWrap').classList.add('is-cut');confetti();goldSparkles();
   }));
   message(isOfficial?'🎉 The official ribbon cut is permanently recorded! Presenting the inaugurated website…':isMainPreview?'✂️ Preview ribbon cut confirmed. Revealing the homepage without recording any official launch…':'✂️ Trial ribbon cut confirmed! Showing the rehearsal website…');
-  successTimer=setTimeout(()=>{show('ribbonArea',false);show('success',true)},1250);
+  // Keep celebration title visible for ~5 seconds before the real homepage reveal.
+  successTimer=setTimeout(()=>{show('ribbonArea',false);show('success',true)},1550);
   // On the Host MAIN PREVIEW show the actual homepage in a full-size frame
   // with a persistent preview banner and reset button, without navigating away.
   if(role==='host'&&experiencedCountdown){
@@ -109,7 +146,7 @@ function playCutAnimation(){
       redirectTimer=setTimeout(()=>{
         $('previewLaunchFrame').src='./index.html';
         show('previewLaunchOverlay',true);
-      },3400);
+      },7100);
     }else{
       redirectTimer=setTimeout(()=>location.assign('./index.html'),3400);
     }
