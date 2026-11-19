@@ -80,45 +80,92 @@ async function loadModule(stubs){
 }
 function renderUI(){
  const els=new Map();
- const ids=['existingIntakeAdminStatus','existingIntakeRequests','existingIntakeCreateLink','existingIntakeCopyLink','existingIntakeCloseLink','existingIntakeRefresh'];
+ const ids=['existingIntakeAdminStatus','existingIntakeCreateLink','existingIntakeCopyLink',
+  'existingIntakeCloseLink','existingIntakeRefresh'];
+ for(const prefix of ['existingIntakePending','existingIntakeApproved','existingIntakeClosed'])
+  for(const suffix of ['Count','Courses','Detail','Title','Students','Back','Refresh'])
+   ids.push(prefix+suffix);
  for(const id of ids)els.set(id,new FakeNode());
  globalThis.document={getElementById:id=>els.get(id),createElement:tag=>new FakeNode(tag),
   createTextNode:content=>String(content)};
  globalThis.confirm=()=>true;
  return els;
 }
-test('real Admin review renderer groups course folders, synchronizes approvals, closes duplicates without new ALIA',async()=>{
+test('dedicated Pending and Approved pages start with ALL course tiles and show students only on course click',async()=>{
  const firestore=mockFirestore(),ui=renderUI();
  const {initExistingStudentIntakeAdmin}=await loadModule(firestore);
  const selected=[];
  const component=initExistingStudentIntakeAdmin({db:{},auth:{currentUser:{uid:'verified-admin',email:'admin@example.com',emailVerified:true}},
   onReview:(id,data)=>selected.push({id,data})});
  await component.refresh();
- const root=ui.get('existingIntakeRequests'),labels=findNodes(root,n=>n.tagName==='SUMMARY').map(n=>n.textContent);
- assert.ok(labels.some(x=>x==='📥 Pending Forms (1)'),JSON.stringify(labels));
- assert.ok(labels.some(x=>x==='✅ Approved Forms (2)'),JSON.stringify(labels));
- assert.ok(labels.some(x=>x.includes('Possible Duplicate Forms')&&x.includes('(1)')));
- assert.ok(labels.some(x=>x.includes('Closed / Rejected Forms (1)')));
- assert.ok(labels.some(x=>x.includes('Muallama · 1 pending')));
- assert.ok(labels.some(x=>x.includes('Muallama · 1 approved')));
- assert.ok(labels.some(x=>x.includes('Muballigha · 1 to verify')));
+ const pendingGrid=ui.get('existingIntakePendingCourses');
+ const approvedGrid=ui.get('existingIntakeApprovedCourses');
+ const archivedGrid=ui.get('existingIntakeClosedCourses');
+ assert.equal(findNodes(pendingGrid,n=>n.tagName==='BUTTON').length,4,'all four courses are shown, including zero-form courses');
+ assert.equal(findNodes(approvedGrid,n=>n.tagName==='BUTTON').length,4);
+ assert.equal(findNodes(archivedGrid,n=>n.tagName==='BUTTON').length,4);
+ assert.match(ui.get('existingIntakePendingCount').textContent,/2 pending/);
+ assert.match(ui.get('existingIntakeApprovedCount').textContent,/2 approved/);
+ assert.match(ui.get('existingIntakeClosedCount').textContent,/1 closed/);
+ assert.equal(ui.get('existingIntakePendingDetail').hidden,true,'pending page opens on the All Courses grid');
+ assert.equal(ui.get('existingIntakeApprovedDetail').hidden,true);
+ assert.equal(findNodes(pendingGrid,n=>n.className==='intake-form-row').length,0,'no student forms listed on the All Courses screen');
  assert.equal(firestore.table.existingStudentRequests.find(row=>row.id==='4'.repeat(32)).status,'Approved');
  assert.equal(firestore.table.existingStudentRequests.find(row=>row.id==='4'.repeat(32)).studentCode,'ALIA00006');
  assert.equal(firestore.table.students.length,2);
- assert.equal(firestore.reads.includes('students'),true);
- const review=findNodes(root,n=>n.tagName==='BUTTON'&&n.textContent.includes('Review & Register'));
- assert.equal(review.length,2,'one regular and one duplicate-review action');
+ const pendingMuallama=findNodes(pendingGrid,n=>n.tagName==='BUTTON'&&visibleText(n).includes('Muallama'))[0];
+ assert.ok(pendingMuallama);
+ pendingMuallama.onclick();
+ assert.equal(ui.get('existingIntakePendingDetail').hidden,false);
+ assert.equal(ui.get('existingIntakePendingCourses').hidden,true);
+ assert.match(ui.get('existingIntakePendingTitle').textContent,/Muallama.*1 pending/);
+ assert.match(visibleText(ui.get('existingIntakePendingStudents')),/Maryam/);
+ assert.doesNotMatch(visibleText(ui.get('existingIntakePendingStudents')),/Fatima|Aisha|Linked/);
+ const review=findNodes(ui.get('existingIntakePendingStudents'),n=>n.tagName==='BUTTON'&&n.textContent.includes('Review & Register'));
+ assert.equal(review.length,1);
  review[0].onclick();
  assert.equal(selected.length,1);
  assert.equal(selected[0].data.name,'Maryam');
- const duplicate=findNodes(root,n=>n.tagName==='BUTTON'&&n.textContent.includes('Confirm Already Registered'));
- assert.equal(duplicate.length,1);
- await duplicate[0].onclick();
+ ui.get('existingIntakePendingBack').onclick();
+ assert.equal(ui.get('existingIntakePendingDetail').hidden,true);
+ assert.equal(ui.get('existingIntakePendingCourses').hidden,false);
+ const approvedMuallama=findNodes(approvedGrid,n=>n.tagName==='BUTTON'&&visibleText(n).includes('Muallama'))[0];
+ approvedMuallama.onclick();
+ assert.match(visibleText(ui.get('existingIntakeApprovedStudents')),/Linked/);
+ assert.match(visibleText(ui.get('existingIntakeApprovedStudents')),/ALIA00006/);
+ assert.doesNotMatch(visibleText(ui.get('existingIntakeApprovedStudents')),/Maryam|Aisha/);
+ assert.equal(findNodes(ui.get('existingIntakeApprovedStudents'),n=>n.tagName==='BUTTON'&&n.textContent.includes('Register')).length,0);
+ await component.openPage('studentApproved');
+ assert.equal(ui.get('existingIntakeApprovedDetail').hidden,true,'returning to Approved Forms starts at All Courses');
+ assert.equal(ui.get('existingIntakeApprovedCourses').hidden,false);
+});
+test('pending duplicate is manually closed and then appears only in Closed Forms, without issuing new ID',async()=>{
+ const firestore=mockFirestore(),ui=renderUI();
+ const {initExistingStudentIntakeAdmin}=await loadModule(firestore);
+ const component=initExistingStudentIntakeAdmin({db:{},auth:{currentUser:{uid:'verified-admin',email:'admin@example.com',emailVerified:true}},
+  onReview:()=>{}});
+ await component.refresh();
+ const pendingGrid=ui.get('existingIntakePendingCourses');
+ const muballigha=findNodes(pendingGrid,n=>n.tagName==='BUTTON'&&visibleText(n).includes('Muballigha'))[0];
+ muballigha.onclick();
+ const pendingDetails=ui.get('existingIntakePendingStudents');
+ assert.match(visibleText(pendingDetails),/Aisha/);
+ assert.match(visibleText(pendingDetails),/DUPLICATE CHECK/);
+ const closeButton=findNodes(pendingDetails,n=>n.tagName==='BUTTON'&&n.textContent.includes('Already Registered'));
+ assert.equal(closeButton.length,1);
+ await closeButton[0].onclick();
  const archived=firestore.table.existingStudentRequests.find(row=>row.id==='2'.repeat(32));
  assert.equal(archived.status,'Duplicate');
  assert.equal(archived.studentId,'student-a');
  assert.equal(archived.studentCode,'ALIA00005');
- assert.equal(firestore.table.students.length,2,'duplicate archival must not create official students');
- assert.ok(firestore.updates.some(x=>x.patch.status==='Duplicate'));
- assert.match(visibleText(ui.get('existingIntakeRequests')),/Closed \/ Rejected Forms \(2\)/);
+ assert.equal(firestore.table.students.length,2,'closing duplicate never creates a student');
+ assert.match(ui.get('existingIntakePendingCount').textContent,/1 pending/);
+ assert.match(ui.get('existingIntakeClosedCount').textContent,/2 closed/);
+ const closedMuballigha=findNodes(ui.get('existingIntakeClosedCourses'),n=>n.tagName==='BUTTON'&&visibleText(n).includes('Muballigha'))[0];
+ closedMuballigha.onclick();
+ assert.match(visibleText(ui.get('existingIntakeClosedStudents')),/Aisha/);
+ assert.match(visibleText(ui.get('existingIntakeClosedStudents')),/ALIA00005/);
+ const approvedMuballigha=findNodes(ui.get('existingIntakeApprovedCourses'),n=>n.tagName==='BUTTON'&&visibleText(n).includes('Muballigha'))[0];
+ approvedMuballigha.onclick();
+ assert.doesNotMatch(visibleText(ui.get('existingIntakeApprovedStudents')),/Aisha/);
 });
