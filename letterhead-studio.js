@@ -9,10 +9,167 @@ import {getFirestore,doc,getDoc} from 'https://www.gstatic.com/firebasejs/11.6.0
 import {loadSiteSettings} from './site-settings.js';
 import {isVerifiedMasterAdmin} from './admin-role-status.js';
 
+const LANGUAGES={
+  "en": {
+    "locale": "en-GB-u-ca-gregory",
+    "headerDesc": "Al Islah Arabic Academy · Admin-only letters with principal signature",
+    "createHeading": "Create a Letter",
+    "editorDesc": "Enter the date, subject and content. The A4 preview updates automatically.",
+    "languageLabel": "Letter Language",
+    "languageHint": "Language changes the form, date, greeting and page direction. Your own writing is not automatically translated.",
+    "dateLabel": "Date *",
+    "referenceLabel": "Reference No.",
+    "referencePlaceholder": "Optional",
+    "recipientLabel": "To / Recipient",
+    "recipientPlaceholder": "Parents / Students / Staff",
+    "subjectLabel": "Subject / Topic *",
+    "subjectPlaceholder": "Enter letter topic",
+    "greetingLabel": "Greeting",
+    "bodyLabel": "Letter Content *",
+    "bodyPlaceholder": "Type your letter here. Paragraphs and line breaks are preserved.",
+    "draftHint": "Not saved automatically. Copy your draft elsewhere if needed.",
+    "closingLabel": "Closing",
+    "printButton": "🖨 Print / Save Signed PDF",
+    "sampleButton": "Fill Sample",
+    "clearButton": "Clear",
+    "previewHeading": "Live A4 Preview",
+    "previewHint": "Official letterhead · A4 portrait",
+    "refOnPaper": "Ref: ",
+    "dateOnPaper": "Date: ",
+    "subjectOnPaper": "Subject: ",
+    "toOnPaper": "To,",
+    "footerNotice": "OFFICIAL ACADEMY COMMUNICATION",
+    "emptySubject": "[Enter subject]",
+    "emptyBody": "Your letter content will appear here.",
+    "emptyDate": "[Enter date]",
+    "principalRole": "Principal",
+    "signatureMissing": "Principal signature not uploaded",
+    "statusSignature": "Upload a principal signature in Admin → Website Settings & Principal before printing.",
+    "statusPrincipal": "Add the principal’s name in Website Settings before printing.",
+    "statusRequired": "Enter date, subject and content to enable the signed PDF.",
+    "statusLong": "Long letter: please inspect the A4 print preview for page breaks before saving.",
+    "statusReady": "✓ Ready. Select Print / Save Signed PDF, then choose “Save as PDF”.",
+    "statusPrintError": "Could not prepare the logo or signature. Check Website Settings and try again.",
+    "confirmSample": "Loading a sample will replace the recipient, subject and content in this editor. Continue?",
+    "defaults": {
+      "letterGreeting": "Assalamu Alaikum wa Rahmatullahi wa Barakatuh,",
+      "letterClosing": "JazakAllahu Khairan."
+    },
+    "sample": {
+      "letterTo": "Parents and Guardians",
+      "letterSubject": "Notice Regarding the Monthly Parent Meeting",
+      "letterBody": "We are pleased to inform you that our Academy will conduct its monthly parent meeting to review students’ learning progress and discuss upcoming academic activities.\n\nAll parents and guardians are kindly requested to attend. The meeting schedule and joining details will be shared through the official class group.\n\nThank you for your continued cooperation and support."
+    }
+  },
+  "ta": {
+    "locale": "ta-IN-u-ca-gregory",
+    "headerDesc": "அல் இஸ்லாஹ் அரபிக் அகாடமி · முதல்வர் கையொப்பத்துடன் அதிகாரப்பூர்வக் கடிதங்கள்",
+    "createHeading": "அதிகாரப்பூர்வக் கடிதம் உருவாக்கு",
+    "editorDesc": "தேதி, தலைப்பு, கடித விவரங்களை உள்ளிடுங்கள். A4 முன்பார்வை உடனே புதுப்பிக்கப்படும்.",
+    "languageLabel": "கடிதத்தின் மொழி",
+    "languageHint": "மொழியை மாற்றினால் படிவம், தேதி, தொடக்கம், கடித அமைப்பு மாறும். நீங்கள் எழுதிய உரை தானாக மொழிபெயர்க்கப்படாது.",
+    "dateLabel": "தேதி *",
+    "referenceLabel": "கடித எண்",
+    "referencePlaceholder": "தேவையென்றால் மட்டும்",
+    "recipientLabel": "பெறுநர் / யாருக்கு",
+    "recipientPlaceholder": "பெற்றோர்கள் / மாணவர்கள் / ஆசிரியர்கள்",
+    "subjectLabel": "தலைப்பு *",
+    "subjectPlaceholder": "கடிதத்தின் தலைப்பை எழுதவும்",
+    "greetingLabel": "தொடக்க வாழ்த்து",
+    "bodyLabel": "கடிதத்தின் விவரம் *",
+    "bodyPlaceholder": "இங்கே தமிழில் கடிதத்தை எழுதுங்கள். பத்திகளும் வரி இடைவெளிகளும் அப்படியே இருக்கும்.",
+    "draftHint": "இந்தக் கடிதம் தானாகச் சேமிக்கப்படாது. தேவைப்பட்டால் உரையை நகலெடுத்துக் கொள்ளுங்கள்.",
+    "closingLabel": "முடிவு வாசகம்",
+    "printButton": "🖨 கையொப்பத்துடன் PDF / அச்சிடு",
+    "sampleButton": "மாதிரி கடிதம்",
+    "clearButton": "அழி",
+    "previewHeading": "A4 கடித முன்பார்வை",
+    "previewHint": "அதிகாரப்பூர்வ கடிதம் · A4 அளவு",
+    "refOnPaper": "கடித எண்: ",
+    "dateOnPaper": "தேதி: ",
+    "subjectOnPaper": "பொருள்: ",
+    "toOnPaper": "பெறுநர்:",
+    "footerNotice": "அகாடமியின் அதிகாரப்பூர்வ அறிவிப்பு",
+    "emptySubject": "[தலைப்பை எழுதவும்]",
+    "emptyBody": "உங்கள் கடிதத்தின் விவரங்கள் இங்கே வரும்.",
+    "emptyDate": "[தேதி கொடுக்கவும்]",
+    "principalRole": "முதல்வர்",
+    "signatureMissing": "முதல்வரின் கையொப்பம் பதிவேற்றப்படவில்லை",
+    "statusSignature": "Admin → Website Settings & Principal பகுதியில் முதல்வரின் கையொப்பத்தைப் பதிவேற்றுங்கள்.",
+    "statusPrincipal": "Website Settings பகுதியில் முதல்வரின் பெயரைச் சேர்க்கவும்.",
+    "statusRequired": "தேதி, தலைப்பு, கடித விவரங்களை உள்ளிடுங்கள்.",
+    "statusLong": "நீண்ட கடிதம்: PDF சேமிக்கும் முன் A4 Print Preview-வில் பக்கங்களைச் சரிபார்க்கவும்.",
+    "statusReady": "✓ தயார். PDF / அச்சிடு அழுத்தி “Save as PDF” தேர்ந்தெடுக்கவும்.",
+    "statusPrintError": "லோகோ அல்லது கையொப்பத்தை PDF-க்குத் தயாரிக்க முடியவில்லை. Settings-ஐச் சரிபார்க்கவும்.",
+    "confirmSample": "மாதிரி கடிதத்தைத் தேர்ந்தெடுத்தால் இப்போது எழுதிய பெறுநர், தலைப்பு, விவரம் மாற்றப்படும். தொடரலாமா?",
+    "defaults": {
+      "letterGreeting": "அஸ்ஸலாமு அலைக்கும் வரஹ்மதுல்லாஹி வபரகாத்துஹு,",
+      "letterClosing": "ஜஸாக்கல்லாஹு கைரன்."
+    },
+    "sample": {
+      "letterTo": "அன்பிற்குரிய பெற்றோர்கள் மற்றும் பாதுகாவலர்கள்",
+      "letterSubject": "மாதாந்திர பெற்றோர் கூட்டம் குறித்த அறிவிப்பு",
+      "letterBody": "நமது அகாடமியில் பயிலும் மாணவ, மாணவியரின் கல்வி முன்னேற்றம் மற்றும் வரவிருக்கும் கல்வி நிகழ்ச்சிகள் குறித்து கலந்துரையாட மாதாந்திர பெற்றோர் கூட்டம் நடைபெற உள்ளது.\n\nஅனைத்துப் பெற்றோர்களும் இக்கூட்டத்தில் கலந்து கொள்ளுமாறு அன்புடன் கேட்டுக்கொள்கிறோம். கூட்டத்தின் நாள், நேரம் மற்றும் இணையும் விவரங்கள் அதிகாரப்பூர்வ வகுப்புக் குழுவில் அறிவிக்கப்படும்.\n\nஉங்களின் தொடர்ந்த ஒத்துழைப்பிற்கும் ஆதரவிற்கும் நன்றி."
+    }
+  },
+  "ar": {
+    "locale": "ar-EG-u-ca-gregory",
+    "headerDesc": "أكاديمية الإصلاح العربية · خطابات رسمية بتوقيع المديرة",
+    "createHeading": "إنشاء خطاب رسمي",
+    "editorDesc": "أدخل التاريخ والموضوع ونص الخطاب. ستُحدَّث معاينة A4 تلقائيًا.",
+    "languageLabel": "لغة الخطاب",
+    "languageHint": "يغيّر اختيار اللغة عناوين الخطاب والتحية واتجاه الكتابة والتاريخ، ولا يترجم النص الذي كتبته تلقائيًا.",
+    "dateLabel": "التاريخ *",
+    "referenceLabel": "الرقم المرجعي",
+    "referencePlaceholder": "اختياري",
+    "recipientLabel": "المرسل إليه",
+    "recipientPlaceholder": "أولياء الأمور / الطلاب / المعلمون",
+    "subjectLabel": "الموضوع *",
+    "subjectPlaceholder": "اكتب موضوع الخطاب",
+    "greetingLabel": "التحية",
+    "bodyLabel": "نص الخطاب *",
+    "bodyPlaceholder": "اكتب نص الخطاب بالعربية هنا. ستُحفَظ الفقرات وفواصل الأسطر.",
+    "draftHint": "لا يُحفَظ النص تلقائيًا. يُرجى نسخه إذا رغبت في الاحتفاظ بالمسودة.",
+    "closingLabel": "عبارة الختام",
+    "printButton": "🖨 طباعة / حفظ PDF موقّع",
+    "sampleButton": "نموذج خطاب",
+    "clearButton": "مسح",
+    "previewHeading": "معاينة الخطاب بحجم A4",
+    "previewHint": "ورق رسمي · مقاس A4",
+    "refOnPaper": "المرجع: ",
+    "dateOnPaper": "التاريخ: ",
+    "subjectOnPaper": "الموضوع: ",
+    "toOnPaper": "إلى:",
+    "footerNotice": "مراسلة رسمية من الأكاديمية",
+    "emptySubject": "[اكتب الموضوع]",
+    "emptyBody": "سيظهر نص خطابك هنا.",
+    "emptyDate": "[أدخل التاريخ]",
+    "principalRole": "المديرة",
+    "signatureMissing": "لم يُرفع توقيع المديرة",
+    "statusSignature": "يُرجى رفع توقيع المديرة من Admin → Website Settings & Principal قبل الطباعة.",
+    "statusPrincipal": "يُرجى إضافة اسم المديرة في إعدادات الموقع.",
+    "statusRequired": "أدخل التاريخ والموضوع ونص الخطاب لتفعيل حفظ PDF.",
+    "statusLong": "خطاب طويل: تحقّق من فواصل الصفحات في معاينة الطباعة قبل الحفظ.",
+    "statusReady": "✓ الخطاب جاهز. اختر طباعة / حفظ PDF موقّع ثم «Save as PDF».",
+    "statusPrintError": "تعذّر تجهيز الشعار أو التوقيع. تحقّق من إعدادات الموقع ثم حاول مجددًا.",
+    "confirmSample": "سيؤدي إدراج النموذج إلى استبدال المرسل إليه والموضوع ونص الخطاب الحالي. هل تريد المتابعة؟",
+    "defaults": {
+      "letterGreeting": "السلام عليكم ورحمة الله وبركاته،",
+      "letterClosing": "جزاكم الله خيرًا على تعاونكم."
+    },
+    "sample": {
+      "letterTo": "السادة أولياء الأمور الكرام",
+      "letterSubject": "إشعار بشأن اجتماع أولياء الأمور الشهري",
+      "letterBody": "يسرّ إدارة الأكاديمية أن تُعلمكم بأنه سيُعقد اجتماع شهري لأولياء الأمور لمتابعة تقدّم الطلاب والطالبات ومناقشة الأنشطة التعليمية القادمة.\n\nنرجو من جميع أولياء الأمور المشاركة في الاجتماع، وسيتم الإعلان عن الموعد وتفاصيل الانضمام عبر المجموعة الرسمية للفصل.\n\nنشكر لكم تعاونكم المستمر وحرصكم على متابعة تعليم أبنائكم وبناتكم."
+    }
+  }
+};
 const $=id=>document.getElementById(id);
 const fields=['letterDate','letterRef','letterTo','letterSubject','letterGreeting','letterBody','letterClosing'];
 const form=Object.fromEntries(fields.map(id=>[id,$(id)]));
-const defaults={letterRef:'',letterTo:'',letterSubject:'',letterGreeting:'Assalamu Alaikum wa Rahmatullahi wa Barakatuh,',letterBody:'',letterClosing:'JazakAllahu Khairan.'};
+const defaults={letterRef:'',letterTo:'',letterSubject:'',letterBody:''};
+const languageSelect=$('letterLanguage');
+let letterLang='en';
 let isAuthorized=false;
 let hasSignature=false;
 let settings=null;
@@ -20,32 +177,70 @@ let settings=null;
 const todayInIndia=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 form.letterDate.value=todayInIndia();
 const val=id=>form[id].value.trim();
+
+function current(){return LANGUAGES[letterLang];}
 function displayDate(dateValue){
- if(!/^\d{4}-\d{2}-\d{2}$/.test(dateValue))return '[Enter date]';
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(dateValue))return current().emptyDate;
  const parsed=new Date(dateValue+'T12:00:00');
- return Number.isFinite(parsed.getTime())?new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'long',year:'numeric'}).format(parsed):'[Enter date]';
+ return Number.isFinite(parsed.getTime())
+  ? new Intl.DateTimeFormat(current().locale,{day:'2-digit',month:'long',year:'numeric'}).format(parsed)
+  : current().emptyDate;
 }
 function text(id,value){$(id).textContent=value;}
 function refresh(){
+ const t=current();
  text('pvDate',displayDate(val('letterDate')));
  $('refRow').hidden=!val('letterRef');
  text('pvRef',val('letterRef'));
  $('pvTo').hidden=!val('letterTo');
- text('pvTo',val('letterTo')?'To,\n'+val('letterTo'):'');
- text('pvSubject',val('letterSubject')||'[Enter subject]');
+ text('pvTo',val('letterTo')?t.toOnPaper+'\n'+val('letterTo'):'');
+ text('pvSubject',val('letterSubject')||t.emptySubject);
  text('pvGreeting',val('letterGreeting'));
  $('pvGreeting').hidden=!val('letterGreeting');
- text('pvBody',val('letterBody')||'Your letter content will appear here.');
+ text('pvBody',val('letterBody')||t.emptyBody);
  $('pvBody').classList.toggle('empty',!val('letterBody'));
  text('pvClosing',val('letterClosing'));
  $('pvClosing').hidden=!val('letterClosing');
+ $('signatureMissing').textContent=t.signatureMissing;
+ if(settings){
+  const actualRole=settings.principal?.designation||'Principal';
+  text('pvRole',actualRole==='Principal'?t.principalRole:actualRole);
+ }
  const ready=isAuthorized&&hasSignature&&!!settings?.principal?.name&&!!val('letterDate')&&!!val('letterSubject')&&!!val('letterBody');
  $('printLetter').disabled=!ready;
- if(!hasSignature)text('status','Upload the principal’s PNG/JPG signature under Admin → Website Settings & Principal before printing.');
- else if(!settings?.principal?.name)text('status','Add the principal’s name under Website Settings before printing.');
- else if(!val('letterSubject')||!val('letterBody')||!val('letterDate'))text('status','Enter the date, subject and letter content to enable the signed PDF.');
- else if(val('letterBody').length>2200)text('status','Long letter: print preview may continue onto a second A4 page. Check before saving.');
- else text('status','✓ Ready. Click Print / Save Signed PDF; choose “Save as PDF” in the browser.');
+ if(!hasSignature)text('status',t.statusSignature);
+ else if(!settings?.principal?.name)text('status',t.statusPrincipal);
+ else if(!val('letterSubject')||!val('letterBody')||!val('letterDate'))text('status',t.statusRequired);
+ else if(val('letterBody').length>2200)text('status',t.statusLong);
+ else text('status',t.statusReady);
+}
+function changeLanguage(next){
+ if(!LANGUAGES[next])return;
+ const previous=LANGUAGES[letterLang],upcoming=LANGUAGES[next];
+ for(const id of ['letterGreeting','letterClosing']){
+  if(!form[id].value.trim()||form[id].value===previous.defaults[id])form[id].value=upcoming.defaults[id];
+ }
+ // Change an inserted sample to the new language, but never silently translate the user's own text.
+ for(const id of ['letterTo','letterSubject','letterBody']){
+  if(form[id].value===previous.sample[id])form[id].value=upcoming.sample[id];
+ }
+ letterLang=next;
+ languageSelect.value=letterLang;
+ document.documentElement.lang=next;
+ const paper=$('paper');paper.dataset.language=next;paper.lang=next;
+ for(const id of ['letterTo','letterSubject','letterGreeting','letterBody','letterClosing']){
+  form[id].dir=next==='ar'?'rtl':'ltr';
+  form[id].lang=next;
+ }
+ for(const el of document.querySelectorAll('[data-i18n]')){
+  const key=el.dataset.i18n;
+  if(typeof upcoming[key]==='string')el.textContent=upcoming[key];
+ }
+ for(const el of document.querySelectorAll('[data-i18n-placeholder]')){
+  const key=el.dataset.i18nPlaceholder;
+  if(typeof upcoming[key]==='string')el.placeholder=upcoming[key];
+ }
+ refresh();
 }
 function useSettings(s){
  settings=s;
@@ -64,16 +259,22 @@ function useSettings(s){
  else img.removeAttribute('src');
  refresh();
 }
+
 for(const id of fields)form[id].addEventListener('input',refresh);
+languageSelect.addEventListener('change',()=>changeLanguage(languageSelect.value));
 $('sampleLetter').addEventListener('click',()=>{
- form.letterTo.value='Parents and Guardians';
- form.letterSubject.value='Notice Regarding the Monthly Parent Meeting';
- form.letterBody.value='We are pleased to inform you that our Academy will conduct its monthly parent meeting to review students’ learning progress and discuss upcoming academic activities.\n\nAll parents and guardians are kindly requested to attend. The meeting schedule and joining details will be shared through the official class group.\n\nThank you for your continued cooperation and support.';
+ if((val('letterTo')||val('letterSubject')||val('letterBody'))&&!confirm(current().confirmSample))return;
+ const sample=current().sample;
+ for(const [id,value] of Object.entries(sample))form[id].value=value;
+ form.letterGreeting.value=current().defaults.letterGreeting;
+ form.letterClosing.value=current().defaults.letterClosing;
  form.letterRef.value='';
  refresh();
 });
 $('clearLetter').addEventListener('click',()=>{
- for(const [id,v] of Object.entries(defaults))form[id].value=v;
+ for(const [id,value] of Object.entries(defaults))form[id].value=value;
+ form.letterGreeting.value=current().defaults.letterGreeting;
+ form.letterClosing.value=current().defaults.letterClosing;
  form.letterDate.value=todayInIndia();refresh();
 });
 async function waitForImage(image){
@@ -86,13 +287,13 @@ $('printLetter').addEventListener('click',async()=>{
  if($('printLetter').disabled)return;
  $('printLetter').disabled=true;
  try{
-  await Promise.all([waitForImage($('pvSignature')),waitForImage(document.querySelector('.masthead img'))]);
+  await Promise.all([waitForImage($('pvSignature')),waitForImage(document.querySelector('.masthead img')),document.fonts?.ready||Promise.resolve()]);
   const previousTitle=document.title;
   document.title='Official Letter - '+val('letterSubject').slice(0,65).replace(/[\\/:*?"<>|]/g,'');
   window.print();
   setTimeout(()=>{document.title=previousTitle;refresh();},1000);
  }catch(error){
-  text('status','Cannot prepare logo or signature for printing. Reload Website Settings or try again.');
+  text('status',current().statusPrintError);
   $('printLetter').disabled=false;
  }
 });
@@ -133,5 +334,5 @@ async function start(){
   },()=>showGate('Authentication could not be verified'));
  }catch(error){showGate('Cannot connect to the Academy. Check your internet connection.');}
 }
-refresh();
+changeLanguage(languageSelect.value);
 start();
