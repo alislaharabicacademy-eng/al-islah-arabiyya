@@ -2,11 +2,12 @@
 // Admin-side secure, one-use student update invitations.
 // Parents never write students/{id} or studentAccess/{id} directly.
 import {doc,getDoc,setDoc,collection,getDocs,updateDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import {isVerifiedAcademyAdmin} from './academy-admin-access.js';
 export function initStudentProfileRequests({db,auth,onLoadIntoEditor}){
  const $=id=>document.getElementById(id);
  const panel=$('studentUpdateLinkPanel'),note=$('studentUpdateLinkStatus');
  let currentStudent=null;
- const admin=()=>auth.currentUser?.emailVerified===true&&String(auth.currentUser.email||'').toLowerCase()==='alislaharabicacademy@gmail.com';
+ const admin=()=>isVerifiedAcademyAdmin(db,auth.currentUser);
  const span=(label,value)=>{const p=document.createElement('p');const strong=document.createElement('strong');strong.textContent=label+': ';p.append(strong,document.createTextNode(String(value??'—')));return p};
  const make=(label,onClick,secondary=false)=>{
   const b=document.createElement('button');b.type='button';b.textContent=label;if(secondary)b.className='secondary';b.onclick=onClick;return b;
@@ -18,7 +19,7 @@ export function initStudentProfileRequests({db,auth,onLoadIntoEditor}){
   catch(err){prompt('Copy private student profile update link:',value)}
  }
  async function openInvite(student){
-  if(!admin())throw Error('Verified Academy Admin login required.');
+  if(!await admin())throw Error('Verified Academy Admin login required.');
   if(!student?.id)throw Error('Save the student first.');
   currentStudent={...student};panel.hidden=false;
   $('studentUpdateSelected').textContent=(student.name||'Student')+' · '+(student.studentCode||'ALIA ID pending');
@@ -56,7 +57,7 @@ export function initStudentProfileRequests({db,auth,onLoadIntoEditor}){
  }
  $('closeStudentUpdateLink').onclick=()=>{panel.hidden=true;currentStudent=null};
  $('issueStudentUpdateLink').onclick=async()=>{
-  if(!admin()||!currentStudent)return;
+  if(!await admin()||!currentStudent)return;
   const email=$('studentUpdateEmail').value.trim().toLowerCase(),button=$('issueStudentUpdateLink');
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){note.textContent='Enter a valid verified Google email.';return}
   if(!confirm('Create a one-time profile update link for '+(currentStudent.name||'Student')+' / '+email+'?'))return;
@@ -76,7 +77,7 @@ export function initStudentProfileRequests({db,auth,onLoadIntoEditor}){
  $('refreshStudentUpdateRequests').onclick=()=>refreshRequests();
  async function refreshRequests(){
   const root=$('studentUpdateRequests');root.replaceChildren();
-  if(!admin())return;
+  if(!await admin())return;
   root.textContent='Loading student submissions…';
   try{
    const [requests,invites,students]=await Promise.all([

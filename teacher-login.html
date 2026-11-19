@@ -145,6 +145,7 @@ import {getFirestore,doc,getDoc,collection,addDoc,onSnapshot,serverTimestamp} fr
 import {attachPersonalIdCard} from './id-card-personal.js';
 import {teacherPortalLanding,isTeacherVisibleInDirectory} from './teacher-role-routing.js';
 import {isVerifiedMasterAdmin} from './admin-role-status.js';
+import {isVerifiedAcademyAdmin} from './academy-admin-access.js';
 
 const $ = id => document.getElementById(id);
 const login=$('loginCard'),dashboard=$('dashboard'),info=$('loginInfo');
@@ -165,21 +166,8 @@ function friendlyError(e){
  if(e.code==='auth/popup-closed-by-user')return 'Google sign-in was cancelled.';
  return e.message||'Could not verify teacher access.';
 }
-const academyOwner='alislaharabicacademy@gmail.com';
 let previewVersion=0;
-async function isAcademyAdmin(user){
- const email=normalizeEmail(user?.email);
- if(!email||!user.emailVerified)return false;
- if(email===academyOwner)return true;
- if(await isVerifiedMasterAdmin(db,user))return true;
- try{
-   const grant=await getDoc(doc(db,'adminAccess',email));
-   return grant.exists() && grant.data().enabled===true;
- }catch(error){
-   // Ordinary teachers cannot inspect admin grant documents.
-   return false;
- }
-}
+const isAcademyAdmin=user=>isVerifiedAcademyAdmin(db,user);
 function renderPreviewAssignments(assignments){
  const classes=new Set(assignments.filter(a=>a.course).map(a=>[a.course,a.batch||''].join('|')));
  const subjects=new Set(assignments.map(a=>a.subject).filter(Boolean));

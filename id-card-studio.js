@@ -2,12 +2,12 @@ import {initializeApp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-
 import {getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import {getFirestore,collection,doc,getDoc,getDocs,setDoc,writeBatch,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {isProfilePhoto} from './profile-photo.js';
+import {isVerifiedAcademyAdmin} from './academy-admin-access.js';
 import {
   normalizedCardSettings,cardDocumentId,validVerificationCode,newVerificationCode,
   teacherDisplayId,isCurrentCard,renderCardCanvas,createIdCardPdf,safeCardFilename
 } from './id-card-utils.js';
 const $=id=>document.getElementById(id);
-const OWNER='alislaharabicacademy@gmail.com';
 const today=()=>new Date().toISOString().slice(0,10);
 function plusOneYear(value=today()){
  const parts=value.split('-').map(Number);const date=new Date(Date.UTC(parts[0]+1,parts[1]-1,parts[2]));
@@ -35,13 +35,7 @@ function writeSettings(value){
  for(const [key,input] of pairs)$(input).type==='checkbox'?$(input).checked=!!value[key]:$(input).value=String(value[key]||'');
  $('defaultValidity').value=value.defaultValidUntil||plusOneYear();
 }
-async function approved(user){
- if(!user?.email||!user.emailVerified)return false;
- const email=user.email.trim().toLowerCase();
- if(email===OWNER)return true;
- try{const grant=await getDoc(doc(db,'adminAccess',email));return grant.exists()&&grant.data().enabled===true}
- catch(error){return false}
-}
+function approved(user){return isVerifiedAcademyAdmin(db,user)}
 async function loadSettings(){
  try{
   const [idSnap,siteSnap]=await Promise.all([
