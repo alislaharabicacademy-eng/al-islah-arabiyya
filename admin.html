@@ -1622,7 +1622,21 @@ $('generateMissingStudentIds').onclick=async()=>{
 };
 async function renderRecords(kind){const singular=kind.slice(0,-1),list=$(singular+'List');list.textContent='Loading…';try{const snap=await getDocs(kind==='students'?collection(db,kind):query(collection(db,kind),limit(150)));list.replaceChildren();const rows=kind==='students'&&$('studentFilter').value!=='all'?snap.docs.filter(d=>courseKey(d.data().course)===$('studentFilter').value):snap.docs;
 const accessByStudent=new Map();
+const courseNames=new Map();
+const directoryCourseName=key=>courseNames.get(key)||defaults[key]?.name||
+ academyCourseLabel(String(key||'Unassigned').replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()));
 if(kind==='students'){
+ try{
+  const courses=await getDocs(collection(db,'courses'));
+  for(const record of courses.docs)if(record.data()?.name)
+   courseNames.set(record.id,academyCourseLabel(record.data().name));
+ }catch(err){console.warn('Course labels unavailable:',err.code||err.message)}
+ const filter=$('studentFilter');
+ for(const row of snap.docs){
+  const key=String(row.data().course||'unassigned');
+  if(![...filter.options].some(o=>o.value===key))
+   filter.add(new Option(directoryCourseName(key),key));
+ }
  try{const access=await getDocs(collection(db,'studentAccess'));for(const record of access.docs)accessByStudent.set(record.id,record.data())}
  catch(err){console.warn('Student Account badges unavailable:',err.code||err.message)}
 }
@@ -1636,11 +1650,11 @@ if(kind==='students'){
   counts.set(key,(counts.get(key)||0)+1);
  }
  for(const [key,count] of [...counts].sort((a,b)=>
-  academyCourseLabel(a[0]).localeCompare(academyCourseLabel(b[0])))){
+  directoryCourseName(a[0]).localeCompare(directoryCourseName(b[0])))){
   const group=document.createElement('details');group.className='record';
   group.style.cssText='border:1px solid #cadacf;border-radius:12px;padding:14px;margin:12px 0';
   const summary=document.createElement('summary');summary.style.cssText='font-weight:850;cursor:pointer';
-  summary.textContent='📚 '+academyCourseLabel(key)+' · '+count+' approved/enrolled student'+(count===1?'':'s');
+  summary.textContent='📚 '+directoryCourseName(key)+' · '+count+' approved/enrolled student'+(count===1?'':'s');
   group.append(summary);list.append(group);studentGroups.set(key,group);
  }
 }
