@@ -7,6 +7,7 @@ import {collection,doc,getDoc,getDocs,query,limit,setDoc,updateDoc,serverTimesta
 import {isProfilePhoto} from './profile-photo.js';
 import {academyCourseLabel} from './academy-course-catalog-core.js';
 import {matchingStudentForRequest,requestReviewBucket} from './existing-student-review-utils.js';
+import {isVerifiedAcademyAdmin} from './academy-admin-access.js';
 
 export function initExistingStudentIntakeAdmin({db,auth,onReview}){
  const $=id=>document.getElementById(id);
@@ -14,7 +15,7 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
  const create=$('existingIntakeCreateLink'),copy=$('existingIntakeCopyLink');
  const close=$('existingIntakeCloseLink'),refresh=$('existingIntakeRefresh');
  let activeToken=null;
- const currentAdmin=()=>Boolean(auth.currentUser?.emailVerified&&auth.currentUser?.uid);
+ const currentAdmin=()=>isVerifiedAcademyAdmin(db,auth.currentUser);
  const tokenOk=v=>/^[a-f0-9]{64}$/.test(String(v||''));
  const linkUrl=v=>{
   const u=new URL('existing-student-registration.html',location.href);
@@ -42,7 +43,7 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
   return snapshot.docs;
  }
  async function refreshLinks(){
-  if(!currentAdmin())return;
+  if(!(await currentAdmin()))return;
   info.textContent='Checking existing-student registration links…';
   try{
    const links=await getAllLinks(),now=Date.now();
@@ -70,7 +71,7 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
   }
  }
  create.onclick=async()=>{
-  if(!currentAdmin())return;
+  if(!(await currentAdmin()))return;
   if(activeToken&&!confirm('Rotate the current existing-student link? The previous link will be closed for new submissions.'))return;
   create.disabled=true;info.textContent='Creating a new secure 30-day link…';
   try{
@@ -95,7 +96,7 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
  };
  copy.onclick=copyActive;
  close.onclick=async()=>{
-  if(!currentAdmin()||!activeToken)return;
+  if(!(await currentAdmin())||!activeToken)return;
   if(!confirm('Close the Existing Academy Student Registration link now? Submitted requests will remain in the Admin review queue.'))return;
   close.disabled=true;
   try{
@@ -110,7 +111,7 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
   finally{close.disabled=false}
  };
  async function refreshRequests(){
-  if(!currentAdmin())return;
+  if(!(await currentAdmin()))return;
   requests.textContent='Loading submitted existing-student forms…';
   try{
    // Load the complete review/Student data so course totals are exact, not a
