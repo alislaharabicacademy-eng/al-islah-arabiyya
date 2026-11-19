@@ -217,6 +217,42 @@ function renderPrivateFeeLedger(access,card){
  selector.onchange=draw;draw();
 }
 
+// Student-facing directory is an Admin-published snapshot inside the
+// current student's own verified studentAccess grant. No Teacher Directory,
+// teacher salary, teacher email or other class's roster is queried here.
+function renderStudentTeachingAssignments(access,card){
+ const section=document.createElement('section');
+ section.className='exam-card';
+ section.style.cssText='margin-top:17px;border:1px solid #cfdfd5;background:linear-gradient(120deg,#f5fbf7,#fffdf6);';
+ const heading=document.createElement('h4');
+ heading.textContent='📚 My Subjects & Assigned Teachers';
+ heading.style.cssText='color:#194d37;margin:3px 0 9px;';
+ section.append(heading);
+ const assignments=Array.isArray(access.teachingAssignments)?access.teachingAssignments:[];
+ if(!assignments.length){
+  const note=document.createElement('p');
+  note.textContent='Your Academy has not published teacher/subject assignments for this class or batch yet. Contact the Admin if you expected them.';
+  section.append(note);
+ }else for(const assignment of assignments){
+  const row=document.createElement('div');
+  row.style.cssText='border:1px solid #e1e9e2;border-radius:10px;background:white;margin:8px 0;padding:11px 14px;';
+  const subject=document.createElement('strong');
+  subject.textContent='📖 '+String(assignment.subject||'Subject');
+  const teacher=document.createElement('p');
+  teacher.style.cssText='margin:5px 0 0;font-size:14px;';
+  teacher.textContent='👩‍🏫 Teacher: '+String(assignment.teacherName||'Not assigned');
+  row.append(subject,teacher);
+  if(assignment.timing){
+   const timing=document.createElement('p');
+   timing.style.cssText='margin:3px 0 0;font-size:13px;color:#456353;';
+   timing.textContent='🕒 Class timing: '+String(assignment.timing);
+   row.append(timing);
+  }
+  section.append(row);
+ }
+ card.append(section);
+}
+
 const identityCard=$('studentIdentityCard'),identityStatus=$('studentIdentityStatus');
 const authCard=$('studentAuthCard'),verification=$('emailVerifyNotice'),dashboard=$('studentPrivateDashboard');
 const authStatus=$('studentAuthStatus'),verifyStatus=$('studentVerifyStatus'),dashboardStatus=$('studentDashboardStatus');
@@ -350,6 +386,7 @@ async function loadPrivateDashboard(user,token){
    const details=document.createElement('p');details.textContent='Official Student ID: '+(access.studentCode||'Not assigned yet')+'  ·  Class: '+className+stage+(access.batch?' · Batch: '+access.batch:'')+' · Status: '+(access.state||'Active');
    const label=document.createElement('span');label.className='tag';label.textContent='✓ Verified Student Account';
    card.append(photoAvatar(access.photoData,'Student profile photograph'),title,details,label);
+   renderStudentTeachingAssignments(access,card);
    renderPrivateFeeLedger(access,card);
    const heading=document.createElement('h4');heading.textContent='🏅 Published Examination Results';heading.style.marginTop='23px';heading.style.fontSize='18px';card.append(heading);
    const refs=[...new Set(Array.isArray(access.resultIds)?access.resultIds:[])].filter(id=>/^RESULT-[a-f0-9]{24}$/.test(id)).slice(0,75);
