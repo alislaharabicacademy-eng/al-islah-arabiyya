@@ -1,0 +1,32 @@
+name: Course-wise Exam Entry and Whole-Academy Publication
+on:
+  pull_request:
+    paths:
+      - 'exam-session-core.js'
+      - 'exam-session-admin.js'
+      - 'exam-announcement-public.js'
+      - 'admin.html'
+      - 'index.html'
+      - 'firestore.rules'
+      - 'tests/course-wise-exam.test.mjs'
+      - '.github/workflows/course-wise-exam-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exam-session-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse exam controller and notice module
+        run: |
+          node --check exam-session-core.js
+          node --check exam-session-admin.js
+          node --check exam-announcement-public.js
+      - name: Assert all-course draft and publication boundaries
+        run: node --test tests/course-wise-exam.test.mjs
+      - name: Preserve academic year and certificate regressions
+        run: node --test tests/academic-pathway.test.mjs tests/certificate-vector.test.mjs tests/exam-batch-report.test.mjs
