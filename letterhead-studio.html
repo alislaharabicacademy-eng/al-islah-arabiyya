@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#103d2d">
+<title>Official Letterhead Studio | Al Islah Arabic Academy</title>
+<style>
+:root{--forest:#113e2f;--deep:#0b251e;--gold:#be9a56;--ink:#1d342a;--muted:#64746a}
+*{box-sizing:border-box}
+body{margin:0;background:#edf2ed;color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
+.app-header{padding:20px clamp(16px,4vw,48px);background:linear-gradient(125deg,#0b261e,#15523b);color:#fdfaf1;border-bottom:4px solid var(--gold);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.app-header h1{font:700 clamp(23px,3vw,31px) Georgia,serif;margin:0}.app-header p{margin:3px 0 0;color:#d9e6dd}
+.app-header a{color:#fff6dd;border:1px solid #dcc185;padding:8px 14px;border-radius:9px;text-decoration:none;font-weight:700}
+.notice{max-width:1400px;margin:20px auto;padding:14px 18px;border-radius:12px;background:#fff8e6;border:1px solid #efdfa9}
+.notice strong{color:#6e5021}
+#gate{max-width:660px;margin:60px auto;background:#fff;border-radius:17px;padding:35px;box-shadow:0 10px 40px #15392817}
+#gate a{display:inline-block;margin-top:12px;padding:10px 17px;background:var(--forest);color:#fff;text-decoration:none;border-radius:8px}
+[hidden]{display:none!important}
+.workspace{max-width:1470px;margin:20px auto 60px;padding:0 16px;display:grid;grid-template-columns:minmax(295px,400px) minmax(0,1fr);gap:24px;align-items:start}
+.editor{background:#fff;border:1px solid #d7e1d9;box-shadow:0 12px 38px #132b1c12;border-radius:18px;padding:23px;position:sticky;top:12px}
+.editor h2{font:700 24px Georgia,serif;color:var(--forest);margin:0 0 4px}
+.editor p{font-size:13px;color:#65756b;margin:0 0 12px}
+label{display:block;margin-top:13px;font-size:13px;font-weight:750;color:#2a4b3a}
+input,textarea{display:block;width:100%;padding:11px 12px;margin-top:5px;background:#fcfffd;border:1px solid #bfd2c4;border-radius:9px;color:#213c2b;font:inherit;outline-offset:2px}
+input:focus,textarea:focus{border-color:#237a58;outline:2px solid #237a5822}
+textarea{resize:vertical;min-height:205px;line-height:1.65}
+label small{display:block;color:#718376;font-weight:400;margin-top:3px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}
+button{border:0;background:var(--forest);color:#fff;padding:12px 17px;font:700 14px system-ui;border-radius:10px;cursor:pointer;min-height:44px}
+button.secondary{background:#e8f1e9;color:var(--forest)}
+button:disabled{opacity:.5;cursor:not-allowed}
+#status{font-size:13px;color:#6c542f;margin-top:13px;min-height:30px}
+.preview-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;color:#486553}
+.preview-header h2{font:700 21px Georgia,serif;margin:0}.preview-header span{font-size:12px}
+.preview-surface{background:linear-gradient(130deg,#d5dfd8,#e8eee8);border-radius:18px;padding:clamp(9px,2.5vw,25px);box-shadow:inset 0 0 0 1px #d5e0d7;overflow:auto}
+.paper{width:100%;max-width:210mm;min-height:297mm;margin:0 auto;background:#fffdfb;position:relative;display:flex;flex-direction:column;padding:17mm 17mm 15mm;box-shadow:0 17px 35px #0002;border:1px solid #e8e7df;color:#24332b;overflow:hidden}
+.paper::before{content:"";position:absolute;inset:8mm;border:1px solid #deceb0;pointer-events:none}
+.paper>*{position:relative;z-index:1}
+.masthead{display:flex;align-items:center;gap:14px;padding-bottom:14px;border-bottom:3px solid var(--forest)}
+.masthead img{width:78px;height:78px;object-fit:contain;flex:none}
+.branding{min-width:0;flex:1}.branding h2{font:700 clamp(18px,2.5vw,28px) Georgia,serif;color:var(--forest);line-height:1.16;margin:0;overflow-wrap:anywhere}
+.branding .subtitle{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:#957333;font-weight:800;margin-top:4px}
+.branding .contact{font-size:10.5px;color:#607568;margin-top:6px;overflow-wrap:anywhere}
+.gold-rule{height:5px;background:linear-gradient(90deg,var(--gold),#efddb1,var(--gold));margin-top:5px}
+.letter-content{padding-top:28px;flex:1}
+.meta{display:flex;justify-content:space-between;gap:20px;font-size:13px;margin-bottom:28px}
+.meta strong{color:#244d38}
+.recipient{font-size:14px;white-space:pre-line;overflow-wrap:anywhere;margin-bottom:23px}
+.subject{font-size:15px;line-height:1.5;margin:0 0 24px;color:#163a2a;overflow-wrap:anywhere}
+.subject span{font-weight:800;border-bottom:1px solid #a3b3a8;padding-bottom:2px}
+.salutation{font-weight:600;font-size:14px;margin-bottom:19px}
+.letter-body{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;min-height:50px}
+.letter-body.empty{color:#a5aaa4;font-style:italic}
+.letter-close{margin-top:28px;font-size:14px}
+.signoff{margin:38px 0 0 auto;max-width:240px;min-width:175px;text-align:center;break-inside:avoid}
+.signature-img{height:54px;width:190px;object-fit:contain;display:block;margin:0 auto}
+.signature-missing{height:54px;color:#a57b58;font-size:11px;display:flex;align-items:center;justify-content:center;border:1px dashed #eadccf}
+.sign-rule{width:85%;height:1px;background:#8ea295;margin:4px auto 6px}
+.sign-name{font-size:15px;font-weight:800;color:var(--forest);overflow-wrap:anywhere}
+.sign-role{font-size:12px;color:#697c6e}
+.paper-footer{margin-top:35px;padding-top:9px;border-top:2px solid #c7a86e;display:flex;justify-content:space-between;gap:9px;color:#677568;font-size:10px}
+.paper-watermark{position:absolute;z-index:0;top:41%;left:33%;width:35%;height:auto;opacity:.045;filter:grayscale(1);pointer-events:none;mix-blend-mode:multiply}
+@media(max-width:1000px){.workspace{grid-template-columns:1fr}.editor{position:static}.paper{min-height:270mm}}
+@media(max-width:650px){.paper{padding:23px 19px;min-height:0}.paper::before{inset:10px}.masthead img{width:50px;height:50px}.branding h2{font-size:17px}.branding .contact{font-size:9px}.meta{margin-bottom:18px;flex-wrap:wrap}.letter-content{padding-top:19px}.letter-body{font-size:13px}}
+@media print{
+ @page{size:A4 portrait;margin:0}
+ html,body{margin:0!important;padding:0!important;background:#fff!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+ .app-header,.notice,.editor,.preview-header,#gate{display:none!important}
+ .workspace,.preview,.preview-surface{display:block!important;width:auto!important;max-width:none!important;min-width:0!important;margin:0!important;padding:0!important;border:0!important;background:#fff!important;box-shadow:none!important;overflow:visible!important}
+ .paper{width:210mm!important;max-width:none!important;min-height:297mm!important;margin:0!important;border:0!important;padding:17mm 17mm 15mm!important;box-shadow:none!important;overflow:visible!important}
+ .paper::before{inset:8mm}.letter-body{font-size:14px}.branding h2{font-size:25px}
+}
+</style></head>
+<body>
+<header class="app-header"><div><h1>✦ Official Letterhead Studio</h1><p>Al Islah Arabic Academy · Admin-only letters with principal signature</p></div><a href="admin.html">← Admin Dashboard</a></header>
+<div id="gate" role="status"><h2>Checking administrator access…</h2><p>Sign in to the Academy admin dashboard first, then open this page.</p><a href="admin.html">Open Admin Login →</a></div>
+<p class="notice" id="notice" hidden><strong>Official document:</strong> The Academy logo, institute contact details, principal name and exact uploaded signature are loaded from Website Settings. Letter content is only held on this page; it is not automatically saved to Firestore.</p>
+<main id="workspace" class="workspace" hidden>
+<section class="editor" aria-label="Compose official letter">
+<h2>Create a Letter</h2><p>Enter date, subject and your content. The A4 preview updates automatically.</p>
+<div class="two">
+<label>Date *<input id="letterDate" type="date" required></label>
+<label>Reference No. <input id="letterRef" maxlength="55" placeholder="Optional"></label>
+</div>
+<label>To / Recipient <input id="letterTo" maxlength="200" placeholder="Parents / Students / Staff"></label>
+<label>Subject / Topic *<input id="letterSubject" maxlength="240" placeholder="Enter letter topic"></label>
+<label>Greeting <input id="letterGreeting" maxlength="150" value="Assalamu Alaikum wa Rahmatullahi wa Barakatuh,"></label>
+<label>Letter Content *<textarea id="letterBody" maxlength="5000" placeholder="Type the full letter content here. Paragraphs and line breaks will be kept exactly as entered. Tamil and English are supported."></textarea><small>Content is not saved automatically. Copy it elsewhere if you need to keep a draft.</small></label>
+<label>Closing <input id="letterClosing" maxlength="160" value="JazakAllahu Khairan."></label>
+<div class="actions"><button id="printLetter" type="button">🖨 Print / Save Signed PDF</button><button id="sampleLetter" type="button" class="secondary">Fill Sample</button><button id="clearLetter" type="button" class="secondary">Clear</button></div>
+<div id="status" role="status"></div>
+</section>
+<section class="preview" aria-label="A4 letter preview">
+<div class="preview-header"><h2>Live A4 Preview</h2><span>Official letterhead · Portrait</span></div>
+<div class="preview-surface">
+<article id="paper" class="paper" aria-label="Official Academy letter">
+<img src="logo-transparent.svg" alt="" class="paper-watermark" aria-hidden="true">
+<div class="masthead"><img src="logo-transparent.svg" alt="Academy logo"><div class="branding"><h2 id="brandName">Al Islah Arabic Academy</h2><div class="subtitle" id="brandSubtitle">Women's Online Madrasa</div><div class="contact" id="brandContact"></div></div></div>
+<div class="gold-rule"></div>
+<div class="letter-content">
+<div class="meta"><div id="refRow" hidden><strong>Ref: </strong><span id="pvRef"></span></div><div><strong>Date: </strong><span id="pvDate"></span></div></div>
+<div id="pvTo" class="recipient" hidden></div>
+<p id="subjectRow" class="subject"><strong>Subject: </strong><span id="pvSubject">[Enter subject]</span></p>
+<div id="pvGreeting" class="salutation"></div>
+<div id="pvBody" class="letter-body empty">Your letter content will appear here.</div>
+<div id="pvClosing" class="letter-close"></div>
+<div class="signoff"><img id="pvSignature" class="signature-img" alt="Principal's uploaded signature" hidden><div id="signatureMissing" class="signature-missing">Principal signature not uploaded</div><div class="sign-rule"></div><div id="pvPrincipal" class="sign-name">Principal</div><div id="pvRole" class="sign-role">Principal</div></div>
+</div>
+<div class="paper-footer"><span>OFFICIAL ACADEMY COMMUNICATION</span><span id="footerName">Al Islah Arabic Academy</span></div>
+</article>
+</div>
+</section>
+</main>
+<script type="module" src="./letterhead-studio.js"></script>
+</body></html>
