@@ -1,8 +1,8 @@
 import {collection,doc,getDoc,getDocs,addDoc,query,where,limit,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {photoAvatar} from './profile-photo.js';
 import {validFeeLedger} from './fee-ledger-utils.js';
+import {isVerifiedAcademyAdmin} from './academy-admin-access.js';
 
-const academyOwner='alislaharabicacademy@gmail.com';
 
 /**
  * Privileged student dashboard preview. This is NOT a student session and
@@ -15,15 +15,7 @@ export function initAdminStudentPreview({auth,db,renderPrivateFeeLedger,onLogout
  const status=$('adminStudentPreviewStatus'),details=$('adminStudentPreviewDetails');
  const cards=$('adminStudentPreviewCards');
  let generation=0;
- async function isAdmin(user){
-  const email=String(user?.email||'').trim().toLowerCase();
-  if(!email||!user.emailVerified)return false;
-  if(email===academyOwner)return true;
-  try{
-   const grant=await getDoc(doc(db,'adminAccess',email));
-   return grant.exists()&&grant.data().enabled===true;
-  }catch(err){return false}
- }
+ function isAdmin(user){return isVerifiedAcademyAdmin(db,user)}
  function hide(){
   ++generation;panel.hidden=true;details.hidden=true;
   selector.replaceChildren(new Option('Select student',''));selector.onchange=null;

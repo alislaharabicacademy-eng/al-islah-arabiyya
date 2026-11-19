@@ -40,10 +40,10 @@ jobs:
           assert 'allow get: if role == \'master\' && isMasterAdmin()' in rules
           assert 'allow get, list: if isMasterAdmin()' in rules
           assert 'allow create, update: if isMasterAdmin()' in rules
-          assert 'Normal Admin' in admin and 'isVerifiedMasterAdmin(db,user)' in admin
+          assert 'Academy Administrator · Authenticated' in admin and 'isVerifiedMasterAdmin(db,user)' in admin
           assert 'isVerifiedMasterAdmin(db,user)' in teacher
-          assert "master?'Master Admin':'Normal Admin'" in teacher
-          assert 'Normal Admin' in setup and 'isVerifiedMasterAdmin(db,user)' in setup
+          assert "const label='Academy Administrator'" in teacher
+          assert 'Private Administrator Access' in setup and 'isVerifiedMasterAdmin(db,user)' in setup
           for file in ['admin.html','teacher-login.html','admin-access-setup.html','admin-role-status.js']:
             assert 'syedatheil40@gmail.com' not in Path(file).read_text(), 'Master account email must not appear in user-facing source'
           for path in ['admin.html','admin-access-setup.html','teacher-login.html']:

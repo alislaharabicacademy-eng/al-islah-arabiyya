@@ -32,7 +32,8 @@ jobs:
           for x in ('value="en"','value="ta"','value="ar"','id="letterLanguage"'):
               assert x in h,x
           assert 'href="letterhead-studio.html"' in a
-          assert 'isVerifiedMasterAdmin' in j
+          assert 'isVerifiedAcademyAdmin' in j
+          assert "import {isVerifiedMasterAdmin}" in Path('academy-admin-access.js').read_text()
           assert 'signatureData' in j
           print('PASS language selectors and admin-only navigation')
           PY

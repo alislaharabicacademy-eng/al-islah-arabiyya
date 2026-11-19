@@ -7,7 +7,7 @@ import {initializeApp,getApps} from 'https://www.gstatic.com/firebasejs/11.6.0/f
 import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import {getFirestore,doc,getDoc} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {loadSiteSettings} from './site-settings.js';
-import {isVerifiedMasterAdmin} from './admin-role-status.js';
+import {isVerifiedAcademyAdmin} from './academy-admin-access.js';
 
 const LANGUAGES={
   "en": {
@@ -297,16 +297,7 @@ $('printLetter').addEventListener('click',async()=>{
   $('printLetter').disabled=false;
  }
 });
-async function permittedAdmin(db,user){
- if(!user?.email||!user.emailVerified)return false;
- const address=user.email.toLowerCase().trim();
- if(address==='alislaharabicacademy@gmail.com')return true;
- if(await isVerifiedMasterAdmin(db,user))return true;
- try{
-  const grant=await getDoc(doc(db,'adminAccess',address));
-  return grant.exists()&&grant.data().enabled===true;
- }catch{return false;}
-}
+const permittedAdmin=(db,user)=>isVerifiedAcademyAdmin(db,user);
 function showGate(message){
  $('gate').hidden=false;$('workspace').hidden=true;$('notice').hidden=true;
  $('gate').querySelector('h2').textContent=message;

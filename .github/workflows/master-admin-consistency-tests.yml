@@ -1,0 +1,43 @@
+name: Master Admin Access Consistency
+
+on:
+  pull_request:
+    paths:
+      - '**/*.js'
+      - '**/*.html'
+      - 'firestore.rules'
+      - 'storage.rules'
+      - 'firebase.json'
+      - 'tests/master-admin-consistency.test.mjs'
+      - '.github/workflows/master-admin-consistency-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  admin-access:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify shared Master Admin access invariants
+        run: |
+          node --test tests/master-admin-consistency.test.mjs
+          for file in academy-admin-access.js admin-student-preview.js id-card-studio.js site-settings-admin.js student-profile-requests.js letterhead-studio.js; do
+            node --check "$file"
+          done
+      - name: Check inline Admin and Teacher module syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          for name in ['admin.html','teacher-login.html']:
+              scripts=re.findall(r'<script type="module">([\s\S]*?)</script>',Path(name).read_text())
+              assert scripts, name
+              Path('/tmp/'+name+'.mjs').write_text('\n'.join(scripts))
+          PY
+          node --check /tmp/admin.html.mjs
+          node --check /tmp/teacher-login.html.mjs

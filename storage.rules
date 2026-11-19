@@ -1,35 +1,40 @@
 rules_version = '2';
+
 service firebase.storage {
- match /b/{bucket}/o {
-  function isAdmin() {
-   return request.auth != null
-    && request.auth.token.email == 'alislaharabicacademy@gmail.com'
-    && request.auth.token.email_verified == true;
+  match /b/{bucket}/o {
+    // Same verified Admin tiers as firestore.rules. The Master role is
+    // independent of normal administrator grants (adminAccess).
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && (
+          request.auth.token.email == 'alislaharabicacademy@gmail.com'
+          || request.auth.token.email == 'syedatheil40@gmail.com'
+          || (
+            request.auth.token.email is string
+            && firestore.exists(/databases/(default)/documents/adminAccess/$(request.auth.token.email))
+            && firestore.get(/databases/(default)/documents/adminAccess/$(request.auth.token.email)).data.enabled == true
+          )
+        );
+    }
+
+    match /teacher-registration/{token}/{fileName} {
+      // Teacher submissions stay private; only verified Academy admins read
+      // or remove these uploaded documents.
+      allow read, update, delete: if isAdmin();
+
+      // Approved, one-time teacher invitation is required to upload a file.
+      allow create: if request.auth != null
+        && request.auth.token.email_verified == true
+        && token.matches('^[a-f0-9]{64}$')
+        && fileName.matches('^(photo|academic|sanadFile)\\.(jpg|png|pdf)$')
+        && request.resource.size <= 3 * 1024 * 1024
+        && request.resource.contentType.matches('^(image/jpeg|image/png|application/pdf)$')
+        && !fileName.matches('^photo\\.pdf$')
+        && firestore.exists(/databases/(default)/documents/teacherInvites/$(token))
+        && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.email == request.auth.token.email
+        && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.used == false
+        && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.revoked == false;
+    }
   }
-  match /teacher-registration/{token}/{fileName} {
-   allow read: if isAdmin();
-   allow create: if request.auth != null && request.auth.token.email_verified == true
-    && token.matches('^[a-f0-9]{64}
-    && fileName.matches('^(photo|academic|sanadFile)\\.(jpg|png|pdf)$')
-    && request.resource.size <= 3 * 1024 * 1024
-    && request.resource.contentType.matches('^(image/jpeg|image/png|application/pdf)$')
-    && !(fileName.matches('^photo\\.pdf$'))
-    && firestore.exists(/databases/(default)/documents/teacherInvites/$(token))
-    && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.email == request.auth.token.email
-    && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.used == false
-    && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.revoked == false;
-   allow update, delete: if isAdmin();
-  }
- }
-})
-    && fileName.matches('^(photo|academic|sanadFile)\\.(jpg|png|pdf)$')
-    && request.resource.size <= 3 * 1024 * 1024
-    && request.resource.contentType.matches('^(image/jpeg|image/png|application/pdf)$')
-    && !(fileName.matches('^photo\\.pdf$'))
-    && firestore.exists(/databases/(default)/documents/teacherInvites/$(token))
-    && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.used == false
-    && firestore.get(/databases/(default)/documents/teacherInvites/$(token)).data.revoked == false;
-   allow update, delete: if isAdmin();
-  }
- }
 }

@@ -815,22 +815,12 @@ import{ensureOfficialStudentId,validOfficialStudentId}from'./student-numbering.j
 import{existingAcademyStudentDetails,findDuplicateAcademyStudent}from'./existing-student-enrollment.js';
 import{academyCourseLabel}from'./academy-course-catalog.js';
 import{isVerifiedMasterAdmin}from'./admin-role-status.js';
+import{isVerifiedAcademyAdmin}from'./academy-admin-access.js';
 import{initExistingStudentIntakeAdmin}from'./existing-student-intake-admin.js';
 import{examStudentLookupKey}from'./exam-lookup.js';
 const $=id=>document.getElementById(id),email='alislaharabicacademy@gmail.com';
 // Private administrator email addresses are never embedded in public source.
-async function permittedAdmin(user,db){
-  if(!user?.email || !user.emailVerified)return false;
-  const address=user.email.trim().toLowerCase();
-  if(address===email)return true;
-  try{
-    const grant=await getDoc(doc(db,'adminAccess',address));
-    return grant.exists() && grant.data().enabled===true;
-  }catch(error){
-    console.warn('Admin access verification failed:',error.code||'unavailable');
-    return false;
-  }
-}
+const permittedAdmin=(user,db)=>isVerifiedAcademyAdmin(db,user);
 const defaults={"muallama":{"name":"Muallama","duration":"1 Year","description":"Foundational Islamic learning programme.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"muballigha":{"name":"Muballigha","duration":"2 Years","description":"Two-year programme for continued Islamic study.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"alima":{"name":"Alima","duration":"3 Years","description":"Extended programme for deeper Islamic learning.","eligibility":"Eligibility criteria will be published by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"boys-hifz":{"name":"Boys Hifz Class","duration":"To be announced","description":"Qur'an memorisation (Hifz) programme for boys. Full course details will be published soon.","eligibility":"Eligibility criteria will be announced by the madrasa.","kitabs":[],"syllabus":"","fees":"","timings":""},"childrens-quran-maktab":{"name":"Children's Qur'an Maktab","duration":"","description":"","eligibility":"","kitabs":[],"syllabus":"","fees":"","timings":""},"tajweed-for-girls":{"name":"Tajweed For Girls","duration":"","description":"","eligibility":"","kitabs":[],"syllabus":"","fees":"","timings":""}};
 const config=await fetch('firebase-config.json').then(r=>r.json()).catch(()=>({}));
 if(!config.apiKey||!config.projectId||!config.appId){$('setup').textContent='Setup required: configure Firebase Authentication, Firestore, and firebase-config.json. No course changes can be published until setup is complete.'}else{
@@ -881,12 +871,10 @@ onAuthStateChanged(auth,async user=>{
   $('login').classList.toggle('hidden',active);
   $('editor').classList.toggle('hidden',!active);
   if(active){
-    // Display a true, server-verified role; the official Academy email is
-    // NORMAL Admin and private Master email is never displayed in the UI.
+    // Enforce privileges server-side without showing the private role tier or account identity.
     const masterRole=await isVerifiedMasterAdmin(db,user);
     if(auth.currentUser?.uid!==user.uid)return;
-    $('signedIn').textContent='Academy contact: '+email+' · '+
-      (masterRole?'Master Admin':'Normal Admin');
+    $('signedIn').textContent='Academy Administrator · Authenticated';
     const linked=user.providerData.some(p=>p.providerId==='password');
     $('passwordSetupPanel').classList.toggle('hidden',linked);
     await hydrateCourseOptions();

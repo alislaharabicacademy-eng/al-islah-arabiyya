@@ -1,5 +1,6 @@
 import {doc,getDoc,setDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {SITE_DEFAULTS,normalizeSiteSettings,resetSiteSettingsCache} from './site-settings.js';
+import {isVerifiedAcademyAdmin} from './academy-admin-access.js';
 
 const textFields={
  siteInstituteName:'instituteName',siteInstituteSubtitle:'instituteSubtitle',
@@ -109,7 +110,7 @@ export function initSiteSettingsAdmin({db,auth}){
  });
  form.addEventListener('submit',async event=>{
   event.preventDefault();
-  if(!auth.currentUser||auth.currentUser.email?.toLowerCase()!=='alislaharabicacademy@gmail.com'||!auth.currentUser.emailVerified){
+  if(!await isVerifiedAcademyAdmin(db,auth.currentUser)){
    say('Only the verified Academy admin can save settings.',true);return;
   }
   const values={};
