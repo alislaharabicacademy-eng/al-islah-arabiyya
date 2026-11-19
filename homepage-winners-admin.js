@@ -3,6 +3,7 @@
    Parents/guardians must authorise displaying each name and image. */
 import {doc,getDoc,getDocs,collection,writeBatch} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {compressProfilePhoto,isProfilePhoto} from './profile-photo.js';
+import {createClassFirstStudentPicker} from './student-class-selector.js';
 
 const ROLES=[1,2,3];
 const roleName=n=>({1:'First Place',2:'Second Place',3:'Third Place'})[n];
@@ -57,12 +58,8 @@ export function initHomepageWinners({db}){
   rows.forEach((ui,rank)=>{
    const pick=state.picks.find(x=>x.rank===rank)||{rank,resultId:'',consent:false,photoOverride:''};
    ui.pick={...pick};
-   ui.select.replaceChildren(new Option('— Do not display this position —',''));
-   results.filter(r=>r.published).sort((a,b)=>String(a.studentName||'').localeCompare(String(b.studentName||''))).forEach(r=>
-     ui.select.add(new Option(r.studentName+' — '+r.examTitle+' ('+r.academicYear+')',r.id))
-   );
-   ui.select.value=pick.resultId;
-   if(ui.select.value!==pick.resultId)ui.select.value='';
+   // Select a class first, and then see only that class's result/student list.
+   ui.picker.setRecords(results.filter(r=>r.published===true),{selectedId:pick.resultId});
    ui.consent.checked=pick.consent===true;
    ui.file.value='';
    updateRow(rank);
@@ -161,7 +158,7 @@ export function initHomepageWinners({db}){
   for(const rank of ROLES){
    const box=document.createElement('div');box.className='homepage-rank-editor';
    const heading=document.createElement('h4');heading.textContent=({1:'🥇 FIRST',2:'🥈 SECOND',3:'🥉 THIRD'})[rank];
-   const select=document.createElement('select');select.setAttribute('aria-label',roleName(rank)+' published result');
+   const select=document.createElement('select');select.id='homepageWinnerResult'+rank;select.setAttribute('aria-label',roleName(rank)+' published result');
    const label=document.createElement('label');label.textContent='Published student result';label.append(select);
    const meta=document.createElement('p');meta.className='homepage-rank-meta';
    const photo=document.createElement('div');photo.className='homepage-rank-photo';photo.textContent='Select a published result';
@@ -172,7 +169,11 @@ export function initHomepageWinners({db}){
    const consent=document.createElement('input');consent.type='checkbox';
    const consentLabel=document.createElement('label');consentLabel.className='homepage-rank-consent';consentLabel.append(consent,document.createTextNode('I have student/guardian permission to publish this name and photo.'));
    box.append(heading,label,meta,photo,uploadLabel,clear,consentLabel);grid.append(box);
-   const ui={select,meta,photo,file:upload,consent,pick:{rank,resultId:'',photoOverride:''}};
+   const picker=createClassFirstStudentPicker({
+    studentSelect:select,classLabel:roleName(rank)+' · Select Class First',
+    optionLabel:r=>String(r.studentName||'Student')+' · '+String(r.examTitle||'Exam')+' ('+String(r.academicYear||'')+')'
+   });
+   const ui={select,picker,meta,photo,file:upload,consent,pick:{rank,resultId:'',photoOverride:''}};
    rows.set(rank,ui);
    select.addEventListener('change',()=>{ui.pick.photoOverride='';upload.value='';consent.checked=false;ui.pick.consent=false;dirty=true;updateRow(rank)});
    clear.onclick=()=>{ui.pick.photoOverride='';upload.value='';dirty=true;updateRow(rank)};
