@@ -97,3 +97,12 @@ This is intentionally **NOT** the one-time official ceremony. It looks and behav
 - If the Principal's phone loses internet or the authenticated cut fails, do **not** claim a launch. Check Host status first, restore the connection, and retry only if the server still reports no official record.
 
 **Acceptance gate:** This feature must pass CI, merged-site deployment, and a *non-destructive* browser check before event day. Only the real action on 21 November can be the one-time inauguration.
+
+## Golden Ribbon & Grand Celebration visuals (21 November 2026)
+- The official and Main Ceremony Preview now use a luxury satin-gold ribbon, golden shine, ceremonial scissor motion, sparkling gold burst, shimmering confetti, and a full-size **WEBSITE OFFICIALLY INAUGURATED** golden headline.
+- The Main Ceremony Preview visibly says **GRAND CEREMONY PREVIEW · NOT OFFICIAL**, and its homepage reveal continues to carry **NOT OFFICIAL**. A rehearsal never writes an official record.
+- Gold sparkles and celebration occur **only after the server-confirmed** ribbon cut, not when a button is merely tapped or an optimistic Firestore write is pending.
+- The headline arrives about 1.5 seconds after cut; the Host shows it for approximately 5 more seconds before revealing the live homepage at about 7.1 seconds after cut (where applicable). The Principal phone remains on the success message.
+- The browser's *Reduce Motion* preference is honored and lower particle density is used on mobile. Effects are CSS and lightweight browser DOM, requiring no new third-party scripts or assets.
+- Resetting the preview cancels pending success/reveal/particle timers, clears sparkles and reloads only the rehearsal document. The **official one-time record is never reset**.
+- **Manual check before launch:** Android Principal + Chrome Host screen share: 10→1; golden ribbon; tap cut; wait for the two-stage fireworks/title/homepage reveal; check no clipping, reduced-motion behavior, and preview reset. Browser rendering still requires a human verification.

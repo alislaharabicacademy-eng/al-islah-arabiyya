@@ -60,6 +60,60 @@ body[data-mode="main-preview"] .kicker{letter-spacing:.25em}
 .official-state{font-weight:750;color:#f4dca0;line-height:1.7}
 .official-armed{background:#132c22;padding:12px;border:1px solid #b68c4b;border-radius:12px}
 #officialControls[hidden]{display:none!important}
+
+/* Grand inauguration visual system. CSS-only effects + minimal mobile-friendly
+   generated particles; no external graphics, credentials or mutable records. */
+.ribbon-wrap{isolation:isolate;overflow:visible}
+.ribbon-wrap:before{content:"";position:absolute;inset:20px 8%;border-radius:50%;background:radial-gradient(ellipse,#f5c75c32 0%,#c89c2811 45%,transparent 76%);filter:blur(12px);pointer-events:none}
+.ribbon-left,.ribbon-right{
+ position:relative;z-index:1;
+ background:linear-gradient(180deg,#704315 0%,#bc852d 7%,#f8d985 19%,#fff3bd 31%,#d8a140 47%,#b47724 59%,#f2cd72 76%,#fff0b3 86%,#9e681c 100%);
+ box-shadow:0 4px 2px #fff4c44d inset,0 -4px 5px #482a1488 inset,0 12px 35px #070e0a99,0 0 25px #ffd66c33;
+ border-top:2px solid #fff4c4;border-bottom:3px solid #8e5b18;
+ transition:transform 1.25s cubic-bezier(.12,.74,.18,1),opacity 1.15s ease
+}
+.ribbon-left:before,.ribbon-right:after{content:"";position:absolute;inset:0;pointer-events:none;
+ background:repeating-linear-gradient(125deg,transparent 0 22px,#fff6cf38 23px 25px,transparent 27px 48px);
+ mix-blend-mode:screen
+}
+.ribbon-left:after,.ribbon-right:before{background:linear-gradient(180deg,#fff3c7,#cd8e28,#fce5a0);opacity:.94;box-shadow:0 0 13px #ffdc88aa}
+.ribbon-left{border-radius:7px 0 0 7px}.ribbon-right{border-radius:0 7px 7px 0}
+.ribbon-wrap.is-cut .ribbon-left{transform:translateX(-135%) translateY(16px) rotate(-13deg);opacity:0}
+.ribbon-wrap.is-cut .ribbon-right{transform:translateX(135%) translateY(-16px) rotate(13deg);opacity:0}
+.scissors{z-index:3;filter:drop-shadow(0 0 11px #ffe29b);border-radius:50%;background:radial-gradient(circle,#4b3a1966,transparent 72%)}
+.scissors:enabled:hover{background:radial-gradient(circle,#fae7a04a,transparent 72%);box-shadow:0 0 25px #e7c45f44}
+.countdown{background:linear-gradient(145deg,#fff8d9,#ffe4a0 35%,#c99636 58%,#fef1c6 80%,#bd862a);
+ -webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 9px 9px #0008) drop-shadow(0 0 17px #f9d36b66)}
+#ribbonMessage{color:#ffe8a8;letter-spacing:.18em;text-shadow:0 0 22px #f2b94f66}
+.sparkle-field{position:fixed;inset:0;z-index:6;overflow:hidden;pointer-events:none}
+.sparkle-field i{position:absolute;top:var(--y);left:var(--x);width:var(--s);height:var(--s);border-radius:50%;
+ background:radial-gradient(circle,#fffdf1 0%,#fff2b4 30%,#e4ac3b 60%,transparent 80%);
+ box-shadow:0 0 14px 4px #f3c35f99;opacity:0;
+ animation:goldSpark var(--d) ease-out var(--delay) forwards;transform:translate(-50%,-50%) scale(.2)}
+.sparkle-field i:after{content:"";position:absolute;top:50%;left:50%;width:1px;height:350%;transform:translate(-50%,-50%);
+ background:linear-gradient(transparent,#fff2b2,transparent)}
+@keyframes goldSpark{0%{opacity:0;transform:translate(-50%,-50%) scale(.1)}20%{opacity:1}
+ 55%{opacity:1;transform:translate(calc(-50% + var(--dx-half)),calc(-50% + var(--dy-half))) scale(1.45)}
+ 100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.35)}}
+.celebration-flash{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;
+ background:radial-gradient(circle at 50% 48%,#fff4cd88 0%,#e6b75438 17%,transparent 58%)}
+.celebration-flash.play{animation:ceremonyFlash 2s ease-out forwards}
+@keyframes ceremonyFlash{0%{opacity:0}15%{opacity:1}45%{opacity:.45}100%{opacity:0}}
+.celebration-title{font-family:Georgia,'Times New Roman',serif;font-weight:700;text-transform:uppercase;
+ letter-spacing:.055em;font-size:clamp(29px,5.9vw,67px);line-height:1.22;max-width:820px;margin:12px auto;
+ background:linear-gradient(130deg,#f6df9c 0%,#fffbe6 23%,#d9a34c 49%,#fff5b9 67%,#b77826 100%);
+ -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 5px 18px #d9a85a6b)}
+#success:not([hidden]) .celebration-title{animation:grandRevealTitle 1.4s cubic-bezier(.18,.85,.2,1) both}
+#successSubtitle{letter-spacing:.11em;color:#eed18e}
+@keyframes grandRevealTitle{0%{opacity:0;transform:translateY(22px) scale(.92);filter:blur(8px)}
+ 65%{filter:blur(0);opacity:1}100%{transform:translateY(0) scale(1)}}
+#success .celebration-divider{width:min(310px,80%);height:2px;margin:20px auto;
+ background:linear-gradient(90deg,transparent,#fff1b5,#c48e38,#fff1b5,transparent);box-shadow:0 0 17px #f2cf80}
+@media(max-width:520px){.sparkle-field i{box-shadow:0 0 8px 2px #f3c35f88}
+ .ribbon-wrap{height:145px}.ribbon-left,.ribbon-right{height:53px}
+ .celebration-title{font-size:clamp(27px,8vw,43px);letter-spacing:.02em}}
+@media(prefers-reduced-motion:reduce){.sparkle-field i,.celebration-flash.play,#success:not([hidden]) .celebration-title{animation:none!important}
+ #success:not([hidden]) .celebration-title{opacity:1;transform:none;filter:none}}
 </style>
 </head>
 <body><main>
@@ -85,7 +139,7 @@ body[data-mode="main-preview"] .kicker{letter-spacing:.25em}
 <button id="cutRibbon" type="button" hidden>✂️ CUT THE RIBBON · TRIAL</button>
 <p id="waitingForPrincipal" class="status" hidden>Countdown complete. Waiting for the Principal on their phone, or use Host Test Cut to practise here.</p>
 </div>
-<div id="success" hidden><div id="successHeadline" class="success">✨ WEBSITE REVEALED ✨</div><p id="successSubtitle" class="subtitle">Trial completed successfully</p><p id="successExplanation" class="muted">This is only a rehearsal. The official launch has NOT happened.</p><a href="index.html" class="button-link">Open Website Homepage ↗</a></div>
+<div id="success" hidden><div id="successHeadline" class="success celebration-title">✨ GRAND WEBSITE REVEAL ✨</div><div class="celebration-divider" aria-hidden="true"></div><p id="successSubtitle" class="subtitle">Trial completed successfully</p><p id="successExplanation" class="muted">This is only a rehearsal. The official launch has NOT happened.</p><a href="index.html" class="button-link">Open Website Homepage ↗</a></div>
 </div>
 <section id="hostControls" class="panel" hidden>
 <h2 id="hostControlHeading">🎬 Host Control · Trial Only</h2>
@@ -110,7 +164,7 @@ body[data-mode="main-preview"] .kicker{letter-spacing:.25em}
 </div>
 </section>
 <section id="principalInfo" class="panel" hidden><h2>👑 Principal's Control</h2><p id="principalInstruction" class="muted">Keep this screen open. After the host's 10–9–8–7–6–5–4–3–2–1 countdown, your digital ribbon-cut button will appear here.</p></section>
-<div class="confetti" id="confetti" aria-hidden="true"></div>
+<div class="confetti" id="confetti" aria-hidden="true"></div><div class="sparkle-field" id="sparkles" aria-hidden="true"></div><div class="celebration-flash" id="celebrationFlash" aria-hidden="true"></div>
 <section id="previewLaunchOverlay" class="preview-launch-overlay" hidden aria-label="Main ceremony preview homepage">
 <div class="preview-launch-bar"><strong id="previewLaunchHeader">🎀 MAIN CEREMONY PREVIEW · NOT OFFICIAL</strong><button id="previewReset" type="button">↻ Reset &amp; Rehearse</button></div>
 <iframe id="previewLaunchFrame" class="preview-launch-frame" title="Academy homepage reveal during launch rehearsal" loading="lazy"></iframe>
