@@ -68,7 +68,13 @@ footer{text-align:center;color:#667b6b;font-size:12px;padding:30px}
 <option value="">Choose your current year</option><option value="1">1st Year</option><option value="2">2nd Year</option>
 </select></label>
 <label id="batchField" hidden>Maktab Batch *<select name="batch" id="batch"><option value="">Choose batch</option></select></label>
-<label class="full">Complete Home Address *<textarea name="address" id="address" rows="3" required minlength="5" maxlength="700"></textarea></label>
+<div class="full"><h2 class="subheading">🏠 Residential Address — all 5 fields required</h2><div class="grid">
+<label>Door Number *<input name="doorNumber" id="doorNumber" required maxlength="30" autocomplete="address-line1" placeholder="Example: 12/3"></label>
+<label>Address Line 1 *<input name="addressLine1" id="addressLine1" required maxlength="120" placeholder="Street / Road / Building"></label>
+<label>Address Line 2 *<input name="addressLine2" id="addressLine2" required maxlength="120" placeholder="Area, City / Town, District, State"></label>
+<label>Landmark *<input name="landmark" id="landmark" required maxlength="100" placeholder="Nearby landmark"></label>
+<label>PIN Code *<input name="pinCode" id="pinCode" type="text" inputmode="numeric" autocomplete="postal-code" required minlength="6" maxlength="6" pattern="[1-9][0-9]{5}" title="Enter a valid 6-digit Indian PIN code" placeholder="Example: 607106"></label>
+</div></div>
 <div class="full"><h2 class="subheading">🏫 School / College Education</h2>
 <p class="select-hint">Tell us what you study <strong>outside the Academy</strong>. This is separate from your Madrasa course.</p>
 <div class="choice-label">Where are you currently studying? *</div>
@@ -102,12 +108,14 @@ footer{text-align:center;color:#667b6b;font-size:12px;padding:30px}
 <button type="button" id="another">Register Another Existing Student</button>
 </section>
 </main><footer>© Madrasa Al Islahul Arabiya · Existing Students Only · Private Academy Registration</footer>
+<script src="./student-address-fields.js"></script>
 <script type="module">
 import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import{getFirestore,doc,getDoc,setDoc,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{compressProfilePhoto,isProfilePhoto}from'./profile-photo.js';
 import{fetchPublishedAcademyCourses}from'./academy-course-catalog.js';
 const $=id=>document.getElementById(id);
+AcademyStudentAddress.attach($('existingStudentForm'));
 const key=new URLSearchParams(location.search).get('key');
 let db=null,photoData='',ready=false;
 const nowIndia=()=>new Date(Date.now()+330*60000).toISOString().slice(0,10);
@@ -194,7 +202,7 @@ async function verifyLink(){
 $('existingStudentForm').onsubmit=async event=>{
  event.preventDefault();
  const form=event.currentTarget,status=$('formStatus'),button=$('submit');
- if(!ready||!db||!form.reportValidity())return;
+ if(!ready||!db||!form.reportValidity()||!AcademyStudentAddress.validate(form))return;
  const get=name=>String(form.elements[name]?.value||'').trim();
  const course=get('course'),dob=get('dob'),joiningDate=get('joiningDate');
  const year=course==='muballigha'?Number(get('courseYear')):course==='alima'?3:0;
@@ -223,7 +231,7 @@ $('existingStudentForm').onsubmit=async event=>{
  const payload={
   name:get('name').slice(0,120),guardian:get('guardian').slice(0,120),
   dob,phone:get('phone').slice(0,25),email:get('email').toLowerCase().slice(0,200),
-  joiningDate,course,courseYear:year,batch,address:get('address').slice(0,700),
+  joiningDate,course,courseYear:year,batch,address:AcademyStudentAddress.format(AcademyStudentAddress.read(form)),
   notes:get('notes').slice(0,500),photoData:photoData||'',
   educationLevel,schoolStandard:educationLevel==='school'?schoolStandard:'',
   collegeCourse:educationLevel==='college'?collegeCourse.slice(0,120):'',

@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - 'admission.html'
+      - 'existing-student-registration.html'
+      - 'student-address-fields.js'
+      - 'tests/student-address-forms.test.mjs'
       - 'admin.html'
       - 'admission-course-utils.js'
       - 'tests/admission-courses.test.mjs'
@@ -27,6 +30,9 @@ on:
     branches: [main]
     paths:
       - 'admission.html'
+      - 'existing-student-registration.html'
+      - 'student-address-fields.js'
+      - 'tests/student-address-forms.test.mjs'
       - 'admin.html'
       - 'admission-course-utils.js'
       - 'tests/admission-courses.test.mjs'
@@ -58,4 +64,4 @@ jobs:
         with:
           node-version: '22'
       - name: Run Course Form Regression Checks
-        run: node --test tests/admission-courses.test.mjs tests/student-fees.test.mjs tests/certificate-vector.test.mjs tests/student-profile-workflow.test.mjs tests/exam-batch-report.test.mjs tests/course-eligibility.test.mjs
+        run: node --test tests/admission-courses.test.mjs tests/student-fees.test.mjs tests/certificate-vector.test.mjs tests/student-profile-workflow.test.mjs tests/exam-batch-report.test.mjs tests/course-eligibility.test.mjs tests/student-address-forms.test.mjs

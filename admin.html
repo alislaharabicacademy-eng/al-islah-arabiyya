@@ -1005,7 +1005,7 @@ const admissionDefaults=[
 {id:'phone',label:'WhatsApp / Contact Number',type:'tel',required:true,visible:true},
 {id:'email',label:'Email Address',type:'email',required:false,visible:true},
 {id:'course',label:'Select Course',type:'select',required:true,visible:true},
-{id:'address',label:'Full Address',type:'textarea',required:true,visible:true},
+{id:'address',label:'Residential Address (5 required fields)',type:'group',required:true,visible:true},
 {id:'aadhaarLast4',label:'Aadhaar Last 4 Digits (Optional)',type:'text',required:false,visible:true},
 {id:'notes',label:'Message / Preferred Timings',type:'textarea',required:false,visible:true}
 ];
@@ -1016,9 +1016,9 @@ function renderAdmissionEditor(){
  admissionFields.forEach((field,i)=>{
  const row=document.createElement('div');row.style.cssText='padding:14px;margin:10px 0;border:1px solid #c9c6b6;border-radius:12px;background:#fff';
  const title=document.createElement('strong');title.textContent=field.id;row.append(title);
- const label=document.createElement('input');label.value=field.label;label.maxLength=100;label.placeholder='Question label';label.style.cssText='display:block;width:100%;margin:9px 0';label.oninput=()=>field.label=label.value;row.append(label);
+ const label=document.createElement('input');label.value=field.label;label.maxLength=100;label.placeholder='Question label';label.style.cssText='display:block;width:100%;margin:9px 0';label.readOnly=field.id==='address';label.oninput=()=>field.label=label.value;row.append(label);if(field.id==='address'){const note=document.createElement('small');note.textContent='Door Number, Address Line 1, Address Line 2, Landmark and PIN Code are always shown and required on the public form.';note.style.display='block';row.append(note)}
  if(field.id.startsWith('custom_')){const select=document.createElement('select');for(const type of ['text','number','date','email','tel','textarea','select']){const o=new Option(type,type);select.add(o)}select.value=field.type;select.onchange=()=>{field.type=select.value;renderAdmissionEditor()};row.append(select);if(field.type==='select'){const opts=document.createElement('input');opts.placeholder='Dropdown options, separated by commas';opts.value=(field.options||[]).join(', ');opts.oninput=()=>field.options=opts.value.split(',').map(x=>x.trim()).filter(Boolean);row.append(opts)}}
- for(const key of ['visible','required']){const l=document.createElement('label');l.style.cssText='display:inline-flex;gap:6px;align-items:center;margin:8px 16px 8px 0';const chk=document.createElement('input');chk.type='checkbox';chk.checked=field[key];chk.disabled=(field.id==='student'||field.id==='phone')&&key==='required';chk.onchange=()=>field[key]=chk.checked;l.append(chk,document.createTextNode(key==='visible'?' Show':' Required'));row.append(l)}
+ for(const key of ['visible','required']){const l=document.createElement('label');l.style.cssText='display:inline-flex;gap:6px;align-items:center;margin:8px 16px 8px 0';const chk=document.createElement('input');chk.type='checkbox';chk.checked=field[key];chk.disabled=field.id==='address'||(field.id==='student'||field.id==='phone')&&key==='required';chk.onchange=()=>field[key]=chk.checked;l.append(chk,document.createTextNode(key==='visible'?' Show':' Required'));row.append(l)}
  if(field.id.startsWith('custom_')){const del=document.createElement('button');del.type='button';del.className='secondary';del.textContent='Remove';del.onclick=()=>{admissionFields.splice(i,1);renderAdmissionEditor()};row.append(del)}
  box.append(row);
  });
@@ -1064,6 +1064,11 @@ async function loadAdmissionSettings(){
   const data=config.exists()?config.data():(legacy?.exists()?legacy.data():{});
   admissionFields=Array.isArray(data.admissionFormFields)&&data.admissionFormFields.length
    ?data.admissionFormFields.map(f=>({...f})):admissionDefaults.map(f=>({...f}));
+  // Address is a fixed, mandatory five-part group even with older published settings.
+  const fixedAddress=admissionDefaults.find(f=>f.id==='address');
+  const addressIndex=admissionFields.findIndex(f=>f.id==='address');
+  if(addressIndex<0)admissionFields.push({...fixedAddress});
+  else admissionFields[addressIndex]={...fixedAddress};
   // Never merge back every published/default course; it reintroduced courses
   // already removed by Admin and caused the two Tajweed For Girls options.
   const raw=Array.isArray(data.admissionFormCourses)?data.admissionFormCourses:defaultAdmissionCourses;
@@ -1074,7 +1079,9 @@ async function loadAdmissionSettings(){
  }catch(e){$('admissionSettingsStatus').textContent='Load failed: '+e.message}
 }
 async function publishAdmissionSettings(){
- const fields=admissionFields.map(f=>({...f,label:String(f.label||'').trim().slice(0,100)}));
+ const fields=admissionFields.map(f=>f.id==='address'
+  ? {...admissionDefaults.find(d=>d.id==='address')}
+  : {...f,label:String(f.label||'').trim().slice(0,100)});
  if(fields.some(f=>!f.label))throw Error('Every admission field needs a label');
  const courses=admissionNamesFromEditor();
  if(courses.length<2)throw Error('Add at least one Academy course besides Other enquiry.');
