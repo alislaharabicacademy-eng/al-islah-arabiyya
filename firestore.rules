@@ -619,18 +619,16 @@ service cloud.firestore {
 
     // Shared, unguessable Academy-generated intake link for students who
     // joined before the website existed. Closed by default; staff enable it
-    // explicitly, and the link expires automatically after a limited window.
+    // explicitly. Only an Admin can close or reopen the persistent link.
     // No student/guardian data is stored in an invitation.
     match /existingStudentIntakeLinks/{token} {
       allow get: if isAdmin() || (
         token.matches('^[a-f0-9]{64}$')
         && resource.data.enabled == true
-        && resource.data.expiresAt is timestamp
-        && resource.data.expiresAt > request.time
       );
       // List queries have no concrete token document ID. Applying a regex
       // guard to that unbound wildcard blocks even approved administrators
-      // from listing links, so Create/Rotate fails before it writes anything.
+      // from listing links, so Admin Open/Close fails before it writes anything.
       allow list: if isAdmin();
       allow create, update, delete: if isAdmin()
         && token.matches('^[a-f0-9]{64}$');
@@ -659,7 +657,6 @@ service cloud.firestore {
         && request.resource.data.linkToken.matches('^[a-f0-9]{64}$')
         && exists(/databases/$(database)/documents/existingStudentIntakeLinks/$(request.resource.data.linkToken))
         && get(/databases/$(database)/documents/existingStudentIntakeLinks/$(request.resource.data.linkToken)).data.enabled == true
-        && get(/databases/$(database)/documents/existingStudentIntakeLinks/$(request.resource.data.linkToken)).data.expiresAt > request.time
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 2
         && request.resource.data.name.size() <= 120
