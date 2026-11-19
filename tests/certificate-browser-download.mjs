@@ -78,7 +78,13 @@ try{
       Number(x.getAttribute('y'))>=760 && Number(x.getAttribute('y'))<=811);
     return {svgWidth:svg.viewBox.baseVal.width,student:collect(name),
      headline:collect(event),eventChip:bounds(chipPieces),
-     eventChipText:normalize(chipPieces.map(x=>x.textContent).join(' '))};
+     eventChipText:normalize(chipPieces.map(x=>x.textContent).join(' ')),
+     resultFooter:(()=>{
+      const ref=texts.find(t=>normalize(t.textContent).startsWith('RESULT REFERENCE:'));
+      const rect=[...svg.querySelectorAll('rect')].find(r=>
+       r.getAttribute('x')==='69' && r.getAttribute('y')==='1261' && r.getAttribute('height')==='85');
+      return ref&&rect?{referenceTop:ref.getBBox().y,totalsBottom:1261+85}:null;
+     })()};
    },{name:longName,event:longEvent});
    const bound=measurement.svgWidth===1000?limits.portrait:limits.landscape;
    if(!measurement.student)throw Error('Full student name is missing or truncated in SVG');
@@ -87,12 +93,14 @@ try{
    if(!measurement.headline)throw Error('Full exam/event heading missing or truncated');
    if(measurement.headline.x<bound.left||measurement.headline.right>bound.right)
     throw Error('Exam/event title overflows A4 safe boundary: '+JSON.stringify(measurement.headline));
-   if(type!=='results'){
+   if(['winner','participation','event'].includes(type)){
     if(measurement.eventChipText!==longEvent)
      throw Error('Event value in certificate chip is truncated: '+measurement.eventChipText);
     if(!measurement.eventChip||measurement.eventChip.x<590||measurement.eventChip.right>820)
      throw Error('Event chip content escapes its card: '+JSON.stringify(measurement.eventChip));
    }
+   if(type==='results'&&(!measurement.resultFooter||measurement.resultFooter.referenceTop<measurement.resultFooter.totalsBottom))
+    throw Error('Result reference overlaps the totals/grade panel: '+JSON.stringify(measurement.resultFooter));
    console.log('PASS '+type+' long-text SVG geometry '+JSON.stringify(measurement));
   }catch(err){
    fail++;
