@@ -36,6 +36,50 @@ try{
    console.error('Browser diagnostics: '+errors.slice(-20).join('\n'));
   }
  }
+
+ // Actual Chromium SVG geometry stress test, not a heuristic based on character
+ // counts. A full-width name or a 95-character event must not touch A4 edges.
+ // Test the user-editable long-name fields in *all five* designs.
+ const longName='Fathima Zahra Bint Abdul Rahman Al Qadiriya Bint Muhammad Farooq Al Islahi Bint Abdul Kareem';
+ const longEvent='Annual Arabic Language and Islamic Studies International Recognition and Achievement Presentation';
+ const limits={landscape:{left:99,right:1315},portrait:{left:79,right:921}};
+ for(const type of ['exam','winner','participation','event','results']){
+  try{
+   await page.goto(root+'/certificate-studio.html?type='+type,{waitUntil:'domcontentloaded'});
+   await page.waitForSelector('#preview svg',{timeout:15000});
+   await page.locator('#studentName').fill(longName);
+   await page.locator('#eventName').fill(longEvent);
+   const measurement=await page.evaluate(({name,event})=>{
+    const svg=document.querySelector('#preview svg');
+    const boxOf=element=>{
+     const box=element?.getBBox();
+     return box?{x:box.x,right:box.x+box.width,top:box.y,bottom:box.y+box.height,width:box.width}:null;
+    };
+    const svgWidth=svg.viewBox.baseVal.width;
+    const texts=[...svg.querySelectorAll('text')];
+    const student=texts.find(t=>t.textContent===name);
+    const headline=texts.find(t=>t.textContent===event);
+    const eventChip=texts.find(t=>t.textContent===event.slice(0,64));
+    return {svgWidth,student:boxOf(student),headline:boxOf(headline),eventChip:boxOf(eventChip)};
+   },{name:longName,event:longEvent});
+   const bound=measurement.svgWidth===1000?limits.portrait:limits.landscape;
+   if(!measurement.student)throw Error('Name is absent from SVG');
+   if(measurement.student.x<bound.left||measurement.student.right>bound.right)
+    throw Error('Student name overlaps A4 safe boundary: '+JSON.stringify(measurement.student));
+   if(!measurement.headline)throw Error('Event/exam heading missing from SVG');
+   if(measurement.headline.x<bound.left||measurement.headline.right>bound.right)
+    throw Error('Exam/event title overflows A4 safe boundary: '+JSON.stringify(measurement.headline));
+   if(type!=='results'&&measurement.eventChip&&measurement.eventChip.width>237)
+    throw Error('Event chip text overflows its 255px card: '+JSON.stringify(measurement.eventChip));
+   console.log('PASS '+type+' long-text SVG geometry '+JSON.stringify(measurement));
+  }catch(err){
+   fail++;
+   console.error('FAIL '+type+' long-text SVG geometry: '+err.message);
+   console.error('Status: '+await page.locator('#status').textContent().catch(()=>'<not found>'));
+  }finally{
+   await page.screenshot({path:resolve(output,type+'-long-text.png')}).catch(()=>{});
+  }
+ }
  await page.screenshot({path:resolve(output,'certificate-studio.png')});
 }finally{await browser.close()}
 if(fail)process.exitCode=1;
