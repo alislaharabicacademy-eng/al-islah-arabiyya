@@ -740,7 +740,9 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <button type="button" id="refreshStudentUpdateRequests" class="secondary">↻ Refresh Student Update Requests</button>
 <div id="studentUpdateRequests"></div>
 </section>
-<div id="studentList"></div><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
+<section class="section"><h3>🎓 Official Students — Course-wise Directory</h3>
+<p class="section-note">Select a course to see its total enrolled students, then select a student to view details, Edit, Fees, Student Login and other options. Approved registration forms remain above in the review archive.</p>
+<div id="studentList"></div></section><section class="section"><h3>📅 Student Attendance · Subject-wise</h3><p class="section-note">Select a date to view attendance submitted by teachers.</p><input type="date" id="studentAttendanceDate"><button type="button" id="loadStudentAttendance">View Attendance</button><div id="studentAttendanceReport"></div></section>
 <details id="monthlyStudentAttendancePanel" class="section student-monthly-panel">
  <summary>📊 Monthly Student Attendance Report</summary>
  <div class="monthly-report-shell">
@@ -1618,14 +1620,31 @@ $('generateMissingStudentIds').onclick=async()=>{
  }catch(error){note.textContent='Stopped: '+error.message+'. Previously issued IDs are preserved. Retry to continue missing IDs.'}
  finally{button.disabled=false}
 };
-async function renderRecords(kind){const singular=kind.slice(0,-1),list=$(singular+'List');list.textContent='Loading…';try{const snap=await getDocs(query(collection(db,kind),limit(150)));list.replaceChildren();const rows=kind==='students'&&$('studentFilter').value!=='all'?snap.docs.filter(d=>courseKey(d.data().course)===$('studentFilter').value):snap.docs;
+async function renderRecords(kind){const singular=kind.slice(0,-1),list=$(singular+'List');list.textContent='Loading…';try{const snap=await getDocs(kind==='students'?collection(db,kind):query(collection(db,kind),limit(150)));list.replaceChildren();const rows=kind==='students'&&$('studentFilter').value!=='all'?snap.docs.filter(d=>courseKey(d.data().course)===$('studentFilter').value):snap.docs;
 const accessByStudent=new Map();
 if(kind==='students'){
  try{const access=await getDocs(collection(db,'studentAccess'));for(const record of access.docs)accessByStudent.set(record.id,record.data())}
  catch(err){console.warn('Student Account badges unavailable:',err.code||err.message)}
 }
 if(kind==='students'){$('studentFilterCount').textContent=rows.length+' students';const counts={};for(const d of snap.docs){const s=d.data(),key=(s.course||'Unassigned')+(isMaktabCourse(s.course)?' · '+(s.batch||'Unassigned Batch'):'');counts[key]=(counts[key]||0)+1}$('studentBatchSummary').textContent='Batch-wise student totals: '+(Object.entries(counts).map(([key,n])=>key+': '+n).join(' | ')||'No students yet')}
-if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'ALIA ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');if(kind==='students'){
+if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'students for this course':'records')+' yet.</p>';return}
+const studentGroups=new Map();
+if(kind==='students'){
+ const counts=new Map();
+ for(const row of rows){
+  const key=String(row.data().course||'unassigned');
+  counts.set(key,(counts.get(key)||0)+1);
+ }
+ for(const [key,count] of [...counts].sort((a,b)=>
+  academyCourseLabel(a[0]).localeCompare(academyCourseLabel(b[0])))){
+  const group=document.createElement('details');group.className='record';
+  group.style.cssText='border:1px solid #cadacf;border-radius:12px;padding:14px;margin:12px 0';
+  const summary=document.createElement('summary');summary.style.cssText='font-weight:850;cursor:pointer';
+  summary.textContent='📚 '+academyCourseLabel(key)+' · '+count+' approved/enrolled student'+(count===1?'':'s');
+  group.append(summary);list.append(group);studentGroups.set(key,group);
+ }
+}
+rows.forEach(d=>{const data=d.data(),el=document.createElement('div');el.className='record';el.innerHTML='<strong>'+safe(data.name)+'</strong>'+(kind==='students'?'<br><span class="official-student-id-badge'+(validOfficialStudentId(data.studentCode)?'':' pending')+'">'+(validOfficialStudentId(data.studentCode)?safe(data.studentCode):'ALIA ID not assigned yet')+'</span>':'')+schemas[kind].filter(f=>f!=='Name'&&f!=='ExamId'&&(f!=='Batch'||isMaktabCourse(data.course))).map(f=>'<p><small>'+safe(f)+':</small> '+safe(data[f.toLowerCase()])+'</p>').join('')+'<button class="secondary" type="button">Edit</button><button type="button">Delete</button>'+(kind==='students'?'<button type="button" data-fees="1">💳 Fees / Receipt</button>':'');if(kind==='students'){
  if(data.educationLevel){
   const edu=document.createElement('p'),label=document.createElement('small');
   label.textContent='School / College Studies: ';
@@ -1742,7 +1761,15 @@ if(!rows.length){list.innerHTML='<p class="empty">No '+(kind==='students'?'stude
   };
   el.append(copy);
  }
- list.append(el)})}catch(err){list.textContent='Unable to load records: '+err.message}}
+ if(kind==='students'){
+  const studentFolder=document.createElement('details');
+  studentFolder.className='record';
+  studentFolder.style.cssText='margin:10px 0;padding:12px';
+  const summary=document.createElement('summary');summary.style.cssText='font-weight:750;cursor:pointer';
+  summary.textContent='👤 '+String(data.name||'Student')+' · '+String(data.studentCode||'ALIA ID pending');
+  studentFolder.append(summary,el);
+  studentGroups.get(String(data.course||'unassigned')).append(studentFolder);
+ }else list.append(el)})}catch(err){list.textContent='Unable to load records: '+err.message}}
 
 $('studentAttendanceDate').value=new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'});$('loadStudentAttendance').onclick=async()=>{const day=$('studentAttendanceDate').value,root=$('studentAttendanceReport');root.textContent='Loading attendance…';try{const teachers=await getDocs(collection(db,'teachers'));root.replaceChildren();for(const t of teachers.docs){const snap=await getDoc(doc(db,'teacherAttendance',t.id,'days',day));if(!snap.exists())continue;for(const [subject,record] of Object.entries(snap.data().subjects||{})){const box=document.createElement('div');box.className='record';appendInfo(box,'Teacher',t.data().name);appendInfo(box,'Subject',record.subject||subject.split('__').pop());appendInfo(box,'Class',record.course||'—');if(record.classType==='makeup')appendInfo(box,'Class Type','Approved Makeup · Original: '+record.originalDate);if(record.course==='maktab')appendInfo(box,'Batch',record.batch||'—');for(const s of Object.values(record.students||{}))appendInfo(box,s.name||'Student',s.status||'Not marked');const reset=document.createElement('button');reset.type='button';reset.textContent='↺ Reset this subject attendance';reset.onclick=async()=>{if(!confirm('Reset '+subject+' for '+(t.data().name||'teacher')+' on '+day+'?\nThe old attendance will be archived in this date record. The teacher can submit again.'))return;reset.disabled=true;try{await updateDoc(doc(db,'teacherAttendance',t.id,'days',day),{['subjects.'+subject]:deleteField(),resetHistory:arrayUnion({subject,record,resetAt:new Date().toISOString(),resetBy:auth.currentUser.email})});alert('Attendance reset. Teacher can refresh and submit again.');$('loadStudentAttendance').click()}catch(e){alert('Reset failed: '+e.message);reset.disabled=false}};box.append(reset);root.append(box)}}if(!root.children.length)root.textContent='No subject-wise student attendance found for this date.'}catch(e){root.textContent='Could not load attendance: '+e.message}};
 
