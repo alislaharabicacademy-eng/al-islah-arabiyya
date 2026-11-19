@@ -24,7 +24,7 @@ export function initAdminStudentPreview({auth,db,renderPrivateFeeLedger,onLogout
  function isAdmin(user){return isVerifiedAcademyAdmin(db,user)}
  function hide(){
   ++generation;panel.hidden=true;details.hidden=true;
-  picker.clear({notify:false});selector.onchange=null;
+  picker.setRecords([],{selectedId:''});selector.onchange=null;
   cards.replaceChildren();
  }
  function line(parent,value){
@@ -145,7 +145,7 @@ export function initAdminStudentPreview({auth,db,renderPrivateFeeLedger,onLogout
   const email=String(user?.email||'').trim().toLowerCase();
   if(!email||!user.emailVerified){hide();return}
   panel.hidden=false;details.hidden=true;cards.replaceChildren();
-  picker.clear({notify:false});
+  picker.setRecords([],{selectedId:''});
   status.textContent='Loading Academy student directory…';
   try{
    const list=await getDocs(collection(db,'students'));
