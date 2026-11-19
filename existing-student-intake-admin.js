@@ -3,9 +3,10 @@
  * Requests NEVER become official students until an administrator verifies
  * the prior register and saves the historical enrollment in Student Details.
  */
-import {collection,doc,getDocs,query,limit,setDoc,updateDoc,serverTimestamp,Timestamp,writeBatch} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import {collection,doc,getDoc,getDocs,query,limit,setDoc,updateDoc,serverTimestamp,Timestamp,writeBatch} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {isProfilePhoto} from './profile-photo.js';
 import {academyCourseLabel} from './academy-course-catalog-core.js';
+import {matchingStudentForRequest,requestReviewBucket} from './existing-student-review-utils.js';
 
 export function initExistingStudentIntakeAdmin({db,auth,onReview}){
  const $=id=>document.getElementById(id);
@@ -112,27 +113,92 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
   if(!currentAdmin())return;
   requests.textContent='Loading submitted existing-student forms…';
   try{
-   const [snap,courseSnap]=await Promise.all([
-    getDocs(query(collection(db,'existingStudentRequests'),limit(500))),
-    getDocs(collection(db,'courses'))
+   // Load the complete review/Student data so course totals are exact, not a
+   // misleading first-500 count; all reads remain Admin-only.
+   const [snap,courseSnap,studentSnap]=await Promise.all([
+    getDocs(collection(db,'existingStudentRequests')),
+    getDocs(collection(db,'courses')),
+    getDocs(collection(db,'students'))
    ]);
    const courseNames=new Map(courseSnap.docs.filter(c=>c.data()?.name).map(c=>[
     c.id,academyCourseLabel(c.data().name)
    ]));
    const rows=snap.docs.sort((a,b)=>
     (b.data().submittedAt?.toMillis?.()||0)-(a.data().submittedAt?.toMillis?.()||0));
+   const officialStudents=studentSnap.docs.map(d=>({id:d.id,data:d.data()}));
+   const prepared=[];
+   for(const row of rows){
+    let data=row.data();
+    const match=matchingStudentForRequest(data,officialStudents,row.id);
+    let syncError='';
+    if(data.status==='Pending Review'&&match?.kind==='linked'){
+     // A previous save may have committed the official student but failed to
+     // update its request. This direct reference is proof of that approval.
+     try{
+      await updateDoc(row.ref,{
+       status:'Approved',studentId:match.record.id,
+       studentCode:match.record.data.studentCode||'',
+       reviewedAt:serverTimestamp(),reviewedByUid:auth.currentUser.uid
+      });
+      data={...data,status:'Approved',studentId:match.record.id,
+       studentCode:match.record.data.studentCode||''};
+     }catch(e){syncError='Official student exists but request status could not be synchronized: '+(e.message||e)}
+    }
+    prepared.push({row,data,match,syncError,bucket:requestReviewBucket(data.status,match)});
+   }
    requests.replaceChildren();
-   const waiting=rows.filter(r=>r.data().status==='Pending Review').length;
+   const counts={pending:0,approved:0,'duplicate-check':0,archived:0};
+   for(const item of prepared)counts[item.bucket]++;
    const head=document.createElement('p');
    head.className='section-note';
-   head.textContent=waiting+' awaiting Academy register verification · '+rows.length+' submitted request(s) shown';
+   head.textContent=counts.pending+' pending · '+counts.approved+' approved · '+
+    counts['duplicate-check']+' possible duplicate(s) to verify · '+
+    counts.archived+' closed/rejected · '+prepared.length+' total forms';
    requests.append(head);
-   if(!rows.length){
+   if(!prepared.length){
     requests.append(label('No submissions','Share the private Existing Student Registration link with current Academy students first.'));
     return;
    }
-   for(const row of rows){
-    const data=row.data(),card=document.createElement('article');
+   const folder=(title,open=false)=>{
+    const box=document.createElement('details');
+    box.className='record';box.open=open;
+    box.style.cssText='padding:12px;margin:10px 0;border:1px solid #cbdacf;border-radius:12px';
+    const summary=document.createElement('summary');
+    summary.textContent=title;
+    summary.style.cssText='font-weight:800;cursor:pointer;list-style-position:inside';
+    box.append(summary);
+    return box;
+   };
+   const groups=[
+    ['pending','📥 Pending Forms',true,'pending'],
+    ['approved','✅ Approved Forms',false,'approved'],
+    ['duplicate-check','⚠️ Possible Duplicate Forms — Admin Verification',false,'to verify'],
+    ['archived','🗂 Closed / Rejected Forms',false,'closed']
+   ];
+   for(const [bucket,title,open,suffix] of groups){
+    const items=prepared.filter(item=>item.bucket===bucket);
+    const section=folder(title+' ('+items.length+')',open);
+    requests.append(section);
+    if(!items.length){
+     section.append(label('Status','No forms in this category.'));
+     continue;
+    }
+    const courses=new Map();
+    for(const item of items){
+     const key=String(item.data.course||'unassigned');
+     if(!courses.has(key))courses.set(key,[]);
+     courses.get(key).push(item);
+    }
+    for(const [key,courseItems] of [...courses].sort((a,b)=>
+     String(courseNames.get(a[0])||a[0]).localeCompare(String(courseNames.get(b[0])||b[0])))){
+     const title=String(courseNames.get(key)||academyCourseLabel(key)||key);
+     const courseFolder=folder('📚 '+title+' · '+courseItems.length+' '+suffix);
+     section.append(courseFolder);
+     for(const item of courseItems)item.mount=courseFolder;
+    }
+   }
+   for(const {row,data,match,bucket,mount,syncError} of prepared){
+    const card=document.createElement('article');
     card.className='record';
     const title=document.createElement('h4');
     title.textContent='📩 '+String(data.name||'Student')+' · '+(data.status||'Pending Review');
@@ -162,10 +228,42 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
      img.style.cssText='display:block;width:80px;height:80px;object-fit:cover;border-radius:8px';
      card.append(img);
     }
+    if(syncError)card.append(label('⚠ Approval sync error',syncError));
     if(data.status==='Approved'){
      card.append(label('Issued Student ID',data.studentCode||'See linked student record'));
+    }else if(data.status==='Duplicate'){
+     card.append(label('Linked student ID',data.studentCode||data.studentId||'Check official record'));
     }else if(data.status==='Pending Review'){
      const action=document.createElement('div');action.className='actions';
+     if(match?.kind==='possible-duplicate'){
+      const found=match.record;
+      card.append(label('⚠ Potential existing student',
+       String(found.data.name||'')+' · '+(found.data.studentCode||found.id)+
+       ' · '+String(found.data.course||'')+'. Compare guardian and phone before closing.'));
+      action.append(button('✓ Confirm Already Registered / Close Duplicate',async()=>{
+       if(!confirm('Verify the Academy register, student DOB, guardian and phone. Mark this form as a duplicate of '+
+        String(found.data.studentCode||found.id)+'? This will NOT create a student or a new ALIA ID.'))return;
+       try{
+        const [requestNow,studentNow]=await Promise.all([
+         getDoc(row.ref),getDoc(doc(db,'students',found.id))
+        ]);
+        const stillMatch=studentNow.exists()?
+         matchingStudentForRequest(requestNow.data(),[{id:found.id,data:studentNow.data()}]):null;
+        if(!requestNow.exists()||requestNow.data().status!=='Pending Review'||!stillMatch)
+         throw Error('Student/request changed. Refresh and verify again.');
+        await updateDoc(row.ref,{
+         status:'Duplicate',studentId:found.id,
+         studentCode:studentNow.data().studentCode||'',
+         reviewedAt:serverTimestamp(),reviewedByUid:auth.currentUser.uid
+        });
+        await refreshRequests();
+       }catch(e){info.textContent='Could not close duplicate: '+(e.message||e)}
+      },false));
+     }else if(match?.kind==='ambiguous'){
+      card.append(label('⚠ Multiple identity matches',
+       match.matches+' official records share this name and DOB. Check the Academy register before proceeding.'));
+     }
+
      action.append(button('🔎 Review & Register in Student Editor',()=>{
       onReview(row.id,data);
      },false));
@@ -179,7 +277,11 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
      }));
      card.append(action);
     }
-    requests.append(card);
+    const itemFolder=folder('👤 '+String(data.name||'Student')+' · '+
+     String(data.studentCode||'ESR-'+row.id.slice(0,12).toUpperCase())+
+     ' · '+(data.status||'Pending Review'));
+    itemFolder.append(card);
+    mount.append(itemFolder);
    }
   }catch(e){requests.textContent='Unable to load existing-student submissions: '+(e.message||e)}
  }
