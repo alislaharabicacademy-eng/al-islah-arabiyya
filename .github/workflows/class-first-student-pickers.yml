@@ -1,0 +1,55 @@
+name: Class-first Student Selectors - Mobile and Security
+on:
+  pull_request:
+    paths:
+      - 'student-class-selector.js'
+      - 'exam-admin.js'
+      - 'competition-certificates.js'
+      - 'homepage-winners-admin.js'
+      - 'admin-student-preview.js'
+      - 'student-login.html'
+      - 'tests/class-first-student-picker.test.mjs'
+      - 'tests/class-first-student-picker-fixture.html'
+      - 'tests/class-first-picker-browser.mjs'
+      - '.github/workflows/class-first-student-pickers.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  class-first-students:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify module parsing
+        run: |
+          node --check student-class-selector.js
+          node --check exam-admin.js
+          node --check competition-certificates.js
+          node --check homepage-winners-admin.js
+          node --check admin-student-preview.js
+          node --check tests/class-first-picker-browser.mjs
+      - name: Validate student filtering and privacy integration
+        run: node --test tests/class-first-student-picker.test.mjs
+      - name: Install Playwright browser controller
+        run: npm install --no-save --ignore-scripts playwright@1.56.1
+      - name: Start local website
+        run: |
+          python3 -m http.server 8766 > /tmp/class-first-picker.log 2>&1 &
+          sleep 3
+          curl -fsS http://127.0.0.1:8766/tests/class-first-student-picker-fixture.html >/dev/null
+      - name: Verify real Chrome mobile and desktop class-first dropdowns
+        env:
+          CHROME: /usr/bin/google-chrome
+        run: node tests/class-first-picker-browser.mjs
+      - name: Upload mobile and desktop QA images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: class-first-picker-mobile-desktop-qa
+          path: class-first-picker-proof/
+          retention-days: 7
