@@ -90,7 +90,7 @@ test('Admin course picker, all-class publish gate and homepage notice are wired'
 test('Existing manual result publishing and certificate download flows are retained',()=>{
  const exam=file('exam-admin.js'),student=file('student-login.html');
  assert.match(exam,/function save\(published\)/);
- assert.match(exam,/const scores=resultMath\(subjects,passPercent\)/);
+ assert.match(exam,/scores=resultMath\(subjects,passPercent\)/);
  assert.match(student,/\bPublished Examination Results\b/);
  assert.match(student,/getDoc\(doc\(db,'examResults',id\)\)/);
 });
