@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'existing-student-registration.html'
+      - 'student-address-fields.js'
+      - 'tests/student-address-forms.test.mjs'
       - 'academy-course-catalog.js'
       - 'academy-course-catalog-core.js'
       - 'tests/academy-course-catalog.test.mjs'
@@ -55,11 +57,12 @@ jobs:
           PY
           node --check /tmp/existing-student-registration.html.mjs
           node --check /tmp/admin.html.mjs
+          node --check student-address-fields.js
           node --check existing-student-intake-admin.js
           node --check academy-course-catalog.js
           node --check academy-course-catalog-core.js
           node --check tests/existing-student-intake-rules.test.mjs
-          node --test tests/academy-course-catalog.test.mjs
+          node --test tests/academy-course-catalog.test.mjs tests/student-address-forms.test.mjs
           python3 - <<'PY'
           from pathlib import Path
           form=Path('existing-student-registration.html').read_text()
