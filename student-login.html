@@ -187,7 +187,7 @@ function renderPrivateFeeLedger(access,card){
   summary.replaceChildren();table.replaceChildren();history.replaceChildren();
   const facts=document.createElement('p');facts.style.cssText='font-weight:700;line-height:1.85;color:#153e30;';
   facts.textContent='📅 12-month fee register ('+report.year+'): ✅ Paid '+report.paid+'/'+report.totalMonths+
-   '  •  ⏳ Due/Pending '+report.pending+'  •  🗓 Upcoming '+report.notDue+
+   '  •  ⏳ Pending (12-month year) '+report.remaining+'  •  📆 Due now '+report.pending+'  •  🗓 Upcoming '+report.notDue+
    '  •  Unpaid in year '+report.remaining+
    (report.beforeEnrollment?'  •  Before enrollment '+report.beforeEnrollment:'')+
    '  •  💰 Received '+rupee(report.collected)+
