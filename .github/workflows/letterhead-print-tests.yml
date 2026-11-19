@@ -61,16 +61,16 @@ jobs:
           from pathlib import Path
           def images_in(pdf):
               images=subprocess.check_output(['pdfimages','-list',str(pdf)],text=True)
-              return sum(bool(re.match(r'^\\s*\\d+\\s+\\d+',row)) for row in images.splitlines()[2:])
+              return sum(bool(re.match(r'^\s*\d+\s+\d+',row)) for row in images.splitlines()[2:])
           for lang in ('en','ta','ar'):
               image_counts={}
               for signed in (False,True):
                   variant='signed' if signed else 'unsigned'
                   pdf=Path('letterhead-print-proof')/(lang+'-'+variant+'.pdf')
                   details=subprocess.check_output(['pdfinfo',str(pdf)],text=True)
-                  pages=int(re.search(r'^Pages:\\s+(\\d+)',details,re.M).group(1))
+                  pages=int(re.search(r'^Pages:\s+(\d+)',details,re.M).group(1))
                   assert pages==1,(lang,variant,pages,'sample letter should fit one A4 page')
-                  match=re.search(r'^Page size:\\s+([\\d.]+)\\s+x\\s+([\\d.]+)\\s+pts',details,re.M)
+                  match=re.search(r'^Page size:\s+([\d.]+)\s+x\s+([\d.]+)\s+pts',details,re.M)
                   assert match,(lang,variant,details)
                   w,h=map(float,match.groups())
                   assert abs(w-595.28)<1 and abs(h-841.89)<1,(lang,variant,w,h)
