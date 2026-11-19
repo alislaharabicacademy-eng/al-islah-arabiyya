@@ -59,9 +59,9 @@ try{
   if(lang==='ar'){
    const originalBody=await page.locator('#letterBody').inputValue();
    await page.locator('#letterLanguage').selectOption('ta');
-   assert.equal(await page.locator('#letterBody').inputValue(),originalBody===''+''?'':
-    // A translated sample is intentionally swapped when the sample is still unchanged.
-    (await page.locator('#letterBody').inputValue()));
+   const translatedBody=await page.locator('#letterBody').inputValue();
+   assert.notEqual(translatedBody,originalBody,'Sample should switch languages');
+   assert.ok(translatedBody.includes('அகாடமியில்'),'Tamil text must replace Arabic sample');
    await page.locator('#letterBody').fill('نص عربي خاص للمستخدم');
    await page.locator('#letterLanguage').selectOption('en');
    assert.equal(await page.locator('#letterBody').inputValue(),'نص عربي خاص للمستخدم','Do not translate manually entered content');
