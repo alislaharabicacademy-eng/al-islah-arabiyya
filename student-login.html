@@ -225,7 +225,7 @@ function renderStudentTeachingAssignments(access,card){
  section.className='exam-card';
  section.style.cssText='margin-top:17px;border:1px solid #cfdfd5;background:linear-gradient(120deg,#f5fbf7,#fffdf6);';
  const heading=document.createElement('h4');
- heading.textContent='📚 My Subjects & Assigned Teachers';
+ heading.textContent='📚 My Subjects, Kitabs & Assigned Teachers';
  heading.style.cssText='color:#194d37;margin:3px 0 9px;';
  section.append(heading);
  const assignments=Array.isArray(access.teachingAssignments)?access.teachingAssignments:[];
@@ -242,6 +242,7 @@ function renderStudentTeachingAssignments(access,card){
   teacher.style.cssText='margin:5px 0 0;font-size:14px;';
   teacher.textContent='👩‍🏫 Teacher: '+String(assignment.teacherName||'Not assigned');
   row.append(subject,teacher);
+  if(assignment.kitab){const kitab=document.createElement('p');kitab.style.cssText='margin:3px 0 0;font-size:14px;color:#456353;';kitab.textContent='📕 Kitab / Book: '+String(assignment.kitab);row.append(kitab)}
   if(assignment.timing){
    const timing=document.createElement('p');
    timing.style.cssText='margin:3px 0 0;font-size:13px;color:#456353;';
