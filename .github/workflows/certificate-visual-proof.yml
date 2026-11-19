@@ -25,14 +25,14 @@ jobs:
           set -euo pipefail
           CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           if [ -z "$CHROME" ]; then echo "Chrome/Chromium missing: cannot certify visual proof"; exit 1; fi
-          for template in exam winner participation event results; do
+          for template in exam winner participation event results exam-long winner-long participation-long event-long results-long; do
             SRC="file://$PWD/certificate-visual-proof/$template.html"
             "$CHROME" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --hide-scrollbars --allow-file-access-from-files --window-size=1500,1180 --screenshot="$PWD/certificate-visual-proof/$template.png" "$SRC" >/dev/null 2>&1
             "$CHROME" --headless --no-sandbox --disable-gpu --disable-dev-shm-usage --allow-file-access-from-files --no-pdf-header-footer --print-to-pdf="$PWD/certificate-visual-proof/$template.pdf" "$SRC" >/dev/null 2>&1
             test -s "certificate-visual-proof/$template.pdf"
             test -s "certificate-visual-proof/$template.png"
           done
-          echo "Five A4 print PDF and screenshot files generated."
+          echo "Ten A4 normal and long-field print PDF and screenshot files generated."
       - name: Upload certificate quality proof for manual review
         uses: actions/upload-artifact@v4
         with:
