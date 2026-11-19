@@ -35,7 +35,10 @@ jobs:
           assert 'isVerifiedAcademyAdmin' in j
           assert "import {isVerifiedMasterAdmin}" in Path('academy-admin-access.js').read_text()
           assert 'signatureData' in j
-          print('PASS language selectors and admin-only navigation')
+          assert 'id="includePrincipalSignature"' in h
+          assert 'signatureChoiceLabel' in j
+          assert 'without-signature' in h
+          print('PASS language selectors, optional signature toggle and admin-only navigation')
           PY
       - name: Install Playwright controller and PDF tools
         run: |
@@ -47,7 +50,7 @@ jobs:
           python3 -m http.server 8767 >/tmp/letterhead-site.log 2>&1 &
           sleep 3
           curl -fsS http://127.0.0.1:8767/letterhead-studio.html >/dev/null
-      - name: Create and inspect three A4 PDFs in real Chrome
+      - name: Create and inspect signed and unsigned A4 PDFs in three languages
         env:
           CHROME: /usr/bin/google-chrome
           PORT: '8767'
@@ -56,20 +59,28 @@ jobs:
           python3 - <<'PY'
           import re,subprocess
           from pathlib import Path
+          def images_in(pdf):
+              images=subprocess.check_output(['pdfimages','-list',str(pdf)],text=True)
+              return sum(bool(re.match(r'^\s*\d+\s+\d+',row)) for row in images.splitlines()[2:])
           for lang in ('en','ta','ar'):
-              pdf=Path('letterhead-print-proof')/(lang+'.pdf')
-              details=subprocess.check_output(['pdfinfo',str(pdf)],text=True)
-              pages=int(re.search(r'^Pages:\s+(\d+)',details,re.M).group(1))
-              assert pages==1,(lang,pages,'sample letter should fit one A4 page')
-              match=re.search(r'^Page size:\s+([\d.]+)\s+x\s+([\d.]+)\s+pts',details,re.M)
-              assert match,(lang,details)
-              w,h=map(float,match.groups())
-              assert abs(w-595.28)<1 and abs(h-841.89)<1,(lang,w,h)
-              selectable=subprocess.check_output(['pdftotext','-layout',str(pdf),'-'],text=True)
-              assert 'Madrasa Al Islahul Arabiya' in selectable,(lang,'missing academy branding')
-              assert 'Test Principal' in selectable,(lang,'missing principal name')
-              assert len(selectable.strip())>120,(lang,'missing selectable PDF text')
-              print('PASS',lang,'A4',w,h,'points; principal and selectable text present')
+              image_counts={}
+              for signed in (False,True):
+                  variant='signed' if signed else 'unsigned'
+                  pdf=Path('letterhead-print-proof')/(lang+'-'+variant+'.pdf')
+                  details=subprocess.check_output(['pdfinfo',str(pdf)],text=True)
+                  pages=int(re.search(r'^Pages:\s+(\d+)',details,re.M).group(1))
+                  assert pages==1,(lang,variant,pages,'sample letter should fit one A4 page')
+                  match=re.search(r'^Page size:\s+([\d.]+)\s+x\s+([\d.]+)\s+pts',details,re.M)
+                  assert match,(lang,variant,details)
+                  w,h=map(float,match.groups())
+                  assert abs(w-595.28)<1 and abs(h-841.89)<1,(lang,variant,w,h)
+                  selectable=subprocess.check_output(['pdftotext','-layout',str(pdf),'-'],text=True)
+                  assert 'Madrasa Al Islahul Arabiya' in selectable,(lang,variant,'missing academy branding')
+                  assert ('Test Principal' in selectable)==signed,(lang,variant,'principal name must only appear in signed mode')
+                  assert len(selectable.strip())>100,(lang,variant,'missing selectable PDF text')
+                  image_counts[variant]=images_in(pdf)
+                  print('PASS',lang,variant,'A4',w,h,'points; principal text condition confirmed')
+              assert image_counts['signed']>image_counts['unsigned'],(lang,'Signed PDF must contain signature image; unsigned must not',image_counts)
           PY
       - name: Upload Chrome PDF and screenshot proofs
         if: always()

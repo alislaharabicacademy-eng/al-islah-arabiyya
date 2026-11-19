@@ -27,6 +27,12 @@ input,textarea,select{display:block;width:100%;padding:11px 12px;margin-top:5px;
 input:focus,textarea:focus,select:focus{border-color:#237a58;outline:2px solid #237a5822}
 textarea{resize:vertical;min-height:205px;line-height:1.65}
 label small{display:block;color:#718376;font-weight:400;margin-top:3px}
+.signature-choice{display:flex;align-items:flex-start;gap:12px;margin-top:18px;padding:15px;border:1px solid #d6e4d6;background:#f2f8f2;border-radius:12px;cursor:pointer}
+.signature-choice input[type="checkbox"]{width:22px;height:22px;flex:0 0 22px;padding:0;margin:3px 0 0;accent-color:var(--forest);cursor:pointer}
+.signature-choice span{display:block;flex:1}
+.signature-choice strong{display:block;font-size:14px;line-height:1.4}
+.signature-choice small{font-size:12px;line-height:1.5;margin:4px 0 0;font-weight:400;color:#547060}
+.signature-choice:focus-within{outline:2px solid #237a5870;outline-offset:2px}
 .language-choice{background:#f2f7ef;border:1px solid #d2e1cf;border-radius:12px;padding:14px;margin:15px 0 8px}
 .language-choice label{margin:0}.language-choice select{font-size:16px;font-weight:750;background:#fff}
 .language-choice p{margin:8px 0 0;font-size:12px}
@@ -68,6 +74,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .letter-body.empty{color:#a5aaa4;font-style:italic}
 .letter-close{margin-top:28px;font-size:14px}
 .signoff{margin:38px 0 0 auto;max-width:240px;min-width:175px;text-align:center;break-inside:avoid}
+.signoff.without-signature{margin-top:22px}
 .signature-img{height:54px;width:190px;object-fit:contain;display:block;margin:0 auto}
 .signature-missing{height:54px;color:#a57b58;font-size:11px;display:flex;align-items:center;justify-content:center;border:1px dashed #eadccf}
 .sign-rule{width:85%;height:1px;background:#8ea295;margin:4px auto 6px}
@@ -90,7 +97,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <body>
 <header class="app-header"><div><h1>✦ Official Letterhead Studio</h1><p data-i18n="headerDesc">Al Islah Arabic Academy · Admin-only letters with principal signature</p></div><a href="admin.html">← Admin Dashboard</a></header>
 <div id="gate" role="status"><h2>Checking administrator access…</h2><p>Sign in to the Academy admin dashboard first, then open this page.</p><a href="admin.html">Open Admin Login →</a></div>
-<p class="notice" id="notice" hidden><strong>Official document:</strong> The Academy logo, institute contact details, principal name and exact uploaded signature are loaded from Website Settings. Letter content is only held on this page; it is not automatically saved to Firestore.</p>
+<p class="notice" id="notice" hidden><strong>Official document:</strong> The Academy logo and contact details come from Website Settings. The principal’s exact uploaded signature appears only when you select the checkbox. Letter content is only held on this page; it is not automatically saved to Firestore.</p>
 <main id="workspace" class="workspace" hidden>
 <section class="editor" aria-label="Compose official letter">
 <h2 data-i18n="createHeading">Create a Letter</h2><p data-i18n="editorDesc">Enter date, subject and your content. The A4 preview updates automatically.</p>
@@ -104,6 +111,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <label><span data-i18n="greetingLabel">Greeting</span><input id="letterGreeting" maxlength="150" value="Assalamu Alaikum wa Rahmatullahi wa Barakatuh,"></label>
 <label><span data-i18n="bodyLabel">Letter Content *</span><textarea id="letterBody" maxlength="5000" placeholder="Type the full letter content here. Paragraphs and line breaks are preserved." data-i18n-placeholder="bodyPlaceholder"></textarea><small data-i18n="draftHint">Content is not saved automatically. Copy it elsewhere if you need to keep a draft.</small></label>
 <label><span data-i18n="closingLabel">Closing</span><input id="letterClosing" maxlength="160" value="JazakAllahu Khairan."></label>
+<label class="signature-choice" for="includePrincipalSignature">
+<input type="checkbox" id="includePrincipalSignature" autocomplete="off">
+<span><strong data-i18n="signatureChoiceLabel">Include Principal Signature</strong><small data-i18n="signatureChoiceHint">Tick to show the uploaded signature on the preview and PDF. Leave unticked to show only the Principal title.</small></span>
+</label>
 <div class="actions"><button id="printLetter" type="button" data-i18n="printButton">🖨 Print / Save Signed PDF</button><button id="sampleLetter" type="button" class="secondary" data-i18n="sampleButton">Fill Sample</button><button id="clearLetter" type="button" class="secondary" data-i18n="clearButton">Clear</button></div>
 <div id="status" role="status"></div>
 </section>
@@ -121,7 +132,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <div id="pvGreeting" class="salutation"></div>
 <div id="pvBody" class="letter-body empty">Your letter content will appear here.</div>
 <div id="pvClosing" class="letter-close"></div>
-<div class="signoff"><img id="pvSignature" class="signature-img" alt="Principal's uploaded signature" hidden><div id="signatureMissing" class="signature-missing">Principal signature not uploaded</div><div class="sign-rule"></div><div id="pvPrincipal" class="sign-name">Principal</div><div id="pvRole" class="sign-role">Principal</div></div>
+<div class="signoff without-signature" id="letterSignoff"><img id="pvSignature" class="signature-img" alt="Principal's uploaded signature" hidden><div id="signatureMissing" class="signature-missing" hidden>Principal signature not uploaded</div><div id="signRule" class="sign-rule" hidden></div><div id="pvPrincipal" class="sign-name" hidden>Principal</div><div id="pvRole" class="sign-role">Principal</div></div>
 </div>
 <div class="paper-footer"><span data-i18n="footerNotice">OFFICIAL ACADEMY COMMUNICATION</span><span id="footerName">Al Islah Arabic Academy</span></div>
 </article>
