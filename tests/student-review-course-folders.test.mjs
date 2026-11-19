@@ -52,17 +52,29 @@ test('count each custom-course student form without hardcoded course assumptions
  assert.deepEqual([...groups],[['muallama',2],['tajweed-for-girls',1],['alima',1]]);
 });
 
-test('Admin UI preserves course-first folders and official student record actions',()=>{
+test('Admin UI has SEPARATE Pending and Approved tab pages and preserves official student actions',()=>{
  const admin=readFileSync(new URL('../admin.html',import.meta.url),'utf8');
  const intake=readFileSync(new URL('../existing-student-intake-admin.js',import.meta.url),'utf8');
+ assert.match(admin,/id="tab-studentPending"/);
+ assert.match(admin,/id="tab-studentApproved"/);
+ assert.match(admin,/id="tab-studentClosed"/);
+ assert.match(admin,/Pending Forms — All Courses/);
+ assert.match(admin,/Approved Forms — All Courses/);
+ assert.match(admin,/existingIntakePendingCourses/);
+ assert.match(admin,/existingIntakeApprovedCourses/);
+ assert.match(admin,/data-tab="studentPending"/);
+ assert.match(admin,/data-tab="studentApproved"/);
+ assert.match(admin,/existingIntakeAdmin\.openPage\(tab\)/);
  assert.match(admin,/Official Students — Course-wise Directory/);
  assert.match(admin,/studentGroups\.get\(String\(data\.course/);
  assert.match(admin,/kind==='students'\?collection\(db,kind\)/);
  assert.match(admin,/💳 Fees \/ Receipt/);
- assert.match(intake,/Pending Forms/);
- assert.match(intake,/Approved Forms/);
- assert.match(intake,/possible duplicate/i);
+ assert.match(intake,/studentPending:/);
+ assert.match(intake,/studentApproved:/);
+ assert.match(intake,/cachedCourseIds/);
+ assert.match(intake,/selectedCourse=null/);
  assert.match(intake,/status:'Duplicate'/);
  assert.match(intake,/kind==='linked'/);
  assert.match(intake,/getDocs\(collection\(db,'existingStudentRequests'\)\)/);
+ assert.doesNotMatch(admin,/id="existingIntakeRequests"/,'old mixed queue should not appear under Student Details');
 });
