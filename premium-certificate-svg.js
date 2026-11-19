@@ -124,17 +124,58 @@ function banner(w,y,title,small=false){
  ${diamond(w/2,y+116,5)}
  </g>`;
 }
+/* Keep complete names, courses and event titles inside the actual SVG.
+ * The public certificate must never silently truncate names or overlap A4 edges. */
+function balancedTextLines(value,requested=2){
+ let rest=String(value??'').trim().replace(/\s+/g,' ');
+ if(!rest)return [''];
+ const count=Math.max(1,Math.min(requested,[...rest].length));
+ const result=[];
+ for(let index=0;index<count-1;index++){
+  const goal=Math.ceil([...rest].length/(count-index));
+  const before=rest.lastIndexOf(' ',goal);
+  const after=rest.indexOf(' ',goal);
+  let cut=before>0?before:goal;
+  if(after>0&&Math.abs(after-goal)<Math.abs(cut-goal))cut=after;
+  if(cut<=0||cut>=rest.length)cut=goal;
+  const line=rest.slice(0,cut).trim();
+  if(line)result.push(line);
+  rest=rest.slice(cut).trim();
+  if(!rest)break;
+ }
+ if(rest)result.push(rest);
+ return result;
+}
 function studentName(w,y,name,fontSize=79){
- const n=String(name||'Student Name').slice(0,100),size=Math.max(20,Math.min(fontSize,1000/(Math.max(1,[...n].length)*.56)));
- return T(w/2,y,n,size,'text-anchor="middle" font-family="Georgia,serif" font-weight="bold" font-style="italic" fill="#07503D"')+
- `<path d="M${w*.25} ${y+21}H${w*.75}" fill="none" stroke="#D5A44B" stroke-width="2"/>${diamond(w/2,y+21,7)}`;
+ const n=String(name||'Student Name').slice(0,100);
+ const available=w>1100?1170:825;
+ const singleSize=Math.min(fontSize,available/(Math.max(1,[...n].length)*.59));
+ const attrs='text-anchor="middle" font-family="Georgia,serif" font-weight="bold" font-style="italic" fill="#07503D"';
+ let body='';
+ if(singleSize>=36||[...n].length<=33){
+  body=T(w/2,y,n,Math.max(18,singleSize),attrs);
+ }else{
+  const lines=balancedTextLines(n,2);
+  const maxLength=Math.max(...lines.map(line=>[...line].length),1);
+  const size=Math.min(w>1100?44:31,available/(maxLength*.60));
+  const baseline=y-16;
+  body=lines.map((line,i)=>T(w/2,baseline+i*33,line,Math.max(17,size),attrs)).join('');
+ }
+ return body+`<path d="M${w*.25} ${y+25}H${w*.75}" fill="none" stroke="#D5A44B" stroke-width="2"/>${diamond(w/2,y+25,7)}`;
 }
 function chip(x,y,w,label,value){
- const txt=String(value??'-').slice(0,64),size=Math.max(11,Math.min(27,(w-20)/(Math.max(1,[...txt].length)*.55)));
+ const txt=String(value??'-').slice(0,160);
+ const len=[...txt].length,rows=len<=22?1:len<=45?2:len<=76?3:4;
+ const lines=balancedTextLines(txt,rows);
+ const maxChars=Math.max(...lines.map(line=>[...line].length),1);
+ const size=Math.min(lines.length===1?27:18,(w-23)/(maxChars*.61));
+ const firstY=lines.length===1?y+80:y+(lines.length===4?61:65);
+ const step=lines.length===4?12:15;
+ const attrs='font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#0B2649"';
  return `<rect x="${x}" y="${y}" width="${w}" height="102" rx="17" fill="#FFFCF6" stroke="#CFA04B" stroke-width="4"/>
  <path d="M${x+3} ${y+16}Q${x+3} ${y+3} ${x+18} ${y+3}H${x+w-18}Q${x+w-3} ${y+3} ${x+w-3} ${y+16}V${y+50}H${x+3}Z" fill="url(#green)"/>
  ${T(x+w/2,y+36,label,21,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#FFE2A0"')}
- ${T(x+w/2,y+80,txt,size,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#0B2649"')}`;
+ ${lines.map((line,i)=>T(x+w/2,firstY+i*step,line,Math.max(10,size),attrs)).join('')}`;
 }
 function stamp(cx,cy,size=82){
  return `<circle cx="${cx}" cy="${cy}" r="${size+11}" fill="#3F174C" stroke="#DDB45D" stroke-width="10"/>
@@ -192,7 +233,11 @@ function resultPage(r,subjects,page,totalPages){
  s+=T(w/2,457,'EXAMINATION RESULTS',28,'font-family="Georgia,serif" text-anchor="middle" fill="#172C4C"');
  s+=studentName(w,548,r.studentName,63);
  s+=chip(55,585,280,'Student ID',r.studentCode)+chip(360,585,280,'Class',r.course)+chip(665,585,280,'Academic Year',r.academicYear);
- s+=T(w/2,749,r.examTitle||'Annual Examination',32,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#4E165F"');
+ const examHeading=String(r.examTitle||'Annual Examination').slice(0,160);
+ const examHeadingLines=[...examHeading].length>48?balancedTextLines(examHeading,2):[examHeading];
+ const titleChars=Math.max(...examHeadingLines.map(x=>[...x].length),1);
+ const titleSize=Math.min(32,815/(titleChars*.61));
+ s+=examHeadingLines.map((line,i)=>T(w/2,examHeadingLines.length===1?749:731+i*30,line,Math.max(13,titleSize),'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#4E165F"')).join('');
  s+=T(w/2,791,(r.examDate||'')+'  •  Page '+(page+1)+' of '+totalPages,21,'font-family="Georgia,serif" text-anchor="middle" fill="#243453"');
  const tableY=829;
  s+=`<rect x="69" y="${tableY}" width="863" height="62" rx="10" fill="url(#purple)" stroke="#D6A34D" stroke-width="4"/>`;
@@ -203,7 +248,12 @@ function resultPage(r,subjects,page,totalPages){
   const y=tableY+62+i*47;
   s+=`<rect x="70" y="${y}" width="862" height="47" fill="${i%2?'#FFF8ED':'#FFFFFA'}" stroke="#D6B577" stroke-width="1.6"/>`;
   s+=T(151,y+31,page*7+i+1,23,'font-family="Georgia,serif" text-anchor="middle" fill="#182C4A"');
-  s+=T(270,y+31,String(item.name||'Subject').slice(0,48),25,'font-family="Georgia,serif" fill="#182C4A"');
+  const subject=String(item.name||'Subject').slice(0,150);
+  const subjectLines=[...subject].length>27?balancedTextLines(subject,2):[subject];
+  const subjectChars=Math.max(...subjectLines.map(x=>[...x].length),1);
+  const subjectFont=Math.min(subjectLines.length===1?25:17,430/(subjectChars*.61));
+  const subjectAttrs='font-family="Georgia,serif" fill="#182C4A"';
+  s+=subjectLines.map((line,k)=>T(270,y+(subjectLines.length===1?31:20+k*19),line,Math.max(10,subjectFont),subjectAttrs)).join('');
   s+=T(823,y+31,(item.score??0)+' / '+(item.max??0),24,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#182C4A"');
  });
  if(page===totalPages-1){
@@ -215,7 +265,7 @@ function resultPage(r,subjects,page,totalPages){
       T(x,y+61,value,String(value).length>13?15:26,'font-family="Georgia,serif" text-anchor="middle" font-weight="bold" fill="#112649"');
   });
  }
- s+=T(w/2,h-83,'RESULT REFERENCE: '+String(r.id||'ALIA-DEMO').slice(0,53),17,'text-anchor="middle" font-family="Arial,sans-serif" fill="#213656"');
+ s+=T(w/2,h-44,'RESULT REFERENCE: '+String(r.id||'ALIA-DEMO').slice(0,53),17,'text-anchor="middle" font-family="Arial,sans-serif" fill="#213656"');
  return `<svg xmlns="${NS}" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${defs()}${s}</svg>`;
 }
 function previewWatermark(markup,portrait){
