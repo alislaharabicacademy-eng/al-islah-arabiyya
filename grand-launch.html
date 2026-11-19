@@ -93,7 +93,7 @@ body[data-mode="main-preview"] .kicker{letter-spacing:.25em}
 .sparkle-field i:after{content:"";position:absolute;top:50%;left:50%;width:1px;height:350%;transform:translate(-50%,-50%);
  background:linear-gradient(transparent,#fff2b2,transparent)}
 @keyframes goldSpark{0%{opacity:0;transform:translate(-50%,-50%) scale(.1)}20%{opacity:1}
- 55%{opacity:1;transform:translate(calc(-50% + var(--dx)*.6),calc(-50% + var(--dy)*.6)) scale(1.45)}
+ 55%{opacity:1;transform:translate(calc(-50% + var(--dx-half)),calc(-50% + var(--dy-half))) scale(1.45)}
  100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.35)}}
 .celebration-flash{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;
  background:radial-gradient(circle at 50% 48%,#fff4cd88 0%,#e6b75438 17%,transparent 58%)}
