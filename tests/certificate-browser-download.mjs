@@ -41,7 +41,7 @@ try{
  // counts. A full-width name or a 95-character event must not touch A4 edges.
  // Test the user-editable long-name fields in *all five* designs.
  const longName='Fathima Zahra Bint Abdul Rahman Al Qadiriya Bint Muhammad Farooq Al Islahi Bint Abdul Kareem';
- const longEvent='Annual Arabic Language and Islamic Studies International Recognition and Achievement Presentation';
+ const longEvent='Annual Arabic Language and Islamic Studies International Recognition and Achievement Presentation'.slice(0,95); // Studio field maxlength=95
  const limits={landscape:{left:99,right:1315},portrait:{left:79,right:921}};
  for(const type of ['exam','winner','participation','event','results']){
   try{
