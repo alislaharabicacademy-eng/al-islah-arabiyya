@@ -41,7 +41,7 @@ jobs:
             'serverTimestamp','photoData','No Google login','Pending Review']:
             assert name in site,name
           for name in ['existingIntakeCreateLink','existingIntakeCopyLink','existingIntakeCloseLink',
-            'existingIntakeRequests','openExistingSubmission','reviewedRequestId',
+            'existingIntakePendingCourses','existingIntakeApprovedCourses','openExistingSubmission','reviewedRequestId',
             'existingStudentRequestId','existingIntakeAdmin.refresh()']:
             assert name in admin,name
           assert 'syedatheil40@gmail.com' not in admin
