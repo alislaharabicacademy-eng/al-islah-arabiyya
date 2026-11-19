@@ -282,13 +282,29 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 .finance-hub-card p{color:#456454;line-height:1.65;font-size:13px;min-height:54px;margin:0 0 15px}
 .finance-hub-card button{width:100%;min-height:45px;margin:0}
 @media(max-width:690px){.finance-hub-grid{grid-template-columns:1fr}.finance-hub-card{padding:16px}.finance-hub-card p{min-height:0}}
+
+/* One-page-per-status student registration navigation: accessible on mobile */
+.intake-page-lead{border:1px solid #cfe3d5;background:linear-gradient(135deg,#f7fcf8,#ecf5ed);padding:18px;border-radius:16px;margin:15px 0;color:#204b32}
+.intake-course-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:14px;margin:20px 0}
+.intake-course-card{display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;min-height:122px;padding:17px!important;border-radius:15px!important;background:#fff!important;color:#163d29!important;border:1px solid #bed9c5!important;box-shadow:0 7px 23px #133d2410!important}
+.intake-course-card:hover,.intake-course-card:focus-visible{border-color:#b58c42!important;background:#f8fcf6!important}
+.intake-course-card .intake-course-name{font-size:17px;font-weight:850;overflow-wrap:anywhere}
+.intake-course-card .intake-course-count{font-size:14px;font-weight:750;color:#25684b}
+.intake-course-card .intake-course-hint{font-size:12px;color:#607367}
+.intake-detail-view{padding:15px;border:1px solid #dae7dc;border-radius:15px;background:#fff}
+.intake-detail-view .intake-back{margin:0 0 15px}
+.intake-form-row{border:1px solid #dde8df;border-radius:12px;padding:12px;margin:12px 0;background:#fdfefd}
+.intake-form-row>summary{cursor:pointer;font-size:15px;font-weight:800;overflow-wrap:anywhere}
+.intake-quick-links{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.intake-quick-links button{flex:1 1 180px;min-height:43px}
+@media(max-width:600px){.intake-course-grid{grid-template-columns:1fr}.intake-course-card{min-height:88px}}
 </style></head><body><button class="menu-toggle" id="menuToggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button><div class="menu-shade hidden" id="menuShade"></div><aside class="side-menu" id="sideMenu" aria-label="Admin navigation">
 <div class="academy-menu-brand"><span class="academy-menu-kicker">AL ISLAHUL ARABIYA</span><h2>Academy Menu</h2><p>Management Control Center</p></div>
 <div class="academy-menu-groups">
 <section class="academy-menu-group" data-menu-group="dashboard"><button class="academy-menu-group-toggle" type="button" aria-expanded="true" aria-controls="menuDashboard"><span>🏠 Dashboard</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuDashboard"><button type="button" data-tab="overview">Dashboard Overview</button></div></section>
 <section class="academy-menu-group" data-menu-group="academics"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuAcademics"><span>📚 Academics</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuAcademics" hidden><button type="button" data-tab="academic">Academic Year</button><button type="button" data-tab="courses">Course Details</button><button type="button" data-tab="newcourse">Add New Course</button><button type="button" data-tab="exams">🎓 Exam Results & Certificates</button><button type="button" id="openHomepageWinnersPanel">🏆 Homepage First / Second / Third</button><a href="certificate-studio.html" target="_blank" rel="noopener">✦ Premium Certificate Design Studio (Vector PDF)</a><a href="exam-results.html" target="_blank" rel="noopener">↗ View Published Results</a></div></section>
 <section class="academy-menu-group" data-menu-group="admissions"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuAdmissions"><span>📝 Admissions</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuAdmissions" hidden><button type="button" data-tab="applications">New Applications</button><button type="button" data-tab="admissionSettings">Admission Form Settings</button><a href="admission.html">↗ Open Admission Form</a></div></section>
-<section class="academy-menu-group" data-menu-group="people"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuPeople"><span>👩‍🏫 Teachers &amp; Students</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuPeople" hidden><button type="button" data-tab="teachers">Teacher Details</button><button type="button" data-tab="students">Student Details</button><a href="id-card-studio.html" target="_blank" rel="noopener">🪪 Student &amp; Teacher ID Card Studio</a><a href="verify-id.html" target="_blank" rel="noopener">🔳 ID Card QR Verification</a></div></section>
+<section class="academy-menu-group" data-menu-group="people"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuPeople"><span>👩‍🏫 Teachers &amp; Students</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuPeople" hidden><button type="button" data-tab="teachers">Teacher Details</button><button type="button" data-tab="students">Student Details</button><button type="button" data-tab="studentPending">📥 Pending Forms</button><button type="button" data-tab="studentApproved">✅ Approved Forms</button><button type="button" data-tab="studentClosed">🗂 Rejected / Duplicate Forms</button><a href="id-card-studio.html" target="_blank" rel="noopener">🪪 Student &amp; Teacher ID Card Studio</a><a href="verify-id.html" target="_blank" rel="noopener">🔳 ID Card QR Verification</a></div></section>
 <section class="academy-menu-group" data-menu-group="management"><button class="academy-menu-group-toggle" type="button" aria-expanded="false" aria-controls="menuManagement"><span>⚙️ Management</span><span class="menu-chevron">⌄</span></button><div class="academy-menu-submenu" id="menuManagement" hidden><button type="button" data-tab="finance">💳 Fees &amp; Salary Management</button><button type="button" data-tab="fees">Fee Structure</button><button type="button" data-tab="settings">🎨 Website Settings &amp; Principal</button><a href="letterhead-studio.html" target="_blank" rel="noopener">📄 Official Letter Pad · Signed PDF</a><button type="button" id="openPrincipalCeremonyAccess">🎀 Principal Login · Ceremony</button><a href="grand-launch.html?role=principal" target="_blank" rel="noopener">👑 Open Principal Login</a><button type="button" id="openHiringSettings">📣 Hiring &amp; Vacancies</button><a href="grand-launch.html?role=host" target="_blank" rel="noopener">🎀 Grand Launch · Trial Studio</a><a href="grand-launch.html?role=host&amp;mode=official" target="_blank" rel="noopener">🔒 Official Inauguration · 21 Nov</a><a href="index.html">↗ Website Home</a></div></section>
 </div></aside><header><div class="top"><div><img src="1_20261112_080707_0000.png" alt="Academy logo" style="width:74px;height:74px;object-fit:contain;float:right;margin-left:12px"><div class="brand">Madrasa Al Islahul Arabiya</div><h1 class="brand-title">Academy Control Center</h1><p class="subtitle">Secure course management dashboard</p></div><nav><a href="index.html">⌂ Home</a><a id="previewTop" href="courses.html?course=muallama" target="_blank" rel="noopener">↗ Course Preview</a></nav></div></header>
 <main><div class="hero"><div><h2>Course Management</h2><p>Update course information and control what students can see.</p></div><span class="badge">● ADMIN DASHBOARD</span></div>
@@ -643,7 +659,32 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
   <p class="status" id="competitionStatus" role="status"></p><div id="competitionCertificatesList"></div>
  </section>
 </div>
-<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Official Student IDs are issued automatically on Save: <strong>ALIA00001, ALIA00002, ALIA00003…</strong> (ALIA + 5 digits). Existing students can be assigned IDs using the button below. These numbers are permanent, unique roll numbers — not login passwords. For online exam results, the separate private Exam Access ID and Date of Birth are used.</p>
+<div id="tab-studentPending" class="tabpage hidden">
+<h2>📥 Pending Forms — All Courses</h2>
+<p class="intake-page-lead">Select any course to view its pending existing-student registration forms. Each course shows its live pending count. Open a student to verify details, approve or reject. Possible duplicate submissions are flagged here for manual verification.</p>
+<div class="intake-quick-links"><button type="button" data-tab="studentApproved" class="secondary">✅ Go to Approved Forms</button><button type="button" data-tab="students" class="secondary">🎓 Student Details</button><button type="button" id="existingIntakePendingRefresh" class="secondary">↻ Refresh Pending Forms</button></div>
+<p id="existingIntakePendingCount" role="status" class="section-note">Loading pending forms…</p>
+<div id="existingIntakePendingCourses" class="intake-course-grid" aria-label="Courses with pending forms"></div>
+<section id="existingIntakePendingDetail" class="intake-detail-view" hidden><button id="existingIntakePendingBack" type="button" class="secondary intake-back">← All Courses</button><h3 id="existingIntakePendingTitle"></h3><div id="existingIntakePendingStudents"></div></section>
+</div>
+<div id="tab-studentApproved" class="tabpage hidden">
+<h2>✅ Approved Forms — All Courses</h2>
+<p class="intake-page-lead">Approved registrations only. Choose a course to see approved requests, verified student details, and the original ALIA Student ID. No pending forms are mixed into this page.</p>
+<div class="intake-quick-links"><button type="button" data-tab="studentPending" class="secondary">📥 Go to Pending Forms</button><button type="button" data-tab="students" class="secondary">🎓 Student Details</button><button type="button" id="existingIntakeApprovedRefresh" class="secondary">↻ Refresh Approved Forms</button></div>
+<p id="existingIntakeApprovedCount" role="status" class="section-note">Loading approved forms…</p>
+<div id="existingIntakeApprovedCourses" class="intake-course-grid" aria-label="Courses with approved forms"></div>
+<section id="existingIntakeApprovedDetail" class="intake-detail-view" hidden><button id="existingIntakeApprovedBack" type="button" class="secondary intake-back">← All Courses</button><h3 id="existingIntakeApprovedTitle"></h3><div id="existingIntakeApprovedStudents"></div></section>
+</div>
+<div id="tab-studentClosed" class="tabpage hidden">
+<h2>🗂 Rejected / Duplicate Forms — All Courses</h2>
+<p class="intake-page-lead">Historical rejected and duplicate requests are kept safely in this separate page. They are not enrolled students or pending approvals.</p>
+<div class="intake-quick-links"><button type="button" data-tab="studentPending" class="secondary">📥 Pending Forms</button><button type="button" data-tab="studentApproved" class="secondary">✅ Approved Forms</button><button type="button" id="existingIntakeClosedRefresh" class="secondary">↻ Refresh Archived Forms</button></div>
+<p id="existingIntakeClosedCount" role="status" class="section-note">Loading archived forms…</p>
+<div id="existingIntakeClosedCourses" class="intake-course-grid" aria-label="Courses with rejected or duplicate forms"></div>
+<section id="existingIntakeClosedDetail" class="intake-detail-view" hidden><button id="existingIntakeClosedBack" type="button" class="secondary intake-back">← All Courses</button><h3 id="existingIntakeClosedTitle"></h3><div id="existingIntakeClosedStudents"></div></section>
+</div>
+<div id="tab-students" class="tabpage hidden"><h3>Student Details</h3>
+<div class="intake-quick-links"><button type="button" data-tab="studentPending">📥 Open Pending Forms</button><button type="button" data-tab="studentApproved" class="secondary">✅ Open Approved Forms</button></div><div class="filterbar"><label for="studentFilter">🎓 Filter Students by Course</label><select id="studentFilter"><option value="all">All Courses</option><option value="muallama">Muallama</option><option value="muballigha">Muballigha</option><option value="alima">Alima</option><option value="boys-hifz">Boys Hifz Class</option><option value="maktab">Maktab Students</option></select><span id="studentFilterCount" class="badge">Loading…</span></div><p class="section-note">Official Student IDs are issued automatically on Save: <strong>ALIA00001, ALIA00002, ALIA00003…</strong> (ALIA + 5 digits). Existing students can be assigned IDs using the button below. These numbers are permanent, unique roll numbers — not login passwords. For online exam results, the separate private Exam Access ID and Date of Birth are used.</p>
 <div class="actions" style="display:flex;flex-wrap:wrap;gap:10px;margin:15px 0">
 <button id="studentNewButton" type="button">＋ Add New Student</button>
 <button id="studentExistingButton" type="button" class="secondary">📚 Register Existing Academy Student</button>
@@ -651,8 +692,8 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <button id="copyStudentAdmissionLink" type="button" class="secondary">🔗 Copy New Student Admission Link</button>
 <span id="studentFormToggleStatus" class="section-note" role="status">The registration form is closed until Add or Edit is selected.</span></div>
 <section class="section" id="existingStudentIntakePanel" style="background:#f8fbf6;border:1px solid #c6d9c7;border-radius:12px">
-<h3>📲 Existing Students — Self-Registration Link &amp; Admin Review</h3>
-<p class="section-note">Allow students <strong>already studying in our Academy</strong> to fill in their own details on a private, shareable form without Google Login. This is separate from New Admission. Submitted details are never official until an Admin verifies and approves them below.</p>
+<h3>📲 Existing Students — Self-Registration Link Management</h3>
+<p class="section-note">Allow students <strong>already studying in our Academy</strong> to fill in their own details on a private, shareable form without Google Login. This is separate from New Admission. Submitted details are never official until an Admin verifies and approves them on the separate Pending Forms page.</p>
 <div class="actions" style="display:flex;flex-wrap:wrap;gap:10px;margin:10px 0">
 <button type="button" id="existingIntakeCreateLink">🔐 Create / Rotate 30-Day Registration Link</button>
 <button type="button" id="existingIntakeCopyLink" class="secondary" disabled>📋 Copy Link for WhatsApp</button>
@@ -660,7 +701,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 <button type="button" id="existingIntakeRefresh" class="secondary">↻ Refresh Submissions</button>
 </div>
 <p id="existingIntakeAdminStatus" class="status" role="status" aria-live="polite">Sign in as Admin to manage the existing-student self-registration link.</p>
-<div id="existingIntakeRequests" aria-live="polite"></div>
+<div class="intake-quick-links"><button type="button" data-tab="studentPending">📥 Review Pending Forms</button><button type="button" data-tab="studentApproved" class="secondary">✅ Browse Approved Forms</button></div>
 </section>
 <div class="actions" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:15px 0"><button id="generateMissingStudentIds" class="secondary" type="button">✨ Generate ALIA IDs for Existing Students</button><span id="studentIdBatchStatus" role="status" class="section-note"></span></div><section id="studentEditorPanel" class="section" hidden style="background:#f5faf5;border:1px solid #c8d8cc;padding:18px;border-radius:13px">
 <div class="actions" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
@@ -976,7 +1017,7 @@ async function load(){
 }
 
 const safe=(s)=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-const tabs=['overview','academic','admissionSettings','courses','courseeditor','newcourse','finance','fees','teachers','students','exams','applications','settings'];
+const tabs=['overview','academic','admissionSettings','courses','courseeditor','newcourse','finance','fees','teachers','students','studentPending','studentApproved','studentClosed','exams','applications','settings'];
 const menu=$('sideMenu'),shade=$('menuShade'),toggle=$('menuToggle');
 function setMenu(open){menu.classList.toggle('open',open);shade.classList.toggle('hidden',!open);toggle.setAttribute('aria-expanded',String(open));toggle.textContent=open?'✕':'☰'}
 toggle.onclick=()=>setMenu(!menu.classList.contains('open'));shade.onclick=()=>setMenu(false);
@@ -1212,7 +1253,7 @@ $('createCourse').onclick=async()=>{
  finally{$('createCourse').disabled=false}
 };
 
-document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',async()=>{if(!active)return;const tab=btn.dataset.tab;switchTab(tab);if(tab==='courses')renderCourseList();if(tab==='teachers'){showTeacherMode('profiles');await loadTeacherDirectory();}if(tab==='students')await renderRecords('students');if(tab==='applications')await renderApplications()}));
+document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',async()=>{if(!active)return;const tab=btn.dataset.tab;switchTab(tab);if(tab==='courses')renderCourseList();if(tab==='teachers'){showTeacherMode('profiles');await loadTeacherDirectory();}if(tab==='students')await renderRecords('students');if(['studentPending','studentApproved','studentClosed'].includes(tab))await existingIntakeAdmin.openPage(tab);if(tab==='applications')await renderApplications()}));
 function courseKey(value){const v=String(value||'').trim().toLowerCase().replace(/[–—_]/g,'-').replace(/\s+/g,' ');const simple=x=>String(x||'').toLowerCase().replace(/[^a-z0-9]/g,'');const match=[...$('course').options].find(o=>simple(o.textContent)===simple(value)&&simple(value));if(match)return match.value;if(v.includes('muballigh')||v.includes('mubaligh'))return 'muballigha';if(v.includes('muallam')||v.includes('mualim')||v.includes('muallim'))return 'muallama';if(v.includes('alima')||v.includes('aalima'))return 'alima';if(v.includes('hifz')||v.includes('hifdh'))return 'boys-hifz';if(v==='maktab'||v==='maktab students'||v==='makthab students')return 'maktab';if(v==='children\'s qur\'an maktab'||v==='childrens quran maktab'||v==='childrens-quran-maktab')return 'childrens-quran-maktab';if(v==='tajweed for girls'||v==='tajweed-for-girls')return 'tajweed-for-girls';return v.replace(/\s+/g,'-')}
 $('studentFilter').onchange=()=>renderRecords('students');
 $('applicationFilter').onchange=renderApplications;
@@ -1508,6 +1549,7 @@ function showStudentEditor(mode='new'){
 $('studentNewButton').onclick=()=>{studentEditorMode='new';resetRecord('student');showStudentEditor('new')};
 $('studentExistingButton').onclick=()=>{studentEditorMode='existing';resetRecord('student');showStudentEditor('existing')};
 function openExistingSubmission(requestId,data){
+ switchTab('students');
  if(!active){$('existingIntakeAdminStatus').textContent='Please sign in as Admin first.';return}
  if(!/^[a-f0-9]{32}$/.test(String(requestId||''))||data?.status!=='Pending Review')return;
  studentEditorMode='existing';
