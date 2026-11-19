@@ -1,0 +1,38 @@
+name: Student Review Course Folders and Duplicate Guard
+
+on:
+  pull_request:
+    paths:
+      - 'admin.html'
+      - 'existing-student-intake-admin.js'
+      - 'existing-student-review-utils.js'
+      - 'tests/student-review-course-folders.test.mjs'
+      - '.github/workflows/student-review-course-folders-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  review-ui-and-duplicate-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate JS module syntax and the Admin inline module
+        run: |
+          node --check existing-student-review-utils.js
+          node --check existing-student-intake-admin.js
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          source=Path('admin.html').read_text()
+          scripts=re.findall(r'<script type="module">([\s\S]*?)</script>',source)
+          assert scripts,'No Admin module found'
+          Path('/tmp/student-review-admin.mjs').write_text('\n'.join(scripts))
+          PY
+          node --check /tmp/student-review-admin.mjs
+      - name: Test pending/approved course folders and duplicate lifecycle
+        run: node --test tests/student-review-course-folders.test.mjs
