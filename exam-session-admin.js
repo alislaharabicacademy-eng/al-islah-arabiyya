@@ -42,7 +42,7 @@ export function initExamSessionAdmin({db,auth,onPublication,onPromotion}={}){
  }
  function renderSummary(){
   const box=$('courseExamOverview');box.replaceChildren();
-  if(!session){box.textContent='Create an examination, then choose a course. All active/completed students are captured in a class roster for this exam.';return}
+  if(!session){box.textContent='Create an examination, then choose a course. All active/completed students are captured in a class roster for this exam.';$('courseExamPublishAll').disabled=true;return}
   const report=readyToPublish(session,recordsOf());
   const summary=document.createElement('p');
   summary.textContent=[session.examTitle,session.academicYear,session.examDate,
@@ -87,15 +87,20 @@ export function initExamSessionAdmin({db,auth,onPublication,onPromotion}={}){
  }
  function renderClassRows(keepValues=false){
   const table=$('courseExamStudentRows');
-  const prior=new Map();
+  const prior=new Map(),priorSubjects=JSON.parse(table.dataset.subjectSchema||'[]');
   if(keepValues)for(const row of table.querySelectorAll('[data-student-id]')){
-   prior.set(row.dataset.studentId,[...row.querySelectorAll('input.course-exam-mark')].map(i=>i.value));
+   const marks=new Map();
+   [...row.querySelectorAll('input.course-exam-mark')].forEach((input,i)=>{
+    const old=priorSubjects[i];if(old)marks.set(old.name+'|'+old.max,input.value);
+   });
+   prior.set(row.dataset.studentId,marks);
   }
-  table.replaceChildren();
+  table.replaceChildren();delete table.dataset.subjectSchema;
   if(!cohort)return;
   let subjects;
   try{subjects=parseExamSubjects($('courseExamSubjects').value)}
   catch(e){table.textContent='Set valid class subjects above, then select Prepare Subject Columns. '+e.message;return}
+  table.dataset.subjectSchema=JSON.stringify(subjects);
   const header=document.createElement('tr');
   for(const label of ['Student / ALIA ID',...subjects.map(s=>s.name+' (/'+s.max+')'),'Total / Grade']){
    const th=document.createElement('th');th.textContent=label;header.append(th);
@@ -107,7 +112,8 @@ export function initExamSessionAdmin({db,auth,onPublication,onPromotion}={}){
    const tr=document.createElement('tr');tr.dataset.studentId=studentId;
    const cell=document.createElement('th');cell.scope='row';
    cell.textContent=(st?.name||'Student not found')+' · '+(st?.studentCode||'No ALIA ID');tr.append(cell);
-   const values=prior.get(studentId)||subjects.map(s=>old?.subjects?.find(x=>x.name===s.name&&x.max===s.max)?.score??'');
+   const previous=prior.get(studentId);
+   const values=subjects.map(s=>previous?.get(s.name+'|'+s.max)??old?.subjects?.find(x=>x.name===s.name&&x.max===s.max)?.score??'');
    for(let i=0;i<subjects.length;i++){
     const td=document.createElement('td'),input=createInput('number',values[i],studentId+':'+i,subjects[i].max);
     input.setAttribute('aria-label',(st?.name||studentId)+' · '+subjects[i].name);
@@ -195,10 +201,22 @@ export function initExamSessionAdmin({db,auth,onPublication,onPromotion}={}){
    const live=await getDoc(sessionDoc(session.id));
    if(!live.exists()||live.data().status!=='draft')throw Error('Exam is no longer editable. Refresh and check status.');
    const schema=parseExamSubjects($('courseExamSubjects').value);
+   if(JSON.stringify(schema)!==$('courseExamStudentRows').dataset.subjectSchema)
+    throw Error('The subject list has changed. Click Prepare Subject Columns first and verify all marks again.');
    const rows=[...$('courseExamStudentRows').querySelectorAll('tr[data-student-id]')];
    if(rows.length!==cohort.studentIds.length||rows.some(row=>!cohort.studentIds.includes(row.dataset.studentId)))
     throw Error('Class student list changed. Reload this exam.');
-   const saved=dataForClass(),now=new Date().toISOString(),payloads=[];
+   // Re-read Firestore before assigning result IDs, so retries after a partial
+   // class save cannot create duplicate results for the same student.
+   const priorSnap=await getDocs(query(collection(db,'examResults'),where('sessionId','==',session.id)));
+   const saved=new Map();
+   for(const d of priorSnap.docs){
+    const row={id:d.id,...d.data()};
+    if(row.cohortKey!==cohort.key)continue;
+    if(saved.has(row.studentId))throw Error('Duplicate saved result for '+row.studentId+'. Admin review required.');
+    saved.set(row.studentId,row);
+   }
+   const now=new Date().toISOString(),payloads=[];
    for(const row of rows){
     const st=byStudent(row.dataset.studentId);
     if(!st)throw Error('Student has been deleted; cannot save marks for '+row.dataset.studentId);
@@ -217,14 +235,19 @@ export function initExamSessionAdmin({db,auth,onPublication,onPromotion}={}){
      sessionId:session.id,cohortKey:cohort.key,published:false,
      ...marks,createdAt:old?.createdAt||now,updatedAt:now});
    }
-   // Save class privately in 200-result chunks. No draft can be viewed by students.
-   for(let i=0;i<payloads.length;i+=200){
-    const batch=writeBatch(db);
-    for(const p of payloads.slice(i,i+200)){const {id,...data}=p;batch.set(doc(db,'examResults',id),data)}
-    await batch.commit();
-   }
+   // Each chunk is a Firestore transaction guarded by the session state.
+   // The final chunk atomically saves the cohort's approved subject schema.
+   // A concurrent publication cannot overwrite results after it acquires its lock.
    const updatedCohorts=session.cohorts.map(c=>c.key===cohort.key?{...c,subjects:schema}:c);
-   await setDoc(sessionDoc(session.id),{cohorts:updatedCohorts,updatedAt:now},{merge:true});
+   for(let i=0;i<payloads.length;i+=170){
+    const chunk=payloads.slice(i,i+170),last=i+170>=payloads.length;
+    await runTransaction(db,async tx=>{
+     const ref=sessionDoc(session.id),gate=await tx.get(ref);
+     if(!gate.exists()||gate.data().status!=='draft')throw Error('Exam publishing started while saving class marks.');
+     for(const p of chunk){const {id,...data}=p;tx.set(doc(db,'examResults',id),data)}
+     if(last)tx.update(ref,{cohorts:updatedCohorts,updatedAt:now});
+    });
+   }
    await refresh();
    status('✓ Saved '+payloads.length+' PRIVATE student results for '+cohortLabel(cohort)+'. No student or public website can see these drafts.');
   }catch(e){status('Class save failed: '+e.message,true)}
@@ -254,6 +277,7 @@ export function initExamSessionAdmin({db,auth,onPublication,onPromotion}={}){
     if(!state.exists())throw Error('Exam no longer exists.');
     const data=state.data();
     if(data.status==='published')throw Error('This exam was already published.');
+    if(data.updatedAt!==current.updatedAt)throw Error('Class marks changed while reviewing publication. Refresh and verify again.');
     if(data.status==='publishing'&&data.publisherUid!==uid)throw Error('Another administrator is publishing this exam.');
     tx.update(ref,{status:'publishing',publisherUid:uid,publishStartedAt:now,updatedAt:now});
    });
@@ -299,10 +323,10 @@ export function initExamSessionAdmin({db,auth,onPublication,onPromotion}={}){
      try{if((await maybePromoteStudent(db,p.studentId)).promoted)promotionCount++}
      catch(e){failures++;console.warn('Promotion follow-up needed:',p.studentId,e)}
     }
-    if(promotionCount&&typeof onPromotion==='function')await onPromotion().catch(console.warn);
+    if(promotionCount&&typeof onPromotion==='function')await Promise.resolve(onPromotion()).catch(console.warn);
    }
    await refresh();
-   if(typeof onPublication==='function')await onPublication().catch(console.warn);
+   if(typeof onPublication==='function')await Promise.resolve(onPublication()).catch(console.warn);
    status('✅ ALL CLASSES PUBLISHED! '+publishedCount+' student results are now available through approved Student Login and result links. Homepage notice '+(publicData.visible?'ON':'OFF')+'.'+(promotionCount?' Promotions: '+promotionCount+'.':'')+(failures?' Check '+failures+' promotion(s) manually.':''));
   }catch(e){
    status('Publication not completed: '+e.message+'. Drafts remain hidden until the exam is fully released. Refresh; use Resume Publishing if appropriate.',true);
