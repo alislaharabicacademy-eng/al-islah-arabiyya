@@ -1,0 +1,26 @@
+name: Course Exam Real Firestore Access Gate
+on:
+  pull_request:
+    paths:
+      - 'firestore.rules'
+      - 'exam-session-admin.js'
+      - 'exam-session-core.js'
+      - 'tests/course-wise-exam-firestore-emulator.mjs'
+      - '.github/workflows/course-exam-firebase-emulator.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exam-firestore-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Ensure Java runtime exists for Firestore emulator
+        run: java -version
+      - name: Install Firebase test clients
+        run: npm install --no-save --ignore-scripts firebase@11.6.0 @firebase/rules-unit-testing@4.0.1
+      - name: Compile and execute real Firestore rules checks in emulator
+        run: npx --yes firebase-tools@14.19.0 emulators:exec --only firestore --project demo-alia-exam "node tests/course-wise-exam-firestore-emulator.mjs"
