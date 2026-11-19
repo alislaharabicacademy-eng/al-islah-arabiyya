@@ -212,7 +212,7 @@ function certificate(kind,r){
  [['Student ID',r.studentCode],['Class',r.course],['Academic Year',r.academicYear],['Exam Date',dt],['Result',r.passed?'PASS':'PARTICIPATED']]:
  [['Student ID',r.studentCode],['Class',r.course],['Event',event||'Academy Event'],['Date',dt],
  ['Award / Role',kind==='winner'?award:kind==='event'?award.replace('Event ',''):'PARTICIPANT']];
- cards.forEach(([label,value],i)=>s+=chip(44+i*267,712,255,label,String(value||'—').slice(0,64)));
+ cards.forEach(([label,value],i)=>s+=chip(44+i*267,712,255,label,String(value||'—')));
  if(kind==='winner')s+=trophy(w*.23,843,award);
  else if(kind==='event')s+=eventCrescent(w*.22,890);
  else if(kind==='participation'||kind==='exam-participation')s+=participationRosette(w*.22,886,'PARTICIPANT');
