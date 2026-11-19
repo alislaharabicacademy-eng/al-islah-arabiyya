@@ -51,26 +51,48 @@ try{
    await page.locator('#eventName').fill(longEvent);
    const measurement=await page.evaluate(({name,event})=>{
     const svg=document.querySelector('#preview svg');
-    const boxOf=element=>{
-     const box=element?.getBBox();
-     return box?{x:box.x,right:box.x+box.width,top:box.y,bottom:box.y+box.height,width:box.width}:null;
-    };
-    const svgWidth=svg.viewBox.baseVal.width;
     const texts=[...svg.querySelectorAll('text')];
-    const student=texts.find(t=>t.textContent===name);
-    const headline=texts.find(t=>t.textContent===event);
-    const eventChip=texts.find(t=>t.textContent===event.slice(0,64));
-    return {svgWidth,student:boxOf(student),headline:boxOf(headline),eventChip:boxOf(eventChip)};
+    const normalize=s=>String(s||'').replace(/\s+/g,' ').trim();
+    const bounds=elements=>{
+     if(!elements.length)return null;
+     const boxes=elements.map(x=>x.getBBox());
+     const x=Math.min(...boxes.map(b=>b.x)),right=Math.max(...boxes.map(b=>b.x+b.width));
+     return {x,right,width:right-x,lines:elements.length};
+    };
+    // Two-line names/headings are valid. Compare their full reconstructed
+    // text with user input, not only one SVG <text> element.
+    const collect=expected=>{
+     const prefix=expected.split(' ').slice(0,3).join(' ');
+     const start=texts.findIndex(x=>normalize(x.textContent).startsWith(prefix));
+     if(start<0)return null;
+     const selected=[];
+     for(let i=start;i<Math.min(texts.length,start+4);i++){
+      selected.push(texts[i]);
+      const joined=normalize(selected.map(x=>x.textContent).join(' '));
+      if(joined===expected)return bounds(selected);
+      if(!expected.startsWith(joined))break;
+     }
+     return null;
+    };
+    const chipPieces=texts.filter(x=>String(x.getAttribute('x'))==='705.5' &&
+      Number(x.getAttribute('y'))>=760 && Number(x.getAttribute('y'))<=811);
+    return {svgWidth:svg.viewBox.baseVal.width,student:collect(name),
+     headline:collect(event),eventChip:bounds(chipPieces),
+     eventChipText:normalize(chipPieces.map(x=>x.textContent).join(' '))};
    },{name:longName,event:longEvent});
    const bound=measurement.svgWidth===1000?limits.portrait:limits.landscape;
-   if(!measurement.student)throw Error('Name is absent from SVG');
+   if(!measurement.student)throw Error('Full student name is missing or truncated in SVG');
    if(measurement.student.x<bound.left||measurement.student.right>bound.right)
     throw Error('Student name overlaps A4 safe boundary: '+JSON.stringify(measurement.student));
-   if(!measurement.headline)throw Error('Event/exam heading missing from SVG');
+   if(!measurement.headline)throw Error('Full exam/event heading missing or truncated');
    if(measurement.headline.x<bound.left||measurement.headline.right>bound.right)
     throw Error('Exam/event title overflows A4 safe boundary: '+JSON.stringify(measurement.headline));
-   if(type!=='results'&&measurement.eventChip&&measurement.eventChip.width>237)
-    throw Error('Event chip text overflows its 255px card: '+JSON.stringify(measurement.eventChip));
+   if(type!=='results'){
+    if(measurement.eventChipText!==longEvent)
+     throw Error('Event value in certificate chip is truncated: '+measurement.eventChipText);
+    if(!measurement.eventChip||measurement.eventChip.x<590||measurement.eventChip.right>820)
+     throw Error('Event chip content escapes its card: '+JSON.stringify(measurement.eventChip));
+   }
    console.log('PASS '+type+' long-text SVG geometry '+JSON.stringify(measurement));
   }catch(err){
    fail++;
