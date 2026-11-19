@@ -7,9 +7,12 @@ import{openPremiumPrintWindow}from'./premium-certificate-svg.js';
 import{maybePromoteStudent}from'./student-promotion.js';
 import{initHomepageWinners}from'./homepage-winners-admin.js';
 import{compressProfilePhoto}from'./profile-photo.js';
+import{createClassFirstStudentPicker}from'./student-class-selector.js';
 export function initExamAdmin({db,auth,onPromotion}){
  const $=id=>document.getElementById(id);
  const studentDropdown=$('examResultStudent'),form=$('examResultForm'),subjectRows=$('examSubjectRows');
+ const studentPicker=createClassFirstStudentPicker({studentSelect:studentDropdown,classLabel:'Select Course / Class First *',
+  optionLabel:st=>String(st.name||'Student')+' · '+String(st.studentCode||'ALIA ID pending')});
  const winners=initHomepageWinners({db});
  let students=[],results=[],courseNames=new Map(),loadPromise=null;
  const allowedId=/^RESULT-[a-f0-9]{24}$/;
@@ -76,7 +79,7 @@ export function initExamAdmin({db,auth,onPromotion}){
   $('examStudentSummary').textContent=st?'Student: '+st.name+'  |  Official ID: '+(st.studentCode||'Not assigned')+'  |  Class: '+(courseNames.get(st.course)||st.course||'—')+'  |  Batch: '+(st.batch||'—')+'  |  Student ID: '+(st.examid||'Not issued — save student in Student Details')+'  |  DOB: '+(st.dob?'Recorded':'Missing — Student ID + DOB lookup needs DOB in Student Details'):'Choose a student to show their class and batch.';
  }
  function reset(){
-  form.reset();$('examResultId').value='';$('examResultPass').value='40';$('examFinalForPromotion').checked=false;
+  form.reset();studentPicker.clear({notify:false});$('examResultId').value='';$('examResultPass').value='40';$('examFinalForPromotion').checked=false;
   $('examHomeWinnerOptions').classList.add('hidden');$('examHomeWinnerPhoto').value='';$('examHomeWinnerUploadStatus').textContent='The student profile photo is used unless you select a different photo here.';
   const today=new Date();
   $('examResultDate').value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
@@ -95,13 +98,7 @@ export function initExamAdmin({db,auth,onPromotion}){
    results=resultsSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
    courseNames=new Map(coursesSnap.docs.map(d=>[d.id,d.data().name||d.id]));
    const prior=studentDropdown.value;
-   studentDropdown.replaceChildren(option('Select enrolled student',''));
-   for(const student of students){
-    const name=String(student.name||'Unnamed Student');
-    const course=courseNames.get(student.course)||student.course||'No class';
-    studentDropdown.append(option(name+' — '+course+(student.batch?' / '+student.batch:''),student.id));
-   }
-   if(students.some(s=>s.id===prior))studentDropdown.value=prior;
+   studentPicker.setRecords(students,{selectedId:prior,courseLabels:courseNames});
    if(!subjectRows.children.length)reset();
    fillStudentSummary();renderList();updatePublishedReportOptions();
   })().finally(()=>{loadPromise=null});
@@ -191,7 +188,7 @@ export function initExamAdmin({db,auth,onPromotion}){
  }
  function edit(record){
   $('examResultId').value=record.id;
-  studentDropdown.value=record.studentId||'';
+  studentPicker.selectStudent(record.studentId||'');
   $('examResultTitle').value=record.examTitle||'';
   $('examResultDate').value=record.examDate||'';
   $('examResultYear').value=record.academicYear||'';

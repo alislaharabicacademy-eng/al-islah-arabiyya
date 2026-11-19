@@ -48,6 +48,8 @@ button:disabled{opacity:.55;cursor:wait}
 .dashboard-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-bottom:1px solid #e1ece2;padding-bottom:16px}
 .dashboard-header h3{margin:0 0 8px}.dashboard-header small{color:#5e7a67}
 .student-preview-select{display:block;width:100%;max-width:680px;min-height:50px;padding:12px 15px;border:1px solid #b9d0be;border-radius:11px;background:#f9fcf9;color:var(--ink);font:inherit;margin-top:12px}
+#adminStudentPreview .class-first-picker-field{display:block;font-size:13px;font-weight:800;color:#24583d;margin-top:15px}
+#adminStudentPreview .class-first-picker-field select{display:block;width:100%;max-width:680px;min-height:50px;padding:12px 15px;border:1px solid #b9d0be;border-radius:11px;background:#f9fcf9;color:var(--ink);font-size:15px;margin-top:9px}
 .student-preview-warning{background:#fff8e8;border:1px solid #ead7ad;border-radius:12px;padding:13px 15px;font-size:13px;color:#5d482a}
 .student-card{padding:20px;background:linear-gradient(125deg,#f5fbf6,#edf6ef);border:1px solid #d6e9d8;border-radius:14px;margin-top:19px}
 .student-card>.academy-profile-avatar{width:94px;height:94px;float:right;object-fit:cover;border-radius:16px;border:3px solid #d5e7d7;margin:0 0 10px 12px}
@@ -139,7 +141,7 @@ footer{background:#0a3526;color:#e1d2ab;text-align:center;padding:22px 14px;font
 <section class="card" id="adminStudentPreview" hidden>
 <h3>🎓 Academy Student Dashboard Preview</h3>
 <p class="student-preview-warning"><strong>Administrator read-only preview.</strong> You are not signed in as a student or parent. Every student dashboard you open is recorded in the Academy security audit. You cannot edit student records here.</p>
-<label for="adminStudentSelector"><strong>Select a Student</strong></label>
+<label for="adminStudentSelector"><strong>Step 2 · Select Student</strong></label>
 <select id="adminStudentSelector" class="student-preview-select" aria-label="Select student to preview"><option value="">Select student</option></select>
 <p class="status" id="adminStudentPreviewStatus" role="status" aria-live="polite">Loading students…</p>
 <div id="adminStudentPreviewDetails" hidden><div id="adminStudentPreviewCards"></div></div>

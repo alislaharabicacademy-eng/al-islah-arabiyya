@@ -3,6 +3,7 @@
  * studentAccess record for Student Dashboard PDF downloads. No public list. */
 import {collection,getDocs,doc,getDoc,runTransaction} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {createCompetitionCertificatePdf,downloadExamBlob,safePdfName} from './exam-documents.js';
+import {createClassFirstStudentPicker} from './student-class-selector.js';
 const ALLOWED_AWARDS=new Set(['Participation','Winner','First Prize','Second Prize','Third Prize','Appreciation','Best Performance','Event Participation','Event Appreciation','Event Volunteer','Event Organizer']);
 const MAX_CERTS=60;
 function makeCertificateId(){
@@ -50,18 +51,18 @@ export function initCompetitionCertificateAdmin({db}){
  const $=id=>document.getElementById(id);
  const student=$('competitionStudent'),event=$('competitionEvent'),date=$('competitionDate'),award=$('competitionAward');
  const status=$('competitionStatus'),records=$('competitionCertificatesList'),issue=$('competitionIssue');
+ const studentPicker=createClassFirstStudentPicker({studentSelect:student,classLabel:'Select Class / Course First *'});
  const text=(message,error=false)=>{status.textContent=message;status.style.color=error?'#ab4536':'#17583a'};
  async function loadStudents(){
   const previously=student.value;
-  student.replaceChildren(new Option('Select Registered Student',''));
   try{
    const snap=await getDocs(collection(db,'students'));
-   for(const d of snap.docs){
-    const x=d.data();
-    const name=String(x.name||'Student')+' · '+String(x.studentCode||'ALIA pending')+' · '+String(x.course||'');
-    student.add(new Option(name,d.id));
-   }
-   if([...student.options].some(x=>x.value===previously))student.value=previously;
+   // Class names are presentation-only. Do not block certificates if catalog
+   // names cannot be refreshed; saved student course IDs are still grouped.
+   const courses=await getDocs(collection(db,'courses')).catch(()=>null);
+   const registered=snap.docs.map(d=>({id:d.id,...d.data()}));
+   const labels=new Map((courses?.docs||[]).map(d=>[d.id,d.data().name||d.id]));
+   studentPicker.setRecords(registered,{selectedId:previously,courseLabels:labels});
    await showCertificates();
   }catch(e){text('Cannot load students: '+e.message,true)}
  }

@@ -3,6 +3,7 @@ import {photoAvatar} from './profile-photo.js';
 import {validFeeLedger} from './fee-ledger-utils.js';
 import {isVerifiedAcademyAdmin} from './academy-admin-access.js';
 import {studentTeachingAssignments} from './student-teaching-utils.js';
+import {createClassFirstStudentPicker} from './student-class-selector.js';
 
 
 /**
@@ -13,13 +14,17 @@ import {studentTeachingAssignments} from './student-teaching-utils.js';
 export function initAdminStudentPreview({auth,db,renderPrivateFeeLedger,onLogout}){
  const $=id=>document.getElementById(id);
  const panel=$('adminStudentPreview'),selector=$('adminStudentSelector');
+ const picker=createClassFirstStudentPicker({studentSelect:selector,
+  insertBefore:document.querySelector('label[for="adminStudentSelector"]'),
+  classLabel:'Step 1 · Select Course / Class',
+  optionLabel:s=>s.name+' · '+s.studentCode});
  const status=$('adminStudentPreviewStatus'),details=$('adminStudentPreviewDetails');
  const cards=$('adminStudentPreviewCards');
  let generation=0;
  function isAdmin(user){return isVerifiedAcademyAdmin(db,user)}
  function hide(){
   ++generation;panel.hidden=true;details.hidden=true;
-  selector.replaceChildren(new Option('Select student',''));selector.onchange=null;
+  picker.setRecords([],{selectedId:''});selector.onchange=null;
   cards.replaceChildren();
  }
  function line(parent,value){
@@ -140,17 +145,17 @@ export function initAdminStudentPreview({auth,db,renderPrivateFeeLedger,onLogout
   const email=String(user?.email||'').trim().toLowerCase();
   if(!email||!user.emailVerified){hide();return}
   panel.hidden=false;details.hidden=true;cards.replaceChildren();
-  selector.replaceChildren(new Option('Select student',''));
+  picker.setRecords([],{selectedId:''});
   status.textContent='Loading Academy student directory…';
   try{
    const list=await getDocs(collection(db,'students'));
    if(request!==generation||auth.currentUser?.uid!==user.uid)return;
    const students=list.docs.map(d=>({id:d.id,
-     name:String(d.data().name||'Student'),code:String(d.data().studentCode||'Not assigned')}));
-   students.sort((a,b)=>a.name.localeCompare(b.name)||a.code.localeCompare(b.code));
-   for(const s of students)selector.add(new Option(s.name+' · '+s.code,s.id));
+     name:String(d.data().name||'Student'),studentCode:String(d.data().studentCode||'Not assigned'),
+     course:String(d.data().course||''),courseYear:d.data().courseYear,batch:String(d.data().batch||'')}));
+   picker.setRecords(students,{selectedId:''});
    status.textContent=students.length?
-     'Choose a student to open an audited, read-only academic dashboard.':
+     'Select a class, then choose a student to open an audited, read-only academic dashboard.':
      'No student profiles are available yet.';
   }catch(error){
    if(request===generation)status.textContent='Student directory unavailable. Please check administrator access.';
