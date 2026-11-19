@@ -155,7 +155,7 @@ test('pending duplicate is manually closed and then appears only in Closed Forms
  assert.equal(closeButton.length,1);
  await closeButton[0].onclick();
  const archived=firestore.table.existingStudentRequests.find(row=>row.id==='2'.repeat(32));
- assert.equal(archived.status,'Duplicate');
+ assert.equal(archived.status,'Duplicate',ui.get('existingIntakeAdminStatus').textContent);
  assert.equal(archived.studentId,'student-a');
  assert.equal(archived.studentCode,'ALIA00005');
  assert.equal(firestore.table.students.length,2,'closing duplicate never creates a student');
