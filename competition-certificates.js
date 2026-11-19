@@ -56,9 +56,12 @@ export function initCompetitionCertificateAdmin({db}){
  async function loadStudents(){
   const previously=student.value;
   try{
-   const [snap,courses]=await Promise.all([getDocs(collection(db,'students')),getDocs(collection(db,'courses'))]);
+   const snap=await getDocs(collection(db,'students'));
+   // Class names are presentation-only. Do not block certificates if catalog
+   // names cannot be refreshed; saved student course IDs are still grouped.
+   const courses=await getDocs(collection(db,'courses')).catch(()=>null);
    const registered=snap.docs.map(d=>({id:d.id,...d.data()}));
-   const labels=new Map(courses.docs.map(d=>[d.id,d.data().name||d.id]));
+   const labels=new Map((courses?.docs||[]).map(d=>[d.id,d.data().name||d.id]));
    studentPicker.setRecords(registered,{selectedId:previously,courseLabels:labels});
    await showCertificates();
   }catch(e){text('Cannot load students: '+e.message,true)}
