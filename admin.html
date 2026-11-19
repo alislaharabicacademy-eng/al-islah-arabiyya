@@ -871,12 +871,10 @@ onAuthStateChanged(auth,async user=>{
   $('login').classList.toggle('hidden',active);
   $('editor').classList.toggle('hidden',!active);
   if(active){
-    // Display a true, server-verified role; the official Academy email is
-    // NORMAL Admin and private Master email is never displayed in the UI.
+    // Enforce privileges server-side without showing the private role tier or account identity.
     const masterRole=await isVerifiedMasterAdmin(db,user);
     if(auth.currentUser?.uid!==user.uid)return;
-    $('signedIn').textContent='Academy contact: '+email+' · '+
-      (masterRole?'Master Admin':'Normal Admin');
+    $('signedIn').textContent='Academy Administrator · Authenticated';
     const linked=user.providerData.some(p=>p.providerId==='password');
     $('passwordSetupPanel').classList.toggle('hidden',linked);
     await hydrateCourseOptions();

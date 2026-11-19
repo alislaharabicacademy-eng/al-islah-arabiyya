@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Master Admin · Private Academy Administrator Access</title>
+<title>Private Academy Administrator Access</title>
 <style>
 :root{font-family:system-ui,Arial,sans-serif;color:#14362a;background:#f3f6f1}
 *{box-sizing:border-box}main{max-width:540px;margin:9vh auto;padding:0 16px}
@@ -18,14 +18,14 @@ button.secondary{background:#53675c}button:disabled{opacity:.5;cursor:wait}
 </style>
 </head>
 <body><main><section class="card">
-<h1>Master Admin · Administrator Access</h1>
-<p class="muted">Only the verified Master Admin account can manage administrator grants. The Academy's official contact Gmail has Normal Admin access and cannot alter these grants.</p>
-<div id="authPanel"><p>Sign in with the authorized Master Admin Google account to manage private access.</p><button id="googleSignIn" type="button">Sign in as Master Admin</button></div>
+<h1>Private Administrator Access</h1>
+<p class="muted">Only authorized account owners may manage administrator grants. Access is verified privately.</p>
+<div id="authPanel"><p>Sign in securely to manage private administrator access.</p><button id="googleSignIn" type="button">Sign in as Private Administrator</button></div>
 <form id="grantForm" hidden>
 <label for="grantEmail">Additional administrator's verified Gmail address</label>
 <input id="grantEmail" type="email" maxlength="254" autocomplete="off" autocapitalize="off" spellcheck="false" required placeholder="Enter account email">
-<p class="muted">This grants <strong>Normal Admin</strong> access only, not Master Admin privileges. The real authenticated account is still retained in the security audit. No administrator can grant themselves Master Admin privileges.</p>
-<button id="enable" type="submit" name="grant" value="enable">Enable Normal Admin access</button>
+<p class="muted">This grants ordinary administrator access only. Reserved permissions cannot be assigned through this form.</p>
+<button id="enable" type="submit" name="grant" value="enable">Enable administrator access</button>
 <button id="disable" class="secondary" type="button">Revoke access</button>
 </form>
 <div id="notice" role="status" aria-live="polite"></div>
@@ -47,7 +47,7 @@ try{
      if(auth.currentUser&&!await isVerifiedMasterAdmin(db,auth.currentUser))
       await signOut(auth);
      await signInWithPopup(auth,new GoogleAuthProvider());
-   }catch(error){notice('Unable to sign in. Use the approved Master Admin Google account.')}
+   }catch(error){notice('Unable to sign in. Use the approved Private Administrator Google account.')}
  };
  onAuthStateChanged(auth,async user=>{
    const version=++authVersion;
@@ -58,17 +58,17 @@ try{
    masterUser=allowed?user:null;
    $('authPanel').hidden=!!masterUser;
    $('grantForm').hidden=!masterUser;
-   notice(masterUser?'Verified Master Admin. You can manage Normal Admin grants.':
-    'Only Master Admin can change administrator grants. Normal Admin access remains available in Admin Panel.');
+   notice(masterUser?'Verified Private Administrator. You can manage administrator grants.':
+    'Only Private Administrator can change administrator grants. administrator access remains available in Admin Panel.');
  });
  const updateGrant=async enabled=>{
    if(!masterUser||!await isVerifiedMasterAdmin(db,masterUser))
-    return notice('Verified Master Admin sign-in required.');
+    return notice('Verified Private Administrator sign-in required.');
    const email=$('grantEmail').value.trim().toLowerCase();
    if(!/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(email)||
       email===masterUser.email?.toLowerCase()||
       email==='alislaharabicacademy@gmail.com'){
-     return notice('Enter a valid additional Normal Admin email, not an existing reserved administrator account.');
+     return notice('Enter a valid additional administrator email, not an existing reserved administrator account.');
    }
    for(const button of document.querySelectorAll('#grantForm button'))button.disabled=true;
    try{
@@ -76,8 +76,8 @@ try{
        enabled,updatedAt:serverTimestamp(),grantedBy:masterUser.uid
      });
      $('grantEmail').value='';
-     notice(enabled?'✓ Normal Admin access enabled. Master Admin privileges were not granted.':'✓ Normal Admin access revoked.');
-   }catch(error){notice('Unable to save grant. Verify the Master Admin sign-in and Firestore permissions.');}
+     notice(enabled?'✓ administrator access enabled. Private Administrator privileges were not granted.':'✓ administrator access revoked.');
+   }catch(error){notice('Unable to save grant. Verify the Private Administrator sign-in and Firestore permissions.');}
    finally{for(const button of document.querySelectorAll('#grantForm button'))button.disabled=false}
  };
  $('grantForm').onsubmit=event=>{event.preventDefault();updateGrant(true)};

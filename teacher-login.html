@@ -103,7 +103,7 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 <div class="stats"><div class="stat"><strong id="classCount">0</strong><small>Assigned Classes</small></div><div class="stat"><strong id="subjectCount">0</strong><small>Assigned Subjects</small></div></div>
 <h3>📚 My Classes &amp; Subjects</h3>
 <div id="teacherAssignments"></div><div id="myTeacherIdCard"></div>
-<div class="actions"><a class="button" id="attendanceLink" href="teacher-attendance.html">📋 Open Attendance</a><button id="myTeacherSwitchMode" type="button" class="secondary" hidden>⇄ Teacher / Master Admin</button><button id="logout" type="button" class="secondary">Sign Out</button></div>
+<div class="actions"><a class="button" id="attendanceLink" href="teacher-attendance.html">📋 Open Attendance</a><button id="myTeacherSwitchMode" type="button" class="secondary" hidden>⇄ Teacher / Administration</button><button id="logout" type="button" class="secondary">Sign Out</button></div>
 <p class="hint">Results, marks and certificates will appear here when those teacher permissions are implemented. Your current access includes assigned classes and attendance.</p>
 </section>
 <section class="card dual-role-choice" id="dualRolePanel" hidden>
@@ -113,7 +113,7 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 <p class="status" id="dualRoleTeacherInfo">Your linked teacher profile is available.</p>
 <div class="dual-role-cards">
 <button type="button" id="openMyTeacherRole" class="dual-role-card"><strong>👩‍🏫 My Teacher Dashboard</strong><small>Open your own assigned subjects, class timetable, attendance and personal teacher ID card. This is your real teacher profile.</small></button>
-<button type="button" id="openMasterAdminRole" class="dual-role-card admin"><strong>👑 Master Admin — All Teachers</strong><small>Select and inspect any teacher's classes in the audited, read-only administrator preview. No impersonation or teacher attendance submission.</small></button>
+<button type="button" id="openMasterAdminRole" class="dual-role-card admin"><strong>Academy Administration — All Teachers</strong><small>Select and inspect any teacher's classes in the audited, read-only administrator preview. No impersonation or teacher attendance submission.</small></button>
 </div>
 <div class="dual-role-actions"><a class="button" href="admin.html">↗ Full Admin Panel</a><button type="button" id="dualRoleLogout" class="secondary">Sign Out</button></div>
 <p class="hint">Your own teacher attendance works only through My Teacher Dashboard. Administrator previews are read-only and recorded in the security audit.</p>
@@ -132,7 +132,7 @@ footer{text-align:center;padding:26px;color:#69806f;font-size:12px}
 <div id="previewAssignments"></div>
 <p class="hint">This preview has no teacher attendance submission, teacher authentication, or impersonation actions. Use the normal Admin Panel for authorized changes.</p>
 </div>
-<div class="actions preview-actions"><a class="button" href="admin.html">↗ Open Admin Panel</a><button id="adminPreviewSwitchMode" class="secondary" type="button" hidden>⇄ My Teacher / Master Admin</button><button id="adminPreviewLogout" class="secondary" type="button">Sign Out</button></div>
+<div class="actions preview-actions"><a class="button" href="admin.html">↗ Open Admin Panel</a><button id="adminPreviewSwitchMode" class="secondary" type="button" hidden>⇄ My Teacher / Administration</button><button id="adminPreviewLogout" class="secondary" type="button">Sign Out</button></div>
 <p class="hint">If your Gmail is also registered as a teacher but My Teacher Dashboard is not offered, ask the Academy admin to select your Teacher Details record and enable its Google Login mapping.</p>
 </section>
 </div>
@@ -283,9 +283,9 @@ function showDualRoleChoice(user,linked,master=false){
  if(auth.currentUser?.uid!==user.uid)return;
  stopLiveView();
  dualAccount={user,linked,master};
- const label=master?'Master Admin':'Normal Admin';
+ const label='Academy Administrator';
  $('openMasterAdminRole').querySelector('strong').textContent=
-   (master?'👑 ':'🛡️ ')+label+' — All Teachers';
+   '🛡️ '+label+' — All Teachers';
  $('myTeacherSwitchMode').textContent='⇄ Teacher / '+label;
  $('adminPreviewSwitchMode').textContent='⇄ My Teacher / '+label;
  $('teacherAdminPreviewRole').textContent=label+' · Audited preview';
@@ -386,7 +386,7 @@ async function openAdminDualRole(){
  const version=++checkVersion;++previewVersion;
  $('dualRolePanel').hidden=true;dashboard.hidden=true;
  try{
-  $('teacherAdminPreviewRole').textContent=(dualAccount.master?'Master Admin':'Normal Admin')+' · Audited preview';
+  $('teacherAdminPreviewRole').textContent='Academy Administrator · Audited preview';
   await showAdminTeacherPreview(user,version);
  }catch(error){
   if(version!==checkVersion)return;
@@ -439,7 +439,7 @@ async function loadDashboard(user){
   }
   if(landing==='admin-preview'){
    // Admin without linked teacher keeps audited preview.
-   $('teacherAdminPreviewRole').textContent=(master?'Master Admin':'Normal Admin')+' · Audited preview';
+   $('teacherAdminPreviewRole').textContent='Academy Administrator · Audited preview';
    await showAdminTeacherPreview(user,version);
    return;
   }
