@@ -45,6 +45,7 @@
 4. Check mobile Android Chrome, desktop Chrome, slow network, PDF print, permission errors, and empty/error states.
 5. Close the Storage deployment blocker and issue #8 before claiming every feature works properly.
 6. Activate/verify backups with a test restore and document admin access recovery. A public GitHub repository makes its source/rules visible; do not commit secrets or personal-data backups.
+7. **Master Admin privacy finding:** the Master Admin account email is written literally in both committed Firebase rule files, and this repository is public. Although the website does not show the email in the public UI, anyone reading GitHub can find it. Protect the actual account with strong MFA and consider a server-controlled UID/custom-claims-based role design if the email identity must not be publicly visible; changes require live rule validation and a safe rollout.
 
 ## 5. Release verdict
 
