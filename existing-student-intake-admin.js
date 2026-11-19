@@ -123,7 +123,7 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
  const pageDom=(page,suffix)=>$(page.prefix+suffix);
  function fullCourseLabel(course){
   return String(cachedCourseNames.get(course)||academyCourseLabel(
-   String(course||'Unassigned').replace(/-/g,' ').replace(/\\b\\w/g,c=>c.toUpperCase())
+   String(course||'Unassigned').replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())
   )||'Unassigned');
  }
  function rowsForPage(page){
