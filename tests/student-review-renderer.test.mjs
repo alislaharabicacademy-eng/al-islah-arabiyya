@@ -76,7 +76,7 @@ async function loadModule(stubs){
  globalThis.__studentReviewTestStubs=stubs;
  const prefix='const {collection,doc,getDoc,getDocs,query,limit,setDoc,updateDoc,serverTimestamp,Timestamp,writeBatch,isProfilePhoto,academyCourseLabel,matchingStudentForRequest,requestReviewBucket,isVerifiedAcademyAdmin}=globalThis.__studentReviewTestStubs;\n';
  const encoded=Buffer.from(prefix+source,'utf8').toString('base64');
- return import('data:text/javascript;base64,'+encoded);
+ return import('data:text/javascript;base64,'+encoded+'#test-'+(globalThis.__reviewImportCount=(globalThis.__reviewImportCount||0)+1));
 }
 function renderUI(){
  const els=new Map();
