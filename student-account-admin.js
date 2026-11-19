@@ -4,6 +4,7 @@ import{doc,getDoc,setDoc,collection,getDocs,query,where}from'https://www.gstatic
 import{normalizeStudentCode,validateStudentDOB,makeStudentDobVerifier}from'./student-dob-verifier.js';
 import{isProfilePhoto}from'./profile-photo.js';
 import{validFeeLedger}from'./fee-ledger-utils.js';
+import{teachingSnapshotForStudent}from'./student-teaching-admin.js';
 export function initStudentAccountAdmin({db}){
  const $=id=>document.getElementById(id);
  const panel=$('studentAccountPanel'),status=$('studentAccountStatus');
@@ -87,8 +88,9 @@ export function initStudentAccountAdmin({db}){
    }
    const resultIds=enabled?(await getDocs(query(collection(db,'examResults'),where('studentId','==',selected.id)))).docs.filter(d=>d.data().published===true).map(d=>d.id):[];
    const fees=await feeSnapshot(student);
+   const teachingAssignments=await teachingSnapshotForStudent(db,student);
    const data={
-    studentId:selected.id,email,enabled,studentCode:String(student.studentCode||''),...dobVerifier,...fees,
+    studentId:selected.id,email,enabled,studentCode:String(student.studentCode||''),...dobVerifier,...fees,teachingAssignments,
     studentName:String(student.name||'Student'),photoData:isProfilePhoto(student.photoData)?student.photoData:'',course:String(student.course||''),courseYear:student.course==='muballigha'&&![1,2].includes(Number(student.courseYear))?0:courseYearOf(student),
     batch:String(student.batch||''),state:String(student.state||'Active'),resultIds,
     promotionHistory:Array.isArray(student.promotionHistory)?student.promotionHistory:[],
@@ -109,8 +111,10 @@ export function initStudentAccountAdmin({db}){
   // The edit form omits feeLedger. Read the saved full student record so
   // routine Student edits NEVER erase historical payments from guardian access.
   const latest=await getDoc(doc(db,'students',studentId));
-  const fees=await feeSnapshot(latest.exists()?latest.data():data);
-  const payload={...fees,
+  const latestStudent=latest.exists()?latest.data():data;
+  const fees=await feeSnapshot(latestStudent);
+  const teachingAssignments=await teachingSnapshotForStudent(db,latestStudent);
+  const payload={...fees,teachingAssignments,
    studentName:String(data.name||'Student'),studentCode,photoData:isProfilePhoto(data.photoData)?data.photoData:'',course:String(data.course||''),courseYear:data.course==='muballigha'&&![1,2].includes(Number(data.courseYear))?0:courseYearOf(data),
    batch:String(data.batch||''),state:String(data.state||'Active'),
    promotionHistory:Array.isArray(data.promotionHistory)?data.promotionHistory:[],
