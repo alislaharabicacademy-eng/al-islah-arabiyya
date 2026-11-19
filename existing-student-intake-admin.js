@@ -114,7 +114,7 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
  const pageConfig={
   studentPending:{prefix:'existingIntakePending',label:'Pending',bucket:'pending'},
   studentApproved:{prefix:'existingIntakeApproved',label:'Approved',bucket:'approved'},
-  studentClosed:{prefix:'existingIntakeClosed',label:'Closed',bucket:'closed'}
+  studentClosed:{prefix:'existingIntakeClosed',label:'Closed',bucket:'archived'}
  };
  const pageState=Object.fromEntries(Object.entries(pageConfig).map(([id,config])=>[
   id,{...config,selectedCourse:null}
