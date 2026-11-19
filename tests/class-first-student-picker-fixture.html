@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Class First Student Picker - Browser QA</title>
+<style>body{font:16px system-ui;background:#f2f6ef;color:#143a2c;padding:16px}.card{background:white;border:1px solid #c8d3c7;border-radius:15px;padding:16px;margin:12px 0}.card label{display:block;margin:12px 0}select{display:block;width:100%;min-height:48px;padding:10px;border:1px solid #bacdbc;border-radius:9px;background:white;color:#122b20}select:disabled{opacity:.65}</style>
+</head><body>
+<section class="card"><h2>Competition Certificates</h2><label>Student *<select id="competitionStudent"></select></label></section>
+<section class="card"><h2>Individual Examination</h2><label>Student *<select id="examResultStudent"></select></label></section>
+<section class="card"><h2>Read-only Admin Preview</h2><label for="adminStudentSelector">Step 2: Student</label><select id="adminStudentSelector"></select></section>
+<section class="card"><h2>Homepage First Place</h2><label>Published Student Result<select id="homepageWinnerResult1"></select></label></section>
+<script type="module">
+import{createClassFirstStudentPicker}from'../student-class-selector.js';
+const students=[
+{id:'S1',name:'Amina',studentCode:'ALIA00001',course:'muallama'},
+{id:'S2',name:'Safa',studentCode:'ALIA00002',course:'muballigha',courseYear:1},
+{id:'S3',name:'Haniya',studentCode:'ALIA00003',course:'muballigha',courseYear:2},
+{id:'S4',name:'Anas',studentCode:'ALIA00004',course:'maktab',batch:'Batch 1'},
+{id:'S5',name:'Rahma',studentCode:'ALIA00005',course:'maktab',batch:'Batch 2'},
+{id:'S6',name:'Mariam',studentCode:'ALIA00006',course:'alima'}
+];
+const results=[
+{id:'RESULT-111111111111111111111111',studentName:'Safa',courseId:'muballigha',courseYear:1,examTitle:'Annual',academicYear:'2026–2027'},
+{id:'RESULT-222222222222222222222222',studentName:'Haniya',courseId:'muballigha',courseYear:2,examTitle:'Annual',academicYear:'2026–2027'},
+{id:'RESULT-333333333333333333333333',studentName:'Amina',courseId:'muallama',examTitle:'Annual',academicYear:'2026–2027'}
+];
+const p={};window.changeCount=0;
+for(const id of ['competitionStudent','examResultStudent','adminStudentSelector']){
+ const elem=document.getElementById(id);
+ p[id]=createClassFirstStudentPicker({studentSelect:elem,
+  insertBefore:id==='adminStudentSelector'?document.querySelector('label[for="adminStudentSelector"]'):null,
+  optionLabel:r=>r.name+' · '+r.studentCode});
+ p[id].setRecords(students);
+ elem.addEventListener('change',()=>window.changeCount++);
+}
+p.homepageWinnerResult1=createClassFirstStudentPicker({studentSelect:document.getElementById('homepageWinnerResult1'),
+ optionLabel:r=>r.studentName+' · '+r.examTitle});
+p.homepageWinnerResult1.setRecords(results);
+window.qaPickers=p;window.qaRecords=students;
+window.qaRefresh=()=>p.competitionStudent.setRecords(students);
+window.qaChoose=id=>p.competitionStudent.selectStudent(id);
+</script></body></html>
