@@ -58,6 +58,33 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 .exam-result-card .exam-card-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
 .exam-result-card .exam-card-actions button{font-size:12px;padding:10px 12px;margin:0}
 @media(max-width:650px){.exam-subject-row{grid-template-columns:1fr 1fr}.exam-subject-row label:first-child{grid-column:span 2}.exam-admin-editor .fields{grid-template-columns:1fr}}
+
+</style><style id="course-exam-styles">
+#courseExamPanel{border:1px solid #b5d3c0;background:linear-gradient(155deg,#f8fcf7,#ecf5ec);border-radius:19px;padding:23px;margin:15px 0 25px}
+#courseExamPanel h3{font:700 26px Georgia,serif;color:#164d39}
+#courseExamPanel h4{font:700 19px Georgia,serif;color:#145039;margin:0 0 14px}
+#courseExamPanel .course-exam-step{background:#fff;border:1px solid #d1e3d5;padding:19px;border-radius:13px;margin:17px 0}
+#courseExamPanel .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+#courseExamPanel .fields label{display:flex;flex-direction:column;gap:6px}
+#courseExamPanel .course-exam-check{display:flex;align-items:center;gap:9px;font-size:13px;margin:14px 0}
+#courseExamPanel .course-exam-check input{width:20px;height:20px}
+#courseExamPanel #courseExamSubjects{width:100%;min-height:140px;font:14px/1.6 monospace}
+#courseExamPanel .course-exam-overview{background:#eaf4e9;color:#174c36;margin-top:14px;padding:16px;border-radius:12px}
+#courseExamPanel .exam-cohort-grid{display:flex;flex-wrap:wrap;gap:8px}
+#courseExamPanel .exam-cohort-chip{min-height:39px;font-size:12px}
+#courseExamPanel .course-exam-table-wrap{overflow:auto;max-height:70vh;border:1px solid #d7e3d9;border-radius:9px;margin:16px 0}
+#courseExamPanel .course-exam-table{border-collapse:separate;border-spacing:0;width:100%;font-size:12px}
+#courseExamPanel .course-exam-table th,#courseExamPanel .course-exam-table td{border-right:1px solid #d9e6df;border-bottom:1px solid #d9e6df;padding:9px;min-width:106px}
+#courseExamPanel .course-exam-table thead th{position:sticky;top:0;background:#14543b;color:#fff;z-index:2}
+#courseExamPanel .course-exam-table tbody th{position:sticky;left:0;background:#f3faf5;z-index:1;min-width:185px;text-align:left}
+#courseExamPanel .course-exam-mark{width:94px!important;min-height:38px;text-align:center;margin:0!important}
+#courseExamPanel .exam-row-grade{min-width:178px;white-space:nowrap;font-weight:800;color:#145239}
+#courseExamPanel .course-exam-publish{background:#fffbf0;border:2px solid #cca967}
+#courseExamPanel button:disabled{opacity:.45;cursor:not-allowed}
+#courseExamEditor[hidden]{display:none!important}
+.exam-single-legacy{border:1px dashed #c3d6c6;padding:14px;border-radius:13px;margin:19px 0}
+.exam-single-legacy summary{cursor:pointer;color:#255138;font-weight:750;padding:8px}
+@media(max-width:660px){#courseExamPanel{padding:13px}#courseExamPanel .fields{grid-template-columns:1fr}#courseExamPanel .course-exam-step{padding:12px}}
 </style><style id="teacher-profile-premium-style">
 .teacher-profile-card{background:linear-gradient(160deg,#fff,#f8fbf7);border:1px solid #d8e4da;border-radius:19px;padding:22px;margin:17px 0;box-shadow:0 9px 27px rgba(19,64,45,.07);overflow-wrap:anywhere}
 .teacher-profile-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}.teacher-profile-heading h4{font-family:'Playfair Display',Georgia,serif;font-size:25px;color:#174c36;margin:0 0 7px}.teacher-profile-heading p{margin:0;color:#66786d;font-size:14px}
@@ -579,6 +606,37 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
 </div></div><div id="tab-exams" class="tabpage hidden">
  <h2>🏅 Examination Results &amp; Certificates</h2>
  <p class="section-note">Enter subject-wise examination marks, save privately, and publish only after checking. Every published student result has a hard-to-guess private link; the public page never displays a list of students.</p>
+
+<section class="section" id="courseExamPanel">
+<h3>📚 Course-wise Exam Results · All Classes</h3>
+<p class="section-note">Create one examination, choose a course / batch / academic year, enter subject marks for every student, then Save Class Draft. After completing <strong>all classes</strong>, publish the whole exam together. Unpublished drafts remain private.</p>
+<div class="course-exam-step"><h4>Step 1 · Set Up Examination</h4><div class="fields">
+<label>Exam Name *<input id="courseExamTitle" maxlength="120" placeholder="Annual Examination"></label>
+<label>Exam Date *<input id="courseExamDate" type="date"></label>
+<label>Academic Year *<input id="courseExamYear" maxlength="30" placeholder="2026–2027"></label>
+<label>Pass % per Subject *<input id="courseExamPass" type="number" value="40" min="0" max="100"></label>
+</div><label class="course-exam-check"><input type="checkbox" id="courseExamFinal"> Final Examination · Enable verified academic promotion checks after publishing</label>
+<button type="button" id="courseExamCreate">＋ Create Exam for All Classes</button></div>
+<div class="course-exam-step"><h4>Step 2 · Select Exam and Course</h4><div class="fields">
+<label>Saved Examination<select id="courseExamSession"><option value="">Select exam</option></select></label>
+<label>Course / Year / Batch<select id="courseExamClass"><option value="">Select class</option></select></label>
+</div><button type="button" id="courseExamRefresh" class="secondary">↻ Refresh Saved Marks</button>
+<div class="course-exam-overview" id="courseExamOverview" aria-live="polite">Select an examination to view class progress.</div></div>
+<div id="courseExamEditor" class="course-exam-step" hidden><h4>Step 3 · All Students &amp; Subject Marks</h4>
+<label>Exam Subjects · One per line (Subject | Maximum Marks)
+<textarea id="courseExamSubjects" rows="7" placeholder="Hadees | 100&#10;Tajweed | 100&#10;Arabic | 50"></textarea></label>
+<p class="section-note">Year-specific syllabus or saved class subjects are suggested automatically. You may edit exam subjects and maximum marks before saving. Every student's marks are required.</p>
+<button type="button" id="courseExamPrepare" class="secondary">✓ Prepare Subject Columns</button>
+<div class="course-exam-table-wrap"><table id="courseExamStudentRows" class="course-exam-table" aria-label="Student marks by subject"></table></div>
+<button type="button" id="courseExamSaveClass">💾 Save Class Marks as Private Draft</button>
+</div>
+<div class="course-exam-step course-exam-publish"><h4>Step 4 · Publish ONLY after All Classes Saved</h4>
+<label class="course-exam-check"><input type="checkbox" id="courseExamAnnounce" checked> Show “Exam Results Published” notice on the homepage (without student private information)</label>
+<button type="button" id="courseExamPublishAll" disabled>🌐 Publish ALL Classes Together</button>
+<p class="section-note">Students see their published marks and certificates only through approved login or their private result link. An interrupted publication can be resumed securely.</p></div>
+<p id="courseExamStatus" class="status" role="status" aria-live="polite"></p>
+</section>
+<details class="exam-single-legacy"><summary>✏ Individual Result / Special Examination (existing method)</summary>
  <section class="section exam-admin-editor">
   <h3>📝 Enter / Edit Student Result</h3>
   <form id="examResultForm">
@@ -613,6 +671,7 @@ nav a{transition:color .2s ease,opacity .2s ease}nav a:hover{opacity:.8}
    <p class="status" id="examEditorStatus" role="status" aria-live="polite"></p>
   </form>
  </section>
+</details>
  <section class="section" id="homepageWinnersPanel">
 <h3>🏆 Homepage Top Achievers · First / Second / Third</h3>
 <p class="winner-info"><strong>Flexible selection:</strong> First only, Second only, Third only, or any combination. Unselected ranks never appear. Select from published examination results; every featured student requires a photo and guardian permission. All displayed winners should belong to the same examination, year and course.</p>
@@ -841,6 +900,7 @@ import{initializeApp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-app
 import{getAuth,GoogleAuthProvider,signInWithPopup,signInWithEmailAndPassword,EmailAuthProvider,linkWithCredential,sendEmailVerification,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 import{getFirestore,doc,getDoc,setDoc,collection,getDocs,deleteDoc,updateDoc,deleteField,arrayUnion,query,limit,where,documentId,writeBatch,FieldPath,serverTimestamp}from'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import{initExamAdmin}from'./exam-admin.js';
+import{initExamSessionAdmin}from'./exam-session-admin.js';
 import{directoryPatchFromApprovedRegistration,registrationPatchFromDirectoryChanges}from'./teacher-admin-sync.js';
 import{syncStudentTeachingDirectory}from'./student-teaching-admin.js';
 import{uniqueAdmissionCourses,admissionCourseKey,removeAdmissionCourse,isAalimaContinuation,publicAdmissionCourses}from'./admission-course-utils.js';
@@ -872,6 +932,7 @@ if(!config.apiKey||!config.projectId||!config.appId){$('setup').textContent='Set
 try{
 const app=initializeApp(config),auth=getAuth(app),db=getFirestore(app);
  const examAdmin=initExamAdmin({db,auth,onPromotion:syncAllTeacherRosters});
+ const courseExamAdmin=initExamSessionAdmin({db,auth,onPublication:()=>examAdmin.load(),onPromotion:syncAllTeacherRosters});
  const studentAccounts=initStudentAccountAdmin({db});
  const studentProfileRequests=initStudentProfileRequests({db,auth,onLoadIntoEditor:openStudentEdit});
  const existingIntakeAdmin=initExistingStudentIntakeAdmin({db,auth,onReview:openExistingSubmission});
@@ -1211,7 +1272,7 @@ $('financeOpenSalarySplit').onclick=async()=>{
  await salarySplitAdmin.load();
  $('salarySplitPanel').scrollIntoView({behavior:'smooth',block:'start'});
 };
-function switchTab(tab){if(tab==='settings'&&active){siteSettingsAdmin.load();principalCeremonyAccess.load();hiringBoardAdmin.load();}if(tab==='exams'&&active){examAdmin.load().catch(e=>{$('examEditorStatus').textContent='Could not load exam system: '+e.message});examAdmin.winners.load().catch(e=>{$('homepageWinnersStatus').textContent='Could not load homepage winners: '+e.message});competitionAdmin.load().catch(e=>{$('competitionStatus').textContent='Could not load competitions: '+e.message})}if(tab!=='teachers'){if($('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();if($('teacherCatalogPanel'))closeTeacherCatalog();}tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
+function switchTab(tab){if(tab==='settings'&&active){siteSettingsAdmin.load();principalCeremonyAccess.load();hiringBoardAdmin.load();}if(tab==='exams'&&active){courseExamAdmin.load().catch(e=>{$('courseExamStatus').textContent='Could not load course exam marks: '+e.message});examAdmin.load().catch(e=>{$('examEditorStatus').textContent='Could not load exam system: '+e.message});examAdmin.winners.load().catch(e=>{$('homepageWinnersStatus').textContent='Could not load homepage winners: '+e.message});competitionAdmin.load().catch(e=>{$('competitionStatus').textContent='Could not load competitions: '+e.message})}if(tab!=='teachers'){if($('teacherEditorHost')&&!$('teacherEditorHost').hidden)resetTeacher();if($('teacherCatalogPanel'))closeTeacherCatalog();}tabs.forEach(t=>$('tab-'+t).classList.toggle('hidden',t!==tab));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));setMenu(false);window.scrollTo({top:0,behavior:'smooth'})}
 $('openNewCourse').onclick=()=>{
  $('newCourseName').value='';$('newCourseId').value='';$('newCourseStatus').textContent='';
  switchTab('newcourse');
