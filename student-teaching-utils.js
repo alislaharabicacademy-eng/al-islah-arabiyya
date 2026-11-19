@@ -30,10 +30,10 @@ export function studentTeachingAssignments(student,teachers){
    // All Maktab teaching allocations must have an explicit batch.
    if(assignedBatch&&assignedBatch!==studentBatch)continue;
    if(studentCourse==='maktab'&&!assignedBatch)continue;
-   const timing=text(entry.timing);
-   const key=[teacherName.toLowerCase(),subject.toLowerCase(),timing.toLowerCase()].join('|');
+   const timing=text(entry.timing),kitab=text(entry.kitab);
+   const key=[teacherName.toLowerCase(),subject.toLowerCase(),kitab.toLowerCase(),timing.toLowerCase()].join('|');
    if(seen.has(key))continue;
-   seen.add(key);assignments.push({subject,teacherName,timing});
+   seen.add(key);assignments.push({subject,teacherName,timing,...(kitab?{kitab}:{})});
   }
  }
  return assignments.sort((a,b)=>a.subject.localeCompare(b.subject,'en')||

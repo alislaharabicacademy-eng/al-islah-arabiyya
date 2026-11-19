@@ -183,7 +183,7 @@ function renderPreviewAssignments(assignments){
    const title=document.createElement('strong');
    title.textContent=(a.courseName||a.course||'Class')+(a.batch?' · '+a.batch:'');
    const detail=document.createElement('small');
-   detail.textContent=[a.subject||'Subject not assigned',a.timing||'',Array.isArray(a.students)?a.students.length+' students':''].filter(Boolean).join(' · ');
+   detail.textContent=[a.subject||'Subject not assigned',a.kitab?'Kitab: '+a.kitab:'',a.timing||'',Array.isArray(a.students)?a.students.length+' students':''].filter(Boolean).join(' · ');
    row.append(title,detail);root.append(row);
  }
 }
@@ -314,7 +314,7 @@ function renderPersonalAssignments(assignments){
   const title=document.createElement('strong');
   title.textContent=(a.courseName||a.course||'Class')+(a.batch?' · '+a.batch:'');
   const details=document.createElement('small');
-  details.textContent=[a.subject||'Subject not assigned',a.timing||'',
+  details.textContent=[a.subject||'Subject not assigned',a.kitab?'Kitab: '+a.kitab:'',a.timing||'',
    Array.isArray(a.students)?a.students.length+' students':''].filter(Boolean).join(' · ');
   row.append(title,details);root.append(row);
  }

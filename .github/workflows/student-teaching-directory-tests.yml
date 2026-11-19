@@ -5,6 +5,7 @@ on:
     paths:
       - 'admin.html'
       - 'student-login.html'
+      - 'teacher-login.html'
       - 'student-account-admin.js'
       - 'student-teaching-admin.js'
       - 'student-teaching-utils.js'
@@ -33,7 +34,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import re
-          for name in ('student-login.html','admin.html'):
+          for name in ('student-login.html','admin.html','teacher-login.html'):
               src=Path(name).read_text()
               scripts=re.findall(r'<script type="module">([\s\S]*?)</script>',src)
               assert len(scripts)==1, name
@@ -41,3 +42,4 @@ jobs:
           PY
           node --check /tmp/student-login.html.mjs
           node --check /tmp/admin.html.mjs
+          node --check /tmp/teacher-login.html.mjs

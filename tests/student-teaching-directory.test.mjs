@@ -42,12 +42,29 @@ test('empty, stale and repeated teacher assignments are safe to render',()=>{
  assert.equal(JSON.stringify(studentTeachingAssignments({course:'alima'},t)).includes('private@example.com'),false);
  assert.deepEqual(studentTeachingAssignments({course:'alima'},null),[]);
 });
+test('kitab assignment appears only for the relevant class and teacher',()=>{
+ const t=[{name:'Ustadha A',assignments:[
+  {course:'muballigha',subject:'Hadees',kitab:'Riyad as-Salihin',timing:'8 PM'},
+  {course:'alima',subject:'Tafseer',kitab:'Tafsir al-Jalalayn'}
+ ]}];
+ assert.deepEqual(studentTeachingAssignments({course:'muballigha'},t),[
+  {subject:'Hadees',teacherName:'Ustadha A',timing:'8 PM',kitab:'Riyad as-Salihin'}
+ ]);
+ assert.deepEqual(studentTeachingAssignments({course:'alima'},t),[
+  {subject:'Tafseer',teacherName:'Ustadha A',timing:'',kitab:'Tafsir al-Jalalayn'}
+ ]);
+ assert.deepEqual(studentTeachingAssignments({course:'muallama'},t),[]);
+});
 test('only admin reads private Teacher Directory; student reads existing verified grant',()=>{
  const admin=readFileSync(new URL('../student-teaching-admin.js',import.meta.url),'utf8');
  const accessAdmin=readFileSync(new URL('../student-account-admin.js',import.meta.url),'utf8');
  const student=readFileSync(new URL('../student-login.html',import.meta.url),'utf8');
  const rules=readFileSync(new URL('../firestore.rules',import.meta.url),'utf8');
- assert.match(admin,/collection\(db,'teachers'\)/);
+ const adminHtml=readFileSync(new URL('../admin.html',import.meta.url),'utf8');
+ assert.match(adminHtml,/className='subject-kitab'/);
+ assert.match(adminHtml,/kitab:a\.kitab/);
+ assert.match(student,/Kitab \/ Book/);
+  assert.match(admin,/collection\(db,'teachers'\)/);
  assert.match(admin,/batch\.set\(doc\(db,'studentAccess'/);
  assert.match(accessAdmin,/teachingAssignments/);
  assert.match(student,/renderStudentTeachingAssignments\(access,card\)/);
