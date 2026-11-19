@@ -72,3 +72,16 @@ test('only admin reads private Teacher Directory; student reads existing verifie
  assert.doesNotMatch(student,/collection\(db,'teacherRosters'\)/);
  assert.match(rules,/match \/teachers\/\{teacherId\} \{\s*allow read, write: if isAdmin\(\)/);
 });
+
+test('audited Admin Student Preview shows the same course/batch teacher & Kitab details',()=>{
+ const preview=readFileSync(new URL('../admin-student-preview.js',import.meta.url),'utf8');
+ assert.match(preview,/studentTeachingAssignments\(student\.data\(\),teachers\.docs\.map/);
+ assert.match(preview,/renderTeachingPreview\(card,student,access,teachingAssignments\)/);
+ assert.match(preview,/My Subjects, Kitabs & Assigned Teachers/);
+ assert.match(preview,/Kitab \/ Book/);
+ assert.match(preview,/Sync Subjects & Teachers to Student Logins/);
+ const audit=preview.indexOf("await addDoc(collection(db,'adminStudentPreviews')");
+ const privateTeachersRead=preview.indexOf("getDocs(collection(db,'teachers'))");
+ assert.ok(audit>0 && privateTeachersRead>audit,'Admin audit must happen BEFORE private teachers are read');
+ assert.doesNotMatch(preview,/setDoc\(doc\(db,'teachers'/);
+});

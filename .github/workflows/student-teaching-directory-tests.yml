@@ -6,6 +6,7 @@ on:
       - 'admin.html'
       - 'student-login.html'
       - 'teacher-login.html'
+      - 'admin-student-preview.js'
       - 'student-account-admin.js'
       - 'student-teaching-admin.js'
       - 'student-teaching-utils.js'
@@ -31,6 +32,7 @@ jobs:
           node --check student-teaching-utils.js
           node --check student-teaching-admin.js
           node --check student-account-admin.js
+          node --check admin-student-preview.js
           python3 - <<'PY'
           from pathlib import Path
           import re

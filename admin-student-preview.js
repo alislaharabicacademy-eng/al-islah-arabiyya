@@ -2,6 +2,7 @@ import {collection,doc,getDoc,getDocs,addDoc,query,where,limit,serverTimestamp} 
 import {photoAvatar} from './profile-photo.js';
 import {validFeeLedger} from './fee-ledger-utils.js';
 import {isVerifiedAcademyAdmin} from './academy-admin-access.js';
+import {studentTeachingAssignments} from './student-teaching-utils.js';
 
 
 /**
@@ -24,7 +25,51 @@ export function initAdminStudentPreview({auth,db,renderPrivateFeeLedger,onLogout
  function line(parent,value){
   const p=document.createElement('p');p.textContent=value;parent.append(p);
  }
- function render(student,studentId,access,results){
+ // Reflect the current official Teacher Directory in the read-only admin preview.
+ // A student never reads /teachers: their live dashboard only reads their own
+ // admin-published, verified /studentAccess grant.
+ function renderTeachingPreview(card,student,access,teachingAssignments){
+  const section=document.createElement('section');section.className='exam-card';
+  section.style.cssText='margin-top:17px;border:1px solid #cfdfd5;background:linear-gradient(120deg,#f5fbf7,#fffdf6);';
+  const heading=document.createElement('h4');heading.textContent='📚 My Subjects, Kitabs & Assigned Teachers';
+  heading.style.cssText='color:#194d37;margin:3px 0 9px;';section.append(heading);
+  if(!teachingAssignments.length){
+   const message=document.createElement('p');
+   message.textContent='No teacher or subject has been assigned yet for '+String(student.course||'this course')+
+    (student.batch?' · '+String(student.batch):'')+'. Go to Admin → Teacher Management to assign a teacher, subject and optional Kitab.';
+   section.append(message);
+  }else for(const assignment of teachingAssignments){
+   const row=document.createElement('div');
+   row.style.cssText='border:1px solid #e1e9e2;border-radius:10px;background:white;margin:8px 0;padding:11px 14px;';
+   const subject=document.createElement('strong');subject.textContent='📖 '+String(assignment.subject||'Subject');
+   const teacher=document.createElement('p');teacher.style.cssText='margin:5px 0 0;font-size:14px;';
+   teacher.textContent='👩‍🏫 Teacher: '+String(assignment.teacherName||'Not assigned');
+   row.append(subject,teacher);
+   if(assignment.kitab){
+    const kitab=document.createElement('p');kitab.style.cssText='margin:3px 0 0;font-size:14px;color:#456353;';
+    kitab.textContent='📕 Kitab / Book: '+String(assignment.kitab);row.append(kitab);
+   }
+   if(assignment.timing){
+    const timing=document.createElement('p');timing.style.cssText='margin:3px 0 0;font-size:13px;color:#456353;';
+    timing.textContent='🕒 Class timing: '+String(assignment.timing);row.append(timing);
+   }
+   section.append(row);
+  }
+  if(access?.enabled===true){
+   const assigned=Array.isArray(access.teachingAssignments)?access.teachingAssignments:[];
+   if(JSON.stringify(assigned)!==JSON.stringify(teachingAssignments)){
+    const warning=document.createElement('p');warning.style.cssText='border-top:1px solid #d6dfd5;margin-top:14px;padding-top:11px;color:#79511a;font-size:13px;';
+    warning.textContent='⚠ Student Login is not yet synchronized with this latest teacher list. Admin → Teacher Management → Sync Subjects & Teachers to Student Logins. Then refresh the student dashboard.';
+    section.append(warning);
+   }
+  }else{
+   const note=document.createElement('p');note.style.cssText='margin-top:12px;color:#5b665d;font-size:13px;';
+   note.textContent='Preview only: no active approved Student Login for this student. Approve access in Student Details to publish private assignments.';
+   section.append(note);
+  }
+  card.append(section);
+ }
+ function render(student,studentId,access,results,teachingAssignments){
   cards.replaceChildren();
   const card=document.createElement('article');card.className='student-card';
   const name=document.createElement('h4');name.textContent=String(student.name||access?.studentName||'Student');
@@ -41,6 +86,7 @@ export function initAdminStudentPreview({auth,db,renderPrivateFeeLedger,onLogout
   const badge=document.createElement('span');badge.className='tag';
   badge.textContent='Academy Academic Record · Read-only';card.append(badge);
   if(access?.enabled===false)line(card,'Student/guardian login is disabled. Academy records can still be previewed by authorized administrators.');
+  renderTeachingPreview(card,student,access,teachingAssignments);
   const feeData={...access,...student,
    feeLedger:validFeeLedger(student.feeLedger||access?.feeLedger),
    feeMonthlyRate:Number(access?.feeMonthlyRate)||0,
@@ -123,14 +169,16 @@ export function initAdminStudentPreview({auth,db,renderPrivateFeeLedger,onLogout
      studentId:selected,actorUid:user.uid,actorEmail:user.email,
      createdAt:serverTimestamp(),purpose:'student_dashboard_preview'
     });
-    const [student,access,exams]=await Promise.all([
+    const [student,access,exams,teachers]=await Promise.all([
      getDoc(doc(db,'students',selected)),
      getDoc(doc(db,'studentAccess',selected)),
-     getDocs(query(collection(db,'examResults'),where('studentId','==',selected),limit(80)))
+     getDocs(query(collection(db,'examResults'),where('studentId','==',selected),limit(80))),
+     getDocs(collection(db,'teachers')) // Admin-only; after audited preview event.
     ]);
     if(selectRequest!==generation||auth.currentUser?.uid!==user.uid)return;
     if(!student.exists())throw Error('Student record no longer exists.');
-    render(student.data(),selected,access.exists()?access.data():null,exams.docs);
+    const teachingAssignments=studentTeachingAssignments(student.data(),teachers.docs.map(d=>d.data()));
+    render(student.data(),selected,access.exists()?access.data():null,exams.docs,teachingAssignments);
     details.hidden=false;
     status.textContent='✓ Read-only student preview opened. Access recorded in the Academy security audit.';
    }catch(error){
