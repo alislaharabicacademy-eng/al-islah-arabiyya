@@ -1,0 +1,46 @@
+name: Student Approval Live Sync and Independent Runtime
+
+on:
+  pull_request:
+    paths:
+      - 'student-login.html'
+      - 'student-account-admin.js'
+      - 'student-dob-verifier.js'
+      - 'firestore.rules'
+      - 'tests/student-approval-live-sync.test.mjs'
+      - '.github/workflows/student-approval-live-sync-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'student-login.html'
+      - 'student-account-admin.js'
+      - 'student-dob-verifier.js'
+      - 'firestore.rules'
+      - 'tests/student-approval-live-sync.test.mjs'
+      - '.github/workflows/student-approval-live-sync-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  student-approval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check authorization and approval subscription invariants
+        run: node --test tests/student-approval-live-sync.test.mjs
+      - name: Parse embedded Student Login JavaScript
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html=Path('student-login.html').read_text()
+          matches=re.findall(r'<script type="module">([\s\S]*?)</script>',html)
+          assert len(matches)==1, f'Expected one embedded module, found {len(matches)}'
+          Path('/tmp/academy-student-login-audit.mjs').write_text(matches[0])
+          PY
+          node --check /tmp/academy-student-login-audit.mjs
