@@ -385,12 +385,29 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Private admin-only examination sessions: every course must finish its
+    // draft marks before the server-side publication gate opens.
+    match /examSessions/{sessionId} {
+      allow get, list, create, update, delete: if isAdmin();
+    }
+
+    // The homepage sees an announcement only, no student PII or marks.
+    match /examAnnouncements/{announcementId} {
+      allow get: if announcementId == 'current' || isAdmin();
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin() && announcementId == 'current';
+    }
+
     // Published exam result only through an unguessable 96-bit document code.
     // Public visitors cannot list or search student records or drafts.
     match /examResults/{resultId} {
       allow get: if isAdmin()
         || (resultId.matches('^RESULT-[a-f0-9]{24}$')
-          && resource.data.published == true);
+          && resource.data.published == true
+          && (!resource.data.keys().hasAny(['sessionId'])
+            || (resource.data.sessionId is string
+              && exists(/databases/$(database)/documents/examSessions/$(resource.data.sessionId))
+              && get(/databases/$(database)/documents/examSessions/$(resource.data.sessionId)).data.status == 'published')));
       allow list: if isAdmin();
       allow create, update, delete: if isAdmin();
     }
