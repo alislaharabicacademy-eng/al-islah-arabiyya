@@ -68,7 +68,7 @@ export function createClassFirstStudentPicker({
   byId=new Map(currentGroups.flatMap(g=>g.records.map(r=>[String(r.id),g])));
   classSelect.replaceChildren(new Option('Select a Class / Course',''));
   for(const group of currentGroups){
-   classSelect.add(new Option(group.label+' ('+group.records.length+' Students)',group.key));
+   classSelect.add(new Option(group.label+' ('+group.records.length+' '+(group.records.length===1?'Student':'Students')+')',group.key));
   }
   const studentGroup=byId.get(wanted);
   if(studentGroup)classSelect.value=studentGroup.key;
