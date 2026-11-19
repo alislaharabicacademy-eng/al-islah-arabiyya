@@ -38,7 +38,8 @@ export function summarizeFees({ledger={},year,rate=0,asOf=indiaFeeClock(),enroll
   const beforeStart=enrolledYear>0&&(yy<enrolledYear||(yy===enrolledYear&&m<enrolledMonth));
   const due=yy<nowY||(yy===nowY&&m<=nowM);
   const dueAndEnrolled=due&&!beforeStart;
-  const status=isPaid?'Paid':beforeStart?'Before enrollment':dueAndEnrolled?'Pending':'Not due';
+  // "Pending" describes an unpaid month; whether it is currently due is tracked separately.
+  const status=isPaid?'Paid':beforeStart?'Before enrollment':'Pending';
   if(isPaid){paid++;received+=e.amount}
   else if(beforeStart)beforeEnrollment++;
   else if(dueAndEnrolled)pending++;
@@ -46,14 +47,15 @@ export function summarizeFees({ledger={},year,rate=0,asOf=indiaFeeClock(),enroll
   return {month:m,name:monthName,year:yy,status,amount:isPaid?e.amount:0,paidAt:e?.paidAt||'',receiptId:e?.receiptId||''};
  });
  // The calendar-year register always contains twelve slots. "Pending"
- // covers months already due; upcoming months must not be shown as overdue.
+ // counts only months already due; future unpaid months also display as Pending,
+ // but they must not be included in the "Amount due now" calculation.
  const totalMonths=months.length;
  const remaining=totalMonths-paid-beforeEnrollment;
  return {year:yy,monthlyRate,months,totalMonths,remaining,paid,pending,notDue,beforeEnrollment,
   fullYearReferenceAmount:monthlyRate?monthlyRate*totalMonths:null,
   collected:received,pendingAmount:monthlyRate?pending*monthlyRate:null,
   enrolledDate:enrolledAt||'',startDateKnown:!!start,
-  note:!start?'Pending months are counted from January of the selected year because an enrollment date is not recorded.':'Pending months begin from the recorded enrollment month.',
+  note:(!start?'Unpaid months are tracked from January of the selected year because an enrollment date is not recorded.':'Unpaid months begin from the recorded enrollment month.')+' Pending means unpaid, including upcoming months. Upcoming months are excluded from Amount due now.',
   state:String(state||'Active')};
 }
 export function allRecordedPayments(ledger){

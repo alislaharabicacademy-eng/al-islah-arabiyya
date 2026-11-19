@@ -2372,7 +2372,7 @@ function renderFeeMonths(){
   const box=document.createElement('div');box.className='record';
   const label=document.createElement('strong');label.textContent=monthNames[i]+' '+year;box.append(label);
   const basic=document.createElement('p');basic.textContent='Monthly fee: ₹'+feeRate.toLocaleString('en-IN')+
-   '  |  '+(isPaid?'✅ Paid':due?'⏳ Pending':'▫️ Not due');box.append(basic);
+   '  |  '+(isPaid?'✅ Paid':due?'⏳ Pending':'⏳ Pending (upcoming)');box.append(basic);
   if(isPaid){
    const received=document.createElement('p');received.textContent='Received ₹'+Number(entry.amount||0).toLocaleString('en-IN')+
     ' • Actual payment date: '+(entry.paidAt?.slice(0,10)||'Not recorded');box.append(received);
@@ -2399,14 +2399,15 @@ function renderFeeMonths(){
  root.append(table);
  const remaining=12-paid;
  $('feeSummary').innerHTML='<span class="stat">12-Month Fee Register: '+paid+'/12 Paid</span>'+
- '<span class="stat">Due / Pending: '+pending+' months</span>'+
- '<span class="stat">Upcoming: '+upcoming+' months</span>'+
+ '<span class="stat">Pending in 12-month year: '+remaining+' months</span>'+
+ '<span class="stat">Due now: '+pending+' months</span>'+
+ '<span class="stat">Upcoming (included in Pending): '+upcoming+' months</span>'+
  '<span class="stat">Unpaid in 12-month year: '+remaining+' months</span>'+
  '<span class="stat">Collected: ₹'+collected.toLocaleString('en-IN')+'</span>'+
  '<span class="stat">Amount due now: ₹'+(pending*feeRate).toLocaleString('en-IN')+'</span>'+
  '<span class="stat">12-month reference total: ₹'+(feeRate*12).toLocaleString('en-IN')+'</span>';
  $('feeStatus').textContent=feeRate>0?
-  'All 12 months (January–December) are shown. Upcoming months remain Not due until their month. Paid records sync privately with Student Login.':
+  'All 12 months (January–December) are shown. Future unpaid months are Pending (upcoming), but only due months count towards Amount due now. Paid records sync privately with Student Login.':
   '⚠ Monthly fee is not set for this course. Set it in Course Details first.';
 }
 async function setFeeMonth(month,paid,details={}){
