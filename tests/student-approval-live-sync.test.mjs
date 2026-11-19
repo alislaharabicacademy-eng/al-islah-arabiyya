@@ -8,7 +8,7 @@ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 test('student portal waits for approval and automatically reloads only the verified email grants',()=>{
  const code=read('student-login.html');
  const start=code.indexOf('function watchApprovedStudentGrants(user){');
- const end=code.indexOf('const identityCard=',start);
+ const end=code.indexOf('function showEmailStep(){',start);
  assert.ok(start>0&&end>start,'authorized approval listener must exist');
  const listener=code.slice(start,end);
  assert.match(listener,/user\?\.emailVerified/);
