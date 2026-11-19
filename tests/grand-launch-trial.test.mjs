@@ -50,6 +50,27 @@ test('Main Ceremony Preview is resettable, keeps real launch locked, and reveals
   assert.doesNotMatch(html,/id="startOfficial"/);
 });
 
+test('Premium gold inauguration effects are server-confirmed, mobile friendly and preview-safe',()=>{
+  assert.match(html,/Luxury|satin-gold|Grand inauguration visual system/i);
+  assert.match(html,/background:linear-gradient\(180deg,#704315/);
+  assert.match(html,/@keyframes goldSpark/);
+  assert.match(html,/id="sparkles"/);
+  assert.match(html,/id="celebrationFlash"/);
+  assert.match(html,/id="successHeadline" class="success celebration-title"/);
+  assert.match(html,/prefers-reduced-motion:reduce/);
+  assert.match(js,/function goldSparkles\(\)/);
+  assert.match(js,/isMainPreview\?'\&mode=main-preview'/);
+  assert.match(js,/WEBSITE OFFICIALLY INAUGURATED/);
+  assert.match(js,/GRAND CEREMONY PREVIEW · NOT OFFICIAL/);
+  assert.match(js,/requestAnimationFrame\(\(\)=>requestAnimationFrame\(\(\)=>\{/);
+  assert.match(js,/classList\.add\('is-cut'\);confetti\(\);goldSparkles\(\)/);
+  assert.match(js,/redirectTimer=setTimeout\(\(\)=>\{[\s\S]*?\},7100\);/);
+  assert.match(js,/clearTimeout\(sparkleTimer\)/);
+  assert.match(js,/clearTimeout\(confettiTimer\)/);
+  assert.match(js,/if\(snapshot\.metadata\.hasPendingWrites\)return/);
+  assert.match(js,/if\(isOfficial\)\{renderOfficial\(\);return\}/);
+});
+
 test('rehearsal is isolated from real one-time launch',()=>{
   assert.match(html,/TRIAL MODE/);
   assert.match(html,/id="scissorsTrigger"/);
