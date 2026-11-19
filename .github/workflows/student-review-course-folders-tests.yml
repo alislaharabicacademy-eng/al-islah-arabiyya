@@ -7,6 +7,7 @@ on:
       - 'existing-student-intake-admin.js'
       - 'existing-student-review-utils.js'
       - 'tests/student-review-course-folders.test.mjs'
+      - 'tests/student-review-renderer.test.mjs'
       - '.github/workflows/student-review-course-folders-tests.yml'
   workflow_dispatch:
 
@@ -35,4 +36,4 @@ jobs:
           PY
           node --check /tmp/student-review-admin.mjs
       - name: Test pending/approved course folders and duplicate lifecycle
-        run: node --test tests/student-review-course-folders.test.mjs
+        run: node --test tests/student-review-course-folders.test.mjs tests/student-review-renderer.test.mjs
