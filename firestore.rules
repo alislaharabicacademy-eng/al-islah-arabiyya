@@ -26,6 +26,9 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/adminAccess/$(request.auth.token.email)).data.enabled == true;
     }
 
+    // Future-feature contract: the verified Master inherits every ordinary
+    // Academy Admin permission, while Master-only operations remain restricted.
+    // All new collections must use isAdmin() unless deliberately Master-only.
     function isAdmin() {
       return isNormalAdmin() || isMasterAdmin() || hasPrivateAdminGrant();
     }
