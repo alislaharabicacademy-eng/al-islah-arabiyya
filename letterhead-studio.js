@@ -29,7 +29,9 @@ const LANGUAGES={
     "bodyPlaceholder": "Type your letter here. Paragraphs and line breaks are preserved.",
     "draftHint": "Not saved automatically. Copy your draft elsewhere if needed.",
     "closingLabel": "Closing",
-    "printButton": "🖨 Print / Save Signed PDF",
+    "signatureChoiceLabel": "Include Principal Signature",
+    "signatureChoiceHint": "Tick to show the uploaded signature in the preview and PDF. Untick for Principal title only.",
+    "printButton": "🖨 Print / Save PDF",
     "sampleButton": "Fill Sample",
     "clearButton": "Clear",
     "previewHeading": "Live A4 Preview",
@@ -48,7 +50,8 @@ const LANGUAGES={
     "statusPrincipal": "Add the principal’s name in Website Settings before printing.",
     "statusRequired": "Enter date, subject and content to enable the signed PDF.",
     "statusLong": "Long letter: please inspect the A4 print preview for page breaks before saving.",
-    "statusReady": "✓ Ready. Select Print / Save Signed PDF, then choose “Save as PDF”.",
+    "statusReady": "✓ Signed letter ready. Select Print / Save PDF, then choose “Save as PDF”.",
+    "statusUnsignedReady": "✓ Ready without signature. The preview and PDF will show only Principal.",
     "statusPrintError": "Could not prepare the logo or signature. Check Website Settings and try again.",
     "confirmSample": "Loading a sample will replace the recipient, subject and content in this editor. Continue?",
     "defaults": {
@@ -80,7 +83,9 @@ const LANGUAGES={
     "bodyPlaceholder": "இங்கே தமிழில் கடிதத்தை எழுதுங்கள். பத்திகளும் வரி இடைவெளிகளும் அப்படியே இருக்கும்.",
     "draftHint": "இந்தக் கடிதம் தானாகச் சேமிக்கப்படாது. தேவைப்பட்டால் உரையை நகலெடுத்துக் கொள்ளுங்கள்.",
     "closingLabel": "முடிவு வாசகம்",
-    "printButton": "🖨 கையொப்பத்துடன் PDF / அச்சிடு",
+    "signatureChoiceLabel": "முதல்வரின் கையொப்பம் சேர்க்கவும்",
+    "signatureChoiceHint": "டிக் செய்தால் Preview மற்றும் PDF-ல் கையொப்பம் வரும். டிக் செய்யாவிட்டால் முதல்வர் என்று மட்டும் வரும்.",
+    "printButton": "🖨 PDF சேமிக்க / அச்சிட",
     "sampleButton": "மாதிரி கடிதம்",
     "clearButton": "அழி",
     "previewHeading": "A4 கடித முன்பார்வை",
@@ -99,7 +104,8 @@ const LANGUAGES={
     "statusPrincipal": "Website Settings பகுதியில் முதல்வரின் பெயரைச் சேர்க்கவும்.",
     "statusRequired": "தேதி, தலைப்பு, கடித விவரங்களை உள்ளிடுங்கள்.",
     "statusLong": "நீண்ட கடிதம்: PDF சேமிக்கும் முன் A4 Print Preview-வில் பக்கங்களைச் சரிபார்க்கவும்.",
-    "statusReady": "✓ தயார். PDF / அச்சிடு அழுத்தி “Save as PDF” தேர்ந்தெடுக்கவும்.",
+    "statusReady": "✓ கையொப்பத்துடன் தயார். PDF சேமிக்க / அச்சிட என்பதைத் தேர்ந்தெடுக்கவும்.",
+    "statusUnsignedReady": "✓ கையொப்பமின்றி தயார். Preview மற்றும் PDF-ல் முதல்வர் என்று மட்டும் வரும்.",
     "statusPrintError": "லோகோ அல்லது கையொப்பத்தை PDF-க்குத் தயாரிக்க முடியவில்லை. Settings-ஐச் சரிபார்க்கவும்.",
     "confirmSample": "மாதிரி கடிதத்தைத் தேர்ந்தெடுத்தால் இப்போது எழுதிய பெறுநர், தலைப்பு, விவரம் மாற்றப்படும். தொடரலாமா?",
     "defaults": {
@@ -131,7 +137,9 @@ const LANGUAGES={
     "bodyPlaceholder": "اكتب نص الخطاب بالعربية هنا. ستُحفَظ الفقرات وفواصل الأسطر.",
     "draftHint": "لا يُحفَظ النص تلقائيًا. يُرجى نسخه إذا رغبت في الاحتفاظ بالمسودة.",
     "closingLabel": "عبارة الختام",
-    "printButton": "🖨 طباعة / حفظ PDF موقّع",
+    "signatureChoiceLabel": "إضافة توقيع المديرة",
+    "signatureChoiceHint": "ضع علامة لإظهار التوقيع في المعاينة وPDF. بدون علامة سيظهر منصب المديرة فقط.",
+    "printButton": "🖨 طباعة / حفظ PDF",
     "sampleButton": "نموذج خطاب",
     "clearButton": "مسح",
     "previewHeading": "معاينة الخطاب بحجم A4",
@@ -150,7 +158,8 @@ const LANGUAGES={
     "statusPrincipal": "يُرجى إضافة اسم المديرة في إعدادات الموقع.",
     "statusRequired": "أدخل التاريخ والموضوع ونص الخطاب لتفعيل حفظ PDF.",
     "statusLong": "خطاب طويل: تحقّق من فواصل الصفحات في معاينة الطباعة قبل الحفظ.",
-    "statusReady": "✓ الخطاب جاهز. اختر طباعة / حفظ PDF موقّع ثم «Save as PDF».",
+    "statusReady": "✓ الخطاب الموقّع جاهز للطباعة أو الحفظ بصيغة PDF.",
+    "statusUnsignedReady": "✓ الخطاب جاهز دون توقيع. سيظهر منصب المديرة فقط في المعاينة وPDF.",
     "statusPrintError": "تعذّر تجهيز الشعار أو التوقيع. تحقّق من إعدادات الموقع ثم حاول مجددًا.",
     "confirmSample": "سيؤدي إدراج النموذج إلى استبدال المرسل إليه والموضوع ونص الخطاب الحالي. هل تريد المتابعة؟",
     "defaults": {
@@ -172,6 +181,7 @@ const languageSelect=$('letterLanguage');
 let letterLang='en';
 let isAuthorized=false;
 let hasSignature=false;
+let signatureData="";
 let settings=null;
 
 const todayInIndia=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
@@ -202,17 +212,31 @@ function refresh(){
  text('pvClosing',val('letterClosing'));
  $('pvClosing').hidden=!val('letterClosing');
  $('signatureMissing').textContent=t.signatureMissing;
+ // A signature must never appear in either print or preview without an explicit tick.
+ const includeSignature=$('includePrincipalSignature').checked;
+ const showSignature=includeSignature&&hasSignature;
+ const img=$('pvSignature');
+ img.hidden=!showSignature;
+ if(showSignature)img.src=signatureData;
+ else img.removeAttribute('src');
+ $('signatureMissing').hidden=!includeSignature||hasSignature;
+ $('signRule').hidden=!includeSignature;
+ $('pvPrincipal').hidden=!includeSignature;
+ $('letterSignoff').classList.toggle('with-signature',includeSignature);
+ $('letterSignoff').classList.toggle('without-signature',!includeSignature);
  if(settings){
+  text('pvPrincipal',settings.principal?.name||'Principal name not set');
   const actualRole=settings.principal?.designation||'Principal';
-  text('pvRole',actualRole==='Principal'?t.principalRole:actualRole);
- }
- const ready=isAuthorized&&hasSignature&&!!settings?.principal?.name&&!!val('letterDate')&&!!val('letterSubject')&&!!val('letterBody');
+  text('pvRole',includeSignature&&actualRole!=='Principal'?actualRole:t.principalRole);
+ }else text('pvRole',t.principalRole);
+ const required=!!val('letterDate')&&!!val('letterSubject')&&!!val('letterBody');
+ const ready=isAuthorized&&required&&(!includeSignature||(hasSignature&&!!settings?.principal?.name));
  $('printLetter').disabled=!ready;
- if(!hasSignature)text('status',t.statusSignature);
- else if(!settings?.principal?.name)text('status',t.statusPrincipal);
- else if(!val('letterSubject')||!val('letterBody')||!val('letterDate'))text('status',t.statusRequired);
+ if(!required)text('status',t.statusRequired);
+ else if(includeSignature&&!hasSignature)text('status',t.statusSignature);
+ else if(includeSignature&&!settings?.principal?.name)text('status',t.statusPrincipal);
  else if(val('letterBody').length>2200)text('status',t.statusLong);
- else text('status',t.statusReady);
+ else text('status',includeSignature?t.statusReady:t.statusUnsignedReady);
 }
 function changeLanguage(next){
  if(!LANGUAGES[next])return;
@@ -250,18 +274,14 @@ function useSettings(s){
  text('footerName',s.instituteName);
  text('pvPrincipal',s.principal?.name||'Principal name not set');
  text('pvRole',s.principal?.designation||'Principal');
- const signature=s.principal?.signatureData||'';
- hasSignature=/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(signature);
- const img=$('pvSignature');
- img.hidden=!hasSignature;
- $('signatureMissing').hidden=hasSignature;
- if(hasSignature)img.src=signature;
- else img.removeAttribute('src');
+ signatureData=s.principal?.signatureData||'';
+ hasSignature=/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(signatureData);
  refresh();
 }
 
 for(const id of fields)form[id].addEventListener('input',refresh);
 languageSelect.addEventListener('change',()=>changeLanguage(languageSelect.value));
+$('includePrincipalSignature').addEventListener('change',refresh);
 $('sampleLetter').addEventListener('click',()=>{
  if((val('letterTo')||val('letterSubject')||val('letterBody'))&&!confirm(current().confirmSample))return;
  const sample=current().sample;
@@ -275,7 +295,9 @@ $('clearLetter').addEventListener('click',()=>{
  for(const [id,value] of Object.entries(defaults))form[id].value=value;
  form.letterGreeting.value=current().defaults.letterGreeting;
  form.letterClosing.value=current().defaults.letterClosing;
- form.letterDate.value=todayInIndia();refresh();
+ form.letterDate.value=todayInIndia();
+ $('includePrincipalSignature').checked=false;
+ refresh();
 });
 async function waitForImage(image){
  if(!image||image.hidden)return;
