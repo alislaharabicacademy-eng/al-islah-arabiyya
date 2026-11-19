@@ -249,7 +249,8 @@ export function initExistingStudentIntakeAdmin({db,auth,onReview}){
         ]);
         const stillMatch=studentNow.exists()?
          matchingStudentForRequest(requestNow.data(),[{id:found.id,data:studentNow.data()}]):null;
-        if(!requestNow.exists()||requestNow.data().status!=='Pending Review'||!stillMatch)
+        if(!requestNow.exists()||requestNow.data().status!=='Pending Review'||
+         stillMatch?.kind!=='possible-duplicate')
          throw Error('Student/request changed. Refresh and verify again.');
         await updateDoc(row.ref,{
          status:'Duplicate',studentId:found.id,
