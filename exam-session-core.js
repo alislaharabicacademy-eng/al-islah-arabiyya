@@ -1,12 +1,13 @@
 /* Pure exam-session policy helpers; no Firestore/browser dependency. */
 export const ELIGIBLE_STATES=new Set(['active','completed']);
 export const cohortKey=(course,year,batch)=>JSON.stringify([String(course||''),Number(year)||0,String(batch||'')]);
-export const academicStage=student=>student?.course==='muballigha'?(Number(student.courseYear)===2?2:1):student?.course==='alima'?3:0;
+export const academicStage=student=>student?.course==='muballigha'?([1,2].includes(Number(student.courseYear))?Number(student.courseYear):0):student?.course==='alima'?3:0;
 export function makeExamCohorts(students,courseNames=new Map()){
  const groups=new Map();
  for(const st of students||[]){
   if(!st?.id||!st.course||!ELIGIBLE_STATES.has(String(st.state||'Active').toLowerCase()))continue;
   const year=academicStage(st),batch=String(st.batch||'');
+  if(st.course==='muballigha'&&!year)throw Error('Verify Muballigha Year 1 or Year 2 for '+String(st.name||st.id)+' in Student Details before creating the exam.');
   const key=cohortKey(st.course,year,batch);
   if(!groups.has(key))groups.set(key,{
    key,courseId:st.course,courseName:courseNames.get(st.course)||st.course,
