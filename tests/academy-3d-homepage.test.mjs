@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {execFileSync} from 'node:child_process';
 
 const home=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../academy-3d-experience.css',import.meta.url),'utf8');
@@ -28,7 +27,7 @@ test('Preserve every essential website operation and dynamically managed hero co
   for(const link of ['admission.html','student-login.html','teacher-login.html','exam-results.html','admin.html','all-courses.html']){
     assert.ok(home.includes(link),'Missing existing route '+link);
   }
-  for(const id of ['homeMenuToggle','homeMenuPanel','homepageCourseGrid','academy-exam','courses','about']){
+  for(const id of ['homeMenuToggle','homeMenuPanel','homepageCourseGrid','academy-exam-announcement','courses','about']){
     assert.ok(home.includes('id="'+id+'"'),'Missing public UI '+id);
   }
   assert.match(home,/madrasa_video_no_gemini\.mp4/);
