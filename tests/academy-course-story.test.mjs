@@ -6,7 +6,7 @@ const home=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('../academy-course-story.css',import.meta.url),'utf8');
 const js=readFileSync(new URL('../academy-course-story.js',import.meta.url),'utf8');
 
-test('Featured courses remain Firestore-driven and only Muallama/Muballigha appear on homepage',()=>{
+test('Three featured courses remain Firestore-driven: Muallama, Muballigha and Alima',()=>{
   assert.match(home,/href="\.\/academy-course-story\.css"/);
   assert.match(home,/src="\.\/academy-course-story\.js"/);
   assert.match(home,/id="homepageCourseGrid"/);
@@ -14,6 +14,9 @@ test('Featured courses remain Firestore-driven and only Muallama/Muballigha appe
   assert.match(home,/const featuredCourseIds=new Set\(base\.map\(course=>course\.id\)\)/);
   assert.match(home,/\{id:'muallama',name:'Muallama'/);
   assert.match(home,/\{id:'muballigha',name:'Muballigha'/);
+  assert.match(home,/\{id:'alima',name:'Alima'/);
+  assert.match(home,/duration:'3rd Year · Continuation'/);
+  assert.match(home,/const featuredCourseIds=new Set\(base\.map\(course=>course\.id\)\)/);
   assert.match(home,/displayCourses\(base\.map\(course=>byId\.get\(course\.id\)\)\)/);
   assert.match(js,/const cards=\[\.\.\.grid\.children\]\.filter\(el=>el\.matches\('article\.course-card'\)\)/);
   assert.match(js,/new MutationObserver\(\(\)=>\{/);
@@ -28,6 +31,7 @@ test('Reference design: large central 3D book, circular orbit, side previews and
   assert.match(js,/class="academy-side-course academy-side-left"/);
   assert.match(js,/class="academy-side-course academy-side-right"/);
   assert.match(js,/class="academy-collection-counter" aria-live="polite"/);
+  assert.match(js,/01 \/ 03/);
   assert.match(css,/#homepageCourseGrid \.academy-main-book\{/);
   assert.match(css,/transform-style:preserve-3d/);
   assert.match(css,/@keyframes academyCourseFloat/);
@@ -54,6 +58,8 @@ test('Screenshot-style interaction has arrows, mobile horizontal swipes and deta
   assert.match(js,/class="academy-course-apply" href="admission\.html">Apply Now →/);
   assert.match(js,/view\.details\.setAttribute\('href',c\.detailsHref\)/);
   assert.match(js,/view\.apply\.setAttribute\('href',c\.applyHref\)/);
+  assert.match(js,/view\.apply\.hidden=alimaContinuation/);
+  assert.match(js,/view\.continuation\.hidden=!alimaContinuation/);
   assert.match(js,/view\.summary\.textContent=c\.summary/);
   assert.match(css,/background:linear-gradient\(135deg,#fffcf0,#f8f1da/);
 });
@@ -73,4 +79,16 @@ test('Short preview retains full details route, avoids backend edits and respect
   for(const route of ['admin.html','student-login.html','teacher-login.html','exam-results.html','all-courses.html','admission.html']){
     assert.ok(home.includes(route),'Existing academy route disappeared: '+route);
   }
+});
+
+test('Alima is a 3rd-year continuation, not an open direct-admission course',()=>{
+  assert.match(home,/if\(d\.id!=='alima'\)/);
+  assert.match(home,/courses\.html\?course=alima/);
+  assert.match(home,/Optional third-year continuation after completing both Muballigha years/);
+  assert.match(home,/duration:item\.id==='alima'\?'3rd Year · Continuation'/);
+  assert.match(js,/const alimaContinuation=c\.id==='alima'/);
+  assert.match(js,/view\.continuation\.hidden=!alimaContinuation/);
+  assert.match(js,/view\.apply\.hidden=alimaContinuation/);
+  assert.match(js,/Separate admission fee and Academy approval are required/);
+  assert.match(css,/\.academy-course-apply\[hidden\]\{display:none!important\}/);
 });
