@@ -86,7 +86,7 @@
 .academy-3d-scene .academy-3d-book-mark{font:700 26px 'Amiri',serif;color:#f4d999;line-height:1.1}
 .academy-3d-scene .academy-3d-book-seal{width:116px;height:116px;object-fit:contain;filter:drop-shadow(0 8px 11px #0006)}
 /* Preserve the Academy emblem without the older site's forced blue photo backing. */
-.academy-3d-scene img.academy-3d-book-seal{background:transparent!important;object-fit:contain!important;clip-path:none!important;border-radius:50%!important;}
+.academy-3d-scene img.academy-3d-book-seal{background:transparent!important;object-fit:contain!important;clip-path:none!important;border-radius:50%!important;margin:0!important;max-width:100%}
 .academy-3d-scene .academy-3d-book-name{font:700 13px/1.2 'Cormorant Garamond',Georgia,serif;color:#f9e7b0;letter-spacing:.08em;text-align:center;margin:0 17px}
 .academy-3d-scene .academy-3d-book-sub{font:700 7px 'DM Sans',sans-serif;color:#c1ab71;letter-spacing:.23em}
 .academy-3d-scene[data-book-open="true"] .academy-3d-book-face{transform:translateZ(17px) rotateY(-12deg);box-shadow:inset 0 0 0 4px #12392c,0 8px 40px #06180b9e}
