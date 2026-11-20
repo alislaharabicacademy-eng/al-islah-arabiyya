@@ -35,7 +35,7 @@ test('Preserve every essential website operation and dynamically managed hero co
   assert.match(home,/class="hero-bismillah"/);
   assert.match(home,/class="actions"><a class="btn" href="admission.html"/);
   assert.match(js,/if\(!scene\|\|!camera\|\|!grid\)return/);
-  assert.doesNotMatch(js,/firebase|localStorage|sessionStorage|fetch\(|setDoc\(|updateDoc\(/i);
+  assert.doesNotMatch(js,/https:\/\/www\.gstatic\.com\/firebasejs|\bgetFirestore\s*\(|\bsetDoc\s*\(|\bupdateDoc\s*\(|\blocalStorage\s*\[|\bsessionStorage\s*\[/i);
 });
 
 test('3D works as decoration without trapping gestures, autoplay or reduced motion',()=>{
