@@ -184,6 +184,13 @@
 #homepageCourseGrid .academy-course-summary{
  margin:21px 0 25px;font-size:16px;line-height:1.8;max-width:770px;color:#455a4e;
 }
+#homepageCourseGrid .academy-continuation-note{
+ display:block;margin:0 0 22px;padding:13px 16px;
+ border:1px solid #c9b276;background:#fff6df;color:#29543c;
+ border-left:4px solid #b69346;border-radius:12px;font-size:13px;line-height:1.68;
+}
+#homepageCourseGrid .academy-continuation-note[hidden],
+#homepageCourseGrid .academy-course-apply[hidden]{display:none!important}
 #homepageCourseGrid .academy-course-links{
  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;
 }
