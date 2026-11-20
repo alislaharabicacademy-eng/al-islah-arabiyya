@@ -1,0 +1,32 @@
+name: Academy 3D Homepage Safety
+on:
+  push:
+    paths:
+      - 'index.html'
+      - 'academy-3d-experience.css'
+      - 'academy-3d-experience.js'
+      - 'tests/academy-3d-homepage.test.mjs'
+      - '.github/workflows/academy-3d-homepage.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'academy-3d-experience.css'
+      - 'academy-3d-experience.js'
+      - 'tests/academy-3d-homepage.test.mjs'
+      - '.github/workflows/academy-3d-homepage.yml'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out Academy homepage
+        uses: actions/checkout@v4
+      - name: Prepare Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify animation syntax
+        run: node --check academy-3d-experience.js
+      - name: Verify homepage accessibility and existing integrations
+        run: node --test tests/academy-3d-homepage.test.mjs
