@@ -1,6 +1,6 @@
 /* Academy featured courses — reference-inspired circular showcase.
  * Swipes and arrow buttons switch the active course; the information card
- * updates with the central 3D book. Firestore's published two-course feed
+ * updates with the central 3D book. Firestore's featured three-course feed
  * remains the only source of course titles and descriptions.
  */
 (()=>{
@@ -52,7 +52,7 @@
    shell.innerHTML=`
      <div class="academy-collection-heading">
        <span>✦ THE ACADEMY COLLECTION</span>
-       <span class="academy-collection-counter" aria-live="polite">01 / 02</span>
+       <span class="academy-collection-counter" aria-live="polite">01 / 03</span>
      </div>
      <div class="academy-collection-stage" tabindex="0" role="group"
           aria-roledescription="carousel" aria-label="Featured course carousel; swipe or use arrows">
@@ -97,6 +97,7 @@
        <h3 class="academy-course-title"></h3>
        <p class="academy-course-tamil"></p>
        <p class="academy-course-summary"></p>
+       <p class="academy-continuation-note" hidden>✦ Alima is an optional 3rd-year continuation for students who completed Muballigha Years 1 &amp; 2. Separate admission fee and Academy approval are required.</p>
        <div class="academy-course-links">
          <a class="academy-more-details" href="all-courses.html">More Details ↗</a>
          <a class="academy-course-apply" href="admission.html">Apply Now →</a>
@@ -116,6 +117,7 @@
      tamil:shell.querySelector('.academy-course-tamil'),
      duration:shell.querySelector('.academy-course-duration'),
      summary:shell.querySelector('.academy-course-summary'),
+     continuation:shell.querySelector('.academy-continuation-note'),
      details:shell.querySelector('.academy-more-details'),
      apply:shell.querySelector('.academy-course-apply'),
      left:shell.querySelector('.academy-side-left .academy-side-name'),
@@ -139,6 +141,11 @@
    view.tamil.hidden=!c.tamil;
    view.duration.textContent=c.duration||'Online learning';
    view.summary.textContent=c.summary;
+   // Alima is an existing-student continuation; never imply that new
+   // applicants can use the direct admission form for this course.
+   const alimaContinuation=c.id==='alima';
+   view.continuation.hidden=!alimaContinuation;
+   view.apply.hidden=alimaContinuation;
    view.details.setAttribute('href',c.detailsHref);
    view.details.setAttribute('aria-label','More details about '+c.name);
    view.apply.setAttribute('href',c.applyHref);
