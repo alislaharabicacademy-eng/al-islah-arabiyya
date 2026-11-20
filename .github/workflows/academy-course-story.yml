@@ -1,0 +1,32 @@
+name: Academy Featured Course Story
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'academy-course-story.css'
+      - 'academy-course-story.js'
+      - 'tests/academy-course-story.test.mjs'
+      - '.github/workflows/academy-course-story.yml'
+  push:
+    paths:
+      - 'index.html'
+      - 'academy-course-story.css'
+      - 'academy-course-story.js'
+      - 'tests/academy-course-story.test.mjs'
+      - '.github/workflows/academy-course-story.yml'
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out Academy source
+        uses: actions/checkout@v4
+      - name: Prepare Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify scroll story JavaScript syntax
+        run: node --check academy-course-story.js
+      - name: Verify course reveal, existing navigation and safety
+        run: node --test tests/academy-course-story.test.mjs
