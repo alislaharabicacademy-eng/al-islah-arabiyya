@@ -104,6 +104,7 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   await assertFails(getDocs(collection(master,'grandLaunch')));
   await assertFails(setDoc(doc(admin,control),{...arm,updatedBy:'normal-uid'}));
   await assertFails(setDoc(doc(principal,control),{...arm,updatedBy:'principal-uid'}));
+  await assertFails(setDoc(doc(ceremonyInvite,control),{...arm,updatedBy:'ceremony-invite-uid'}));
   await assertFails(setDoc(doc(outsider,control),{...arm,updatedBy:'outsider-uid'}));
   await assertSucceeds(setDoc(doc(master,control),arm));
   await assertFails(setDoc(doc(master,control),arm));
@@ -131,7 +132,10 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   const record={kind:'official',phase:'launched',dateLocal:'2026-11-21',
     startedAt:firstCountdown,launchedAt:serverTimestamp(),launchedBy:'principal-uid'};
   assert.equal((await getDoc(doc(master,official))).exists(),false,'Staged ribbon cut must not create the permanent record');
-  await assertFails(setDoc(doc(admin,official),{...record,launchedBy:'normal-uid'}));
+  // Assigned Academy account IS allowed to confirm, but only with a
+  // valid 10-second countdown and exact immutable record schema.
+  // Do not commit the real record here: reset-after-cut is tested below.
+  await assertFails(setDoc(doc(admin,official),{...record,launchedBy:'normal-uid',startedAt:null}));
   await assertFails(setDoc(doc(outsider,official),{...record,launchedBy:'outsider-uid'}));
   await assertFails(setDoc(doc(unverified,official),{...record,launchedBy:'unverified-uid'}));
   // Reset is explicitly permitted AFTER the visible ribbon has been cut.
