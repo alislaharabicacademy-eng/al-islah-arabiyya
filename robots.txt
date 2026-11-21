@@ -1,0 +1,6 @@
+# Madrasa Al Islahul Arabiya public site
+# At this GitHub Pages project URL, crawlers normally consult the host root's
+# /robots.txt, not this subdirectory file. Submit sitemap.xml in Search Console.
+User-agent: *
+Allow: /
+Sitemap: https://alislaharabicacademy-eng.github.io/al-islah-arabiyya/sitemap.xml
