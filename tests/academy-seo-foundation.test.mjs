@@ -37,7 +37,7 @@ for(const path of publicPages){
    assert.ok(!/name="robots" content="noindex/i.test(h));
  });
 }
-test('Homepage's EducationalOrganization and actual courses are valid JSON-LD',()=>{
+test("Homepage EducationalOrganization and courses are valid JSON-LD",()=>{
  const h=head('index.html');
  const hit=h.match(/<script type="application\/ld\+json">([\s\S]+?)<\/script>/);
  assert.ok(hit,'JSON-LD must be in the static HTML head for Google');
