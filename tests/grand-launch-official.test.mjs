@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {initializeTestEnvironment,assertSucceeds,assertFails} from '@firebase/rules-unit-testing';
-import {doc,getDoc,getDocs,collection,setDoc,updateDoc,deleteDoc,serverTimestamp} from 'firebase/firestore';
+import {doc,getDoc,getDocs,collection,setDoc,updateDoc,deleteDoc,writeBatch,serverTimestamp} from 'firebase/firestore';
 
 const rules=readFileSync(new URL('../firestore.rules',import.meta.url),'utf8');
 const ceremony=readFileSync(new URL('../grand-launch.js',import.meta.url),'utf8');
@@ -30,6 +30,8 @@ test('Production date is locked to 21 November 2026 Asia/Kolkata, not system loc
   assert.match(html,/id="successExplanation"/);
   assert.match(ceremony,/final record can NEVER be reset/);
   assert.match(ceremony,/async function cancelOfficialCountdown\(\)/);
+  assert.match(ceremony,/writeBatch\(db\)/);
+  assert.match(ceremony,/grandLaunchPublic','opening'/);
 });
 
 // In emulator-only tests, override the date helper to simulate opening day.
@@ -57,12 +59,14 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   const outsider=env.authenticatedContext('outsider-uid',{
     email:'another@example.com',email_verified:true
   }).firestore();
+  const guest=env.unauthenticatedContext().firestore();
   const unverified=env.authenticatedContext('unverified-uid',{
     email:'principal@example.com',email_verified:false
   }).firestore();
   const control='grandLaunch/officialControl';
   const official='grandLaunch/official';
   const trial='grandLaunch/trial';
+  const publicOpening='grandLaunchPublic/opening';
   const config='grandLaunch/config';
   const arm={kind:'officialControl',state:'armed',startedAt:null,startedBy:null,
     updatedAt:serverTimestamp(),updatedBy:'master-uid'};
@@ -75,6 +79,8 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
     principalEmail:'principal@example.com',updatedAt:serverTimestamp(),updatedBy:'master-uid'
   }));
   await assertFails(getDoc(doc(outsider,control)));
+  await assertFails(getDoc(doc(guest,publicOpening))); // before final opening no public welcome
+  await assertFails(getDoc(doc(guest,official))); // private immutable launch record is never public
   await assertFails(getDocs(collection(master,'grandLaunch')));
   await assertFails(setDoc(doc(admin,control),{...arm,updatedBy:'normal-uid'}));
   await assertFails(setDoc(doc(principal,control),{...arm,updatedBy:'principal-uid'}));
@@ -97,6 +103,10 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   await new Promise(resolve=>setTimeout(resolve,10450));
   await assertSucceeds(updateDoc(doc(principal,trial),stageCut));
   await assertFails(getDoc(doc(outsider,trial)));
+  await assertFails(setDoc(doc(principal,publicOpening),{
+    phase:'launched',dateLocal:'2026-11-21',launchedAt:serverTimestamp()
+  })); // cannot show public welcome after a staged scissors preview
+  await assertFails(getDoc(doc(guest,publicOpening)));
   await assertFails(setDoc(doc(principal,official),{state:'launched'})); // staged ≠ permanent
   const record={kind:'official',phase:'launched',dateLocal:'2026-11-21',
     startedAt:firstCountdown,launchedAt:serverTimestamp(),launchedBy:'principal-uid'};
@@ -121,7 +131,21 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   const finalRecord={...record,startedAt:finalCountdown};
   await assertFails(setDoc(doc(principal,official),finalRecord));
   await new Promise(resolve=>setTimeout(resolve,10450));
-  await assertSucceeds(setDoc(doc(principal,official),finalRecord));
+  const launchTime=serverTimestamp();
+  const batch=writeBatch(principal);
+  batch.set(doc(principal,official),{...finalRecord,launchedAt:launchTime});
+  batch.set(doc(principal,publicOpening),{
+    phase:'launched',dateLocal:'2026-11-21',launchedAt:launchTime
+  });
+  await assertSucceeds(batch.commit());
+  // After and ONLY after final confirmation, guests see the safe public signal.
+  const signal=await assertSucceeds(getDoc(doc(guest,publicOpening)));
+  assert.equal(signal.data().phase,'launched');
+  assert.deepEqual(Object.keys(signal.data()).sort(),['dateLocal','launchedAt','phase']);
+  await assertFails(getDoc(doc(guest,official)));
+  await assertFails(getDocs(collection(guest,'grandLaunchPublic')));
+  await assertFails(updateDoc(doc(principal,publicOpening),{phase:'pending'}));
+  await assertFails(deleteDoc(doc(master,publicOpening)));
   const published=await assertSucceeds(getDoc(doc(master,official)));
   assert.equal(published.data().kind,'official');
   assert.equal(published.data().launchedBy,'principal-uid');
