@@ -1,0 +1,32 @@
+name: Live Public Course Website Smoke Check
+on:
+  push:
+    branches:
+      - qa/live-smoke-course-details-20261121
+    paths:
+      - 'tests/live-course-pages-smoke.mjs'
+      - '.github/workflows/live-course-website-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-public-site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install minimal browser test dependency
+        run: npm install --no-save --ignore-scripts playwright@1.56.1
+      - name: Test actual deployed GitHub Pages with mobile Chrome (no sign-in, no writes)
+        run: node tests/live-course-pages-smoke.mjs
+        env:
+          CHROME: /usr/bin/google-chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-course-website-mobile-screenshots
+          path: live-course-smoke-proof/
+          retention-days: 7
