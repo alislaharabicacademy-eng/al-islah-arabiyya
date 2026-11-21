@@ -160,49 +160,81 @@ function officialIndiaDate(){
 function officialTimeString(ts){
   return ts?.toDate?.().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})||'21 November 2026';
 }
+// The irreversible grandLaunch/official document is created only at the
+// Principal's explicit FINAL CONFIRMATION, never by the visual scissors tap.
+// A cut is staged in the existing resettable trial document, so no new
+// Firestore permissions or rule deployment is needed for this workflow.
+function isStagedOfficialCut(){
+  if(officialControl?.state!=='countdown'||trial?.phase!=='cut')return false;
+  const began=officialControl.startedAt?.toMillis?.();
+  const trialBegan=trial.startedAt?.toMillis?.();
+  const cutAt=trial.cutAt?.toMillis?.();
+  return Number.isFinite(began)&&Number.isFinite(trialBegan)&&Number.isFinite(cutAt)
+    && trialBegan<=began && began-trialBegan<30000 && cutAt>=began+COUNTDOWN_MS;
+}
 function renderOfficial(){
-  if(!authorized||!officialControlLoaded||!officialRecordLoaded)return;
+  if(!authorized||!officialControlLoaded||!officialRecordLoaded||!officialTrialLoaded)return;
   const launched=officialRecord?.phase==='launched';
+  const state=officialControl?.state||'not-prepared';
+  const staged=isStagedOfficialCut()&&!launched;
+  show('officialFinalize',role==='principal'&&staged);
+  show('officialFinalizeHelp',role==='principal'&&staged);
   if(role==='host'){
-    const state=officialControl?.state||'not-prepared';
     $('officialStatus').textContent=launched
-      ?'✅ Officially inaugurated: '+officialTimeString(officialRecord.launchedAt)+' (India time). Permanent record; no reset.'
+      ?'✅ Officially inaugurated: '+officialTimeString(officialRecord.launchedAt)+' (India time). Final record locked permanently.'
+      :staged
+      ?'🎀 The ribbon was cut and the full website reveal can be shown. NOT YET FINAL: Reset and repeat, or ask the Principal to CONFIRM FINAL OPENING.'
       :state==='countdown'
-      ?'⏳ Final countdown started. Waiting for the Principal to cut the ribbon.'
+      ?'⏳ Official countdown running. You can reset it now or even after the ribbon is cut (until final confirmation).'
       :state==='armed'
-      ?'🔒 Ceremony armed. Start is permitted ONLY on Saturday 21 November 2026 (India time).'
-      :'🔐 Not yet armed. A verified Master Admin can prepare the ceremony now without launching it.';
+      ?'🔒 Ceremony armed. The countdown may start on Saturday 21 November 2026 (India time).'
+      :'🔐 Not yet armed. The Master Admin can prepare the ceremony without launching.';
     const canManage=masterVerified&&!launched;
     show('officialArm',canManage&&!officialControl);
     show('officialStart',canManage&&state==='armed');
     show('officialCancel',canManage&&state==='countdown');
     $('officialStart').disabled=officialIndiaDate()!=='2026-11-21';
     $('officialPhrase').closest('label').hidden=!canManage||!!officialControl;
+    // The full-screen reveal must retain a Master-only reset button while
+    // pending final confirmation, so accidental taps never lock the launch.
+    show('previewReset',canManage&&staged);
   }
   if(launched){
+    $('previewLaunchHeader').textContent='🎉 OFFICIALLY INAUGURATED · 21 NOVEMBER 2026';
+    $('previewLaunchFooter').textContent='Official inauguration permanently confirmed · 21 November 2026';
+    $('successExplanation').textContent='The Principal has confirmed the official launch. The final record is permanent.';
+    show('previewReset',false);
     if(!cutPlayed){
-      if(officialSeenCountdown){
+      if(officialSeenCountdown||staged){
+        experiencedCountdown=true;
         playCutAnimation();
       }else{
         cutPlayed=true;show('ribbonArea',false);show('countdown',false);show('success',true);
-        message('✅ Website officially inaugurated on '+officialTimeString(officialRecord.launchedAt)+' (India time). This cannot be reset.');
       }
     }
+    message('✅ Officially inaugurated on '+officialTimeString(officialRecord.launchedAt)+' (India time). Final confirmation is permanent.');
     previousPhase='launched';
     return;
   }
-  const phase=officialControl?.state||'not-prepared';
+  const phase=state;
   if(phase==='not-prepared'||phase==='armed'){
     if(previousPhase!==phase)resetVisual();
     message(phase==='armed'
-      ?(role==='principal'?'Official opening is prepared. Wait for the Master Admin to start the countdown on 21 November.':'Ready for the final event. Master Admin starts the countdown on 21 November.')
-      :(role==='principal'?'Official ceremony is not armed. The Master Admin prepares it first.':'The official ceremony has not been armed yet. No launch has happened.'));
+      ?(role==='principal'?'Official ceremony is armed. Wait for the Master Admin to start. The ribbon cut may be reset until FINAL CONFIRM.':'Ready to start. Countdown and ribbon cutting may be reset until the Principal finalises.')
+      :(role==='principal'?'Official ceremony is not armed yet.':'The official ceremony has not been armed.'));
   }else if(phase==='countdown'){
     officialSeenCountdown=true;experiencedCountdown=true;
+    if(staged){
+      $('previewLaunchHeader').textContent='🎀 RIBBON CUT PREVIEW · NOT YET FINAL';
+      $('previewLaunchFooter').textContent='Reset permitted · No permanent inauguration record until Principal confirms';
+      $('successExplanation').textContent='Preview completed. The Principal may confirm the one-time opening, or the Master Admin can reset and repeat.';
+      if(!cutPlayed)playCutAnimation();
+      previousPhase='staged-cut';
+      return;
+    }
     if(previousPhase!=='countdown'){
-      cutPlayed=false;cutPending=false;clearTimeout(redirectTimer);clearTimeout(successTimer);
-      show('success',false);$('ribbonWrap').classList.remove('is-cut');
-      $('confetti').replaceChildren();
+      resetVisual();
+      officialSeenCountdown=true;experiencedCountdown=true;
     }
     const start=officialControl.startedAt?.toMillis?.();
     if(!start){
@@ -223,11 +255,11 @@ function renderOfficial(){
         show('countdown',false);show('ribbonArea',true);
         show('scissorsTrigger',true);
         show('cutRibbon',role==='principal');
-        $('cutRibbon').textContent='✂️ CUT THE OFFICIAL RIBBON · ONE TIME';
+        $('cutRibbon').textContent='✂️ CUT THE RIBBON · RESETTABLE UNTIL FINAL CONFIRM';
         $('cutRibbon').disabled=cutPending;
         $('scissorsTrigger').disabled=role!=='principal'||cutPending;
         show('waitingForPrincipal',role==='host');
-        message(role==='principal'?'Principal: this is the REAL one-time opening. Tap scissors only when you are ready.':'Countdown complete. Waiting for Principal to cut the OFFICIAL ribbon live.');
+        message(role==='principal'?'Tap scissors to show the full ribbon-cut reveal. Then choose FINAL CONFIRM to lock, or ask the Master Admin to reset.':'Countdown complete. Waiting for the Principal to show the ribbon-cut reveal.');
       }
     }
   }else message('Unknown official status. Contact the Master Admin.',true);
