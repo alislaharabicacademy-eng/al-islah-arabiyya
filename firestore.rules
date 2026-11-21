@@ -33,13 +33,24 @@ service cloud.firestore {
       return isNormalAdmin() || isMasterAdmin() || hasPrivateAdminGrant();
     }
 
-    // Authorised Principal can cut a rehearsal ribbon, but cannot manage academy data.
+    // Ceremony-only Google access: the configured Principal and two invited
+    // inauguration accounts may cut the ribbon / confirm final opening.
+    // NO extra Admin or Master Admin permission is granted by this helper.
     function isLaunchPrincipal() {
       return request.auth != null
         && request.auth.token.email_verified == true
         && request.auth.token.email is string
-        && exists(/databases/$(database)/documents/grandLaunch/config)
-        && get(/databases/$(database)/documents/grandLaunch/config).data.principalEmail == request.auth.token.email;
+        && (
+          request.auth.token.email in [
+            'wafahikmiya@gmail.com',
+            'alislaharabicacademy@gmail.com'
+          ]
+          || (
+            exists(/databases/$(database)/documents/grandLaunch/config)
+            && get(/databases/$(database)/documents/grandLaunch/config).data.principalEmail
+              == request.auth.token.email
+          )
+        );
     }
 
     // Saturday 21 November 2026 in Asia/Kolkata (UTC+05:30).
@@ -238,8 +249,12 @@ service cloud.firestore {
 
     // Launch practice is separate from any one-time official launch record.
     match /grandLaunch/{documentId} {
-      allow get: if documentId in ['config', 'trial', 'officialControl', 'official']
-        && (isAdmin() || isLaunchPrincipal());
+      // Read permission to this intentionally absent document is a
+      // server-side role check for Principal Login; no private emails in JS.
+      allow get: if (
+          documentId in ['config', 'trial', 'officialControl', 'official']
+          && (isAdmin() || isLaunchPrincipal())
+        ) || (documentId == 'principalAccessProbe' && isLaunchPrincipal());
       allow list, delete: if false;
 
       allow create, update: if documentId == 'config' && isAdmin()
