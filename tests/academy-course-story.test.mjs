@@ -46,7 +46,7 @@ test('Reference design: single central 3D book, circular orbit, no side previews
 
 test('Next course appears as a draggable miniature book on the upper-right circular rail',()=>{
   assert.match(js,/class="academy-orbit-preview"/);
-  assert.match(js,/class="academy-preview-course"/);
+  assert.match(js,/class="academy-book-course academy-preview-course"/);
   assert.match(js,/class="academy-preview-caption"/);
   assert.match(js,/view\.previewTitle\.textContent=next\.name/);
   assert.match(js,/view\.previewCaption\.textContent=next\.name/);
