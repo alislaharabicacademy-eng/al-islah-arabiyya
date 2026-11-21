@@ -1,0 +1,48 @@
+name: Academy GA4 Privacy & Public Tracking
+on:
+  pull_request:
+    paths:
+      - 'academy-ga4-public.js'
+      - 'academy-ga4-public.css'
+      - 'index.html'
+      - 'all-courses.html'
+      - 'courses.html'
+      - 'admission.html'
+      - 'tests/academy-ga4-public*'
+      - '.github/workflows/academy-ga4-privacy.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'academy-ga4-public.js'
+      - 'academy-ga4-public.css'
+      - 'index.html'
+      - 'all-courses.html'
+      - 'courses.html'
+      - 'admission.html'
+      - 'tests/academy-ga4-public*'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consent-and-public-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Syntax and privacy regression
+        run: |
+          node --check academy-ga4-public.js
+          node --test tests/academy-ga4-public.test.mjs
+      - name: Prepare Chrome browser controller
+        run: npm install --no-save --ignore-scripts playwright@1.56.1
+      - name: Start Academy website locally
+        run: |
+          python3 -m http.server 8770 >/tmp/academy-ga4-site.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:8770/all-courses.html >/dev/null
+      - name: Validate Google tag only loads after visitor opt-in, with mobile Chrome
+        env:
+          CHROME: /usr/bin/google-chrome
+        run: node tests/academy-ga4-public-browser.mjs
