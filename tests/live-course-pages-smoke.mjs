@@ -103,6 +103,8 @@ try{
   }));
   check('Admission page opens publicly',/admission/i.test(data.heading||''),JSON.stringify(data));
   check('Admission course options load',data.courseOptions.length>1,JSON.stringify(data.courseOptions));
+  check('Public new Admission excludes Muballiga Year 2',!data.courseOptions.some(x=>/muball/i.test(x)&&/\b(?:2nd|second|year\s*2)\b/i.test(x)),JSON.stringify(data.courseOptions));
+  check('Public new Admission includes Year 1 Muballigha',data.courseOptions.some(x=>/Muballigha/i.test(x)&&/1st Year/.test(x)));
   await page.screenshot({path:'live-course-smoke-proof/admission-mobile.png',fullPage:true,animations:'disabled'});
  }catch(e){report('FAIL','Admission browser render',e.message.slice(0,260))}
  if(scriptErrors.length)report('WARN','Browser runtime JavaScript errors',JSON.stringify(scriptErrors.slice(0,8)));
