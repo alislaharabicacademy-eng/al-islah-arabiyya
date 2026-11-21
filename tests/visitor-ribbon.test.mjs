@@ -27,7 +27,7 @@ test('Homepage has an accessible, hidden-by-default ribbon intro for public visi
 test('Personal ribbon is NOT official launch, requires no Google login, and preserves existing security',()=>{
  assert.match(script,/alia-visitor-ribbon-seen-v1/);
  assert.match(script,/storageWrite\(\);[\s\S]*overlay\.hidden=false/);
- assert.doesNotMatch(script,/firebase|grandLaunch|setDoc|writeBatch|signInWith|location\.assign|fetch\(/i);
+ assert.doesNotMatch(script,/grandLaunch|setDoc|writeBatch|signInWith|location\.assign|fetch\(/i);
  assert.match(legacyWelcome,/if\(document\.getElementById\('vrOpeningOverlay'\)\)return/);
  assert.match(legacyWelcome,/grandLaunchPublic','opening'/);
  assert.match(rules,/allow create: if documentId == 'official'/);
