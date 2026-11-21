@@ -293,3 +293,61 @@
   transform:none!important;opacity:1!important;
  }
 }
+
+
+/* Single-book editorial collection. No neighboring course previews:
+   the outgoing book is dragged fully out; the next falls from above. */
+#homepageCourseGrid .academy-hero-course{
+ --drag-x:0px;
+ transform:translate(calc(-50% + var(--drag-x)),-50%);
+ transition:transform .24s cubic-bezier(.22,.7,.24,1);
+ cursor:grab;
+}
+#homepageCourseGrid .academy-is-dragging .academy-hero-course{
+ transition:none;
+ cursor:grabbing;
+}
+#homepageCourseGrid .academy-is-dragging .academy-main-book{
+ animation:none;
+}
+#homepageCourseGrid .academy-book-leaving-left,
+#homepageCourseGrid .academy-book-leaving-right,
+#homepageCourseGrid .academy-book-entering{
+ transition:none;
+ will-change:transform,opacity;
+}
+#homepageCourseGrid .academy-book-leaving-left{
+ animation:academyBookLeaveLeft .33s cubic-bezier(.5,.04,.95,.6) both;
+}
+#homepageCourseGrid .academy-book-leaving-right{
+ animation:academyBookLeaveRight .33s cubic-bezier(.5,.04,.95,.6) both;
+}
+#homepageCourseGrid .academy-book-entering{
+ animation:academyBookDropIn .74s cubic-bezier(.16,.78,.22,1) both;
+}
+#homepageCourseGrid .academy-book-leaving-left .academy-main-book,
+#homepageCourseGrid .academy-book-leaving-right .academy-main-book,
+#homepageCourseGrid .academy-book-entering .academy-main-book{
+ animation:none;
+}
+@keyframes academyBookLeaveLeft{
+ from{opacity:1;transform:translate(calc(-50% + var(--drag-start,0px)),-50%)}
+ to{opacity:0;transform:translate(calc(-50% - 110vw),-50%)}
+}
+@keyframes academyBookLeaveRight{
+ from{opacity:1;transform:translate(calc(-50% + var(--drag-start,0px)),-50%)}
+ to{opacity:0;transform:translate(calc(-50% + 110vw),-50%)}
+}
+@keyframes academyBookDropIn{
+ 0%{opacity:0;transform:translate(-50%,calc(-50% - 330px)) scale(.91)}
+ 72%{opacity:1;transform:translate(-50%,calc(-50% + 8px)) scale(1.018)}
+ 100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+@media(prefers-reduced-motion:reduce){
+ #homepageCourseGrid .academy-book-entering,
+ #homepageCourseGrid .academy-book-leaving-left,
+ #homepageCourseGrid .academy-book-leaving-right{
+  animation:none!important;transform:translate(-50%,-50%)!important;
+  opacity:1!important;
+ }
+}

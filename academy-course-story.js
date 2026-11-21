@@ -12,7 +12,10 @@
  let currentId='';
  let records=[];
  let view=null;
- let touchStart=null;
+ let dragStart=null;
+ let exitTimer=0;
+ let settleTimer=0;
+ let transitioning=false;
 
  function courseSummary(raw){
    const text=String(raw||'').replace(/\s+/g,' ').trim();
@@ -61,10 +64,6 @@
        <div class="academy-collection-orbit academy-collection-orbit-front" aria-hidden="true"></div>
        <div class="academy-collection-star star-one" aria-hidden="true">✧</div>
        <div class="academy-collection-star star-two" aria-hidden="true">✦</div>
-       <div class="academy-side-course academy-side-left" aria-hidden="true">
-         <div class="academy-side-book"><span>✦</span></div>
-         <span class="academy-side-name"></span>
-       </div>
        <div class="academy-hero-course" aria-hidden="true">
          <div class="academy-main-book">
            <div class="academy-main-book-spine"></div>
@@ -79,13 +78,9 @@
          </div>
          <div class="academy-book-shadow"></div>
        </div>
-       <div class="academy-side-course academy-side-right" aria-hidden="true">
-         <div class="academy-side-book"><span>✦</span></div>
-         <span class="academy-side-name"></span>
-       </div>
        <div class="academy-collection-controls">
          <button type="button" class="academy-carousel-prev" aria-label="Previous course">←</button>
-         <span class="academy-swipe-text">SWIPE TO EXPLORE</span>
+         <span class="academy-swipe-text">DRAG TO EXPLORE</span>
          <button type="button" class="academy-carousel-next" aria-label="Next course">→</button>
        </div>
      </div>
@@ -120,8 +115,6 @@
      continuation:shell.querySelector('.academy-continuation-note'),
      details:shell.querySelector('.academy-more-details'),
      apply:shell.querySelector('.academy-course-apply'),
-     left:shell.querySelector('.academy-side-left .academy-side-name'),
-     right:shell.querySelector('.academy-side-right .academy-side-name'),
      dots:shell.querySelector('.academy-collection-dots')
    };
  }
@@ -150,10 +143,6 @@
    view.details.setAttribute('aria-label','More details about '+c.name);
    view.apply.setAttribute('href',c.applyHref);
    view.apply.setAttribute('aria-label','Apply for '+c.name);
-   const previous=records[(idx-1+len)%len];
-   const next=records[(idx+1)%len];
-   view.left.textContent=previous?.name||'';
-   view.right.textContent=next?.name||'';
    view.dots.replaceChildren();
    for(let i=0;i<len;i++){
      const dot=document.createElement('button');
@@ -161,21 +150,72 @@
      dot.className='academy-collection-dot';
      dot.setAttribute('aria-label','Show '+records[i].name);
      dot.setAttribute('aria-pressed',String(i===idx));
-     dot.addEventListener('click',()=>showCourse(i));
+     dot.addEventListener('click',()=>navigate(i));
      view.dots.append(dot);
    }
    if(animate&&!reduced.matches){
-     for(const element of [view.hero,view.info]){
-       element.classList.remove('academy-course-changed');
-       void element.offsetWidth;
-       element.classList.add('academy-course-changed');
-     }
+     view.info.classList.remove('academy-course-changed');
+     void view.info.offsetWidth;
+     view.info.classList.add('academy-course-changed');
    }
+ }
+
+ // Clear in-progress gestures and timers when Firebase rebuilds the showcase.
+ function stopAnimation(){
+   window.clearTimeout(exitTimer);
+   window.clearTimeout(settleTimer);
+   transitioning=false;
+   dragStart=null;
+   if(!view)return;
+   view.stage.classList.remove('academy-is-dragging');
+   view.hero.classList.remove('academy-book-entering','academy-book-leaving-left','academy-book-leaving-right');
+   view.hero.style.removeProperty('--drag-x');
+   view.hero.style.removeProperty('--drag-start');
+ }
+
+ function resetDrag(){
+   if(!view)return;
+   view.stage.classList.remove('academy-is-dragging');
+   view.hero.style.removeProperty('--drag-x');
+ }
+
+ // One visible book only: dragged book exits entirely off-stage; the new
+ // course drops in from above and settles at exactly the same centre point.
+ function navigate(index,direction=0,dragOffset=0){
+   if(!records.length||!view||transitioning)return;
+   const len=records.length;
+   const idx=(index+len)%len;
+   const from=records.findIndex(c=>c.id===currentId);
+   if(idx===from){resetDrag();return}
+   if(reduced.matches){resetDrag();showCourse(idx,false);return}
+
+   transitioning=true;
+   const oldView=view;
+   const outgoing=view.hero;
+   const toRight=direction<0||(direction===0&&idx<from);
+   outgoing.style.setProperty('--drag-start',Math.round(dragOffset)+'px');
+   outgoing.style.removeProperty('--drag-x');
+   view.stage.classList.remove('academy-is-dragging');
+   outgoing.classList.add(toRight?'academy-book-leaving-right':'academy-book-leaving-left');
+
+   exitTimer=window.setTimeout(()=>{
+     if(view!==oldView){transitioning=false;return}
+     outgoing.classList.remove('academy-book-leaving-left','academy-book-leaving-right');
+     outgoing.style.removeProperty('--drag-start');
+     showCourse(idx,true);
+     outgoing.classList.add('academy-book-entering');
+     settleTimer=window.setTimeout(()=>{
+       if(view===oldView){
+         outgoing.classList.remove('academy-book-entering');
+         transitioning=false;
+       }
+     },760);
+   },330);
  }
 
  function move(delta){
    const index=records.findIndex(c=>c.id===currentId);
-   showCourse((index<0?0:index)+delta);
+   navigate((index<0?0:index)+delta,delta);
  }
 
  function connect(){
@@ -186,19 +226,44 @@
      if(event.key==='ArrowRight'){event.preventDefault();move(1)}
      if(event.key==='ArrowLeft'){event.preventDefault();move(-1)}
    });
-   view.stage.addEventListener('touchstart',event=>{
-     if(event.touches.length!==1){touchStart=null;return}
-     touchStart={x:event.touches[0].clientX,y:event.touches[0].clientY};
-   },{passive:true});
-   view.stage.addEventListener('touchend',event=>{
-     if(!touchStart||!event.changedTouches.length)return;
-     const dx=event.changedTouches[0].clientX-touchStart.x;
-     const dy=event.changedTouches[0].clientY-touchStart.y;
-     touchStart=null;
-     // Horizontal swipe switches courses; vertical touchscroll stays native.
-     if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.35)move(dx<0?1:-1);
-   },{passive:true});
-   view.stage.addEventListener('touchcancel',()=>{touchStart=null},{passive:true});
+
+   // Pointer events provide real-time horizontal dragging on phones,
+   // tablets, and desktops. Vertical page scrolling remains native.
+   view.stage.addEventListener('pointerdown',event=>{
+     if(transitioning||event.button!==0||event.target.closest('button,a'))return;
+     dragStart={id:event.pointerId,x:event.clientX,y:event.clientY,dx:0,active:false};
+   });
+   view.stage.addEventListener('pointermove',event=>{
+     if(!dragStart||event.pointerId!==dragStart.id||transitioning)return;
+     const dx=event.clientX-dragStart.x;
+     const dy=event.clientY-dragStart.y;
+     if(!dragStart.active){
+       if(Math.abs(dy)>12&&Math.abs(dy)>Math.abs(dx)){dragStart=null;return}
+       if(Math.abs(dx)<10||Math.abs(dx)<Math.abs(dy)*1.15)return;
+       dragStart.active=true;
+       view.stage.classList.add('academy-is-dragging');
+       try{view.stage.setPointerCapture(event.pointerId)}catch(_){}
+     }
+     event.preventDefault();
+     const limit=Math.max(110,view.stage.clientWidth*.85);
+     dragStart.dx=Math.max(-limit,Math.min(limit,dx));
+     view.hero.style.setProperty('--drag-x',Math.round(dragStart.dx)+'px');
+   });
+   view.stage.addEventListener('pointerup',event=>{
+     if(!dragStart||event.pointerId!==dragStart.id)return;
+     const last=dragStart;
+     dragStart=null;
+     const threshold=Math.min(70,Math.max(46,view.stage.clientWidth*.16));
+     if(last.active&&Math.abs(last.dx)>=threshold){
+       const direction=last.dx<0?1:-1;
+       const index=records.findIndex(c=>c.id===currentId);
+       navigate((index<0?0:index)+direction,direction,last.dx);
+     }else resetDrag();
+   });
+   view.stage.addEventListener('pointercancel',()=>{dragStart=null;resetDrag()});
+   view.stage.addEventListener('lostpointercapture',()=>{
+     if(dragStart){dragStart=null;resetDrag()}
+   });
  }
 
  function refreshFromPublishedCards(){
@@ -207,11 +272,23 @@
    const cards=[...grid.children].filter(el=>el.matches('article.course-card'));
    if(!cards.length)return;
    const previousId=currentId;
+   stopAnimation();
    records=cards.map(readCourse);
    view=createShowcase();
    connect();
    const selected=records.findIndex(c=>c.id===previousId);
    showCourse(selected<0?0:selected,false);
+   if(!reduced.matches){
+     transitioning=true;
+     view.hero.classList.add('academy-book-entering');
+     const initialView=view;
+     settleTimer=window.setTimeout(()=>{
+       if(view===initialView){
+         view.hero.classList.remove('academy-book-entering');
+         transitioning=false;
+       }
+     },760);
+   }
  }
 
  refreshFromPublishedCards();

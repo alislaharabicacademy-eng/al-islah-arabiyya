@@ -23,13 +23,18 @@ test('Three featured courses remain Firestore-driven: Muallama, Muballigha and A
   assert.match(js,/const previousId=currentId/);
 });
 
-test('Reference design: large central 3D book, circular orbit, side previews and counter',()=>{
+test('Reference design: single central 3D book, circular orbit, no side previews and counter',()=>{
   assert.match(js,/class="academy-collection-orbit academy-collection-orbit-back"/);
   assert.match(js,/class="academy-collection-orbit academy-collection-orbit-front"/);
   assert.match(js,/class="academy-hero-course"/);
   assert.match(js,/class="academy-main-book"/);
-  assert.match(js,/class="academy-side-course academy-side-left"/);
-  assert.match(js,/class="academy-side-course academy-side-right"/);
+  assert.doesNotMatch(js,/class="academy-side-course academy-side-left"/);
+  assert.doesNotMatch(js,/class="academy-side-course academy-side-right"/);
+  assert.doesNotMatch(js,/view\.left\.textContent|view\.right\.textContent/);
+  assert.match(js,/academy-book-entering/);
+  assert.match(css,/@keyframes academyBookDropIn/);
+  assert.match(css,/@keyframes academyBookLeaveLeft/);
+  assert.match(css,/@keyframes academyBookLeaveRight/);
   assert.match(js,/class="academy-collection-counter" aria-live="polite"/);
   assert.match(js,/01 \/ 03/);
   assert.match(css,/#homepageCourseGrid \.academy-main-book\{/);
@@ -39,15 +44,20 @@ test('Reference design: large central 3D book, circular orbit, side previews and
   assert.match(js,/src="1_20261112_080707_0000\.png"/);
 });
 
-test('Screenshot-style interaction has arrows, mobile horizontal swipes and details below',()=>{
-  assert.match(js,/SWIPE TO EXPLORE/);
+test('Book interaction has arrows, real-time horizontal pointer drags and details below',()=>{
+  assert.match(js,/DRAG TO EXPLORE/);
   assert.match(js,/aria-label="Previous course"/);
   assert.match(js,/aria-label="Next course"/);
   assert.match(js,/academy-carousel-prev'\)\.addEventListener\('click',\(\)=>move\(-1\)\)/);
   assert.match(js,/academy-carousel-next'\)\.addEventListener\('click',\(\)=>move\(1\)\)/);
-  assert.match(js,/touchstart/);
-  assert.match(js,/touchend/);
-  assert.match(js,/Math\.abs\(dx\)>45&&Math\.abs\(dx\)>Math\.abs\(dy\)\*1\.35/);
+  assert.match(js,/pointerdown/);
+  assert.match(js,/pointermove/);
+  assert.match(js,/pointerup/);
+  assert.match(js,/pointercancel/);
+  assert.match(js,/setPointerCapture/);
+  assert.match(js,/dragStart\.dx/);
+  assert.match(js,/if\(last\.active&&Math\.abs\(last\.dx\)>=threshold\)/);
+  assert.match(css,/academy-is-dragging/);
   assert.match(js,/event\.key==='ArrowRight'/);
   assert.match(js,/event\.key==='ArrowLeft'/);
   assert.match(js,/class="academy-course-info" aria-live="polite"/);
