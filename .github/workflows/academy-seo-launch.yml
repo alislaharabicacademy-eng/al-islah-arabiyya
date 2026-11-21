@@ -1,0 +1,41 @@
+name: Academy SEO Launch Checks
+on:
+  pull_request:
+    paths:
+      - '*.html'
+      - 'sitemap.xml'
+      - 'robots.txt'
+      - 'tests/academy-seo-foundation.test.mjs'
+      - '.github/workflows/academy-seo-launch.yml'
+  push:
+    branches: [main]
+    paths:
+      - '*.html'
+      - 'sitemap.xml'
+      - 'robots.txt'
+      - 'tests/academy-seo-foundation.test.mjs'
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  seo-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify sitemap, structured data, SEO and privacy boundaries
+        run: node --test tests/academy-seo-foundation.test.mjs
+      - name: Confirm XML sitemap parses
+        run: python3 -c "import xml.etree.ElementTree as ET; ET.parse('sitemap.xml'); print('Sitemap XML validated')"
+      - name: Check deployed public pages on scheduled runs only
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: |
+          curl -fsSL --retry 2 --max-time 20 'https://alislaharabicacademy-eng.github.io/al-islah-arabiyya/sitemap.xml' -o /tmp/academy-sitemap.xml
+          curl -fsSL --retry 2 --max-time 20 'https://alislaharabicacademy-eng.github.io/al-islah-arabiyya/' -o /tmp/academy-home.html
+          grep -q '<urlset' /tmp/academy-sitemap.xml
+          grep -q 'rel="canonical"' /tmp/academy-home.html
+          echo 'Live sitemap and Academy homepage responded'
