@@ -542,6 +542,7 @@ async function requestStagedOfficialCut(){
       phase:'cut',cutAt:serverTimestamp(),cutBy:me.uid,
       updatedAt:serverTimestamp(),updatedBy:me.uid
     });
+    cutPending=false;
     message('Ribbon-cut display submitted. The Principal must FINAL CONFIRM to lock the opening, or Master Admin can reset.');
   }catch(error){
     cutPending=false;$('cutRibbon').disabled=false;$('scissorsTrigger').disabled=false;
