@@ -303,7 +303,7 @@ header{z-index:30}header .nav{position:relative}header .links{gap:clamp(8px,1vw,
 .exam-announcement-inner p{font-size:14px;line-height:1.6;margin:6px 0}
 .exam-announcement-inner>.btn{white-space:normal;text-align:center}
 @media(max-width:600px){.exam-announcement-inner{justify-content:center;text-align:center;padding:17px}}
-</style><link rel="stylesheet" href="./academy-3d-experience.css"/><link rel="stylesheet" href="./academy-course-story.css"/><link rel="stylesheet" href="./launch-day-welcome.css"/></head><body><div class="lux-scroll-progress" aria-hidden="true"></div><header><div class="wrap nav"><a class="brand" href="#home"><img alt="Madrasa Al Islahul Arabiya original logo" src="1_20261112_080707_0000.png"/><span class="academy-wordmark">Madrasa Al Islahul<br>Arabiya<small>WOMEN’S ONLINE MADRASA</small></span></a><nav class="links" aria-label="Main navigation"><a href="#home">Home</a><a href="#about">About</a><a href="#courses">Learning</a><a href="admission.html">Admissions</a><a href="exam-results.html">Exam Results</a><a href="#careers" data-careers-nav hidden>Careers</a><a href="teacher-login.html">Teacher Login</a><a href="student-login.html">Student Login</a><a href="#contact">Contact</a><a href="admin.html" aria-label="Admin login">Admin Login</a></nav>
+</style><link rel="stylesheet" href="./academy-3d-experience.css"/><link rel="stylesheet" href="./academy-course-story.css"/><link rel="stylesheet" href="./launch-day-welcome.css"/><link rel="stylesheet" href="./visitor-ribbon.css"/></head><body><div class="lux-scroll-progress" aria-hidden="true"></div><header><div class="wrap nav"><a class="brand" href="#home"><img alt="Madrasa Al Islahul Arabiya original logo" src="1_20261112_080707_0000.png"/><span class="academy-wordmark">Madrasa Al Islahul<br>Arabiya<small>WOMEN’S ONLINE MADRASA</small></span></a><nav class="links" aria-label="Main navigation"><a href="#home">Home</a><a href="#about">About</a><a href="#courses">Learning</a><a href="admission.html">Admissions</a><a href="exam-results.html">Exam Results</a><a href="#careers" data-careers-nav hidden>Careers</a><a href="teacher-login.html">Teacher Login</a><a href="student-login.html">Student Login</a><a href="#contact">Contact</a><a href="admin.html" aria-label="Admin login">Admin Login</a></nav>
 <button class="home-menu-toggle" id="homeMenuToggle" type="button" aria-expanded="false" aria-controls="homeMenuPanel" aria-label="Open website menu"><span class="menu-symbol" aria-hidden="true">☰</span><span class="menu-title">Menu</span></button><a class="btn mobile" href="admission.html">Apply Now</a></div>
 <nav class="home-menu-panel" id="homeMenuPanel" aria-label="Website menu" hidden>
 <div class="home-menu-heading"><div><small>MADRASA AL ISLAHUL ARABIYA</small><strong>Academy Menu</strong></div><button id="homeMenuClose" type="button" aria-label="Close menu">✕</button></div>
@@ -478,6 +478,25 @@ try{
  window.addEventListener('resize',()=>{if(window.innerWidth>1160&&!panel.hidden)setOpen(false,false)},{passive:true});
 })();
 </script><script type="module" src="./academic-year.js"></script><script type="module" src="./site-settings-public.js"></script><script type="module" src="./homepage-winners-public.js"></script><script type="module" src="./hiring-board-public.js"></script><script type="module" src="./exam-announcement-public.js"></script><script defer src="./academy-3d-experience.js"></script><script defer src="./academy-course-story.js"></script>
+<div id="vrOpeningOverlay" role="dialog" aria-modal="true" aria-labelledby="vrOpeningTitle" aria-describedby="vrOpeningDescription" hidden>
+  <div class="vr-particles" id="vrParticles" aria-hidden="true"></div>
+  <button class="vr-skip" id="vrSkipOpening" type="button">Skip &amp; Enter Website ↗</button>
+  <div class="vr-opening-panel">
+    <div class="vr-logo-ring"><img src="./1_20261112_080707_0000.png" alt="Madrasa Al Islahul Arabiya logo"></div>
+    <div class="vr-arabic" lang="ar" dir="rtl">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+    <div class="vr-kicker">✦ A SPECIAL WELCOME FOR EVERY VISITOR ✦</div>
+    <h2 id="vrOpeningTitle">Welcome to Our Academy</h2>
+    <div class="vr-academy">Women's Online Madrasa</div>
+    <p id="vrOpeningDescription" class="vr-audience">A warm welcome to our <strong>Parents, Students &amp; Teachers</strong></p>
+    <div class="vr-ribbon-stage" aria-label="Personal welcome ribbon">
+      <span class="vr-ribbon-left" aria-hidden="true"></span><span class="vr-ribbon-right" aria-hidden="true"></span>
+      <button class="vr-cut-button" id="vrCutRibbon" type="button">✂️ CUT THE RIBBON &amp; ENTER</button>
+    </div>
+    <div class="vr-reveal" aria-hidden="true">✨ Enjoy Your Visit ✨</div>
+    <p class="vr-status" id="vrOpeningStatus" role="status" aria-live="polite">Tap the ribbon to explore our website</p>
+    <div class="vr-seal">FAITH · LEARNING · EXCELLENCE</div>
+  </div>
+</div>
 <div id="launchWelcomeOverlay" role="dialog" aria-modal="true" aria-label="Official inauguration welcome" hidden>
  <div class="launch-welcome-petal-field" id="launchWelcomePetals" aria-hidden="true"></div>
  <button id="launchWelcomeSkip" class="launch-welcome-skip" type="button">Skip Intro ✕</button>
@@ -493,4 +512,4 @@ try{
   <button type="button" id="launchWelcomeEnter" class="launch-welcome-enter">🌸 Enter Our Academy →</button>
  </div>
 </div>
-<script type="module" src="./launch-day-welcome.js"></script></body></html>
+<script type="module" src="./launch-day-welcome.js"></script><script defer src="./visitor-ribbon.js"></script></body></html>
