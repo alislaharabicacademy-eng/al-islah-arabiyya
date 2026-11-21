@@ -44,8 +44,29 @@ test('Reference design: single central 3D book, circular orbit, no side previews
   assert.match(js,/src="1_20261112_080707_0000\.png"/);
 });
 
+test('Next course appears as a draggable miniature book on the upper-right circular rail',()=>{
+  assert.match(js,/class="academy-orbit-preview"/);
+  assert.match(js,/class="academy-book-course academy-preview-course"/);
+  assert.match(js,/class="academy-preview-caption"/);
+  assert.match(js,/view\.previewTitle\.textContent=next\.name/);
+  assert.match(js,/view\.previewCaption\.textContent=next\.name/);
+  assert.match(js,/function positionPreview\(progress\)/);
+  assert.match(js,/function dragPreview\(event\)/);
+  assert.match(js,/function promoteNext\(index\)/);
+  assert.match(js,/view\.preview\.addEventListener\('pointerdown'/);
+  assert.match(js,/view\.preview\.addEventListener\('pointermove'/);
+  assert.match(js,/view\.preview\.addEventListener\('pointerup'/);
+  assert.match(js,/view\.preview\.setPointerCapture/);
+  assert.match(css,/touch-action:none/);
+  assert.match(css,/academy-preview-promoting/);
+  assert.match(css,/academy-is-preview-dragging/);
+  assert.match(js,/view\.hero\.style\.opacity=/);
+  assert.match(js,/positionPreview\(1\)/);
+  assert.doesNotMatch(js,/class="academy-side-course academy-side-right"/);
+});
+
 test('Book interaction has arrows, real-time horizontal pointer drags and details below',()=>{
-  assert.match(js,/DRAG TO EXPLORE/);
+  assert.match(js,/DRAG SMALL BOOK ↙/);
   assert.match(js,/aria-label="Previous course"/);
   assert.match(js,/aria-label="Next course"/);
   assert.match(js,/academy-carousel-prev'\)\.addEventListener\('click',\(\)=>move\(-1\)\)/);
