@@ -85,7 +85,7 @@ test('Public new admissions exclude Muballiga Year 2 while preserving the two-ye
  const input=['Muallama','Muballigha','Muballiga 2nd year','Muballigha - Second Year',
   'Muballigha Year 2','Muballiga 2nd yr','Muballigha - 2 Years','Boys Hifz Class'];
  const choices=publicAdmissionCourses(input);
- assert.deepEqual(choices,['Muallama','Muballigha','Muballigha','Boys Hifz Class','Other enquiry']);
+ assert.deepEqual(choices,['Muallama','Muballigha','Boys Hifz Class','Other enquiry']);
  // The legacy admin configuration remains intact; this filter is view-only.
  assert.ok(uniqueAdmissionCourses(input).includes('Muballiga 2nd year'));
 });
