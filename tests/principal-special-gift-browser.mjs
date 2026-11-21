@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import {mkdir} from 'node:fs/promises';
+import {chromium} from 'playwright';
+const port=process.env.PORT||'8768';
+const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME||'/usr/bin/google-chrome',args:['--no-sandbox','--disable-dev-shm-usage']});
+const context=await browser.newContext({viewport:{width:393,height:852},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+try{
+ const page=await context.newPage();
+ const errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:'+port+'/a-special-gift-for-our-principal.html',{waitUntil:'domcontentloaded',timeout:25000});
+ assert.equal(await page.locator('#beforeCut').isVisible(),true);
+ assert.equal(await page.locator('#afterCut').isVisible(),false);
+ assert.equal(await page.locator('#cut').isVisible(),true);
+ const logoOk=await page.locator('.logo-ring img').evaluate(el=>el.complete&&el.naturalWidth>0);
+ assert.equal(logoOk,true,'Original Academy logo must render');
+ await mkdir('principal-gift-browser-proof',{recursive:true});
+ await page.screenshot({path:'principal-gift-browser-proof/before-cut-mobile.png',fullPage:true});
+ await page.locator('#cut').click();
+ await page.locator('#afterCut').waitFor({state:'visible',timeout:5000});
+ assert.equal(await page.locator('#beforeCut').isVisible(),false);
+ assert.equal(await page.locator('#enterAcademy').isVisible(),true);
+ assert.equal(await page.evaluate(()=>localStorage.getItem('alia-visitor-ribbon-seen-v1')),'1');
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+2),true,'No horizontal overflow');
+ await page.screenshot({path:'principal-gift-browser-proof/after-cut-mobile.png',fullPage:true});
+ await page.locator('#replay').click();
+ assert.equal(await page.locator('#beforeCut').isVisible(),true,'Replay is allowed for this one special link');
+ await page.locator('#cut').click();
+ await page.locator('#afterCut').waitFor({state:'visible',timeout:5000});
+ await page.locator('#enterAcademy').click();
+ await page.waitForURL('**/index.html',{timeout:15000});
+ await page.waitForFunction(()=>document.getElementById('vrOpeningOverlay')?.hidden===true,{timeout:15000});
+ assert.equal(await page.evaluate(()=>localStorage.getItem('alia-visitor-ribbon-seen-v1')),'1');
+ assert.deepEqual(errors,[],'No JavaScript errors');
+ console.log('PASS mobile Chrome: logo, one-tap surprise, golden reveal, replay, direct homepage, no repeat ribbon');
+}finally{await context.close();await browser.close()}

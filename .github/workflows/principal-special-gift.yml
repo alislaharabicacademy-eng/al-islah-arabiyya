@@ -1,0 +1,46 @@
+name: Principal Surprise - Single-Tap Mobile Opening
+on:
+  pull_request:
+    paths:
+      - 'a-special-gift-for-our-principal.html'
+      - 'tests/principal-special-gift.test.mjs'
+      - 'tests/principal-special-gift-browser.mjs'
+      - '.github/workflows/principal-special-gift.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'a-special-gift-for-our-principal.html'
+      - 'tests/principal-special-gift.test.mjs'
+      - 'tests/principal-special-gift-browser.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  emotional-opening:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify offline one-touch ceremony behavior
+        run: node --test tests/principal-special-gift.test.mjs
+      - name: Install browser controller
+        run: npm install --no-save --ignore-scripts playwright@1.56.1
+      - name: Start local Academy website
+        run: |
+          python3 -m http.server 8768 >/tmp/principal-gift-server.log 2>&1 &
+          sleep 2
+          curl -fsS http://127.0.0.1:8768/a-special-gift-for-our-principal.html >/dev/null
+      - name: Test and capture principal surprise on Android-sized Chrome
+        env:
+          CHROME: /usr/bin/google-chrome
+          PORT: '8768'
+        run: node tests/principal-special-gift-browser.mjs
+      - name: Upload mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: principal-surprise-before-after-chrome
+          path: principal-gift-browser-proof/
+          retention-days: 7
