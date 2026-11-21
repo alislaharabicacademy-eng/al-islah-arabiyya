@@ -14,7 +14,7 @@ const privatePages=[
 const unescapeXml=s=>s.replace(/&amp;/g,'&');
 function head(path){const text=read(path);const match=text.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i);assert.ok(match,path+' must have a head');return match[1]}
 function meta(h,kind,value){
- const escaped=value.replace(/[.*+?^$()|[\]{}]/g,'\\$&');
+ const escaped=value; // Attribute names here contain only letters and a colon.
  const pattern=new RegExp('<meta\\s+[^>]*'+kind+'="'+escaped+'"[^>]*content="([^"]+)"[^>]*>','i');
  const match=h.match(pattern);
  return match?.[1]??null;
@@ -27,7 +27,7 @@ for(const path of publicPages){
    assert.ok(desc&&desc.length>=80&&desc.length<=200,path+' description');
    assert.equal(meta(h,'name','robots'),'index,follow,max-image-preview:large');
    const loc=path==='index.html'?base:base+path;
-   assert.match(h,new RegExp('<link rel="canonical" href="'+loc.replace(/[.*+?^$()|[\]{}]/g,'\\$&')+'">'));
+   assert.ok(h.includes('<link rel="canonical" href="'+loc+'">'),path+' canonical must match sitemap URL');
    assert.equal(meta(h,'property','og:url'),loc);
    assert.equal(meta(h,'property','og:type'),'website');
    assert.equal(meta(h,'property','og:image'),image);
