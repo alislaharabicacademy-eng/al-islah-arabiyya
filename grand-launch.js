@@ -445,20 +445,22 @@ async function writeTrial(phase){
 $('startTrial').addEventListener('click',()=>writeTrial('countdown'));
 $('resetTrial').addEventListener('click',()=>writeTrial('idle'));
 $('previewReset').addEventListener('click',async()=>{
-  if(role!=='host'||!authorized||!isMainPreview)return;
+  if(role!=='host'||!authorized)return;
+  if(isOfficial){await cancelOfficialCountdown();return}
+  if(!isMainPreview)return;
   const button=$('previewReset');button.disabled=true;
   try{
     if(await writeTrial('idle'))resetVisual();
   }finally{button.disabled=false}
 });
-// These actions never touch the resettable Trial document. The only irreversible
-// operation is the Principal's server-validated one-time CREATE of official.
+// The visual ribbon is staged in the resettable Trial document.
+// Only FINAL CONFIRM writes the server-protected immutable official record.
 async function armOfficial(){
   if(!isOfficial||role!=='host'||!masterVerified||officialRecord||officialControl)return;
   if($('officialPhrase').value.trim().toUpperCase()!=='LAUNCH 21 NOV 2026'){
     message('Type exactly LAUNCH 21 NOV 2026 to PREPARE the ceremony. This does NOT launch it.',true);return;
   }
-  if(!confirm('ARM the official ceremony for Saturday 21 November? This only prepares it. No website launch will occur yet.'))return;
+  if(!confirm('ARM the official ceremony for 21 November? This is only preparation.'))return;
   const button=$('officialArm');button.disabled=true;
   try{
     await setDoc(doc(db,'grandLaunch','officialControl'),{
@@ -466,65 +468,111 @@ async function armOfficial(){
       updatedAt:serverTimestamp(),updatedBy:me.uid
     });
     $('officialPhrase').value='';
-    message('✅ Official ceremony ARMED safely. Countdown is unavailable until Saturday 21 November (India time).');
+    message('✅ Ceremony armed. The countdown and ribbon cut are resettable until final Principal confirmation.');
   }catch(error){message('Could not arm official ceremony: '+error.message,true)}
   finally{button.disabled=false}
 }
 async function startOfficial(){
   if(!isOfficial||role!=='host'||!masterVerified||officialRecord||officialControl?.state!=='armed')return;
   if(officialIndiaDate()!=='2026-11-21'){
-    message('Final opening is locked to Saturday, 21 November 2026, India time.',true);return;
+    message('Official opening is restricted to Saturday 21 November 2026, India time.',true);return;
   }
-  if(!confirm('START the REAL official countdown? This is NOT a trial. The Principal can permanently inaugurate the website after 10 seconds.'))return;
+  if(!confirm('START the official countdown? Ribbon cut + website reveal can be RESET and repeated. No permanent inauguration is recorded until the Principal separately presses CONFIRM FINAL OPENING.'))return;
   const button=$('officialStart');button.disabled=true;
   try{
+    // Start the staging timer first. Both timers use server timestamps.
+    await setDoc(doc(db,'grandLaunch','trial'),{
+      kind:'trial',phase:'countdown',startedAt:serverTimestamp(),
+      cutAt:null,cutBy:null,updatedAt:serverTimestamp(),updatedBy:me.uid
+    });
     await updateDoc(doc(db,'grandLaunch','officialControl'),{
       state:'countdown',startedAt:serverTimestamp(),startedBy:me.uid,
       updatedAt:serverTimestamp(),updatedBy:me.uid
     });
-  }catch(error){message('Final countdown could not start: '+error.message,true)}
-  finally{button.disabled=false}
+    message('Countdown started. You may reset before or AFTER cutting the ribbon, until final confirmation.');
+  }catch(error){
+    // If the official timer failed, do not leave the rehearsal stuck running.
+    try{
+      if(officialControl?.state==='armed')await setDoc(doc(db,'grandLaunch','trial'),{
+        kind:'trial',phase:'idle',startedAt:null,cutAt:null,cutBy:null,
+        updatedAt:serverTimestamp(),updatedBy:me.uid
+      });
+    }catch(_ignored){}
+    message('Countdown could not start: '+error.message,true);
+  }finally{button.disabled=false}
 }
 async function cancelOfficialCountdown(){
   if(!isOfficial||role!=='host'||!masterVerified||officialRecord||officialControl?.state!=='countdown')return;
-  if(!confirm('Cancel the final countdown BEFORE the Principal cuts the ribbon? This returns to Armed and does NOT undo an actual inauguration.'))return;
-  const button=$('officialCancel');button.disabled=true;
+  if(!confirm('RESET the countdown AND displayed ribbon cut? No permanent launch record has been created. You can start the ceremony again.'))return;
+  const button=$('officialCancel'),overlayButton=$('previewReset');
+  button.disabled=true;overlayButton.disabled=true;
   try{
+    // Firestore rules refuse this update after FINAL CONFIRM, including
+    // if another device just made the permanent record.
     await updateDoc(doc(db,'grandLaunch','officialControl'),{
       state:'armed',startedAt:null,startedBy:null,
       updatedAt:serverTimestamp(),updatedBy:me.uid
     });
+    try{
+      await setDoc(doc(db,'grandLaunch','trial'),{
+        kind:'trial',phase:'idle',startedAt:null,cutAt:null,cutBy:null,
+        updatedAt:serverTimestamp(),updatedBy:me.uid
+      });
+    }catch(e){
+      message('Official status is armed, but staging clean-up failed: '+e.message+'. Restarting will clear the stage.',true);
+    }
     resetVisual();
-    message('Countdown cancelled before the official cut. The one-time launch record is still absent.');
-  }catch(error){message('Cannot cancel countdown. It may have been inaugurated: '+error.message,true)}
-  finally{button.disabled=false}
+    message('✅ Countdown and ribbon display reset. Start again when you are ready. Nothing was permanently launched.');
+  }catch(error){message('Cannot reset: the Principal may already have confirmed the final launch. '+error.message,true)}
+  finally{button.disabled=false;overlayButton.disabled=false}
 }
-async function requestOfficialCut(){
-  if(!isOfficial||role!=='principal'||!authorized||cutPending||
-    officialRecord||officialControl?.state!=='countdown'||!officialControl.startedAt?.toMillis)return;
-  if(officialIndiaDate()!=='2026-11-21'){
-    message('Official inauguration is restricted to 21 November 2026 (India time).',true);return;
+async function requestStagedOfficialCut(){
+  if(!isOfficial||role!=='principal'||!authorized||cutPending||officialRecord||
+     officialControl?.state!=='countdown'||trial?.phase!=='countdown')return;
+  const officialStart=officialControl.startedAt?.toMillis?.();
+  const trialStart=trial.startedAt?.toMillis?.();
+  if(!officialStart||!trialStart){message('Please wait for both countdowns to sync.',true);return}
+  if(Date.now()-officialStart<COUNTDOWN_MS||Date.now()-trialStart<COUNTDOWN_MS){
+    message('Wait for the full official countdown.',true);return;
   }
-  if(Date.now()-officialControl.startedAt.toMillis()<COUNTDOWN_MS){
-    message('Wait for the full official countdown to finish.',true);return;
-  }
-  if(!confirm('CONFIRM THE REAL OFFICIAL INAUGURATION? This cuts the ribbon and records the one-time opening permanently. IT CANNOT BE RESET.'))return;
+  if(!confirm('CUT the ribbon and show the website reveal? This visual cut is RESETTABLE. The permanent official opening requires a SEPARATE FINAL CONFIRM.'))return;
   cutPending=true;$('cutRibbon').disabled=true;$('scissorsTrigger').disabled=true;
-  message('✂️ Submitting the one-time official ribbon cut for secure server confirmation…');
+  try{
+    await updateDoc(doc(db,'grandLaunch','trial'),{
+      phase:'cut',cutAt:serverTimestamp(),cutBy:me.uid,
+      updatedAt:serverTimestamp(),updatedBy:me.uid
+    });
+    message('Ribbon-cut display submitted. The Principal must FINAL CONFIRM to lock the opening, or Master Admin can reset.');
+  }catch(error){
+    cutPending=false;$('cutRibbon').disabled=false;$('scissorsTrigger').disabled=false;
+    message('Ribbon cut preview failed; no inauguration recorded: '+error.message,true);
+  }
+}
+async function finalizeOfficial(){
+  if(!isOfficial||role!=='principal'||!authorized||cutPending||officialRecord||!isStagedOfficialCut())return;
+  if(officialIndiaDate()!=='2026-11-21'){
+    message('Final opening is restricted to 21 November 2026 (India time).',true);return;
+  }
+  if(!confirm('FINAL CONFIRMATION: Permanently inaugurate the website NOW? The final record can NEVER be reset. Cancel this dialog if you want another rehearsal.'))return;
+  cutPending=true;
+  $('officialFinalize').disabled=true;
+  message('Submitting the Principal’s final one-time inauguration confirmation…');
   try{
     await setDoc(doc(db,'grandLaunch','official'),{
       kind:'official',phase:'launched',dateLocal:'2026-11-21',
       startedAt:officialControl.startedAt,
       launchedAt:serverTimestamp(),launchedBy:me.uid
     });
+    message('Final confirmation submitted. Awaiting secure server verification…');
   }catch(error){
-    cutPending=false;$('cutRibbon').disabled=false;$('scissorsTrigger').disabled=false;
-    message('Official cut NOT recorded: '+error.message+'. Ask Master Admin to check the status before retrying.',true);
+    cutPending=false;$('officialFinalize').disabled=false;
+    message('Final launch NOT recorded: '+error.message+'. Confirm the status before retrying.',true);
   }
 }
 $('officialArm').addEventListener('click',armOfficial);
 $('officialStart').addEventListener('click',startOfficial);
 $('officialCancel').addEventListener('click',cancelOfficialCountdown);
+$('officialFinalize').addEventListener('click',finalizeOfficial);
 
 async function requestTrialCut(){
   if(isOfficial)return; // Official mode can never use the resettable cut path.
@@ -554,8 +602,8 @@ async function requestTrialCut(){
       ' · Make sure you are signed in and the trial is still active.',true);
   }
 }
-$('cutRibbon').addEventListener('click',()=>isOfficial?requestOfficialCut():requestTrialCut());
-$('scissorsTrigger').addEventListener('click',()=>isOfficial?requestOfficialCut():requestTrialCut());
+$('cutRibbon').addEventListener('click',()=>isOfficial?requestStagedOfficialCut():requestTrialCut());
+$('scissorsTrigger').addEventListener('click',()=>isOfficial?requestStagedOfficialCut():requestTrialCut());
 
 setInterval(render,130);
 initialise();
