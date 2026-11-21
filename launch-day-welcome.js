@@ -54,6 +54,10 @@ function revealConfirmedOpening(){
  complete=true;
  if(poll){clearInterval(poll);poll=null}
  banner.hidden=false;
+ // The personal ribbon experience replaces the old automatic welcome dialog
+ // for every visitor. Keep this banner only after a verified official launch.
+ // This avoids showing two full-screen introductions back-to-back.
+ if(document.getElementById('vrOpeningOverlay'))return;
  if(alreadyShown())return;
  markShown(); // one automatic welcome per browser on launch day
  addPetals();

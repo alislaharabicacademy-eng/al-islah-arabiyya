@@ -1,0 +1,61 @@
+/* Personal public-visitor ribbon ceremony. Does not style Academy pages. */
+#vrOpeningOverlay[hidden]{display:none!important}
+#vrOpeningOverlay{position:fixed;inset:0;z-index:100001;overflow:auto;overscroll-behavior:contain;display:grid;place-items:center;isolation:isolate;
+  padding:34px 16px;background:radial-gradient(ellipse at 50% 12%,#276746 0%,#12432f 36%,#071f18 86%);
+  color:#fff6df;text-align:center;font-family:'DM Sans',system-ui,sans-serif}
+#vrOpeningOverlay::before{content:'';position:fixed;inset:13px;border:1px solid #ebc77d65;border-radius:22px;pointer-events:none}
+#vrOpeningOverlay::after{content:'';position:fixed;inset:0;pointer-events:none;opacity:.08;
+  background:repeating-conic-gradient(from 15deg at 50% 48%,#fae5ae 0 6deg,transparent 6deg 28deg)}
+body.vr-opening-active{overflow:hidden}
+.vr-particles{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:2}
+.vr-particles i{position:absolute;top:-5vh;left:var(--vr-x);width:8px;height:14px;
+  background:linear-gradient(145deg,#fff8d5,#c78e39);box-shadow:0 0 10px #f9d887a0;
+  animation:vr-fall var(--vr-time) ease-in var(--vr-delay) both}
+.vr-opening-panel{position:relative;z-index:1;width:min(740px,100%);padding:26px 15px 34px;display:flex;flex-direction:column;align-items:center}
+.vr-skip{position:fixed;right:22px;top:19px;z-index:3;min-height:44px;padding:10px 16px;
+  background:#0b3226dd;border:1px solid #e6bd67;border-radius:100px;color:#fff4d6;font-size:13px;font-weight:700;cursor:pointer}
+.vr-logo-ring{width:112px;height:112px;padding:12px;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle,#dec37f42,#103e2a75);box-shadow:0 0 0 8px #d7b46d17,0 0 40px #e8c17640;border:2px solid #e5c783}
+.vr-logo-ring img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 8px #0008)}
+.vr-arabic{font-family:'Amiri','Traditional Arabic',serif;font-size:clamp(23px,4.5vw,35px);color:#f7dc99;line-height:1.7;margin-top:17px}
+.vr-kicker{font-size:11px;font-weight:800;letter-spacing:.17em;color:#ecc780;text-transform:uppercase;margin-top:11px}
+.vr-opening-panel h2{font:600 clamp(34px,7.3vw,61px)/1.1 'Cormorant Garamond',Georgia,serif;margin:9px 0 6px;color:#fffbeb}
+.vr-academy{font:700 clamp(20px,4.3vw,33px)/1.2 'Playfair Display',Georgia,serif;color:#f7d99d}
+.vr-audience{margin:17px 0 3px;color:#e2e9dc;font-size:clamp(13px,2.5vw,16px);line-height:1.6}
+.vr-audience strong{color:#f9e5b7}
+.vr-ribbon-stage{position:relative;width:min(660px,100%);height:145px;display:flex;justify-content:center;align-items:center;isolation:isolate;overflow:visible;margin:8px auto 4px}
+.vr-ribbon-stage::before{content:'';position:absolute;inset:13px 7%;border-radius:50%;filter:blur(24px);background:#e9c46735}
+.vr-ribbon-left,.vr-ribbon-right{position:relative;z-index:1;width:50%;height:56px;box-shadow:0 10px 26px #0007;
+  background:linear-gradient(180deg,#8f571b,#d8a743 12%,#fff0b7 33%,#d39e42 53%,#f9d47c 75%,#8d5417);
+  border-top:2px solid #fff2bd;border-bottom:3px solid #a46d28;transition:transform 1.1s cubic-bezier(.2,.75,.2,1),opacity .85s}
+.vr-ribbon-left{border-radius:8px 0 0 8px}.vr-ribbon-right{border-radius:0 8px 8px 0}
+.vr-ribbon-left::before,.vr-ribbon-right::after{content:'';position:absolute;inset:0;opacity:.3;
+  background:repeating-linear-gradient(125deg,transparent 0 17px,#fff9dd 18px 20px,transparent 21px 43px)}
+.vr-cut-button{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);min-width:min(290px,85vw);min-height:59px;
+  border:2px solid #fff0c5;border-radius:15px;padding:13px 20px;background:linear-gradient(135deg,#fff6d0,#eac16e 55%,#bf8d37);
+  font:800 15px/1.45 'DM Sans',system-ui,sans-serif;color:#193927;box-shadow:0 7px 25px #0009,0 0 26px #edc8738c;cursor:pointer;
+  transition:box-shadow .2s,transform .2s,opacity .5s}
+.vr-cut-button:enabled:hover{box-shadow:0 10px 38px #f3d58b6b,0 9px 30px #0008;transform:translate(-50%,-53%)}
+.vr-cut-button:focus-visible,.vr-skip:focus-visible{outline:3px solid white;outline-offset:4px}
+.vr-status{font-size:14px;min-height:24px;line-height:1.6;color:#ebd396;letter-spacing:.02em;margin:0}
+.vr-seal{margin-top:18px;color:#c2d7c6;letter-spacing:.10em;font-size:11px}
+.vr-reveal{font:700 clamp(25px,5vw,46px) Georgia,serif;color:#fff4c7;opacity:0;transform:translateY(10px);
+  transition:opacity .7s ease,transform .7s ease;pointer-events:none}
+.vr-is-cut .vr-ribbon-left{opacity:0;transform:translateX(-130%) rotate(-12deg)}
+.vr-is-cut .vr-ribbon-right{opacity:0;transform:translateX(130%) rotate(12deg)}
+.vr-is-cut .vr-cut-button{opacity:0;pointer-events:none}
+.vr-is-celebrating .vr-reveal{opacity:1;transform:translateY(-3px)}
+@keyframes vr-fall{from{transform:translateY(-12vh) rotate(0);opacity:1}to{transform:translateY(110vh) translateX(var(--vr-drift)) rotate(710deg);opacity:0}}
+@media(max-width:550px){
+  #vrOpeningOverlay{padding:73px 14px 22px}
+  .vr-skip{top:12px;right:13px;font-size:12px}
+  .vr-opening-panel{padding:8px 8px 24px}
+  .vr-logo-ring{height:88px;width:88px;padding:8px}
+  .vr-arabic{margin-top:9px}.vr-ribbon-stage{height:120px}
+  .vr-ribbon-left,.vr-ribbon-right{height:49px}
+  .vr-cut-button{min-width:min(245px,82vw);font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){
+  .vr-particles i{animation:none!important;display:none!important}
+  .vr-ribbon-left,.vr-ribbon-right,.vr-reveal,.vr-cut-button{transition:none!important}
+}
