@@ -42,9 +42,11 @@ test('Main Ceremony Preview is resettable, keeps real launch locked, and reveals
   assert.match(js,/previewLaunchFrame'\)\.src='\.\/index\.html'/);
   assert.match(js,/await writeTrial\('idle'\)/);
   assert.match(js,/resetVisual\(\)/);
-  // Official state is written only by the separate, explicitly selected
-  // Principal official-cut handler; the default preview remains reversible.
-  assert.match(js,/async function requestOfficialCut\(\)/);
+  // Only the Principal's explicit FINAL CONFIRM writes the immutable record.
+  // The displayed official ribbon cut itself is staged and remains resettable.
+  assert.match(js,/async function requestStagedOfficialCut\(\)/);
+  assert.match(js,/async function finalizeOfficial\(\)/);
+  assert.match(js,/await setDoc\(doc\(db,'grandLaunch','official'\)/);
   assert.match(js,/if\(!isOfficial\|\|role!=='principal'/);
   assert.match(js,/if\(isOfficial\)return; \/\/ Official mode can never use the resettable cut path/);
   assert.doesNotMatch(html,/id="startOfficial"/);
@@ -75,7 +77,8 @@ test('rehearsal is isolated from real one-time launch',()=>{
   assert.match(html,/TRIAL MODE/);
   assert.match(html,/id="scissorsTrigger"/);
   assert.match(html,/TEST CUT HERE|Host Test Cut/);
-  assert.match(js,/isOfficial\?requestOfficialCut\(\):requestTrialCut\(\)/);
+  assert.match(js,/isOfficial\?requestStagedOfficialCut\(\):requestTrialCut\(\)/);
+  assert.match(js,/async function finalizeOfficial\(\)/);
   assert.match(js,/hasPendingWrites/);
   assert.match(js,/role==='principal'/);
   assert.match(js,/COUNTDOWN_MS=10000/);
