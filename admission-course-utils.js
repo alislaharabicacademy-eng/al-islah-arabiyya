@@ -35,8 +35,15 @@ export function isAalimaContinuation(name){
  const key=admissionCourseKey(name);
  return /^(?:alima|aalima|alimah|aalimah)(?:3rdyear|year3|thirdyear)?$/.test(key);
 }
+export function isMuballigaSecondYear(name){
+ const key=admissionCourseKey(name);
+ // Only the second-year CONTINUATION, not the two-year programme duration.
+ // Existing students progress through the private Academy workflow instead.
+ return /^(?:muballiga|muballigha)(?:2ndyear|secondyear|year2|2ndyr|yearii)$/.test(key);
+}
 export function publicAdmissionCourses(input){
- return uniqueAdmissionCourses(input).filter(name=>!isAalimaContinuation(name));
+ return uniqueAdmissionCourses(input).filter(name=>
+  !isAalimaContinuation(name)&&!isMuballigaSecondYear(name));
 }
 export function publicAdmissionLabel(name){
  const key=admissionCourseKey(name);
