@@ -152,18 +152,18 @@ body[data-mode="main-preview"] .kicker{letter-spacing:.25em}
 <p class="muted">To practise alone: Start Trial → 10–9–8–7–6–5–4–3–2–1 → tap ✂️ scissors or Host Test Cut → homepage opens. To practise with the Principal: share the private Principal link.</p>
 </div>
 <div id="officialControls" class="official-controls" hidden>
-<p class="official-warning"><strong>ONE-TIME OFFICIAL INAUGURATION · SATURDAY, 21 NOVEMBER 2026</strong><br>The Master Admin prepares the ceremony first. The countdown can only start on 21 Nov (India time). The final ribbon cut takes place on the authorised Principal Ceremony page. The countdown may be cancelled and restarted before the ribbon is cut. Once cut, the official inauguration is recorded permanently and cannot be reset.</p>
+<p class="official-warning"><strong>ONE-TIME OFFICIAL INAUGURATION · SATURDAY, 21 NOVEMBER 2026</strong><br>Run the complete countdown and ribbon-cut reveal as many times as needed. Even after the ribbon is cut, the Master Admin can reset and start again, until the Principal explicitly presses <strong>CONFIRM FINAL OPENING</strong>. Only that final confirmation permanently records the official inauguration. Available on 21 November (India time).</p>
 <p id="officialStatus" class="official-state" role="status" aria-live="polite">Reading locked official inauguration status…</p>
 <label>Confirmation phrase to prepare the event<input id="officialPhrase" type="text" maxlength="40" autocomplete="off" placeholder="LAUNCH 21 NOV 2026" aria-label="Type LAUNCH 21 NOV 2026"></label>
 <div class="actions">
 <button id="officialArm" type="button">🔒 ARM OFFICIAL CEREMONY</button>
 <button id="officialStart" type="button" hidden>▶ START FINAL COUNTDOWN</button>
-<button id="officialCancel" class="secondary" type="button" hidden>↩ Cancel Countdown (Before Cut)</button>
+<button id="officialCancel" class="secondary" type="button" hidden>↻ RESET COUNTDOWN / RIBBON (BEFORE FINAL CONFIRM)</button>
 </div>
 <p class="muted">For the official ribbon cut, open the <a id="officialPrincipalLink" href="./grand-launch.html?role=principal&amp;mode=official" target="_blank" rel="noopener" style="color:#f4d594">Principal Official Ceremony page ↗</a>. Do not share this Admin control screen with parents; screen-share only the ceremony display.</p>
 </div>
 </section>
-<section id="principalInfo" class="panel" hidden><h2>👑 Principal's Control</h2><p id="principalInstruction" class="muted">Keep this screen open. After the host's 10–9–8–7–6–5–4–3–2–1 countdown, your digital ribbon-cut button will appear here.</p></section>
+<section id="principalInfo" class="panel" hidden><h2>👑 Principal's Control</h2><p id="principalInstruction" class="muted">Keep this screen open. After the host's 10–9–8–7–6–5–4–3–2–1 countdown, your digital ribbon-cut button will appear here.</p><button id="officialFinalize" type="button" hidden>🔐 CONFIRM FINAL OPENING · LOCK PERMANENTLY</button><p id="officialFinalizeHelp" class="official-warning" hidden>After the ribbon-cut preview, choose this only when everyone is ready for the ONE-TIME official inauguration. The Master Admin can reset and repeat until you confirm here. Once confirmed, it cannot be reset.</p></section>
 <div class="confetti" id="confetti" aria-hidden="true"></div><div class="sparkle-field" id="sparkles" aria-hidden="true"></div><div class="celebration-flash" id="celebrationFlash" aria-hidden="true"></div>
 <section id="previewLaunchOverlay" class="preview-launch-overlay" hidden aria-label="Main ceremony preview homepage">
 <div class="preview-launch-bar"><strong id="previewLaunchHeader">🎀 MAIN CEREMONY PREVIEW · NOT OFFICIAL</strong><button id="previewReset" type="button">↻ Reset &amp; Rehearse</button></div>
