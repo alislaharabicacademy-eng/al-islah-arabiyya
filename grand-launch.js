@@ -170,7 +170,7 @@ function isStagedOfficialCut(){
   const trialBegan=trial.startedAt?.toMillis?.();
   const cutAt=trial.cutAt?.toMillis?.();
   return Number.isFinite(began)&&Number.isFinite(trialBegan)&&Number.isFinite(cutAt)
-    && trialBegan<=began && began-trialBegan<30000 && cutAt>=began+COUNTDOWN_MS;
+    && trialBegan<=began && began-trialBegan<300000 && cutAt>=began+COUNTDOWN_MS-2000;
 }
 function renderOfficial(){
   if(!authorized||!officialControlLoaded||!officialRecordLoaded||!officialTrialLoaded)return;
@@ -513,16 +513,17 @@ async function cancelOfficialCountdown(){
       state:'armed',startedAt:null,startedBy:null,
       updatedAt:serverTimestamp(),updatedBy:me.uid
     });
+    let stageCleaned=true;
     try{
       await setDoc(doc(db,'grandLaunch','trial'),{
         kind:'trial',phase:'idle',startedAt:null,cutAt:null,cutBy:null,
         updatedAt:serverTimestamp(),updatedBy:me.uid
       });
-    }catch(e){
-      message('Official status is armed, but staging clean-up failed: '+e.message+'. Restarting will clear the stage.',true);
-    }
+    }catch(e){stageCleaned=false}
     resetVisual();
-    message('✅ Countdown and ribbon display reset. Start again when you are ready. Nothing was permanently launched.');
+    message(stageCleaned
+      ?'✅ Countdown and ribbon display reset. Start again when you are ready. Nothing was permanently launched.'
+      :'✅ Official timer reset, but rehearsal clean-up failed. Starting again will reinitialize the stage.',!stageCleaned);
   }catch(error){message('Cannot reset: the Principal may already have confirmed the final launch. '+error.message,true)}
   finally{button.disabled=false;overlayButton.disabled=false}
 }
