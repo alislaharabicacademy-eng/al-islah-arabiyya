@@ -100,7 +100,7 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   await assertFails(setDoc(doc(principal,official),{state:'launched'})); // staged ≠ permanent
   const record={kind:'official',phase:'launched',dateLocal:'2026-11-21',
     startedAt:firstCountdown,launchedAt:serverTimestamp(),launchedBy:'principal-uid'};
-  await assertFails(setDoc(doc(principal,official),record));
+  assert.equal((await getDoc(doc(master,official))).exists(),false,'Staged ribbon cut must not create the permanent record');
   await assertFails(setDoc(doc(admin,official),{...record,launchedBy:'normal-uid'}));
   await assertFails(setDoc(doc(outsider,official),{...record,launchedBy:'outsider-uid'}));
   await assertFails(setDoc(doc(unverified,official),{...record,launchedBy:'unverified-uid'}));
