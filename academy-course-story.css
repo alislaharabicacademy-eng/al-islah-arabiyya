@@ -418,3 +418,23 @@
 #homepageCourseGrid .academy-orbit-preview[data-course-style="muallama"] .academy-main-book-cover{
  background:linear-gradient(112deg,#061b18 0%,#174e39 24%,#16674b 52%,#093527 83%,#081d19 100%);
 }
+
+
+/* Launch polish — the main cover is 14% smaller but keeps the 3D detailing.
+   The next-course book rests at half opacity and never overlays the centre
+   while stationary. Touch-drag / automatic promotion makes it fully opaque. */
+#homepageCourseGrid .academy-hero-course .academy-main-book{
+ scale:.86;
+}
+#homepageCourseGrid .academy-orbit-preview{
+ opacity:.5;
+ transition:transform .31s cubic-bezier(.2,.7,.25,1), opacity .22s ease;
+}
+#homepageCourseGrid .academy-orbit-preview.academy-preview-promoting,
+#homepageCourseGrid .academy-is-preview-dragging .academy-orbit-preview,
+#homepageCourseGrid .academy-orbit-preview:focus-visible{
+ opacity:1;
+}
+@media(prefers-reduced-motion:reduce){
+ #homepageCourseGrid .academy-orbit-preview{transition:none!important}
+}

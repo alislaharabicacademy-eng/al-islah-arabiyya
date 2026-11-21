@@ -208,9 +208,13 @@
  // Preview rests on the upper-right arc of the visible circular track.
  // Its scaled 3D cover is the real next course, never a generic star icon.
  function orbit(){
-   if(!view)return {x:110,y:-110};
+   if(!view)return {x:115,y:-125};
    const w=view.stage.clientWidth, h=view.stage.clientHeight;
-   return {x:Math.max(70,Math.min(w*.35,w/2-39)),y:-h*.285};
+   // Place the miniature on the outer right arc, outside the main cover.
+   // Keep the small cover's right edge in frame even on narrow phones.
+   const x=Math.min(w/2-18,Math.max(115,w*.40),190);
+   const y=-Math.min(h*.30,137);
+   return {x:Math.max(78,x),y};
  }
  function positionPreview(progress){
    if(!view)return;
@@ -219,7 +223,7 @@
    const wave=Math.sin(p*Math.PI);
    const px=x*(1-p)+wave*9;
    const py=y*(1-p)-wave*12;
-   const scale=.38+.62*p;
+   const scale=.26+.74*p;
    const rotate=11*(1-p);
    view.preview.style.transform='translate(calc(-50% + '+px.toFixed(1)+'px),calc(-50% + '+py.toFixed(1)+'px)) scale('+scale.toFixed(3)+') rotate('+rotate.toFixed(1)+'deg)';
  }
@@ -247,7 +251,7 @@
    positionPreview(p);
    // The centre book simultaneously moves toward the left side and fades.
    view.hero.style.transform='translate(calc(-50% - '+(view.stage.clientWidth*.80*p).toFixed(1)+'px),calc(-50% - '+(view.stage.clientHeight*.12*p).toFixed(1)+'px)) scale('+(1-.48*p).toFixed(3)+')';
-   view.hero.style.opacity=String(Math.max(0,1-p*1.30));
+   view.hero.style.opacity=String(Math.max(0,1-p*2.65));
  }
 
  // Promoting the small right-side course enlarges that exact book into
