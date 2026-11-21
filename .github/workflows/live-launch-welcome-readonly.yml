@@ -1,0 +1,30 @@
+name: Verify Live Official Opening Welcome
+on:
+  push:
+    branches: [qa/verify-live-inauguration-welcome-20261121]
+    paths:
+      - tests/live-launch-welcome-readonly.mjs
+      - .github/workflows/live-launch-welcome-readonly.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --ignore-scripts playwright@1.56.1
+      - name: Read-only mobile Chrome test on actual deployed site
+        run: node tests/live-launch-welcome-readonly.mjs
+        env:
+          CHROME: /usr/bin/google-chrome
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: launch-welcome-mobile-proof
+          path: launch-welcome-proof/
+          retention-days: 7
