@@ -1,0 +1,33 @@
+name: Once-Only Visitor Ribbon Experience
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'visitor-ribbon.js'
+      - 'visitor-ribbon.css'
+      - 'launch-day-welcome.js'
+      - 'tests/visitor-ribbon.test.mjs'
+      - '.github/workflows/visitor-ribbon-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'visitor-ribbon.js'
+      - 'visitor-ribbon.css'
+      - 'launch-day-welcome.js'
+      - 'tests/visitor-ribbon.test.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visitor-welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check visitor JavaScript syntax
+        run: node --check visitor-ribbon.js
+      - name: Check personal visitor opening and official intro isolation
+        run: node --test tests/visitor-ribbon.test.mjs tests/launch-day-welcome.test.mjs
