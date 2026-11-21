@@ -46,7 +46,9 @@ test('Main Ceremony Preview is resettable, keeps real launch locked, and reveals
   // The displayed official ribbon cut itself is staged and remains resettable.
   assert.match(js,/async function requestStagedOfficialCut\(\)/);
   assert.match(js,/async function finalizeOfficial\(\)/);
-  assert.match(js,/await setDoc\(doc\(db,'grandLaunch','official'\)/);
+  assert.match(js,/batch\.set\(doc\(db,'grandLaunch','official'\)/);
+  assert.match(js,/batch\.set\(doc\(db,'grandLaunchPublic','opening'\)/);
+  assert.match(js,/await batch\.commit\(\)/);
   assert.match(js,/if\(!isOfficial\|\|role!=='principal'/);
   assert.match(js,/if\(isOfficial\)return; \/\/ Official mode can never use the resettable cut path/);
   assert.doesNotMatch(html,/id="startOfficial"/);

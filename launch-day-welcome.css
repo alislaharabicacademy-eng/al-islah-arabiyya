@@ -1,0 +1,31 @@
+/* Only activated after Firebase verifies the immutable official launch. */
+#launchDayBanner[hidden],#launchWelcomeOverlay[hidden]{display:none!important}
+#launchDayBanner{position:relative;z-index:8;background:linear-gradient(90deg,#0b3d2d,#1c664a 49%,#0b3d2d);color:#ffe7ac;box-shadow:0 6px 19px #09241822;border-top:1px solid #bd9a57;border-bottom:1px solid #bd9a57}
+#launchDayBanner .launch-banner-inner{max-width:1180px;margin:auto;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;padding:11px 52px 11px 16px;text-align:center;font:600 clamp(12px,2vw,15px)/1.5 'DM Sans',sans-serif;letter-spacing:.015em}
+#launchDayBanner strong{color:#fff9df}
+#launchDayBanner .launch-banner-close{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#ffe7ac;border:1px solid #c6aa6e65;background:#ffffff12;padding:5px 9px;border-radius:8px;cursor:pointer;font-size:16px;min-height:32px}
+#launchWelcomeOverlay{position:fixed;inset:0;z-index:99999;overflow-x:hidden;overflow-y:auto;display:grid;place-items:center;padding:24px 14px;background:radial-gradient(ellipse at 50% 15%,#236447 0%,#103d2d 38%,#051c15 100%);color:#ffebbc;text-align:center;isolation:isolate;font-family:'DM Sans',system-ui,sans-serif;animation:launchWelcomeFade .7s ease both}
+#launchWelcomeOverlay::before{content:'';position:fixed;inset:10px;border:1px solid #e3bd6b50;border-radius:18px;pointer-events:none}
+#launchWelcomeOverlay::after{content:'';position:fixed;inset:0;opacity:.14;pointer-events:none;background:repeating-conic-gradient(from 45deg at 50% 35%,#d5ae6528 0deg 12deg,transparent 12deg 30deg);mask-image:radial-gradient(circle at center,transparent 20%,#000 100%)}
+.launch-welcome-skip{position:fixed;top:22px;right:25px;z-index:2;min-height:41px;border:1px solid #e3bd6b8c;border-radius:30px;background:#09271fd9;color:#fff4d7;padding:9px 17px;font-weight:700;cursor:pointer}
+.launch-welcome-card{width:min(770px,100%);position:relative;z-index:1;padding:56px 22px 45px;display:flex;align-items:center;flex-direction:column;gap:12px;animation:launchWelcomeUp .95s cubic-bezier(.2,.7,.2,1) both}
+.launch-welcome-ring{display:grid;place-items:center;width:136px;height:136px;padding:14px;border:2px solid #daba7099;border-radius:50%;background:radial-gradient(circle,#f5da9242,#0b392c45 75%);box-shadow:0 0 0 10px #e0b96a13,0 0 60px #e7c77442}
+.launch-welcome-logo{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 4px 10px #0008)}
+.launch-welcome-arabic{font-family:'Amiri','Traditional Arabic',serif;font-size:clamp(22px,5vw,35px);line-height:1.65;letter-spacing:0;color:#ffe6a6;margin:5px 0 0}
+.launch-welcome-kicker{text-transform:uppercase;letter-spacing:.25em;font-size:clamp(11px,2vw,14px);font-weight:700;color:#f6d28e}
+.launch-welcome-card h2{margin:6px 0 0;font:700 clamp(41px,8.5vw,77px)/1 'Cormorant Garamond',Georgia,serif;color:#fff7da;text-shadow:0 10px 35px #e9c17455}
+.launch-welcome-brand{font:600 clamp(21px,4vw,37px)/1.18 'Playfair Display',Georgia,serif;color:#ffe1a3}
+.launch-welcome-subtitle{font-size:clamp(13px,2vw,17px);font-weight:650;letter-spacing:.07em;color:#ffefc9;margin:2px 0}
+.launch-welcome-date{padding:8px 20px;border-top:1px solid #d5b57475;border-bottom:1px solid #d5b57475;letter-spacing:.12em;font-size:12px;color:#e9c484}
+.launch-welcome-enter{margin-top:18px;display:inline-flex;justify-content:center;align-items:center;min-height:52px;border:1px solid #ffe4ab;border-radius:12px;padding:13px 28px;background:linear-gradient(115deg,#fff5c5,#dfb765 56%,#af7929);color:#173628!important;text-decoration:none;font-size:15px;font-weight:800;box-shadow:0 9px 35px #e0b75f2f;cursor:pointer}
+.launch-welcome-enter:hover,.launch-welcome-enter:focus-visible{transform:translateY(-2px);box-shadow:0 14px 40px #e0b75f6a}
+.launch-welcome-petal-field{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.launch-welcome-petal{position:absolute;top:-8vh;left:var(--petal-x);width:var(--petal-size);height:calc(var(--petal-size)*1.4);border-radius:70% 5% 70% 5%;opacity:.65;transform:rotate(var(--petal-turn));background:linear-gradient(130deg,#fff6de,#e0b76a 55%,#fff1c5);box-shadow:0 0 14px #f6de9455;animation:launchPetalFall var(--petal-duration) linear var(--petal-delay) infinite}
+.launch-welcome-light{position:absolute;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,#dfb46822,transparent 75%);filter:blur(8px);pointer-events:none}
+.launch-welcome-light.left{left:-110px;top:25%}.launch-welcome-light.right{right:-110px;bottom:20%}
+body.launch-welcome-open{overflow:hidden}
+@keyframes launchWelcomeFade{from{opacity:0}to{opacity:1}}
+@keyframes launchWelcomeUp{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes launchPetalFall{from{transform:translateY(-8vh) translateX(0) rotate(var(--petal-turn))}to{transform:translateY(112vh) translateX(var(--petal-drift)) rotate(560deg)}}
+@media(max-width:520px){.launch-welcome-card{padding:73px 10px 42px}.launch-welcome-ring{width:108px;height:108px}.launch-welcome-skip{top:12px;right:14px}.launch-welcome-date{font-size:11px}.launch-welcome-kicker{letter-spacing:.16em}}
+@media(prefers-reduced-motion:reduce){#launchWelcomeOverlay,.launch-welcome-card,.launch-welcome-petal{animation:none!important}.launch-welcome-petal{display:none!important}.launch-welcome-enter{transition:none!important}}

@@ -336,6 +336,29 @@ service cloud.firestore {
         && request.resource.data.launchedBy == request.auth.uid;
     }
 
+    // Public inauguration signal: only the date and confirmed state are
+    // visible. No Master Admin / Principal email, UID, or private ceremony
+    // control is exposed to visitors. The signal can never precede the
+    // immutable official launch, even with multiple devices racing.
+    match /grandLaunchPublic/{documentId} {
+      allow get: if documentId == 'opening'
+        && exists(/databases/$(database)/documents/grandLaunch/official);
+      allow list, update, delete: if false;
+      // Must be created in the SAME Firestore atomic batch as official.
+      // getAfter inspects the fully committed state in that batch.
+      allow create: if documentId == 'opening'
+        && (isLaunchPrincipal() || isMasterAdmin())
+        && !exists(/databases/$(database)/documents/grandLaunch/official)
+        && getAfter(/databases/$(database)/documents/grandLaunch/official).data.phase == 'launched'
+        && request.resource.data.keys().hasOnly(['phase','dateLocal','launchedAt'])
+        && request.resource.data.keys().hasAll(['phase','dateLocal','launchedAt'])
+        && request.resource.data.phase == 'launched'
+        && request.resource.data.dateLocal == '2026-11-21'
+        && request.resource.data.launchedAt == request.time
+        && request.resource.data.launchedAt
+            == getAfter(/databases/$(database)/documents/grandLaunch/official).data.launchedAt;
+    }
+
     match /siteSettings/{settingId} {
       allow get: if settingId == 'public' || isAdmin();
       allow list: if isAdmin();

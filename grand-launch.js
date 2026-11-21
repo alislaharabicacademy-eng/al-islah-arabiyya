@@ -1,7 +1,7 @@
 /* Host/Principal inauguration UX. Trial and Main Preview are reversible; only separately confirmed Official mode creates a permanent launch record. */
 import {initializeApp,getApps} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js';
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect,signInWithEmailAndPassword,signOut} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
-import {getFirestore,doc,collection,query,limit,getDocs,getDoc,setDoc,updateDoc,onSnapshot,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+import {getFirestore,doc,collection,query,limit,getDocs,getDoc,setDoc,updateDoc,writeBatch,onSnapshot,serverTimestamp} from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
 import {isVerifiedMasterAdmin} from './admin-role-status.js';
 
 const $=id=>document.getElementById(id);
@@ -560,12 +560,21 @@ async function finalizeOfficial(){
   $('officialFinalize').disabled=true;
   message('Submitting the Principal’s final one-time inauguration confirmation…');
   try{
-    await setDoc(doc(db,'grandLaunch','official'),{
+    // One atomic transaction: the public welcome signal cannot exist until
+    // the Principal's one-time official launch record is committed.
+    // The public signal contains no identities or private ceremony metadata.
+    const launchTime=serverTimestamp();
+    const batch=writeBatch(db);
+    batch.set(doc(db,'grandLaunch','official'),{
       kind:'official',phase:'launched',dateLocal:'2026-11-21',
       startedAt:officialControl.startedAt,
-      launchedAt:serverTimestamp(),launchedBy:me.uid
+      launchedAt:launchTime,launchedBy:me.uid
     });
-    message('Final confirmation submitted. Awaiting secure server verification…');
+    batch.set(doc(db,'grandLaunchPublic','opening'),{
+      phase:'launched',dateLocal:'2026-11-21',launchedAt:launchTime
+    });
+    await batch.commit();
+    message('Final official inauguration and public welcome confirmed together. Awaiting secure server verification…');
   }catch(error){
     cutPending=false;$('officialFinalize').disabled=false;
     message('Final launch NOT recorded: '+error.message+'. Confirm the status before retrying.',true);
