@@ -351,3 +351,65 @@
   opacity:1!important;
  }
 }
+
+
+/* Version 2: actual next-course book on the upper-right of the circular rail.
+   Its own pointer drag moves and grows it into the main centre position. */
+#homepageCourseGrid .academy-orbit-preview{
+ position:absolute;
+ top:43%;left:50%;z-index:5;
+ width:220px;height:283px;padding:0;margin:0;
+ display:block;border:0;background:transparent;color:#ffefbd;
+ transform-origin:center center;
+ cursor:grab;touch-action:none;
+ transition:transform .31s cubic-bezier(.2,.7,.25,1);
+ filter:drop-shadow(0 9px 13px #0008);
+ -webkit-tap-highlight-color:transparent;
+}
+#homepageCourseGrid .academy-orbit-preview:focus-visible{
+ outline:4px solid #ffe29b;
+ outline-offset:9px;
+ border-radius:16px;
+}
+#homepageCourseGrid .academy-orbit-preview .academy-main-book{
+ animation:none!important;
+}
+#homepageCourseGrid .academy-orbit-preview[data-course-style="muballigha"] .academy-main-book-cover{
+ background:linear-gradient(110deg,#091f30,#174252 29%,#1c686e 53%,#0b3745 80%,#081d29);
+}
+#homepageCourseGrid .academy-preview-caption{
+ position:absolute;left:50%;top:calc(100% + 7px);transform:translateX(-50%);
+ font:800 25px/1.3 'DM Sans',sans-serif;
+ letter-spacing:.05em;white-space:nowrap;
+ color:#ffe7ac;text-shadow:0 3px 8px #000a;pointer-events:none;
+}
+#homepageCourseGrid .academy-orbit-preview[hidden]{display:none!important}
+#homepageCourseGrid .academy-orbit-preview.academy-preview-promoting{
+ transition:transform .68s cubic-bezier(.16,.78,.2,1);
+ cursor:grabbing;
+}
+#homepageCourseGrid .academy-orbit-preview.academy-preview-no-transition,
+#homepageCourseGrid .academy-is-preview-dragging .academy-orbit-preview{
+ transition:none!important;
+ cursor:grabbing;
+}
+#homepageCourseGrid .academy-is-preview-dragging .academy-hero-course{
+ transition:none!important;
+}
+#homepageCourseGrid .academy-hero-course{
+ transition:transform .32s cubic-bezier(.2,.7,.25,1),opacity .32s ease;
+}
+#homepageCourseGrid .academy-is-preview-dragging .academy-collection-controls{
+ pointer-events:none;
+}
+@media(max-width:720px){
+ #homepageCourseGrid .academy-orbit-preview{width:190px;height:251px}
+ #homepageCourseGrid .academy-preview-caption{font-size:22px}
+ #homepageCourseGrid .academy-swipe-text{font-size:9px;letter-spacing:.08em}
+}
+@media(prefers-reduced-motion:reduce){
+ #homepageCourseGrid .academy-orbit-preview,
+ #homepageCourseGrid .academy-orbit-preview.academy-preview-promoting{
+ transition:none!important;
+ }
+}
