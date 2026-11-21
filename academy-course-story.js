@@ -16,6 +16,8 @@
  let exitTimer=0;
  let settleTimer=0;
  let transitioning=false;
+ let previewGesture=null;
+ let outgoingAnimation=null;
 
  function courseSummary(raw){
    const text=String(raw||'').replace(/\s+/g,' ').trim();
@@ -58,7 +60,7 @@
        <span class="academy-collection-counter" aria-live="polite">01 / 03</span>
      </div>
      <div class="academy-collection-stage" tabindex="0" role="group"
-          aria-roledescription="carousel" aria-label="Featured course carousel; swipe or use arrows">
+          aria-roledescription="carousel" aria-label="Featured course carousel; drag the small book on the upper right into the centre or use arrows">
        <div class="academy-collection-watermark" aria-hidden="true">AL ISLAH</div>
        <div class="academy-collection-orbit academy-collection-orbit-back" aria-hidden="true"></div>
        <div class="academy-collection-orbit academy-collection-orbit-front" aria-hidden="true"></div>
@@ -78,9 +80,23 @@
          </div>
          <div class="academy-book-shadow"></div>
        </div>
+       <button type="button" class="academy-orbit-preview" aria-label="Drag next course into the centre">
+         <div class="academy-main-book" aria-hidden="true">
+           <div class="academy-main-book-spine"></div>
+           <div class="academy-main-book-pages"></div>
+           <div class="academy-main-book-cover">
+             <div class="academy-book-border"></div>
+             <span class="academy-book-kicker">MADRASA AL ISLAHUL ARABIYA</span>
+             <img class="academy-book-logo" src="1_20261112_080707_0000.png" alt="" decoding="async">
+             <strong class="academy-book-course academy-preview-course"></strong>
+             <small>WOMEN'S ONLINE MADRASA</small>
+           </div>
+         </div>
+         <span class="academy-preview-caption" aria-hidden="true"></span>
+       </button>
        <div class="academy-collection-controls">
          <button type="button" class="academy-carousel-prev" aria-label="Previous course">←</button>
-         <span class="academy-swipe-text">DRAG TO EXPLORE</span>
+         <span class="academy-swipe-text">DRAG SMALL BOOK ↙</span>
          <button type="button" class="academy-carousel-next" aria-label="Next course">→</button>
        </div>
      </div>
@@ -105,6 +121,9 @@
      shell,
      stage:shell.querySelector('.academy-collection-stage'),
      hero:shell.querySelector('.academy-hero-course'),
+     preview:shell.querySelector('.academy-orbit-preview'),
+     previewTitle:shell.querySelector('.academy-preview-course'),
+     previewCaption:shell.querySelector('.academy-preview-caption'),
      title:shell.querySelector('.academy-course-title'),
      info:shell.querySelector('.academy-course-info'),
      bookTitle:shell.querySelector('.academy-book-course'),
@@ -126,9 +145,16 @@
    const c=records[idx];
    currentId=c.id;
    view.count.textContent=String(idx+1).padStart(2,'0')+' / '+String(len).padStart(2,'0');
-   view.stage.setAttribute('aria-label','Featured course '+(idx+1)+' of '+len+': '+c.name+'. Swipe or use the arrows to explore.');
+   view.stage.setAttribute('aria-label','Featured course '+(idx+1)+' of '+len+': '+c.name+'. Drag the small next-course book into the centre, or use the arrows.');
    view.stage.dataset.courseStyle=c.id==='muballigha'?'muballigha':'muallama';
    view.bookTitle.textContent=c.name;
+   const next=records[(idx+1)%len];
+   view.previewTitle.textContent=next.name;
+   view.previewCaption.textContent=next.name;
+   view.preview.dataset.courseStyle=next.id==='muballigha'?'muballigha':'muallama';
+   view.preview.setAttribute('aria-label','Next course: '+next.name+'. Drag this small book along the circle into the centre, or tap to open.');
+   view.preview.hidden=len<2;
+   positionPreview(0);
    view.title.textContent=c.name;
    view.tamil.textContent=c.tamil;
    view.tamil.hidden=!c.tamil;
@@ -166,11 +192,107 @@
    window.clearTimeout(settleTimer);
    transitioning=false;
    dragStart=null;
+   previewGesture=null;
+   if(outgoingAnimation){outgoingAnimation.cancel();outgoingAnimation=null}
    if(!view)return;
    view.stage.classList.remove('academy-is-dragging');
    view.hero.classList.remove('academy-book-entering','academy-book-leaving-left','academy-book-leaving-right');
    view.hero.style.removeProperty('--drag-x');
    view.hero.style.removeProperty('--drag-start');
+   view.hero.style.removeProperty('transform');
+   view.hero.style.removeProperty('opacity');
+   view.preview.classList.remove('academy-preview-promoting','academy-preview-no-transition');
+   positionPreview(0);
+ }
+
+ // Preview rests on the upper-right arc of the visible circular track.
+ // Its scaled 3D cover is the real next course, never a generic star icon.
+ function orbit(){
+   if(!view)return {x:110,y:-110};
+   const w=view.stage.clientWidth, h=view.stage.clientHeight;
+   return {x:Math.max(70,Math.min(w*.35,w/2-39)),y:-h*.285};
+ }
+ function positionPreview(progress){
+   if(!view)return;
+   const p=Math.max(0,Math.min(1,Number(progress)||0));
+   const {x,y}=orbit();
+   const wave=Math.sin(p*Math.PI);
+   const px=x*(1-p)+wave*9;
+   const py=y*(1-p)-wave*12;
+   const scale=.38+.62*p;
+   const rotate=11*(1-p);
+   view.preview.style.transform='translate(calc(-50% + '+px.toFixed(1)+'px),calc(-50% + '+py.toFixed(1)+'px)) scale('+scale.toFixed(3)+') rotate('+rotate.toFixed(1)+'deg)';
+ }
+ function resetPreviewGesture(){
+   previewGesture=null;
+   if(!view)return;
+   view.stage.classList.remove('academy-is-preview-dragging');
+   view.hero.style.removeProperty('transform');
+   view.hero.style.removeProperty('opacity');
+   positionPreview(0);
+ }
+ function dragPreview(event){
+   if(!previewGesture||event.pointerId!==previewGesture.id||transitioning)return;
+   const g=previewGesture;
+   const dx=event.clientX-g.x,dy=event.clientY-g.y;
+   if(!g.active&&Math.hypot(dx,dy)<7)return;
+   g.active=true;
+   view.stage.classList.add('academy-is-preview-dragging');
+   event.preventDefault();
+   // Project the finger motion toward the centre. A subtle curved path
+   // follows the circle, so this is an actual draggable book, not a button.
+   const {x,y}=orbit();
+   const p=Math.max(0,Math.min(1,(-x*dx-y*dy)/(x*x+y*y)));
+   g.progress=p;
+   positionPreview(p);
+   // The centre book simultaneously moves toward the left side and fades.
+   view.hero.style.transform='translate(calc(-50% - '+(view.stage.clientWidth*.80*p).toFixed(1)+'px),calc(-50% - '+(view.stage.clientHeight*.12*p).toFixed(1)+'px)) scale('+(1-.48*p).toFixed(3)+')';
+   view.hero.style.opacity=String(Math.max(0,1-p*1.30));
+ }
+
+ // Promoting the small right-side course enlarges that exact book into
+ // the main stage while the old centre book disappears to the left.
+ function promoteNext(index){
+   if(!view||transitioning||records.length<2)return;
+   const idx=(index+records.length)%records.length;
+   transitioning=true;
+   const oldView=view;
+   const hero=view.hero;
+   const preview=view.preview;
+   const transform=getComputedStyle(hero).transform;
+   const opacity=getComputedStyle(hero).opacity;
+   view.stage.classList.remove('academy-is-preview-dragging','academy-is-dragging');
+   preview.classList.add('academy-preview-promoting');
+   hero.style.removeProperty('--drag-x');
+   // The Web Animations API preserves the current position if already
+   // partially dragged, avoiding a jump to the centre on release.
+   if(typeof hero.animate==='function'){
+     outgoingAnimation=hero.animate([
+       {transform,opacity},
+       {transform:'translate(calc(-50% - '+(view.stage.clientWidth+260)+'px),calc(-50% - 95px)) scale(.19) rotate(-18deg)',opacity:0}
+     ],{duration:680,easing:'cubic-bezier(.3,.68,.28,1)',fill:'forwards'});
+   }else{
+     hero.classList.add('academy-book-leaving-left');
+   }
+   previewGesture=null;
+   // Next frame ensures a transition from wherever the small book was
+   // released, including a direct tap from its upper-right resting point.
+   requestAnimationFrame(()=>{if(view===oldView)positionPreview(1)});
+   exitTimer=window.setTimeout(()=>{
+     if(view!==oldView)return;
+     if(outgoingAnimation){outgoingAnimation.cancel();outgoingAnimation=null}
+     hero.classList.remove('academy-book-leaving-left');
+     hero.style.removeProperty('transform');
+     hero.style.removeProperty('opacity');
+     // Swap at the exact instant the preview arrives. The new miniature
+     // appears at the upper-right start of the orbit without flying back.
+     preview.classList.add('academy-preview-no-transition');
+     preview.classList.remove('academy-preview-promoting');
+     showCourse(idx,true);
+     void preview.offsetWidth;
+     preview.classList.remove('academy-preview-no-transition');
+     transitioning=false;
+   },700);
  }
 
  function resetDrag(){
@@ -186,8 +308,10 @@
    const len=records.length;
    const idx=(index+len)%len;
    const from=records.findIndex(c=>c.id===currentId);
-   if(idx===from){resetDrag();return}
-   if(reduced.matches){resetDrag();showCourse(idx,false);return}
+   if(idx===from){resetDrag();resetPreviewGesture();return}
+   if(reduced.matches){resetDrag();resetPreviewGesture();showCourse(idx,false);return}
+   // Advancing uses the real small book on the top-right orbit.
+   if(idx===(from+1)%len){promoteNext(idx);return}
 
    transitioning=true;
    const oldView=view;
@@ -264,6 +388,46 @@
    view.stage.addEventListener('lostpointercapture',()=>{
      if(dragStart){dragStart=null;resetDrag()}
    });
+   // Separate gesture surface: the small NEXT course itself follows the
+   // finger along the circular track and grows into the main book.
+   view.preview.addEventListener('pointerdown',event=>{
+     if(transitioning||event.button!==0)return;
+     event.stopPropagation();
+     previewGesture={id:event.pointerId,x:event.clientX,y:event.clientY,active:false,progress:0};
+     try{view.preview.setPointerCapture(event.pointerId)}catch(_){}
+   });
+   view.preview.addEventListener('pointermove',event=>{
+     if(previewGesture&&event.pointerId===previewGesture.id){
+       event.stopPropagation();
+       dragPreview(event);
+     }
+   });
+   view.preview.addEventListener('pointerup',event=>{
+     if(!previewGesture||event.pointerId!==previewGesture.id)return;
+     event.stopPropagation();
+     const progress=previewGesture.progress;
+     const active=previewGesture.active;
+     previewGesture=null;
+     if(!active||progress>=.38){
+       const index=records.findIndex(c=>c.id===currentId);
+       navigate((index<0?0:index)+1,1);
+     }else resetPreviewGesture();
+   });
+   view.preview.addEventListener('pointercancel',event=>{
+     event.stopPropagation();
+     resetPreviewGesture();
+   });
+   view.preview.addEventListener('lostpointercapture',()=>{
+     if(previewGesture)resetPreviewGesture();
+   });
+   view.preview.addEventListener('click',event=>{
+     // Pointer-up already performs a single transition; this also permits
+     // Enter/Space activation for keyboards and assistive technologies.
+     if(event.detail===0){
+       const index=records.findIndex(c=>c.id===currentId);
+       navigate((index<0?0:index)+1,1);
+     }
+   });
  }
 
  function refreshFromPublishedCards(){
@@ -290,6 +454,10 @@
      },760);
    }
  }
+
+ window.addEventListener('resize',()=>{
+   if(view&&!transitioning&&!previewGesture)positionPreview(0);
+ },{passive:true});
 
  refreshFromPublishedCards();
  if('MutationObserver' in window){
