@@ -28,6 +28,9 @@ test('Firestore retains Master privileges without weakening normal or public acc
  const rules=read('firestore.rules');
  assert.match(rules,/function isMasterAdmin\(\)/);
  assert.match(rules,/request\.auth\.token\.email == 'syedatheil40@gmail\.com'/);
+ const masterOnly=rules.split('function isMasterAdmin()')[1].split('function hasPrivateAdminGrant()')[0];
+ assert.match(masterOnly,/request\.auth\.token\.email == 'alislaharabicacademy@gmail\.com'/);
+ assert.match(masterOnly,/request\.auth\.token\.email_verified == true/);
  assert.match(rules,/function isAdmin\(\)\s*\{\s*return isNormalAdmin\(\) \|\| isMasterAdmin\(\) \|\| hasPrivateAdminGrant\(\);/);
  assert.match(rules,/allow create, update: if isMasterAdmin\(\)/);
  assert.match(rules,/allow get: if role == 'master' && isMasterAdmin\(\)/);
