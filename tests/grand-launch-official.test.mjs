@@ -59,6 +59,12 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   const outsider=env.authenticatedContext('outsider-uid',{
     email:'another@example.com',email_verified:true
   }).firestore();
+  const ceremonyInvite=env.authenticatedContext('ceremony-invite-uid',{
+    email:'wafahikmiya@gmail.com',email_verified:true
+  }).firestore();
+  const unverifiedInvite=env.authenticatedContext('unverified-invite-uid',{
+    email:'wafahikmiya@gmail.com',email_verified:false
+  }).firestore();
   const guest=env.unauthenticatedContext().firestore();
   const unverified=env.authenticatedContext('unverified-uid',{
     email:'principal@example.com',email_verified:false
@@ -75,8 +81,22 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   const cancel={state:'armed',startedAt:null,startedBy:null,
     updatedAt:serverTimestamp(),updatedBy:'master-uid'};
 
+  // Both explicitly invited inauguration accounts can open Principal Login,
+  // but never acquire Master permissions or Official Host countdown controls.
+  const probe='grandLaunch/principalAccessProbe';
+  await assertSucceeds(getDoc(doc(ceremonyInvite,probe)));
+  await assertSucceeds(getDoc(doc(admin,probe)));
+  await assertFails(getDoc(doc(outsider,probe)));
+  await assertFails(getDoc(doc(unverifiedInvite,probe)));
+  await assertFails(getDoc(doc(ceremonyInvite,'adminRoleChecks','master')));
+  await assertFails(getDoc(doc(admin,'adminRoleChecks','master')));
   await assertSucceeds(setDoc(doc(master,config),{
     principalEmail:'principal@example.com',updatedAt:serverTimestamp(),updatedBy:'master-uid'
+  }));
+  await assertSucceeds(getDoc(doc(principal,probe))); // saved Principal still has access
+  await assertSucceeds(getDoc(doc(ceremonyInvite,config))); // additional account persists
+  await assertFails(setDoc(doc(ceremonyInvite,config),{
+    principalEmail:'wafahikmiya@gmail.com',updatedAt:serverTimestamp(),updatedBy:'ceremony-invite-uid'
   }));
   await assertFails(getDoc(doc(outsider,control)));
   await assertFails(getDoc(doc(guest,publicOpening))); // before final opening no public welcome
