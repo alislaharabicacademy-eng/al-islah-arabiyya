@@ -413,3 +413,8 @@
  transition:none!important;
  }
 }
+
+/* Explicit preview palette, independent of the active course's stage data attribute. */
+#homepageCourseGrid .academy-orbit-preview[data-course-style="muallama"] .academy-main-book-cover{
+ background:linear-gradient(112deg,#061b18 0%,#174e39 24%,#16674b 52%,#093527 83%,#081d19 100%);
+}
