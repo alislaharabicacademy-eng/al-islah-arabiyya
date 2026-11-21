@@ -82,7 +82,7 @@ try{
   }catch(e){report('FAIL',label+' · course browser render',e.message.slice(0,280))}
  }
  try{
-  await page.goto(new URL('all-courses.html',base),{waitUntil:'domcontentloaded',timeout:45000});
+  await page.goto(new URL('all-courses.html',base).href,{waitUntil:'domcontentloaded',timeout:45000});
   await page.waitForTimeout(4000);
   const details=await page.evaluate(()=>({
    count:document.querySelectorAll('#grid .card').length,
@@ -94,7 +94,7 @@ try{
   await page.screenshot({path:'live-course-smoke-proof/all-courses-mobile.png',fullPage:true,animations:'disabled'});
  }catch(e){report('FAIL','All Courses browser render',e.message.slice(0,280))}
  try{
-  await page.goto(new URL('admission.html',base),{waitUntil:'domcontentloaded',timeout:45000});
+  await page.goto(new URL('admission.html',base).href,{waitUntil:'domcontentloaded',timeout:45000});
   await page.waitForTimeout(4000);
   const data=await page.evaluate(()=>({
    heading:document.querySelector('h1')?.textContent?.trim(),
