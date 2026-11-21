@@ -81,15 +81,15 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   const cancel={state:'armed',startedAt:null,startedBy:null,
     updatedAt:serverTimestamp(),updatedBy:'master-uid'};
 
-  // Both explicitly invited inauguration accounts can open Principal Login,
-  // but never acquire Master permissions or Official Host countdown controls.
+  // Both invited accounts can open Principal Login. Academy Gmail is ALSO a
+  // verified Master, while the separate ceremony invite stays Principal-only.
   const probe='grandLaunch/principalAccessProbe';
   await assertSucceeds(getDoc(doc(ceremonyInvite,probe)));
   await assertSucceeds(getDoc(doc(admin,probe)));
   await assertFails(getDoc(doc(outsider,probe)));
   await assertFails(getDoc(doc(unverifiedInvite,probe)));
   await assertFails(getDoc(doc(ceremonyInvite,'adminRoleChecks','master')));
-  await assertFails(getDoc(doc(admin,'adminRoleChecks','master')));
+  await assertSucceeds(getDoc(doc(admin,'adminRoleChecks','master')));
   await assertSucceeds(setDoc(doc(master,config),{
     principalEmail:'principal@example.com',updatedAt:serverTimestamp(),updatedBy:'master-uid'
   }));
@@ -102,13 +102,15 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   await assertFails(getDoc(doc(guest,publicOpening))); // before final opening no public welcome
   await assertFails(getDoc(doc(guest,official))); // private immutable launch record is never public
   await assertFails(getDocs(collection(master,'grandLaunch')));
-  await assertFails(setDoc(doc(admin,control),{...arm,updatedBy:'normal-uid'}));
+  await assertFails(setDoc(doc(admin,control),{...arm,updatedBy:'wrong-uid'}));
+  await assertSucceeds(setDoc(doc(admin,control),{...arm,updatedBy:'normal-uid'}));
   await assertFails(setDoc(doc(principal,control),{...arm,updatedBy:'principal-uid'}));
   await assertFails(setDoc(doc(ceremonyInvite,control),{...arm,updatedBy:'ceremony-invite-uid'}));
   await assertFails(setDoc(doc(outsider,control),{...arm,updatedBy:'outsider-uid'}));
-  await assertSucceeds(setDoc(doc(master,control),arm));
+  // Original Master cannot overwrite an already armed ceremony.
   await assertFails(setDoc(doc(master,control),arm));
-  await assertFails(updateDoc(doc(admin,control),{...start,startedBy:'normal-uid',updatedBy:'normal-uid'}));
+  await assertFails(setDoc(doc(master,control),arm));
+  await assertFails(updateDoc(doc(admin,control),{...start,startedBy:'forged-uid',updatedBy:'normal-uid'}));
   await assertFails(updateDoc(doc(principal,control),{...start,startedBy:'principal-uid',updatedBy:'principal-uid'}));
   // Stage a full official countdown in the existing resettable trial doc.
   // Principal scissors only writes here; it never creates the official record.

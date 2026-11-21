@@ -37,9 +37,9 @@ test('students can self-submit only to a valid opened link, without viewing anyo
    email:'stranger@example.com',email_verified:true
   }).firestore();
   const visitor=env.unauthenticatedContext().firestore();
-  // The official Academy Gmail is now a NORMAL Admin and cannot issue
-  // private admin grants. The distinct verified Master grants access here.
-  await assertFails(setDoc(doc(owner,'adminAccess','secondary@example.com'),{
+  // Both verified Master accounts can issue ordinary admin grants; this
+  // does not elevate the grantee to Master.
+  await assertSucceeds(setDoc(doc(owner,'adminAccess','secondary@example.com'),{
    enabled:true,grantedBy:'owner',updatedAt:serverTimestamp()
   }));
   await assertSucceeds(setDoc(doc(superAdmin,'adminAccess','secondary@example.com'),{

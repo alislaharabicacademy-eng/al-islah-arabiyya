@@ -130,7 +130,7 @@ test('secure, repeatable rehearsal: Admin starts and Principal or host cuts afte
     // screen via a private server-side role check; no visible second account.
     await assertSucceeds(getDoc(doc(master,config)));
     await assertSucceeds(getDoc(doc(master,'adminRoleChecks','master')));
-    await assertFails(getDoc(doc(admin,'adminRoleChecks','master')));
+    await assertSucceeds(getDoc(doc(admin,'adminRoleChecks','master')));
     await assertFails(getDoc(doc(principal,'adminRoleChecks','master')));
     await assertFails(getDoc(doc(wrong,config)));
     await assertFails(getDoc(doc(unverified,config)));

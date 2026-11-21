@@ -3,9 +3,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Two independent levels: official Academy email is a NORMAL Admin;
-    // the separately authorized operator has the only Master Admin role.
-    // All sensitive privileges are enforced on the server, not just UI labels.
+    // Two verified Master Admin accounts: the original operator and Academy Gmail.
+    // Other privately granted administrators retain ordinary permissions only.
+    // All privileges are enforced in server rules, never by browser labels.
+    // Compatibility helper: Academy Gmail is also elevated by isMasterAdmin().
     function isNormalAdmin() {
       return request.auth != null
         && request.auth.token.email == 'alislaharabicacademy@gmail.com'
@@ -14,8 +15,11 @@ service cloud.firestore {
 
     function isMasterAdmin() {
       return request.auth != null
-        && request.auth.token.email == 'syedatheil40@gmail.com'
-        && request.auth.token.email_verified == true;
+        && request.auth.token.email_verified == true
+        && (
+          request.auth.token.email == 'syedatheil40@gmail.com'
+          || request.auth.token.email == 'alislaharabicacademy@gmail.com'
+        );
     }
 
     function hasPrivateAdminGrant() {
@@ -68,9 +72,9 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/teacherAccess/$(teacherId)).data.email == request.auth.token.email;
     }
 
-    // Only Master Admin can add or revoke normal administrator access.
-    // The public Academy contact email has NORMAL rights and cannot change
-    // role grants or promote itself. No account can self-assign Master.
+    // Both verified Master Admin accounts can manage ordinary admin grants.
+    // Both reserved Master emails are excluded from grant edits/revocation;
+    // no ordinary admin can promote themselves to Master.
     match /adminAccess/{grantEmail} {
       allow get: if isMasterAdmin()
         || (request.auth != null
@@ -91,9 +95,9 @@ service cloud.firestore {
         && grantEmail != 'syedatheil40@gmail.com';
     }
 
-    // Role probe: no role emails are exposed to normal Admins in browser
-    // code. Master gets a successful GET even when this sentinel is absent;
-    // a normal Admin gets permission-denied. No reads of other roles/writes.
+    // Role probe: no role emails are exposed by public browser code.
+    // Both verified Master accounts get a successful GET for this sentinel;
+    // other admins are denied. No role-listing or marker writes permitted.
     match /adminRoleChecks/{role} {
       allow get: if role == 'master' && isMasterAdmin();
       allow list, create, update, delete: if false;
