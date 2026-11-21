@@ -12,7 +12,7 @@ const isOfficial=params.get('mode')==='official';
 const isMainPreview=!isOfficial && params.get('mode')==='main-preview';
 const COUNTDOWN_MS=10000;
 let auth,db,me,trial=null,unsubscribe=null,authorized=false,principalEmail='',experiencedCountdown=false,cutPlayed=false,cutPending=false,previousPhase='',lastDigit=0,redirectTimer=null,successTimer=null,confettiTimer=null,sparkleTimer=null;
-let officialControl=null,officialRecord=null,officialControlLoaded=false,officialRecordLoaded=false;
+let officialControl=null,officialRecord=null,officialControlLoaded=false,officialRecordLoaded=false,officialTrialLoaded=false;
 let officialUnsubscribes=[],officialSeenCountdown=false,masterVerified=false;
 const message=(text,isError=false)=>{$('message').textContent=text;$('message').classList.toggle('danger',isError)};
 const show=(id,visible)=>$(id).hidden=!visible;
@@ -38,14 +38,14 @@ if(isOfficial){
   $('ceremonyModeBadge').textContent='👑 OFFICIAL INAUGURATION · ONE TIME ONLY';
   $('ceremonyTopline').textContent='SATURDAY, 21 NOVEMBER 2026 · OFFICIAL INAUGURATION';
   $('hostControlHeading').textContent='🔐 One-Time Official Opening · Master Control';
-  $('principalInstruction').textContent='When the Master Admin starts the official countdown on 21 November, you may cut the ribbon exactly once. This is NOT a trial; once cut, it cannot be reset.';
+  $('principalInstruction').textContent='After the 10-second official countdown, tap the scissors to reveal the inauguration. The Master Admin can RESET even after the ribbon cut. Only your separate CONFIRM FINAL OPENING action locks the ceremony permanently.';
   $('ceremonyFooter').innerHTML='Official inauguration · Saturday, 21 November 2026 · The confirmed ceremony is permanently recorded.<br>Madrasa Al Islahul Arabiya · Women\'s Online Madrasa';
   $('successHeadline').textContent='WEBSITE OFFICIALLY INAUGURATED';
   $('successSubtitle').textContent='21 November 2026 · Official Inauguration';
-  $('successExplanation').textContent='The official launch is permanently recorded and cannot be reset.';
-  $('previewLaunchHeader').textContent='🎉 OFFICIALLY INAUGURATED · 21 NOVEMBER 2026';
-  $('previewLaunchFooter').textContent='Official inauguration successfully recorded · 21 November 2026';
-  $('previewReset').hidden=true;
+  $('successExplanation').textContent='Ribbon-cut display completed. Waiting for the Principal to confirm the final official opening. Until then, the Master Admin can reset and repeat.';
+  $('previewLaunchHeader').textContent='🎀 CEREMONY PREVIEW · AWAITING FINAL CONFIRMATION';
+  $('previewLaunchFooter').textContent='Ribbon cut preview only · Not permanently recorded until Principal confirms';
+  $('previewReset').textContent='↻ Reset Ribbon & Rehearse';
   show('rehearsalControls',false);
   show('officialControls',true);
 }
@@ -136,7 +136,7 @@ function playCutAnimation(){
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
     $('ribbonWrap').classList.add('is-cut');confetti();goldSparkles();
   }));
-  message(isOfficial?'🎉 The official ribbon cut is permanently recorded! Presenting the inaugurated website…':isMainPreview?'✂️ Preview ribbon cut confirmed. Revealing the homepage without recording any official launch…':'✂️ Trial ribbon cut confirmed! Showing the rehearsal website…');
+  message(isOfficial?(officialRecord?.phase==='launched'?'🎉 Official inauguration permanently recorded. Presenting the website…':'🎀 Ribbon-cut preview complete. Reset is still available until Principal FINAL CONFIRM.'):isMainPreview?'✂️ Preview ribbon cut confirmed. Revealing the homepage without recording any official launch…':'✂️ Trial ribbon cut confirmed! Showing the rehearsal website…');
   // Keep celebration title visible for ~5 seconds before the real homepage reveal.
   successTimer=setTimeout(()=>{show('ribbonArea',false);show('success',true)},1550);
   // On the Host MAIN PREVIEW show the actual homepage in a full-size frame
@@ -284,7 +284,7 @@ function render(){
 async function showSignedIn(user,version){
   unsubscribe?.();unsubscribe=null;
   officialUnsubscribes.forEach(stop=>stop());officialUnsubscribes=[];
-  officialControl=null;officialRecord=null;officialControlLoaded=false;officialRecordLoaded=false;
+  officialControl=null;officialRecord=null;officialControlLoaded=false;officialRecordLoaded=false;officialTrialLoaded=false;
   officialSeenCountdown=false;masterVerified=false;
   authorized=false;me=user;trial=null;resetVisual();
   show('hostControls',false);show('principalInfo',false);
@@ -326,7 +326,7 @@ async function showSignedIn(user,version){
     }
     authorized=true;show('loginPanel',false);
     if(isOfficial){
-      message('🔐 Official inauguration status connected. The final cut has not been triggered from this page.');
+      message('🔐 Official inauguration connected. Ribbon display is resettable until the Principal confirms the final lock.');
       officialUnsubscribes.push(onSnapshot(doc(db,'grandLaunch','officialControl'),{includeMetadataChanges:true},snapshot=>{
         if(snapshot.metadata.hasPendingWrites)return;
         officialControl=snapshot.exists()?snapshot.data():null;
@@ -337,6 +337,11 @@ async function showSignedIn(user,version){
         officialRecord=snapshot.exists()?snapshot.data():null;
         officialRecordLoaded=true;render();
       },error=>message('Cannot read official inauguration record: '+error.message,true)));
+      officialUnsubscribes.push(onSnapshot(doc(db,'grandLaunch','trial'),{includeMetadataChanges:true},snapshot=>{
+        if(snapshot.metadata.hasPendingWrites)return;
+        trial=snapshot.exists()?snapshot.data():{phase:'idle'};
+        officialTrialLoaded=true;render();
+      },error=>message('Cannot read staged ceremony: '+error.message,true)));
     }else{
       message('Connected to secure rehearsal. Official Launch remains locked.');
       unsubscribe=onSnapshot(doc(db,'grandLaunch','trial'),{includeMetadataChanges:true},snapshot=>{
