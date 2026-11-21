@@ -123,3 +123,20 @@ test('Alima is a 3rd-year continuation, not an open direct-admission course',()=
   assert.match(js,/Separate admission fee and Academy approval are required/);
   assert.match(css,/\.academy-course-apply\[hidden\]\{display:none!important\}/);
 });
+
+test('Launch polish keeps center book smaller, preview half transparent and separated from main at rest',()=>{
+  assert.match(css,/\.academy-hero-course \.academy-main-book\{\s*scale:\.86/);
+  assert.match(css,/\.academy-orbit-preview\{\s*opacity:\.5/);
+  assert.match(css,/\.academy-preview-promoting,[\s\S]*?opacity:1/);
+  assert.match(js,/const x=Math\.min\(w\/2-18,Math\.max\(115,w\*\.40\),190\)/);
+  assert.match(js,/const scale=\.26\+\.74\*p/);
+  assert.match(js,/view\.hero\.style\.opacity=String\(Math\.max\(0,1-p\*2\.65\)\)/);
+  // The right-side preview is much smaller and begins outside the centre
+  // cover footprint across regular and narrow phone carousel widths.
+  for(const width of [238,260,298,360,700]){
+    const x=Math.max(78,Math.min(width/2-18,Math.max(115,width*.4),190));
+    const mainHalf=(width<720?171:204)*.86/2;
+    const smallHalf=(width<720?171:204)*.26/2;
+    assert.ok(x-smallHalf>=mainHalf-2,'resting covers overlap at '+width+'px');
+  }
+});
