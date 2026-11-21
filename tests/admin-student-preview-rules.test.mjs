@@ -40,8 +40,8 @@ test('student preview audit requires real verified admin and remains immutable',
    email:'secondary@example.com',email_verified:false
   }).firestore();
 
-  // Both normal and Master admins can access ordinary student records,
-  // while only Master may inspect audit logs. Parents cannot browse records.
+  // Both verified Masters and ordinary granted admins can access student
+  // records. Only Master accounts can inspect audit logs.
   await assertSucceeds(getDoc(doc(owner,'students','student-a')));
   await assertSucceeds(getDoc(doc(admin,'students','student-a')));
   await assertSucceeds(getDoc(doc(master,'students','student-a')));
@@ -59,10 +59,10 @@ test('student preview audit requires real verified admin and remains immutable',
   };
   const audit=await assertSucceeds(addDoc(collection(admin,'adminStudentPreviews'),event));
   assert.equal((await assertSucceeds(getDoc(doc(master,'adminStudentPreviews',audit.id)))).data().actorUid,'normal-granted-uid');
-  await assertFails(getDoc(doc(owner,'adminStudentPreviews',audit.id)));
+  await assertSucceeds(getDoc(doc(owner,'adminStudentPreviews',audit.id)));
   await assertFails(getDoc(doc(admin,'adminStudentPreviews',audit.id)));
   await assertSucceeds(getDocs(collection(master,'adminStudentPreviews')));
-  await assertFails(getDocs(collection(owner,'adminStudentPreviews')));
+  await assertSucceeds(getDocs(collection(owner,'adminStudentPreviews')));
   await assertFails(getDocs(collection(admin,'adminStudentPreviews')));
   await assertFails(updateDoc(audit,{purpose:'changed'}));
   await assertFails(deleteDoc(audit));
@@ -79,9 +79,9 @@ test('student preview audit requires real verified admin and remains immutable',
   await assertFails(addDoc(collection(stranger,'adminStudentPreviews'),event));
   await assertFails(addDoc(collection(unverified,'adminStudentPreviews'),event));
 
-  // The official normal Admin is not permitted to revoke accounts; the
-  // distinct Master Admin can revoke grants without changing normal owner.
-  await assertFails(setDoc(doc(owner,'adminAccess','secondary@example.com'),{
+  // Either verified Master may revoke ordinary grants without affecting
+  // protected Master accounts.
+  await assertSucceeds(setDoc(doc(owner,'adminAccess','secondary@example.com'),{
    enabled:false,updatedAt:serverTimestamp(),grantedBy:'academy-owner'
   }));
   await assertSucceeds(setDoc(doc(master,'adminAccess','secondary@example.com'),{
