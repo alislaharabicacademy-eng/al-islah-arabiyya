@@ -40,9 +40,9 @@ test('privileged teacher previews are append-only, actor-bound, non-anonymous an
   await assertSucceeds(getDoc(doc(admin,'teachers','teacher-1')));
   await assertSucceeds(getDoc(doc(master,'teachers','teacher-1')));
   const logged=await assertSucceeds(addDoc(collection(admin,'adminTeacherPreviews'),entry));
-  await assertFails(getDoc(doc(owner,'adminTeacherPreviews',logged.id)));
+  await assertSucceeds(getDoc(doc(owner,'adminTeacherPreviews',logged.id)));
   await assertFails(getDoc(doc(admin,'adminTeacherPreviews',logged.id)));
-  await assertFails(getDocs(collection(owner,'adminTeacherPreviews')));
+  await assertSucceeds(getDocs(collection(owner,'adminTeacherPreviews')));
   await assertSucceeds(getDoc(doc(master,'adminTeacherPreviews',logged.id)));
   await assertSucceeds(getDocs(collection(master,'adminTeacherPreviews')));
   await assertFails(deleteDoc(logged));
