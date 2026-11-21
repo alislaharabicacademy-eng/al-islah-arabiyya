@@ -7,7 +7,7 @@ Official Website of Madrasa Al Islahul Arabiya
 The verified Master Admin account is identified **server-side** by `isMasterAdmin()`
 in `firestore.rules`. It must be included through `isAdmin()` for **every current
 and future** Academy administrator operation. Master-only tasks use
-`isMasterAdmin()`. The Academy contact Gmail remains a Normal Admin.
+`isMasterAdmin()`. Both verified Master accounts (the original operator and the Academy contact Gmail) receive the same server-enforced Master permissions.
 
 **For every new Admin feature:** use
 `isVerifiedAcademyAdmin(db, auth.currentUser)` from
