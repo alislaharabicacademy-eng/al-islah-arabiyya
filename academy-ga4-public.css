@@ -1,0 +1,19 @@
+/* Public-only, optional analytics consent; no admin/teacher/student tracking. */
+#aliaAnalyticsConsent[hidden]{display:none!important}
+#aliaAnalyticsConsent{position:fixed;bottom:18px;left:18px;z-index:75;width:min(430px,calc(100vw - 36px));border-radius:16px;
+  border:1px solid #d9bc7b;background:#10392c;color:#fff9e7;padding:19px 19px 17px;
+  box-shadow:0 15px 50px #0007;font:14px/1.55 system-ui,-apple-system,Arial,sans-serif;text-align:left}
+#aliaAnalyticsConsent strong{display:block;color:#ffe7a8;font-size:16px;line-height:1.4}
+#aliaAnalyticsConsent p{font:13px/1.65 system-ui,-apple-system,Arial,sans-serif;color:#ecf3e9;margin:9px 0 14px}
+.alia-analytics-buttons{display:flex;flex-wrap:wrap;gap:10px}
+.alia-analytics-buttons button{flex:1 1 125px;min-height:44px;padding:10px 14px;cursor:pointer;
+  border-radius:10px;font-weight:800;font-size:13px;border:1px solid #f5e4b8}
+.alia-analytics-buttons button[data-analytics-choice="no"]{background:transparent;color:#fff0c8}
+.alia-analytics-buttons button[data-analytics-choice="yes"]{background:#e9c679;color:#193c2b}
+#aliaAnalyticsSettings{position:fixed;left:12px;bottom:10px;z-index:49;border:1px solid #c6d4c7;
+  color:#214936;background:#ffffffec;border-radius:100px;padding:8px 12px;min-height:35px;
+  font:700 11px system-ui,-apple-system,Arial,sans-serif;cursor:pointer;box-shadow:0 3px 12px #0002}
+#aliaAnalyticsConsent:not([hidden])~#aliaAnalyticsSettings{display:none}
+#aliaAnalyticsConsent button:focus-visible,#aliaAnalyticsSettings:focus-visible{outline:3px solid #ffdf8e;outline-offset:3px}
+@media(max-width:580px){#aliaAnalyticsConsent{left:12px;bottom:12px;width:calc(100vw - 24px);padding:16px}
+ #aliaAnalyticsSettings{left:7px;bottom:7px;font-size:10px}}
