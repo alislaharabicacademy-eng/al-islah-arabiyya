@@ -190,6 +190,11 @@ function renderOfficial(){
       ?'🔒 Ceremony armed. The countdown may start on Saturday 21 November 2026 (India time).'
       :'🔐 Not yet armed. The Master Admin can prepare the ceremony without launching.';
     const canManage=masterVerified&&!launched;
+    // Never silently hide all ceremony actions for a non-Master host.
+    // Keep server-enforced Master authorization unchanged; offer a safe
+    // Google-account switch rather than granting countdown privileges.
+    show('officialAccountHelp',!masterVerified&&!launched);
+    show('switchOfficialHostAccount',!masterVerified&&!launched);
     show('officialArm',canManage&&!officialControl);
     show('officialStart',canManage&&state==='armed');
     show('officialCancel',canManage&&state==='countdown');
@@ -414,6 +419,19 @@ async function loginWithGoogle(){
   }
 }
 $('googleLogin').addEventListener('click',loginWithGoogle);
+$('switchOfficialHostAccount').addEventListener('click',async()=>{
+  if(!auth||role!=='host'||!isOfficial)return;
+  const button=$('switchOfficialHostAccount');button.disabled=true;
+  try{
+    await signOut(auth);
+    // Return to the explicit login panel on Android and other browsers;
+    // the user can select the verified Master Google account there.
+    message('Signed out. Tap Continue with Google and choose the Master Admin account to start the official countdown.');
+    show('loginPanel',true);
+    $('googleLogin').focus();
+  }catch(error){message('Could not switch Google account: '+error.message,true)}
+  finally{button.disabled=false}
+});
 $('switchGoogleAccount').addEventListener('click',async()=>{
   if(!auth||role!=='principal')return;
   try{await signOut(auth);await loginWithGoogle()}
