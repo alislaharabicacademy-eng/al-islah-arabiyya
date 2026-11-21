@@ -341,19 +341,24 @@ async function showSignedIn(user,version){
       }
       show('hostControls',true);
     }else{
-      const snap=await getDoc(doc(db,'grandLaunch','config'));
+      // The empty probe document is readable ONLY to server-authorised
+      // ceremony Principals, including inauguration-only invitees. No
+      // permission is inferred from a public email list or local UI code.
+      let verifiedPrincipal=false;
+      try{
+        await getDoc(doc(db,'grandLaunch','principalAccessProbe'));
+        verifiedPrincipal=true;
+      }catch(_){ /* A denied probe never grants access. */ }
       if(version!==authVersion)return;
-      // The registered Principal remains the only configured ceremony email.
-      // A verified Master Admin has quiet backup access via a server-enforced
-      // role probe. Never add a second email to the Principal configuration,
-      // HTML, JavaScript, or any public website setting.
-      principalEmail=snap.exists()?String(snap.data().principalEmail||'').toLowerCase():'';
-      const registeredPrincipal=!!principalEmail && principalEmail===user.email.toLowerCase();
-      if(!registeredPrincipal){
+      if(!verifiedPrincipal){
+        // The private Master role retains its independent backup access.
         const verifiedMaster=await isVerifiedMasterAdmin(db,user);
         if(version!==authVersion)return;
-        if(!verifiedMaster)throw Error('Your Google account is not registered for Principal Login. Ask the Academy Admin to verify the Principal account in Settings → Principal Login, or choose a different Google account.');
+        if(!verifiedMaster)throw Error('This Google account is not authorised for Inauguration Principal Login. Choose one of the registered ceremony accounts.');
       }
+      const snap=await getDoc(doc(db,'grandLaunch','config'));
+      if(version!==authVersion)return;
+      principalEmail=snap.exists()?String(snap.data().principalEmail||'').toLowerCase():'';
       show('principalInfo',true);
     }
     authorized=true;show('loginPanel',false);

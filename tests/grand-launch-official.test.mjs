@@ -59,6 +59,12 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   const outsider=env.authenticatedContext('outsider-uid',{
     email:'another@example.com',email_verified:true
   }).firestore();
+  const ceremonyInvite=env.authenticatedContext('ceremony-invite-uid',{
+    email:'wafahikmiya@gmail.com',email_verified:true
+  }).firestore();
+  const unverifiedInvite=env.authenticatedContext('unverified-invite-uid',{
+    email:'wafahikmiya@gmail.com',email_verified:false
+  }).firestore();
   const guest=env.unauthenticatedContext().firestore();
   const unverified=env.authenticatedContext('unverified-uid',{
     email:'principal@example.com',email_verified:false
@@ -75,8 +81,22 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   const cancel={state:'armed',startedAt:null,startedBy:null,
     updatedAt:serverTimestamp(),updatedBy:'master-uid'};
 
+  // Both explicitly invited inauguration accounts can open Principal Login,
+  // but never acquire Master permissions or Official Host countdown controls.
+  const probe='grandLaunch/principalAccessProbe';
+  await assertSucceeds(getDoc(doc(ceremonyInvite,probe)));
+  await assertSucceeds(getDoc(doc(admin,probe)));
+  await assertFails(getDoc(doc(outsider,probe)));
+  await assertFails(getDoc(doc(unverifiedInvite,probe)));
+  await assertFails(getDoc(doc(ceremonyInvite,'adminRoleChecks','master')));
+  await assertFails(getDoc(doc(admin,'adminRoleChecks','master')));
   await assertSucceeds(setDoc(doc(master,config),{
     principalEmail:'principal@example.com',updatedAt:serverTimestamp(),updatedBy:'master-uid'
+  }));
+  await assertSucceeds(getDoc(doc(principal,probe))); // saved Principal still has access
+  await assertSucceeds(getDoc(doc(ceremonyInvite,config))); // additional account persists
+  await assertFails(setDoc(doc(ceremonyInvite,config),{
+    principalEmail:'wafahikmiya@gmail.com',updatedAt:serverTimestamp(),updatedBy:'ceremony-invite-uid'
   }));
   await assertFails(getDoc(doc(outsider,control)));
   await assertFails(getDoc(doc(guest,publicOpening))); // before final opening no public welcome
@@ -84,6 +104,7 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   await assertFails(getDocs(collection(master,'grandLaunch')));
   await assertFails(setDoc(doc(admin,control),{...arm,updatedBy:'normal-uid'}));
   await assertFails(setDoc(doc(principal,control),{...arm,updatedBy:'principal-uid'}));
+  await assertFails(setDoc(doc(ceremonyInvite,control),{...arm,updatedBy:'ceremony-invite-uid'}));
   await assertFails(setDoc(doc(outsider,control),{...arm,updatedBy:'outsider-uid'}));
   await assertSucceeds(setDoc(doc(master,control),arm));
   await assertFails(setDoc(doc(master,control),arm));
@@ -111,7 +132,10 @@ test('Master can reset displayed ribbon after cut; only Principal final confirma
   const record={kind:'official',phase:'launched',dateLocal:'2026-11-21',
     startedAt:firstCountdown,launchedAt:serverTimestamp(),launchedBy:'principal-uid'};
   assert.equal((await getDoc(doc(master,official))).exists(),false,'Staged ribbon cut must not create the permanent record');
-  await assertFails(setDoc(doc(admin,official),{...record,launchedBy:'normal-uid'}));
+  // Assigned Academy account IS allowed to confirm, but only with a
+  // valid 10-second countdown and exact immutable record schema.
+  // Do not commit the real record here: reset-after-cut is tested below.
+  await assertFails(setDoc(doc(admin,official),{...record,launchedBy:'normal-uid',startedAt:null}));
   await assertFails(setDoc(doc(outsider,official),{...record,launchedBy:'outsider-uid'}));
   await assertFails(setDoc(doc(unverified,official),{...record,launchedBy:'unverified-uid'}));
   // Reset is explicitly permitted AFTER the visible ribbon has been cut.
