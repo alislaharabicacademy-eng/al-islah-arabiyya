@@ -17,15 +17,19 @@ test('Production date is locked to 21 November 2026 Asia/Kolkata, not system loc
   assert.match(rules,/!exists\(\/databases\/\$\(database\)\/documents\/grandLaunch\/official\)/);
   assert.doesNotMatch(rules,/allow (?:update|delete): if documentId == 'official'\b/);
   assert.match(ceremony,/const isOfficial=params\.get\('mode'\)==='official'/);
-  assert.match(ceremony,/requestOfficialCut\(\)/);
+  assert.match(ceremony,/requestStagedOfficialCut\(\)/);
+  assert.match(ceremony,/finalizeOfficial\(\)/);
+  assert.match(ceremony,/isStagedOfficialCut\(\)/);
   assert.match(ceremony,/if\(!isOfficial\|\|role!=='principal'/);
   assert.match(ceremony,/officialRecordLoaded/);
   assert.match(html,/id="officialControls"/);
   assert.match(html,/id="officialArm"/);
   assert.match(html,/id="officialCancel"/);
   assert.match(html,/id="officialStart"/);
+  assert.match(html,/id="officialFinalize"/);
   assert.match(html,/id="successExplanation"/);
-  assert.match(ceremony,/IT CANNOT BE RESET/);
+  assert.match(ceremony,/final record can NEVER be reset/);
+  assert.match(ceremony,/async function cancelOfficialCountdown\(\)/);
 });
 
 // In emulator-only tests, override the date helper to simulate opening day.
@@ -34,7 +38,7 @@ const helper=/    function isOfficialOpeningDay\(\) \{[\s\S]*?\n    \}/;
 assert.ok(helper.test(rules),'Expected a server-side opening date restriction');
 const emulatorRules=rules.replace(helper,"    function isOfficialOpeningDay() {\n      return true; // emulator only\n    }");
 
-test('Master arms/starts and Principal cuts once after countdown; official record remains immutable',async()=>{
+test('Master can reset displayed ribbon after cut; only Principal final confirmation records immutable launch',async()=>{
  const env=await initializeTestEnvironment({
    projectId:'demo-grand-official-onetime',
    firestore:{rules:emulatorRules}
@@ -58,6 +62,7 @@ test('Master arms/starts and Principal cuts once after countdown; official recor
   }).firestore();
   const control='grandLaunch/officialControl';
   const official='grandLaunch/official';
+  const trial='grandLaunch/trial';
   const config='grandLaunch/config';
   const arm={kind:'officialControl',state:'armed',startedAt:null,startedBy:null,
     updatedAt:serverTimestamp(),updatedBy:'master-uid'};
@@ -78,16 +83,39 @@ test('Master arms/starts and Principal cuts once after countdown; official recor
   await assertFails(setDoc(doc(master,control),arm));
   await assertFails(updateDoc(doc(admin,control),{...start,startedBy:'normal-uid',updatedBy:'normal-uid'}));
   await assertFails(updateDoc(doc(principal,control),{...start,startedBy:'principal-uid',updatedBy:'principal-uid'}));
+  // Stage a full official countdown in the existing resettable trial doc.
+  // Principal scissors only writes here; it never creates the official record.
+  await assertSucceeds(setDoc(doc(master,trial),{
+    kind:'trial',phase:'countdown',startedAt:serverTimestamp(),cutAt:null,cutBy:null,
+    updatedAt:serverTimestamp(),updatedBy:'master-uid'
+  }));
   await assertSucceeds(updateDoc(doc(master,control),start));
   const firstCountdown=(await getDoc(doc(master,control))).data().startedAt;
+  const stageCut={phase:'cut',cutAt:serverTimestamp(),cutBy:'principal-uid',
+    updatedAt:serverTimestamp(),updatedBy:'principal-uid'};
+  await assertFails(updateDoc(doc(principal,trial),stageCut)); // wait full ten seconds
+  await new Promise(resolve=>setTimeout(resolve,10450));
+  await assertSucceeds(updateDoc(doc(principal,trial),stageCut));
+  await assertFails(getDoc(doc(outsider,trial)));
+  await assertFails(setDoc(doc(principal,official),{state:'launched'})); // staged ≠ permanent
   const record={kind:'official',phase:'launched',dateLocal:'2026-11-21',
     startedAt:firstCountdown,launchedAt:serverTimestamp(),launchedBy:'principal-uid'};
   await assertFails(setDoc(doc(principal,official),record));
   await assertFails(setDoc(doc(admin,official),{...record,launchedBy:'normal-uid'}));
   await assertFails(setDoc(doc(outsider,official),{...record,launchedBy:'outsider-uid'}));
   await assertFails(setDoc(doc(unverified,official),{...record,launchedBy:'unverified-uid'}));
+  // Reset is explicitly permitted AFTER the visible ribbon has been cut.
   await assertSucceeds(updateDoc(doc(master,control),cancel));
+  await assertSucceeds(setDoc(doc(master,trial),{
+    kind:'trial',phase:'idle',startedAt:null,cutAt:null,cutBy:null,
+    updatedAt:serverTimestamp(),updatedBy:'master-uid'
+  }));
   await assertFails(setDoc(doc(principal,official),record));
+  // A second complete run can now start and be finally confirmed.
+  await assertSucceeds(setDoc(doc(master,trial),{
+    kind:'trial',phase:'countdown',startedAt:serverTimestamp(),cutAt:null,cutBy:null,
+    updatedAt:serverTimestamp(),updatedBy:'master-uid'
+  }));
   await assertSucceeds(updateDoc(doc(master,control),start));
   const finalCountdown=(await getDoc(doc(master,control))).data().startedAt;
   const finalRecord={...record,startedAt:finalCountdown};
