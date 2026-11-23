@@ -1,6 +1,17 @@
 <!doctype html>
 <html lang="en">
 <head>
+<script id="academy-legacy-domain-redirect">
+(function () {
+  var oldHost = "alislaharabicacademy-eng.github.io";
+  var oldPrefix = "/al-islah-arabiyya";
+  var loc = window.location;
+  if (loc.hostname !== oldHost) return;
+  if (loc.pathname !== oldPrefix && loc.pathname.indexOf(oldPrefix + "/") !== 0) return;
+  var newPath = loc.pathname.slice(oldPrefix.length) || "/";
+  loc.replace("https://alislaharabicacademy.pages.dev" + newPath + loc.search + loc.hash);
+})();
+</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#103d2d">
 <meta name="robots" content="noindex,nofollow">
