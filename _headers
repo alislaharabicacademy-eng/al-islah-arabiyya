@@ -1,0 +1,19 @@
+# Browser-cache only the Academy's static media; Firebase and HTML stay uncached by this file.
+# These files are repository assets, not student records or live site settings.
+/*.png
+  Cache-Control: public, max-age=3600
+
+/*.jpg
+  Cache-Control: public, max-age=3600
+
+/*.jpeg
+  Cache-Control: public, max-age=3600
+
+/*.webp
+  Cache-Control: public, max-age=3600
+
+/*.svg
+  Cache-Control: public, max-age=3600
+
+/*.mp4
+  Cache-Control: public, max-age=86400
